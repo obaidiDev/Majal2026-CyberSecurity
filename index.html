@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Majal 2026 · Cybersecurity</title>
+  <style>
+    /* Majal light identity — palette sampled from the deck template PDF */
+    :root{
+      --petrol:#00567d; --petrol-d:#003f5e; --teal:#1f8f89; --turq:#33d2cb;
+      --yellow:#f2d200; --ink:#12333d; --slate:#2f4f59; --muted:#5c7880;
+      --bg:#f6f8f8; --bg-2:#eef3f3; --card:#ffffff; --line:#e0e7e8;
+      --sans:"Avenir Next","Avenir","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0}
+    body{
+      font-family:var(--sans); color:var(--ink);
+      background:
+        radial-gradient(1100px 620px at 12% -12%, rgba(51,210,203,.12), transparent 60%),
+        radial-gradient(900px 520px at 100% 112%, rgba(0,86,125,.07), transparent 55%),
+        var(--bg);
+      min-height:100vh; display:flex; flex-direction:column;
+      -webkit-font-smoothing:antialiased;
+    }
+    .wrap{width:100%; max-width:1080px; margin:0 auto; padding:40px 28px 56px; flex:1 0 auto}
+
+    /* header */
+    header{display:flex; align-items:center; gap:14px; margin-bottom:64px}
+    header svg{width:40px; height:40px; flex:0 0 auto}
+    .wm{font-weight:800; letter-spacing:.22em; font-size:19px; color:var(--petrol)}
+    .wm small{display:block; font-weight:600; letter-spacing:.05em; font-size:11px;
+      color:var(--muted); text-transform:none; margin-top:2px}
+
+    /* hero */
+    .kicker{font-weight:800; letter-spacing:.24em; text-transform:uppercase;
+      font-size:14px; color:var(--teal); margin:0 0 14px}
+    h1{font-size:clamp(40px,7vw,76px); line-height:1.02; letter-spacing:-.02em;
+      color:var(--petrol); margin:0; font-weight:800}
+    .bar{width:72px; height:6px; border-radius:3px; background:var(--yellow); margin:22px 0 20px}
+    .lede{font-size:clamp(17px,2.2vw,21px); color:var(--slate); max-width:44ch; margin:0 0 52px; line-height:1.5}
+
+    /* day grid */
+    .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:18px}
+    .day{
+      position:relative; display:flex; flex-direction:column; gap:10px;
+      background:var(--card); border:1px solid var(--line); border-top:4px solid var(--edge,var(--turq));
+      border-radius:8px; padding:22px 22px 24px; text-decoration:none; color:inherit;
+      box-shadow:0 1px 3px rgba(18,51,61,.05); transition:transform .12s, box-shadow .12s, border-color .12s;
+    }
+    a.day:hover{transform:translateY(-3px); box-shadow:0 10px 26px rgba(0,86,125,.14); border-color:var(--line)}
+    .day .no{font-family:var(--sans); font-weight:800; font-size:34px; color:var(--petrol); line-height:1}
+    .day h2{margin:0; font-size:20px; color:var(--petrol); font-weight:800; letter-spacing:-.01em}
+    .day p{margin:0; font-size:14.5px; line-height:1.5; color:var(--muted)}
+    .status{margin-top:auto; align-self:flex-start; font-size:11px; font-weight:700; letter-spacing:.12em;
+      text-transform:uppercase; padding:.35em .8em; border-radius:999px}
+    .status.live{background:rgba(31,143,137,.14); color:var(--teal); border:1px solid rgba(31,143,137,.4)}
+    .status.soon{background:var(--bg-2); color:var(--muted); border:1px solid var(--line)}
+    .day.soon{opacity:.72; cursor:not-allowed}
+    .day.live::after{content:"→"; position:absolute; top:20px; right:22px; color:var(--petrol);
+      font-size:22px; font-weight:800; transition:transform .12s}
+    a.day.live:hover::after{transform:translateX(4px)}
+    /* per-day accent edges cycling the brand blocks */
+    .day:nth-child(1){--edge:var(--turq)} .day:nth-child(2){--edge:var(--petrol)}
+    .day:nth-child(3){--edge:var(--yellow)} .day:nth-child(4){--edge:var(--teal)}
+    .day:nth-child(5){--edge:var(--turq)}
+
+    footer{flex:0 0 auto; border-top:1px solid var(--line); background:rgba(255,255,255,.4)}
+    .foot{max-width:1080px; margin:0 auto; padding:20px 28px; display:flex; justify-content:space-between;
+      align-items:center; gap:16px; flex-wrap:wrap; font-size:13px; color:var(--muted)}
+    .foot .slogan{font-weight:700; letter-spacing:.02em; color:var(--slate)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <svg viewBox="0 0 100 100" aria-label="Majal">
+        <polygon points="0,0 47,0 47,18 18,18 18,47 0,47" fill="#33d2cb"/>
+        <polygon points="100,0 100,47 82,47 82,18 53,18 53,0" fill="#00567d"/>
+        <polygon points="0,53 18,53 18,82 47,82 47,100 0,100" fill="#00567d"/>
+        <polygon points="100,53 100,100 53,100 53,82 82,82 82,53" fill="#f2d200"/>
+      </svg>
+      <div class="wm">MAJAL<small>Unlocking your tech horizons</small></div>
+    </header>
+
+    <p class="kicker">Majal · 2026 Program</p>
+    <h1>Cybersecurity</h1>
+    <div class="bar"></div>
+    <p class="lede">A five-day, hands-on course. You spend the week as the attacker — because you can't
+      detect what you've never seen from the inside — then take the defender's chair on Friday.</p>
+
+    <div class="grid">
+      <a class="day live" href="day1/" style="--edge:var(--turq)">
+        <div class="no">01</div>
+        <h2>What is Normal?</h2>
+        <p>Establish the baseline, then find the one line in forty thousand that isn't.</p>
+        <span class="status live">Available</span>
+      </a>
+      <div class="day soon">
+        <div class="no">02</div>
+        <h2>The First Foothold</h2>
+        <p>How an attacker chooses a target and gets their initial access.</p>
+        <span class="status soon">Coming soon</span>
+      </div>
+      <div class="day soon">
+        <div class="no">03</div>
+        <h2>Moving Through</h2>
+        <p>Once inside the network, how attackers pivot and escalate.</p>
+        <span class="status soon">Coming soon</span>
+      </div>
+      <div class="day soon">
+        <div class="no">04</div>
+        <h2>Breaking the App</h2>
+        <p>Attacking the application layer itself.</p>
+        <span class="status soon">Coming soon</span>
+      </div>
+      <div class="day soon">
+        <div class="no">05</div>
+        <h2>The Defender's Chair</h2>
+        <p>Reconstruct the whole week from the alerts you generated.</p>
+        <span class="status soon">Coming soon</span>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="foot">
+      <span class="slogan">Majal · Unlocking your tech horizons</span>
+      <span>Cybersecurity 2026</span>
+    </div>
+  </footer>
+</body>
+</html>
