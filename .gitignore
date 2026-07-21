@@ -1,0 +1,10 @@
+# OS / editor junk
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# logs / deps (the vendored Reveal.js in shared/dist and shared/plugin is
+# intentionally committed so the deck runs offline from file:// with no build)
+*.log
+node_modules/

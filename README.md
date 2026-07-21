@@ -1,55 +1,31 @@
-# Majal — Cyber Day 1: *What is normal?*
+# Majal — Cyber Course
 
-An offline, single-player, interactive Reveal.js deck. Every teaching beat from the
-Day-1 script is a hands-on widget; each student's answers are saved locally and
-exported to a `day1-<name>.txt` file you collect at the end.
+A five-day, offline Reveal.js course. Every day runs straight from `file://`
+(no server, no build) by opening its `index.html`.
 
-## Run it
-Just open **`index.html`** in any modern browser — double-click it, or drag it onto
-a browser window. **No server, no internet, no install.** It runs straight from
-`file://`, from a USB stick, from anywhere.
+## Layout
 
-- Distribute the whole `day1/` folder (zip it, or copy to USB).
-- Everything is vendored: Reveal.js lives in `dist/` and `plugin/`; there are no
-  CDN links, no `fetch()`, no external fonts. It works fully air-gapped.
-
-## Presenting
-- **Arrow keys / Space** — next / previous slide.
-- **`S`** — open the **speaker-notes window** (every facilitator note from the
-  script travels with the deck).
-- **`F`** — fullscreen. **`Esc`** — slide overview.
-- Typing in any answer box will **not** jump slides (keyboard capture is handled).
-- Content-dense slides scroll inside their own frame if a projector is small.
-
-## The single-player contract
-There's no live "compare with the room" — instead each of those moments is a
-**commit-then-reveal gate**: the student locks an answer, and only then does the
-facilitator note / model answer unlock. Prevents free-riding, and it's captured in
-their export file.
-
-## Collecting work
-The last slide has an **Export** button → downloads `day1-<name>.txt` with:
-acknowledgement timestamp, diagnostic self-score, **pair code**, and every answer.
-Students read their **pair code** (e.g. `A-35`) aloud after the diagnostic — pair
-every `A` with a `C`, `B`s together. (The letter is a tier; the word "tier" never
-appears on screen, and the two digits are random salt.)
-
-## File map
 ```
-index.html            Reveal deck, one <section> per slide
-css/course.css        Majal brand theme (palette + fonts from the identity PDF)
-js/state.js           localStorage, pair code, export, reveal init, keyboard fix
-js/widgets/*.js        one file per block; 16 distinct interaction mechanics
-data/content.js        all questions / artifacts / briefs (JS consts, not JSON)
-data/logs.js           seeded log-wall + DNS-tunnel generators (deterministic)
-dist/ plugin/          vendored Reveal.js 5.2.1
+.
+├── shared/              # framework + brand, shared by every day
+│   ├── dist/            #   Reveal.js core (vendored, committed for offline use)
+│   ├── plugin/          #   Reveal plugins (notes, highlight, …)
+│   └── css/course.css   #   Majal brand theme (light PDF identity)
+├── day1/                # one folder per day = that day's content only
+│   ├── index.html       #   links ../shared/… for framework + theme
+│   ├── data/            #   content.js, logs.js
+│   ├── js/              #   state.js engine + widgets/ (day-specific)
+│   └── assets/
+├── day2/ … day5/        # same shape (added as they're built)
+└── MajalEducationalDeckTemplate.pdf   # brand reference
 ```
 
-## Notes on the content
-- The **log wall** (2,847 lines) and **DNS log** are seeded — identical on every
-  machine, so you can point at "line 2,845" and everyone has the same one.
-- Brand palette is taken from `MajalFinalIdentity.pdf`: Purple `#9a66ff`,
-  Navy `#15155b`, Gray `#cccccc`, Yellow `#e2e233`. English text falls back to a
-  system sans (Avenir isn't web-distributable); drop `Avenir`/`IBM Plex Sans Arabic`
-  web-font files into an `assets/` folder and `@font-face` them in `course.css` if
-  you want exact brand type.
+## Adding a new day
+
+Copy `day1/` to `dayN/`, keep the `../shared/…` links in its `index.html`,
+and replace `data/` + `js/widgets/` with that day's content. Theme changes go
+once into `shared/css/course.css` and apply to every day.
+
+> Note: `js/state.js` is currently day-coupled (localStorage key, export
+> filename, day flag). Once day2 exists, the day-agnostic engine parts can be
+> lifted into `shared/js/` — deferred until the real seam is visible.
