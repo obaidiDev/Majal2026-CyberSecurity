@@ -29,6 +29,10 @@
   .toggle.enc.on { border-color:#00567C; background:#EDF3F6; }
   .toggle.enc.on .st { background:#00567C; }
   .hint { font-size:11.5px; color:#7C929A; line-height:1.4; margin-top:3px; }
+  .sigcalc { font-family:"JetBrains Mono",monospace; font-size:12px; line-height:1.7; color:#1a6f6a;
+    background:#F1F8F7; border:1px solid #DCEAE9; border-radius:8px; padding:8px 10px; margin-top:8px; }
+  .sigcalc.hidden { display:none; }
+  .sigcalc b { color:#00567C; } .sigcalc .n { color:#B8960A; font-weight:700; }
 
   .packet { border-radius:9px; border:1.5px solid #04303F; overflow:hidden; margin-bottom:12px;
     font-family:"JetBrains Mono",monospace; font-size:13px; transition:transform .35s ease, box-shadow .2s; }
@@ -76,7 +80,8 @@
       <div class="ch">🧕 Alice sends</div>
       <div class="msg" id="msg">PAY <span class="amt">$100</span> TO CAROL</div>
       <button class="toggle" id="tSign"><span>✍️ Sign it</span><span class="st">OFF</span></button>
-      <div class="hint">Signs a fingerprint with her <b>private</b> key — proves it's from her &amp; unchanged.</div>
+      <div class="hint">Signs a <b>fingerprint</b> (a short number from the message) with her <b>private</b> key.</div>
+      <div class="sigcalc hidden" id="sigcalc"></div>
       <button class="toggle enc" id="tEnc" style="margin-top:9px"><span>🔒 Encrypt it</span><span class="st">OFF</span></button>
       <div class="hint">Seals it with Bob's <b>public</b> key — only Bob can read it.</div>
     </div>
@@ -109,7 +114,7 @@
 (function () {
   // toy keys — Alice signs (nA), Bob decrypts (nB); both e=3, distinct moduli
   var nA = 33, dA = 7, eA = 3, nB = 55, K = 23;
-  var MSG = "PAY $100 TO CAROL", TAMP = "PAY $9000 TO CAROL", FORGE = "PAY $9000 TO MALLORY";
+  var MSG = "PAY $100 TO CAROL", TAMP = "PAY $9000 TO CAROL", FORGE = "PAY $9000 TO EVE";
   var sign = false, enc = false, attack = null;
 
   function modpow(b, e, m) { var r = 1; b %= m; while (e > 0) { if (e & 1) r = (r * b) % m; e >>= 1; b = (b * b) % m; } return r; }
@@ -129,8 +134,8 @@
 
   function delivered() {
     // what Bob ends up with, given the selected attack
-    if (attack === "tamp")  return { msg: TAMP,  sig: sign ? aliceSig(MSG) : null, corrupt: enc, tampered: true };
-    if (attack === "forge") return { msg: FORGE, sig: sign ? 99 : null, forged: true }; // 99 = a sig Mallory can't make valid
+    if (attack === "tamp")  return { msg: TAMP,  sig: sign ? aliceSig(MSG) : null, corrupt: enc, tampered: true }; // Mallory forwards Alice's old sig
+    if (attack === "forge") return { msg: FORGE, sig: sign ? aliceSig(MSG) : null, forged: true }; // Mallory replays a signature she saw
     return { msg: MSG, sig: sign ? aliceSig(MSG) : null };
   }
 
@@ -146,9 +151,21 @@
     var pbody = $("pbody"), psig = $("psig");
     if (enc) { pbody.className = "body enc"; pbody.innerHTML = '<div class="plab">🔒 sealed for Bob · key wrapped</div>' + hex(d.msg); }
     else     { pbody.className = "body clear"; pbody.innerHTML = '<div class="plab">🔓 plaintext — anyone can read</div>' + d.msg; }
-    if (sign) { var ok = verify(d.msg, d.sig); psig.className = "sig" + (ok ? "" : " bad"); psig.style.display = "";
-      psig.innerHTML = '<div class="plab">✍️ signature</div>sig = ' + d.sig + '   →  check: sig³ mod 33 ' + (ok ? "=" : "≠") + " fingerprint(msg)"; }
-    else { psig.style.display = "none"; }
+    if (sign) {
+      var fpR = hash(d.msg), chk = modpow(d.sig, eA, nA), ok = chk === fpR;
+      psig.className = "sig" + (ok ? "" : " bad"); psig.style.display = "";
+      psig.innerHTML = '<div class="plab">✍️ signature = ' + d.sig + '</div>verify: ' + d.sig + '³ mod 33 = ' + chk +
+        (ok ? ' = ' : ' ≠ ') + 'fingerprint ' + fpR + (ok ? '  ✓' : '  ✗');
+    } else { psig.style.display = "none"; }
+
+    // Alice's side: how the signature is built from the original message
+    var sc = $("sigcalc");
+    if (sign) {
+      sc.classList.remove("hidden");
+      sc.innerHTML = '🔎 fingerprint = (add up characters) mod 33 = <span class="n">' + hash(MSG) + '</span><br>' +
+        '✍️ signature = fingerprint<sup>d</sup> mod 33 = <span class="n">' + hash(MSG) + '</span><sup>7</sup> mod 33 = <b>' + aliceSig(MSG) + '</b>' +
+        '<br><span style="color:#8AA1A8">d = 7 is Alice\'s private key · verify uses e = 3, her public key</span>';
+    } else { sc.classList.add("hidden"); }
 
     // attack live-status badges
     setRes("rRead", readWins());
