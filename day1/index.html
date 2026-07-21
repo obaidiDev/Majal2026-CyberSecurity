@@ -90,6 +90,26 @@
       Eve has A and B but would have to solve the discrete log to recover a secret. This is what happens the instant every HTTPS page loads.</aside>
     </section>
 
+    <!-- ============ CRYPTO CAPSTONE: sign it, seal it ============ -->
+    <section>
+      <p class="kicker">Putting the crypto together · how HTTPS moves the key</p>
+      <h2>The digital envelope — asymmetric to deliver the key, symmetric for the data</h2>
+      <iframe class="wframe" style="height:566px" src="widgets/enc_hybrid.html?v=4" title="Hybrid encryption / digital envelope" scrolling="auto"></iframe>
+      <aside class="notes">RSA is too slow and too small to encrypt a message directly, so we never do. Step through it:
+      Alice encrypts the body with a fast one-time symmetric key K, wraps just K with Bob's public key, and sends both.
+      Only Bob's private key unwraps K. The next slide adds the signature — proof of WHO sent it.</aside>
+    </section>
+
+    <section>
+      <p class="kicker">Putting the crypto together · sign it, seal it</p>
+      <h2>Encryption hides it. A signature proves who sent it. You need both.</h2>
+      <iframe class="wframe" style="height:566px" src="widgets/enc_lab.html?v=5" title="Tamper Lab — signatures + encryption" scrolling="auto"></iframe>
+      <aside class="notes">Play the attacker. Encrypt (Bob's public key) buys secrecy; Sign (Alice's private key over a small fingerprint of the message) buys
+      authenticity + integrity. Read is stopped only by Encrypt; Tamper and Impersonate are stopped only by Sign. The killer point: encryption alone
+      does NOT prove the sender — anyone has Bob's public key — which is exactly why signatures exist. The "fingerprint" here is a toy; the real one is
+      the SHA-256 hash they'll meet in the next block.</aside>
+    </section>
+
     <!-- ================= INTEGRITY ================= -->
     <section data-w="avalanche">
       <p class="kicker">Integrity · proof that nothing changed</p>
@@ -113,25 +133,6 @@
       <div id="salt-mount"></div>
       <aside class="notes">Two ideas: (1) the server stores a hash, not the password — it verifies without knowing.
       (2) salting: same password, different stored hash, so one leak can't crack millions at once. Toggle the salt live.</aside>
-    </section>
-
-    <!-- ============ CRYPTO CAPSTONE: putting C + I together ============ -->
-    <section>
-      <p class="kicker">Putting it together · how HTTPS actually moves the key</p>
-      <h2>The digital envelope — asymmetric to deliver the key, symmetric for the data</h2>
-      <iframe class="wframe" style="height:566px" src="widgets/enc_hybrid.html?v=4" title="Hybrid encryption / digital envelope" scrolling="auto"></iframe>
-      <aside class="notes">RSA is too slow and too small to encrypt a message directly, so we never do. Step through it:
-      Alice encrypts the body with a fast one-time symmetric key K, wraps just K with Bob's public key, and sends both.
-      Only Bob's private key unwraps K. Now that they've also seen hashing, the next slide adds the signature — proof of WHO sent it.</aside>
-    </section>
-
-    <section>
-      <p class="kicker">Putting it together · sign it, seal it</p>
-      <h2>Encryption hides it. A signature proves who sent it. You need both.</h2>
-      <iframe class="wframe" style="height:566px" src="widgets/enc_lab.html?v=4" title="Tamper Lab — signatures + encryption" scrolling="auto"></iframe>
-      <aside class="notes">Play the attacker. Encrypt (Bob's public key) buys secrecy; Sign (Alice's private key over a hash) buys authenticity + integrity.
-      Land the three attacks: Read is stopped only by Encrypt; Tamper and Impersonate are stopped only by Sign. The killer point: encryption alone
-      does NOT prove the sender — anyone has Bob's public key — which is exactly why signatures exist. Only Sign+Encrypt blocks all three.</aside>
     </section>
 
     <!-- ================= AVAILABILITY ================= -->
