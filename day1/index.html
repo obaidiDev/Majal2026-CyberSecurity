@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Majal — Cyber Day 1: What is normal?</title>
+  <title>Majal — Cyber Day 1: The CIA Triad</title>
   <link rel="stylesheet" href="../shared/dist/reset.css">
   <link rel="stylesheet" href="../shared/dist/reveal.css">
   <link rel="stylesheet" href="../shared/css/course.css">
@@ -12,278 +12,126 @@
 <div class="reveal">
   <div class="slides">
 
-    <!-- ================= BLOCK 0 — COLD OPEN ================= -->
-
-    <!-- S1: log wall -->
-    <section data-w="logwall">
-      <p class="kicker">Jul 19 · srv-web-02 · /var/log/auth.log</p>
-      <div id="logwall-mount"></div>
-      <aside class="notes">
-        Read the last line. Something different happened there. In about six hours,
-        you personally are going to find that line inside a file of forty thousand
-        others, work out what the account did next, and write two sentences a manager
-        can act on. That is the job — not the simplified version of the job, the job.
-        (Let them scroll. Say nothing about how to find it. The unglamour is the lesson.)
-      </aside>
-    </section>
-
-    <!-- S2: the week (static, deliberately) -->
+    <!-- ================= TITLE ================= -->
     <section>
-      <p class="kicker">The week</p>
-      <table class="week">
-        <thead><tr><th>Day</th><th>The question you'll be able to answer</th></tr></thead>
-        <tbody>
-          <tr class="today"><td>1</td><td>What is normal, and how do I find what isn't?</td></tr>
-          <tr><td>2</td><td>How does an attacker choose me, and how do they get the first foothold?</td></tr>
-          <tr><td>3</td><td>Once they're inside the network, how do they move?</td></tr>
-          <tr><td>4</td><td>How do they break the application itself?</td></tr>
-          <tr><td>5</td><td>Can I sit in the defender's chair and reconstruct all of it?</td></tr>
-        </tbody>
-      </table>
-      <p class="sub" style="margin-top:1em">Days 2, 3 and 4 you are the attacker — because you cannot detect a thing
-      you've never seen from the inside. On Friday it all comes back as alerts. <em>You will be investigating yourselves.</em></p>
-      <aside class="notes">
-        Days 2-4 you're the attacker — not to make attackers, but because you can't detect what you've
-        never seen from inside. Friday everything you ran comes back as alerts. And notice Day 1 isn't
-        "what is hacking" — it's "what is normal." Detection is a subtraction problem; you can't subtract
-        without the baseline.
-      </aside>
+      <p class="kicker">Day 1 · Foundations</p>
+      <h1>Security is three properties.<br>Everything else is detail.</h1>
+      <p class="sub" style="margin-top:1.2em;max-width:22em">Before tools, before attacks, before a single command — every system either
+      holds three properties or it doesn't. Today you'll <em>see</em> each one: build the mechanisms that protect it, and the ones that break it.</p>
+      <aside class="notes">Set the frame: we are not memorising definitions. Each property gets a live demo they can touch.
+      The whole day hangs off these three words: Confidentiality, Integrity, Availability.</aside>
     </section>
 
-    <!-- S3: ground rules + ack gate -->
-    <section data-w="ackgate">
-      <p class="kicker">Ground rules</p>
-      <div class="rule"><span class="n">1</span><div><strong>Ask the dumb question.</strong> The person next to you has the same one and is quieter. You're not here to look competent — you're here to stop being incompetent.</div></div>
-      <div class="rule"><span class="n">2</span><div><strong>Nothing outside the lab. Ever.</strong> Not the university network, not your ISP, not a site you're curious about. Everything this week is illegal applied to systems you don't own. In Saudi Arabia this falls under the <em>Anti-Cyber Crime Law</em> and it carries prison time.</div></div>
-      <div class="rule"><span class="n">3</span><div><strong>Pairs are assigned, not chosen.</strong> You'll understand why in thirty minutes.</div></div>
-      <div class="rule"><span class="n">4</span><div><strong>Nothing works the first time.</strong> When your VM fails to boot, that's not a sign you don't belong here. That's the job too.</div></div>
-      <div id="ack-mount"></div>
-      <aside class="notes">Read rule 2 slowly. The checkbox writes a timestamped acknowledgement into their export file. It gates the next slide on purpose.</aside>
-    </section>
-
-    <!-- ================= BLOCK 1 — DIAGNOSTIC ================= -->
-
-    <!-- S4: diagnostic -->
-    <section data-w="diagnostic">
-      <p class="kicker">Diagnostic · not graded · not shown to anyone</p>
-      <div id="diag-mount"></div>
-      <aside class="notes">
-        Not graded, not shown, doesn't affect anything — it's only to pair you. Answer honestly;
-        inflation gets you paired badly and hurts you all week. Self-scored on purpose: MCQ inflates
-        through recognition. 12 minutes, phones away.
-      </aside>
-    </section>
-
-    <!-- S5: pair code -->
-    <section data-w="paircode">
-      <p class="kicker">Your lab partner code</p>
-      <div id="pair-mount"></div>
-      <aside class="notes">
-        Students read the code aloud; you pair from it. Pair every C with an A. Pair Bs together.
-        The word "tier" never appears on screen. If you scored 3 you're exactly where the course
-        assumes. If you scored 13, your job is to explain out loud — that's how you find your own holes.
-      </aside>
-    </section>
-
-    <!-- ================= BLOCK 2.1 — THE THREE PROPERTIES ================= -->
-
-    <!-- S6: intro (static teaching) -->
+    <!-- ================= CIA OVERVIEW ================= -->
     <section>
-      <p class="kicker">Block 2 · What security actually is</p>
-      <h2>Three properties a system<br>either has or doesn't.</h2>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:1em;font-size:.8em">
-        <div class="card"><span class="pill c">Confidentiality</span><p class="sub" style="margin:.5em 0 0">Only authorized parties can <strong>read</strong> it. The one you can never undo.</p></div>
-        <div class="card"><span class="pill i">Integrity</span><p class="sub" style="margin:.5em 0 0">The data is <strong>what it should be</strong>, unaltered. The quietest to break.</p></div>
-        <div class="card"><span class="pill a">Availability</span><p class="sub" style="margin:.5em 0 0">Authorized users can <strong>reach</strong> it. Ransomware lives here.</p></div>
+      <p class="kicker">The C · I · A triad</p>
+      <h2>Three properties a system either has or doesn't</h2>
+      <div class="triad">
+        <div class="card triad-c">
+          <span class="pill c">Confidentiality</span>
+          <p class="triad-q">Can only the right people <strong>read</strong> it?</p>
+          <p class="sub">Broken by: eavesdropping, stolen credentials, a leaked database. The one you can never undo — once a secret is out, it's out.</p>
+        </div>
+        <div class="card triad-i">
+          <span class="pill i">Integrity</span>
+          <p class="triad-q">Is the data <strong>exactly what it should be</strong>?</p>
+          <p class="sub">Broken by: tampering, forged records, a swapped file. The quietest to break — a wrong number can sit undetected for years.</p>
+        </div>
+        <div class="card triad-a">
+          <span class="pill a">Availability</span>
+          <p class="triad-q">Can authorised users <strong>reach</strong> it when needed?</p>
+          <p class="sub">Broken by: DDoS, ransomware, a full disk. The most expensive event most organisations ever face.</p>
+        </div>
       </div>
-      <p class="sub" style="margin-top:1.2em">Every control you'll ever configure exists to produce one of these. Every attack exists to break one. When you meet a new tool, ask: <em>which of the three does it produce?</em></p>
-      <aside class="notes">Security isn't bolted on — it's these three properties. Availability is a security property, not IT's problem: ransomware is an availability attack and the most expensive event most orgs ever face.</aside>
+      <p class="sub" style="margin-top:1em">Every control you'll ever configure exists to produce one of these. Every attack exists to break one. When you meet a new tool, ask: <em>which of the three?</em></p>
+      <aside class="notes">Don't lecture the definitions — they'll build each one next. Land only the framing:
+      controls produce a property; attacks break one. Availability is a security property, not "IT's problem".</aside>
     </section>
 
-    <!-- S7: controls -> buckets -->
-    <section data-w="buckets">
-      <p class="kicker">Which property does each control produce?</p>
-      <div id="buckets-mount"></div>
-      <aside class="notes">
-        Several chips legitimately belong in two or three buckets (TLS -> C+I, immutable backups -> I+A,
-        log forwarding -> I+A, WORM -> I+A, separation of duties -> C+I). The check doesn't say "wrong" —
-        it asks which of your single-bucket chips belong in more than one. That's defence-in-depth,
-        discovered rather than announced.
-      </aside>
+    <!-- ================= CONFIDENTIALITY ================= -->
+    <section data-w="caesar">
+      <p class="kicker">Confidentiality · keeping secrets</p>
+      <h2>The oldest idea in security: scramble it so only a key-holder can read it</h2>
+      <div id="caesar-mount"></div>
+      <aside class="notes">Let them play with the wheel. The Caesar cipher is the "hello world" of encryption:
+      the KEY is the shift. The point to land: the method is simple, and the keyspace is tiny.</aside>
     </section>
 
-    <!-- S8: evidence-first inference -->
-    <section data-w="evidence">
-      <p class="kicker">Evidence first · name the mechanism</p>
-      <div id="evidence-mount"></div>
-      <aside class="notes">
-        This is inference, not classification. Show only the analyst observation — the right-hand column —
-        and make them reason backwards to the mechanism. The full row only unfolds after they commit.
-      </aside>
+    <section data-w="caesarbreak">
+      <p class="kicker">Confidentiality · why a small key is no key</p>
+      <h2>Break it yourself</h2>
+      <div id="cbreak-mount"></div>
+      <aside class="notes">They break real "encryption" with their eyes. The lesson isn't "Caesar is bad" — it's
+      WHY: 25 keys. Then the leap: real crypto keeps the method public and the keyspace impossible. Kerckhoffs's principle, without the name.</aside>
     </section>
 
-    <!-- S9: tension sliders -->
-    <section data-w="tension">
-      <p class="kicker">The three are in tension</p>
-      <div id="tension-mount"></div>
-      <aside class="notes">
-        Every control trades against the others. MFA-on-everything: which property improves, which suffers?
-        Let them argue two minutes. Don't resolve the MFA box — leave it unresolved in the deck as in the room.
-      </aside>
+    <section data-w="keys">
+      <p class="kicker">Confidentiality · sharing the secret</p>
+      <h2>One key, or two? The problem that shaped the internet</h2>
+      <div id="keys-mount"></div>
+      <aside class="notes">Symmetric first: fast, but how do you get the shared key to Bob without Eve seeing it?
+      That "key distribution problem" is the setup for asymmetric. Public locks, private key. HTTPS is built on exactly this.</aside>
     </section>
 
-    <!-- S10: scenario commit-gate -->
-    <section data-w="scenarios">
-      <p class="kicker">Your scenario · commit before you see the note</p>
-      <div id="scenario-mount"></div>
-      <aside class="notes">
-        Routed by pair code so each pair gets one. #1: nothing was violated, a control worked — blunt on purpose.
-        #3: no attacker, real incident — security ≠ attacks. #6: no clean answer, and it says so only after they commit.
-      </aside>
+    <section data-w="dh">
+      <p class="kicker">Confidentiality · agreeing on a secret in the open</p>
+      <h2>Diffie–Hellman, as mixing paint</h2>
+      <div id="dh-mount"></div>
+      <aside class="notes">The magic every student should see once: two people agree on a shared secret while an eavesdropper
+      watches every message — because un-mixing is hard. Move the sliders; the shared swatch always matches on both sides. This is what happens the instant every HTTPS page loads.</aside>
     </section>
 
-    <!-- ================= BLOCK 2.2 — RISK ================= -->
-
-    <!-- S11: sentence builder -->
-    <section data-w="sentence">
-      <p class="kicker">Asset · Vulnerability · Threat · Risk</p>
-      <div id="sentence-mount"></div>
-      <aside class="notes">
-        Risk = likelihood × impact, and it's the only language management acts on. The jargon detector
-        underlines words a dean won't act on — that counter does more work than ten minutes of you saying it.
-      </aside>
+    <!-- ================= INTEGRITY ================= -->
+    <section data-w="avalanche">
+      <p class="kicker">Integrity · proof that nothing changed</p>
+      <h2>The fingerprint that shatters if you touch one letter</h2>
+      <div id="aval-mount"></div>
+      <aside class="notes">The single best crypto "aha": type, then change one character and watch ~half the fingerprint flip.
+      A hash is a one-way fingerprint. This is the machine behind every integrity check for the rest of the week.</aside>
     </section>
 
-    <!-- S12: attack surface -->
-    <section data-w="surface">
-      <p class="kicker">Attack surface · a Riyadh retail chain</p>
-      <div id="surface-mount"></div>
-      <aside class="notes">
-        Three surfaces, not one. Network ~40, Software ~180, Human 1,247. Then invert the budget.
-        Tomorrow you map the third one — most organizations spend all their money on the first.
-      </aside>
+    <section data-w="checksum">
+      <p class="kicker">Integrity · did this file get tampered with?</p>
+      <h2>Same fingerprint = same file. Different = don't trust it.</h2>
+      <div id="chk-mount"></div>
+      <aside class="notes">This is the everyday use of a hash: verify a download, a log, an update wasn't swapped.
+      Have them edit one byte and watch VERIFIED flip to TAMPERED. Integrity is about correctness, not secrecy.</aside>
     </section>
 
-    <!-- S13: threat-actor attribution -->
-    <section data-w="attribution">
-      <p class="kicker">Who did this? · attribute from behaviour</p>
-      <div id="attrib-mount"></div>
-      <aside class="notes">
-        Profiling from behaviour — a different move from the mechanism-inference earlier. Two briefs are
-        ambiguous on purpose (a crew mimicking an insider; a "nation-state" that's a kiddie with a public exploit).
-        Capability, not target, places an actor. Row 2 — organized crime — is where almost everything you'll see comes from.
-      </aside>
+    <section data-w="salt">
+      <p class="kicker">Integrity · how your password is stored</p>
+      <h2>Servers verify your password without ever knowing it</h2>
+      <div id="salt-mount"></div>
+      <aside class="notes">Two ideas: (1) the server stores a hash, not the password — it verifies without knowing.
+      (2) salting: same password, different stored hash, so one leak can't crack millions at once. Toggle the salt live.</aside>
     </section>
 
-    <!-- ================= BLOCK 3 — INTRUSIONS ================= -->
-
-    <!-- S14: they log in (static) -->
-    <section>
-      <p class="kicker">Block 3 · How intrusions actually work</p>
-      <h2>The attacker doesn't hack.<br>They log in.</h2>
-      <p class="sub" style="margin-top:.8em">Delete the movie image. The dominant intrusion today is <strong>valid credentials</strong> — phished, or stolen by malware from a browser — followed by <strong>ordinary admin tools used in abnormal ways</strong>. Almost nothing you investigate involves a zero-day. It'll involve PowerShell, RDP, and a service account doing something a service account shouldn't.</p>
-      <div class="callout" style="margin-top:1em">Your detection problem is not "find the malicious thing." The tools are legitimate, the credentials valid, every action technically authorized. Your problem is finding the <em>abnormal use of normal things</em> — and the only way is to know what normal looks like. Which is why today is about normal.</div>
-      <aside class="notes">This is the important half: the consequence. Legitimate tools, valid creds, authorized actions. Detection = abnormal use of normal things.</aside>
+    <!-- ================= AVAILABILITY ================= -->
+    <section data-w="ddos">
+      <p class="kicker">Availability · reachable when it matters</p>
+      <h2>Nothing is stolen. Nothing is changed. Nobody can get in.</h2>
+      <div id="ddos-mount"></div>
+      <aside class="notes">The property people forget is a security property. Drive the attack slider up and watch real users
+      get dropped; then show the two defences recover it. Tie it to ransomware: same property, different weapon.</aside>
     </section>
 
-    <!-- S15: kill chain -->
-    <section data-w="killchain">
-      <p class="kicker">The kill chain · left column vs right column</p>
-      <div id="killchain-mount"></div>
-      <aside class="notes">
-        Top row = what they did. Bottom row = what lands in a log. Recon stays empty forever — no log exists.
-        Then it flips: top hides, bottom stays. That flip is "you never see the left column" — executed, not asserted.
-        The kill chain is a model, not a law: real intrusions skip stages, loop, run several at once.
-      </aside>
-    </section>
-
-    <!-- S16: ATT&CK -->
-    <section data-w="attack">
-      <p class="kicker">MITRE ATT&amp;CK · a defender's encyclopedia</p>
-      <div id="attack-mount"></div>
-      <aside class="notes">
-        Offline snapshot of T1003.001. Tactic = why (Credential Access), Technique = how (dumping),
-        Sub-technique = specific how (LSASS), Procedure = what a named group actually did. Scroll to Detection
-        and pause: this site tells you how to catch it. Nobody memorizes this — you look it up, every time, for your whole career.
-      </aside>
-    </section>
-
-    <!-- ================= BLOCK 4 — NETWORKING ================= -->
-
-    <!-- S17: four questions -->
-    <section data-w="fourq">
-      <p class="kicker">Networking for defenders · four questions</p>
-      <div id="fourq-mount"></div>
-      <aside class="notes">
-        Forget OSI today (Day 3, and every cert exam). Four questions are what you actually ask of traffic:
-        who / which service / what / reliably-delivered. One record, four passes.
-      </aside>
-    </section>
-
-    <!-- S18: TCP vs UDP -->
-    <section data-w="tcpudp">
-      <p class="kicker">TCP vs UDP · a physics demo, not a quiz</p>
-      <div id="tcpudp-mount"></div>
-      <aside class="notes">
-        TCP has a handshake, so a connection proves someone was really there. UDP has none, so the source
-        can be forged — which is why floods and amplification use UDP. Flip "forge source IP": TCP stalls
-        (SYN-ACK flies to the forged address, never returns); UDP delivers anyway.
-      </aside>
-    </section>
-
-    <!-- S19: ports drill -->
-    <section data-w="ports">
-      <p class="kicker">The ports a SOC analyst actually sees</p>
-      <div id="ports-mount"></div>
-      <aside class="notes">
-        They handwrite the table from your projection first — this is the recall drill after. Two lines out loud:
-        445 from one workstation to fifty others is ransomware until proven otherwise. 3389 exposed to the internet
-        is how a huge share of ransomware begins — not sophisticated, just exposed. End with the 445 pulse animation; just watch it.
-      </aside>
-    </section>
-
-    <!-- S20: DNS build-then-catch -->
-    <section data-w="dns">
-      <p class="kicker">DNS · build the tunnel, then catch it</p>
-      <div id="dns-mount"></div>
-      <aside class="notes">
-        The centrepiece — it rehearses Friday's whole premise. Grouping alone doesn't surface it; entropy alone
-        false-positives on CDN hashes; unique-subdomain-count per parent breaks it open. Then their own name decodes
-        back out of the log. "No individual event is suspicious. The pattern is." Unprovable by assertion, undeniable after this.
-      </aside>
-    </section>
-
-    <!-- S21: HTTP dissector + UA lineup -->
-    <section data-w="http">
-      <p class="kicker">HTTP anatomy · and the odd one out</p>
-      <div id="http-mount"></div>
-      <aside class="notes">
-        User-Agent is a string the client chooses — it can lie completely. But malware authors are lazy and leave
-        a distinctive one. Ending the day on the least glamorous possible detection is the right note to end on.
-      </aside>
-    </section>
-
-    <!-- S22: export -->
-    <section data-w="export">
-      <p class="kicker">Hand this in</p>
-      <div id="export-mount"></div>
-      <aside class="notes">Students export day1-&lt;name&gt;.txt via the browser's own download — no server. Collect the files.</aside>
+    <!-- ================= SYNTHESIS ================= -->
+    <section data-w="synth">
+      <p class="kicker">Putting it together</p>
+      <h2>Which property just broke?</h2>
+      <div id="synth-mount"></div>
+      <aside class="notes">The reflex that outlasts every tool. For each incident, which of C/I/A failed?
+      The last card breaks two — that's defence-in-depth in miniature. Whatever tool they meet all week, this question comes first.</aside>
     </section>
 
   </div>
 </div>
 
-<!-- scripts: reveal, notes, then data, core, widgets (order matters) -->
+<!-- scripts: reveal, notes, then engine + crypto + widgets -->
 <script src="../shared/dist/reveal.js"></script>
 <script src="../shared/plugin/notes/notes.js"></script>
-<script src="data/content.js"></script>
-<script src="data/logs.js"></script>
+<script src="js/sha256.js"></script>
 <script src="js/state.js"></script>
-<script src="js/widgets/block0.js"></script>
-<script src="js/widgets/block1.js"></script>
-<script src="js/widgets/block2.js"></script>
-<script src="js/widgets/block2b.js"></script>
-<script src="js/widgets/block3.js"></script>
-<script src="js/widgets/block4.js"></script>
+<script src="js/widgets/cia.js"></script>
 </body>
 </html>
