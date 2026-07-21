@@ -104,76 +104,160 @@ MAJAL.widget("caesarbreak", function (root) {
 });
 
 /* ======================================================================= *
- *  CONFIDENTIALITY — 3. Symmetric vs asymmetric keys                      *
+ *  Shared animation helpers for the encryption scenes                     *
  * ======================================================================= */
-MAJAL.widget("keys", function (root) {
-  var mount = root.querySelector("#keys-mount");
-  var stage = MAJAL.el("div", { class: "keys-stage" });
-  var status = MAJAL.el("div", { class: "keys-status", text: "Pick a scheme, then step through it." });
-  var tabs = MAJAL.el("div", { class: "keys-tabs" });
-
-  function chip(txt, cls) { return MAJAL.el("span", { class: "kchip " + (cls || ""), html: txt }); }
-
-  function symmetric() {
-    stage.innerHTML = "";
-    var eve = MAJAL.el("input", { type: "checkbox" });
-    var flow = MAJAL.el("div", { class: "keys-flow" }, [
-      MAJAL.el("div", { class: "party" }, [ MAJAL.el("b", { text: "Alice" }), chip("🔑 shared key", "k") ]),
-      MAJAL.el("div", { class: "wire", id: "wire" }, [ chip("✉️ message", "m msg") ]),
-      MAJAL.el("div", { class: "party" }, [ MAJAL.el("b", { text: "Bob" }), chip("🔑 same key", "k") ])
-    ]);
-    var msg = flow.querySelector(".msg");
-    var st = 0;
-    function step() {
-      st++;
-      if (st === 1) { msg.innerHTML = "🔒 locked"; msg.classList.add("locked"); status.textContent = "Alice locks the message with the shared key."; }
-      else if (st === 2) { msg.style.marginLeft = "auto"; status.textContent = eve.checked ? "…and Eve, sitting on the wire, copies both the box AND (somehow) the key." : "The locked box travels across the network."; }
-      else if (st === 3) { msg.innerHTML = "🔓 read!"; msg.classList.remove("locked"); msg.classList.add("open");
-        status.innerHTML = eve.checked
-          ? "<b class='danger'>Broken.</b> Symmetric is fast and simple — but both sides need the <em>same secret key</em>, and getting that key to Bob without Eve seeing it is the whole problem."
-          : "Bob unlocks it with the same key. Fast and simple — <b>if</b> you can share the key safely first."; btn.disabled = true; }
+var GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ#%&@$*?/\\+=<>0123456789".split("");
+function scramble(el, target, dur, done) {
+  cancelAnimationFrame(el._raf);
+  var start = null;
+  function tick(t) {
+    if (start == null) start = t;
+    var p = Math.min(1, (t - start) / dur);
+    var settled = Math.floor(p * target.length);
+    var out = "";
+    for (var i = 0; i < target.length; i++) {
+      if (target[i] === " ") out += " ";
+      else out += i < settled ? target[i] : GLYPHS[(Math.random() * GLYPHS.length) | 0];
     }
-    var btn = MAJAL.el("button", { class: "btn", text: "▶ Step", onclick: step });
-    stage.appendChild(flow);
-    stage.appendChild(MAJAL.el("div", { class: "keys-ctl" }, [
-      btn,
-      MAJAL.el("label", { class: "keys-eve" }, [ eve, MAJAL.el("span", { text: " Eve is listening on the wire" }) ])
-    ]));
-    status.textContent = "Symmetric: one secret key both locks and unlocks. Step through it.";
+    el.textContent = out;
+    if (p < 1) el._raf = requestAnimationFrame(tick);
+    else { el.textContent = target; if (done) done(); }
+  }
+  el._raf = requestAnimationFrame(tick);
+}
+function avatar(color, ring) {
+  return '<svg viewBox="0 0 64 64" class="av">'
+    + (ring ? '<circle cx="32" cy="34" r="30" fill="none" stroke="' + color + '" stroke-width="2" stroke-dasharray="4 4"/>' : '')
+    + '<circle cx="32" cy="23" r="12" fill="' + color + '"/>'
+    + '<path d="M12 58 Q12 39 32 39 Q52 39 52 58 Z" fill="' + color + '"/></svg>';
+}
+function keyIcon(color) {
+  return '<svg viewBox="0 0 42 20" class="ic-key"><circle cx="9" cy="10" r="7" fill="none" stroke="' + color
+    + '" stroke-width="3"/><rect x="15" y="8" width="23" height="4" fill="' + color
+    + '"/><rect x="29" y="8" width="3" height="8" fill="' + color + '"/><rect x="35" y="8" width="3" height="8" fill="' + color + '"/></svg>';
+}
+function lockIcon(closed, color) {
+  var sh = closed
+    ? '<path d="M13 20 V13 a8 8 0 0 1 16 0 V20" fill="none" stroke="' + color + '" stroke-width="3.2"/>'
+    : '<path d="M13 20 V13 a8 8 0 0 1 16 0" fill="none" stroke="' + color + '" stroke-width="3.2"/>';
+  return '<svg viewBox="0 0 42 40" class="ic-lock">' + sh
+    + '<rect x="8" y="20" width="26" height="17" rx="3" fill="' + color + '"/></svg>';
+}
+function Timeline() { this.ids = []; }
+Timeline.prototype.at = function (ms, fn) { this.ids.push(setTimeout(fn, ms)); return this; };
+Timeline.prototype.clear = function () { this.ids.forEach(clearTimeout); this.ids = []; };
+
+var C_TEAL = "#1f8f89", C_PETROL = "#00567d", C_BAD = "#d64545", C_YELL = "#d9b400";
+var ENC_PLAIN = "MEET AT DAWN";
+
+/* ======================================================================= *
+ *  CONFIDENTIALITY — 3a. Symmetric encryption (animated)                  *
+ * ======================================================================= */
+MAJAL.widget("symkey", function (root) {
+  var mount = root.querySelector("#symkey-mount");
+  var stage = MAJAL.el("div", { class: "enc-stage" });
+  stage.innerHTML =
+    '<div class="enc-actor enc-alice">' + avatar(C_TEAL) + '<div class="nm">Alice</div>' +
+      '<div class="enc-badge">' + keyIcon(C_YELL) + ' key&nbsp;K</div></div>' +
+    '<div class="enc-actor enc-bob">' + avatar(C_PETROL) + '<div class="nm">Bob</div>' +
+      '<div class="enc-badge" id="bob-key">' + keyIcon(C_YELL) + ' same&nbsp;K</div></div>' +
+    '<div class="enc-wire"></div><div class="enc-tap"></div>' +
+    '<div class="enc-actor enc-eve">' + avatar(C_BAD, true) + '<div class="nm eve">Eve · on the wire</div>' +
+      '<div class="enc-badge eve-key" id="eve-key" style="visibility:hidden">' + keyIcon(C_BAD) + ' stolen&nbsp;K</div></div>' +
+    '<div class="enc-card" id="card"><div class="lockbadge" id="cardlock"></div><div class="txt" id="txt">' + ENC_PLAIN + '</div></div>' +
+    '<div class="enc-ghost" id="ghost"><div class="txt" id="gtxt"></div></div>' +
+    '<div class="enc-key" id="travelkey">' + keyIcon(C_YELL) + '</div>';
+
+  var card = stage.querySelector("#card"), txt = stage.querySelector("#txt"),
+      lock = stage.querySelector("#cardlock"), ghost = stage.querySelector("#ghost"),
+      gtxt = stage.querySelector("#gtxt"), eveKey = stage.querySelector("#eve-key"),
+      travel = stage.querySelector("#travelkey");
+  var cap = MAJAL.el("div", { class: "enc-cap" });
+  var tl = new Timeline();
+
+  function reset() {
+    tl.clear(); cancelAnimationFrame(txt._raf); cancelAnimationFrame(gtxt._raf);
+    txt.textContent = ENC_PLAIN; lock.innerHTML = ""; card.classList.remove("move");
+    ghost.classList.remove("show", "shake"); gtxt.textContent = "";
+    eveKey.style.visibility = "hidden"; travel.classList.remove("go", "show");
+    play.disabled = false; problem.disabled = true;
+    cap.innerHTML = "Alice and Bob already share one secret key <b>K</b>. Press play.";
+  }
+  function run() {
+    reset(); play.disabled = true;
+    tl.at(200, function () { cap.innerHTML = "Alice writes her message."; });
+    tl.at(1100, function () { cap.innerHTML = "She <b>locks</b> it with the shared key <b>K</b> — the readable text turns to ciphertext."; lock.innerHTML = lockIcon(true, C_YELL); scramble(txt, "8F#K2@QW$MZ", 900); });
+    tl.at(2300, function () { cap.innerHTML = "The locked message travels across the network…"; card.classList.add("move"); });
+    tl.at(3100, function () { ghost.classList.add("show"); scramble(gtxt, "8F#K2@QW$MZ", 700); cap.innerHTML = "…and <b class='danger'>Eve copies it off the wire</b>. But without K it's gibberish to her."; });
+    tl.at(4300, function () { cap.innerHTML = "Bob has the <b>same key K</b>, so he unlocks it back to plain text."; lock.innerHTML = lockIcon(false, C_TEAL); scramble(txt, ENC_PLAIN, 800); });
+    tl.at(5400, function () { cap.innerHTML = "✅ It worked — <b>but only because they already shared K</b>. So how did Alice get K to Bob in the first place?"; problem.disabled = false; });
+  }
+  function showProblem() {
+    problem.disabled = true; cap.innerHTML = "To agree on K, it has to cross the <b>same wire</b>…";
+    travel.classList.add("show");
+    tl.at(60, function () { travel.classList.add("go"); });
+    tl.at(1200, function () { eveKey.style.visibility = "visible"; ghost.classList.add("shake"); scramble(gtxt, ENC_PLAIN, 800);
+      cap.innerHTML = "🔓 <b class='danger'>Eve grabbed K too</b> — now she reads everything. This is the <em>key-distribution problem</em>, and it's why we need a second idea."; });
   }
 
-  function asymmetric() {
-    stage.innerHTML = "";
-    var flow = MAJAL.el("div", { class: "keys-flow" }, [
-      MAJAL.el("div", { class: "party" }, [ MAJAL.el("b", { text: "Alice" }), chip("🔓 Bob's PUBLIC key", "pub") ]),
-      MAJAL.el("div", { class: "wire" }, [ chip("✉️ message", "m msg") ]),
-      MAJAL.el("div", { class: "party" }, [ MAJAL.el("b", { text: "Bob" }), chip("🗝️ PRIVATE key", "prv") ])
-    ]);
-    var msg = flow.querySelector(".msg");
-    var st = 0;
-    function step() {
-      st++;
-      if (st === 1) { msg.innerHTML = "🔒 locked"; msg.classList.add("locked"); status.innerHTML = "Alice locks it with Bob's <b>public</b> key — which anyone may have. The public key can only <em>lock</em>."; }
-      else if (st === 2) { msg.style.marginLeft = "auto"; status.innerHTML = "Eve copies the box AND the public key from the wire… but the public key <b>cannot open</b> what it locked."; msg.classList.add("shake"); setTimeout(function(){msg.classList.remove("shake");}, 500); }
-      else if (st === 3) { msg.innerHTML = "🔓 read!"; msg.classList.remove("locked"); msg.classList.add("open");
-        status.innerHTML = "<b class='good-t'>Solved.</b> Only Bob's <em>private</em> key opens it, and it never left his machine. No shared secret ever crossed the wire — that's the breakthrough public-key crypto made."; btn.disabled = true; }
-    }
-    var btn = MAJAL.el("button", { class: "btn", text: "▶ Step", onclick: step });
-    stage.appendChild(flow);
-    stage.appendChild(MAJAL.el("div", { class: "keys-ctl" }, [ btn ]));
-    status.innerHTML = "Asymmetric: a <b>public</b> key locks, a <b>private</b> key unlocks. They come as a pair.";
-  }
-
-  var tSym = MAJAL.el("button", { class: "seg on", text: "One shared key (symmetric)" });
-  var tAsym = MAJAL.el("button", { class: "seg", text: "Public + private (asymmetric)" });
-  tSym.addEventListener("click", function () { tSym.classList.add("on"); tAsym.classList.remove("on"); symmetric(); });
-  tAsym.addEventListener("click", function () { tAsym.classList.add("on"); tSym.classList.remove("on"); asymmetric(); });
-  tabs.appendChild(tSym); tabs.appendChild(tAsym);
-
-  mount.appendChild(tabs);
+  var play = MAJAL.el("button", { class: "btn", text: "▶ Play", onclick: run });
+  var problem = MAJAL.el("button", { class: "btn ghost", text: "Then show the problem →", onclick: showProblem });
   mount.appendChild(stage);
-  mount.appendChild(status);
-  symmetric();
+  mount.appendChild(MAJAL.el("div", { class: "enc-ctl" }, [ play, problem ]));
+  mount.appendChild(cap);
+  reset();
+});
+
+/* ======================================================================= *
+ *  CONFIDENTIALITY — 3b. Asymmetric (public-key) encryption (animated)    *
+ * ======================================================================= */
+MAJAL.widget("asymkey", function (root) {
+  var mount = root.querySelector("#asymkey-mount");
+  var stage = MAJAL.el("div", { class: "enc-stage" });
+  stage.innerHTML =
+    '<div class="enc-board" id="board"><div class="board-lbl">Bob’s PUBLIC lock — published for anyone</div>' +
+      '<div class="board-lock">' + lockIcon(false, C_TEAL) + '</div></div>' +
+    '<div class="enc-actor enc-alice">' + avatar(C_TEAL) + '<div class="nm">Alice</div>' +
+      '<div class="enc-badge" id="alice-pub" style="visibility:hidden">' + lockIcon(false, C_TEAL) + ' public</div></div>' +
+    '<div class="enc-actor enc-bob">' + avatar(C_PETROL) + '<div class="nm">Bob</div>' +
+      '<div class="enc-badge" id="bob-priv">' + keyIcon(C_PETROL) + ' PRIVATE key</div></div>' +
+    '<div class="enc-wire"></div><div class="enc-tap"></div>' +
+    '<div class="enc-actor enc-eve">' + avatar(C_BAD, true) + '<div class="nm eve">Eve · on the wire</div>' +
+      '<div class="enc-badge eve-key" id="eve-pub" style="visibility:hidden">' + lockIcon(false, C_BAD) + ' has public</div></div>' +
+    '<div class="enc-card" id="card"><div class="lockbadge" id="cardlock"></div><div class="txt" id="txt">' + ENC_PLAIN + '</div></div>' +
+    '<div class="enc-ghost" id="ghost"><div class="txt" id="gtxt"></div></div>';
+
+  var card = stage.querySelector("#card"), txt = stage.querySelector("#txt"),
+      lock = stage.querySelector("#cardlock"), ghost = stage.querySelector("#ghost"),
+      gtxt = stage.querySelector("#gtxt"), alicePub = stage.querySelector("#alice-pub"),
+      evePub = stage.querySelector("#eve-pub"), bobPriv = stage.querySelector("#bob-priv");
+  var cap = MAJAL.el("div", { class: "enc-cap" });
+  var tl = new Timeline();
+
+  function reset() {
+    tl.clear(); cancelAnimationFrame(txt._raf); cancelAnimationFrame(gtxt._raf);
+    txt.textContent = ENC_PLAIN; lock.innerHTML = ""; card.classList.remove("move");
+    ghost.classList.remove("show", "shake"); gtxt.textContent = "";
+    alicePub.style.visibility = "hidden"; evePub.style.visibility = "hidden"; bobPriv.classList.remove("glow");
+    play.disabled = false;
+    cap.innerHTML = "Bob has a <b>key pair</b>: a public lock anyone can use, and a private key only he holds. Press play.";
+  }
+  function run() {
+    reset(); play.disabled = true;
+    tl.at(300, function () { cap.innerHTML = "Bob <b>publishes his public lock</b>. Anyone may take a copy — including Eve."; alicePub.style.visibility = "visible"; evePub.style.visibility = "visible"; });
+    tl.at(1500, function () { cap.innerHTML = "Alice locks her message with <b>Bob's public lock</b> — the text becomes ciphertext."; lock.innerHTML = lockIcon(true, C_TEAL); scramble(txt, "Q@7XK#9$WPM", 900); });
+    tl.at(2900, function () { cap.innerHTML = "The locked message travels…"; card.classList.add("move"); });
+    tl.at(3700, function () { ghost.classList.add("show"); scramble(gtxt, "Q@7XK#9$WPM", 700); cap.innerHTML = "<b class='danger'>Eve copies the ciphertext</b>, and she already has the public lock…"; });
+    tl.at(4900, function () { ghost.classList.add("shake"); cap.innerHTML = "…but a <b>public lock can only LOCK</b>. It cannot open what it closed. Eve is stuck with gibberish."; });
+    tl.at(6100, function () { ghost.classList.remove("shake"); cap.innerHTML = "Only Bob's <b>PRIVATE key</b> opens it — and it <em>never crossed the wire</em>."; bobPriv.classList.add("glow"); lock.innerHTML = lockIcon(false, C_PETROL); scramble(txt, ENC_PLAIN, 800); });
+    tl.at(7300, function () { cap.innerHTML = "✅ <b class='good-t'>Solved.</b> No shared secret ever traveled. This is what happens the instant an HTTPS page loads."; });
+  }
+
+  var play = MAJAL.el("button", { class: "btn", text: "▶ Play", onclick: run });
+  mount.appendChild(stage);
+  mount.appendChild(MAJAL.el("div", { class: "enc-ctl" }, [ play ]));
+  mount.appendChild(cap);
+  reset();
 });
 
 /* ======================================================================= *
