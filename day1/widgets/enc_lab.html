@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding:6px 8px; }
+  .w { padding:12px 14px; }
+  .lead { font-size:13.5px; color:#42606A; margin:0 0 11px; line-height:1.4; }
+  .lead b { color:#00567C; } .lead .m { color:#D64545; font-weight:700; }
+
+  .scene { display:grid; grid-template-columns:1fr 1.1fr 1fr; gap:11px; align-items:stretch; }
+  .col { border-radius:10px; padding:11px 12px; border:1px solid #E0E7E8; background:#fff; }
+  .col.alice { border-top:4px solid #1F8F89; }
+  .col.wire  { border-top:4px solid #D64545; background:#FCF7F7; }
+  .col.bob   { border-top:4px solid #00567C; }
+  .ch { font-size:12px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; margin-bottom:9px; }
+  .col.alice .ch { color:#1F8F89; } .col.wire .ch { color:#D64545; } .col.bob .ch { color:#00567C; }
+
+  .msg { font-family:"JetBrains Mono",monospace; font-size:15px; font-weight:700; color:#12333D;
+    background:#F1F8F7; border:1px solid #DCEAE9; border-radius:8px; padding:9px 11px; margin-bottom:11px; }
+  .msg .amt { color:#B8960A; }
+
+  .toggle { display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%;
+    border:1.5px solid #CDD8DA; background:#fff; border-radius:10px; padding:9px 12px; margin-bottom:8px;
+    cursor:pointer; font-weight:700; font-size:13.5px; color:#42606A; transition:all .15s; text-align:left; }
+  .toggle .st { font-size:11px; font-weight:800; letter-spacing:.03em; padding:2px 9px; border-radius:999px;
+    background:#EEF2F2; color:#8AA1A8; }
+  .toggle.on { border-color:#1F8F89; color:#12333D; background:#F1F8F7; }
+  .toggle.on .st { background:#1F8F89; color:#fff; }
+  .toggle.enc.on { border-color:#00567C; background:#EDF3F6; }
+  .toggle.enc.on .st { background:#00567C; }
+  .hint { font-size:11.5px; color:#7C929A; line-height:1.4; margin-top:3px; }
+
+  .packet { border-radius:9px; border:1.5px solid #04303F; overflow:hidden; margin-bottom:12px;
+    font-family:"JetBrains Mono",monospace; font-size:13px; transition:transform .35s ease, box-shadow .2s; }
+  .packet .plab { font-size:10px; letter-spacing:.04em; text-transform:uppercase; opacity:.75; margin-bottom:2px; }
+  .packet .body { padding:8px 10px; }
+  .packet .body.clear { background:#FEF2F2; color:#B23; }
+  .packet .body.enc { background:#04303F; color:#33D3CB; }
+  .packet .sig { padding:6px 10px; border-top:1px dashed #9DB4BA; background:#EAF6F5; color:#00567C; }
+  .packet .sig.bad { background:#FBE9E9; color:#D64545; }
+  .packet.flash { box-shadow:0 0 0 4px rgba(214,69,69,.22); }
+
+  .atk { font-size:11px; font-weight:800; letter-spacing:.03em; text-transform:uppercase; color:#8A5; color:#7a3b3b; margin:2px 0 6px; }
+  .abtn { display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; text-align:left;
+    border:1.5px solid #EAD3D3; background:#fff; border-radius:9px; padding:8px 11px; margin-bottom:7px;
+    cursor:pointer; font-weight:700; font-size:13px; color:#7a3b3b; transition:all .12s; }
+  .abtn:hover { border-color:#D64545; }
+  .abtn.sel { border-color:#D64545; background:#FBECEC; box-shadow:0 0 0 3px rgba(214,69,69,.13); }
+  .abtn .res { font-size:10px; font-weight:800; letter-spacing:.03em; padding:2px 8px; border-radius:999px; white-space:nowrap; }
+  .abtn .res.win { background:#D64545; color:#fff; }
+  .abtn .res.blk { background:#E6F4E9; color:#1F8F89; }
+
+  .recv { font-family:"JetBrains Mono",monospace; font-size:14px; font-weight:700; border-radius:8px;
+    padding:9px 11px; margin-bottom:10px; }
+  .recv.ok  { background:#F1F8F7; color:#12333D; border:1px solid #DCEAE9; }
+  .recv.junk{ background:#F4F6F6; color:#8AA1A8; border:1px dashed #CDD8DA; }
+  .badge { display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:700; border-radius:8px;
+    padding:7px 10px; margin-bottom:7px; line-height:1.35; }
+  .badge.good { background:#E6F4E9; color:#1a7a4f; } .badge.bad { background:#FBE9E9; color:#c0392b; }
+  .badge.warn { background:#FEF7E6; color:#9a7b12; }
+  .verdict { text-align:center; font-weight:800; font-size:13px; letter-spacing:.03em; border-radius:8px;
+    padding:8px; margin-top:2px; }
+  .verdict.acc { background:#1F8F89; color:#fff; } .verdict.rej { background:#D64545; color:#fff; }
+
+  .outcome { margin-top:12px; border-left:3px solid #00567C; background:#EDF3F6; border-radius:0 8px 8px 0;
+    padding:10px 13px; font-size:13.5px; line-height:1.45; color:#274b54; min-height:44px; }
+  .outcome b { color:#00567C; } .outcome .g { color:#1a7a4f; font-weight:700; } .outcome .r { color:#c0392b; font-weight:700; }
+</style>
+</head><body>
+<div class="w">
+  <p class="lead"><b>You're the attacker</b> sitting on the wire. Alice is sending Bob a payment order.
+    Flip her protections, then try each attack — watch what still gets through.</p>
+
+  <div class="scene">
+    <div class="col alice">
+      <div class="ch">🧕 Alice sends</div>
+      <div class="msg" id="msg">PAY <span class="amt">$100</span> TO CAROL</div>
+      <button class="toggle" id="tSign"><span>✍️ Sign it</span><span class="st">OFF</span></button>
+      <div class="hint">Signs a fingerprint with her <b>private</b> key — proves it's from her &amp; unchanged.</div>
+      <button class="toggle enc" id="tEnc" style="margin-top:9px"><span>🔒 Encrypt it</span><span class="st">OFF</span></button>
+      <div class="hint">Seals it with Bob's <b>public</b> key — only Bob can read it.</div>
+    </div>
+
+    <div class="col wire">
+      <div class="ch">🦹 On the wire — what you see</div>
+      <div class="packet" id="packet">
+        <div class="body" id="pbody"></div>
+        <div class="sig" id="psig"></div>
+      </div>
+      <div class="atk">Your move:</div>
+      <button class="abtn" id="aRead"><span>👀 Read the amount</span><span class="res" id="rRead"></span></button>
+      <button class="abtn" id="aTamp"><span>✏️ Change $100 → $9000</span><span class="res" id="rTamp"></span></button>
+      <button class="abtn" id="aForge"><span>🎭 Impersonate Alice</span><span class="res" id="rForge"></span></button>
+    </div>
+
+    <div class="col bob">
+      <div class="ch">🧔 Bob receives</div>
+      <div class="recv" id="recv"></div>
+      <div class="badge" id="bSecret"></div>
+      <div class="badge" id="bAuth"></div>
+      <div class="verdict" id="verdict"></div>
+    </div>
+  </div>
+
+  <div class="outcome" id="outcome"></div>
+</div>
+
+<script>
+(function () {
+  // toy keys — Alice signs (nA), Bob decrypts (nB); both e=3, distinct moduli
+  var nA = 33, dA = 7, eA = 3, nB = 55, K = 23;
+  var MSG = "PAY $100 TO CAROL", TAMP = "PAY $9000 TO CAROL", FORGE = "PAY $9000 TO MALLORY";
+  var sign = false, enc = false, attack = null;
+
+  function modpow(b, e, m) { var r = 1; b %= m; while (e > 0) { if (e & 1) r = (r * b) % m; e >>= 1; b = (b * b) % m; } return r; }
+  function hash(s) { var t = 0; for (var i = 0; i < s.length; i++) t += s.charCodeAt(i); return t % nA; }
+  function aliceSig(s) { return modpow(hash(s), dA, nA); }
+  function verify(s, sig) { return modpow(sig, eA, nA) === hash(s); }
+  function hex(s) { var o = []; for (var i = 0; i < s.length; i++) o.push(("0" + (s.charCodeAt(i) ^ K).toString(16).toUpperCase()).slice(-2)); return o.join(" "); }
+  function amtSpan(s) { return s.replace(/\$\d+/, function (m) { return '<span class="amt">' + m + '</span>'; }); }
+
+  var $ = function (id) { return document.getElementById(id); };
+  var packet = $("packet");
+
+  // does each attack achieve the attacker's goal under current toggles?
+  function readWins()  { return !enc; }         // secrecy is Encrypt's job
+  function tampWins()  { return !sign; }         // integrity is Sign's job
+  function forgeWins() { return !sign; }         // authenticity is Sign's job
+
+  function delivered() {
+    // what Bob ends up with, given the selected attack
+    if (attack === "tamp")  return { msg: TAMP,  sig: sign ? aliceSig(MSG) : null, corrupt: enc, tampered: true };
+    if (attack === "forge") return { msg: FORGE, sig: sign ? 99 : null, forged: true }; // 99 = a sig Mallory can't make valid
+    return { msg: MSG, sig: sign ? aliceSig(MSG) : null };
+  }
+
+  function render() {
+    // toggles
+    $("tSign").classList.toggle("on", sign);
+    $("tEnc").classList.toggle("on", enc);
+    $("tSign").querySelector(".st").textContent = sign ? "ON" : "OFF";
+    $("tEnc").querySelector(".st").textContent = enc ? "ON" : "OFF";
+
+    // packet on the wire (what the attacker sees) — reflects the delivered content
+    var d = delivered();
+    var pbody = $("pbody"), psig = $("psig");
+    if (enc) { pbody.className = "body enc"; pbody.innerHTML = '<div class="plab">🔒 sealed for Bob · key wrapped</div>' + hex(d.msg); }
+    else     { pbody.className = "body clear"; pbody.innerHTML = '<div class="plab">🔓 plaintext — anyone can read</div>' + d.msg; }
+    if (sign) { var ok = verify(d.msg, d.sig); psig.className = "sig" + (ok ? "" : " bad"); psig.style.display = "";
+      psig.innerHTML = '<div class="plab">✍️ signature</div>sig = ' + d.sig + '   →  check: sig³ mod 33 ' + (ok ? "=" : "≠") + " fingerprint(msg)"; }
+    else { psig.style.display = "none"; }
+
+    // attack live-status badges
+    setRes("rRead", readWins());
+    setRes("rTamp", tampWins());
+    setRes("rForge", forgeWins());
+    $("aRead").classList.toggle("sel", attack === "read");
+    $("aTamp").classList.toggle("sel", attack === "tamp");
+    $("aForge").classList.toggle("sel", attack === "forge");
+
+    // Bob's side
+    var secret = enc, authKnown = sign, authValid = sign && verify(d.msg, d.sig);
+    // secrecy badge
+    $("bSecret").className = "badge " + (secret ? "good" : "bad");
+    $("bSecret").innerHTML = secret ? "🔒 <span>Confidential — only Bob can read it</span>"
+                                    : "🔓 <span>Not secret — readable on the wire</span>";
+    // authenticity badge
+    if (!authKnown) { $("bAuth").className = "badge warn"; $("bAuth").innerHTML = "❔ <span>Unsigned — Bob can't prove who sent it or that it's intact</span>"; }
+    else if (authValid) { $("bAuth").className = "badge good"; $("bAuth").innerHTML = "🛡️ <span>Signature valid — proven from Alice, unchanged</span>"; }
+    else { $("bAuth").className = "badge bad"; $("bAuth").innerHTML = "🚫 <span>Signature INVALID — altered or not really Alice</span>"; }
+
+    // what Bob acts on + verdict
+    var rejected = authKnown && !authValid;
+    var recv = $("recv"), verdict = $("verdict");
+    if (enc && d.corrupt) { recv.className = "recv junk"; recv.innerHTML = "decrypts to ▓▒░ garbage ░▒▓"; }
+    else { recv.className = "recv ok"; recv.innerHTML = amtSpan(d.msg); }
+    if (rejected) { verdict.className = "verdict rej"; verdict.textContent = "🚫 REJECTED"; }
+    else { verdict.className = "verdict acc"; verdict.textContent = "✅ ACCEPTED as genuine"; }
+
+    renderOutcome(d, rejected);
+  }
+
+  function setRes(id, wins) {
+    var e = $(id); e.className = "res " + (wins ? "win" : "blk"); e.textContent = wins ? "GETS THROUGH" : "BLOCKED";
+  }
+
+  function renderOutcome(d, rejected) {
+    var o = $("outcome"), t;
+    if (attack === "read") {
+      t = enc ? "👀 You see only <b>ciphertext</b> — <span class='g'>encryption blocks the read.</span> The amount stays secret."
+              : "👀 You read <span class='r'>“" + MSG + "”</span> straight off the wire — <span class='r'>no encryption, no secrecy.</span>";
+    } else if (attack === "tamp") {
+      if (sign) t = "✏️ You changed the amount, but the <b>fingerprint no longer matches Alice's signature</b> → <span class='g'>Bob rejects it.</span> Signing catches tampering.";
+      else if (enc) t = "✏️ Encrypted, so you can't craft “$9000” — you can only <span class='r'>corrupt</span> it into garbage. Bob has no signature to notice it's wrong. <b>Encryption ≠ integrity.</b>";
+      else t = "✏️ You swapped $100 → <span class='r'>$9000</span> and <span class='r'>Bob pays it</span> — unsigned, so he can't tell it changed.";
+    } else if (attack === "forge") {
+      if (sign) t = "🎭 You wrote your own order, but <b>you can't forge Alice's signature</b> (no private key) → <span class='g'>Bob rejects it.</span>";
+      else t = "🎭 You sent “<span class='r'>" + FORGE + "</span>” as Alice and <span class='r'>Bob accepts it</span>" + (enc ? " — even encrypted, because <b>anyone has Bob's public key.</b> Encryption doesn't prove the sender." : ". Nothing proves the sender.");
+    } else {
+      t = "Alice's message is on the wire. <b>Pick an attack</b> — then toggle Sign / Encrypt and watch what changes. (Encrypt stops reading; Sign stops tampering &amp; impersonation.)";
+    }
+    o.innerHTML = t;
+  }
+
+  function flash() { packet.classList.remove("flash"); void packet.offsetWidth; packet.classList.add("flash"); }
+
+  $("tSign").addEventListener("click", function () { sign = !sign; render(); });
+  $("tEnc").addEventListener("click", function () { enc = !enc; render(); });
+  $("aRead").addEventListener("click", function () { attack = "read"; flash(); render(); });
+  $("aTamp").addEventListener("click", function () { attack = "tamp"; flash(); render(); });
+  $("aForge").addEventListener("click", function () { attack = "forge"; flash(); render(); });
+
+  var q = location.search;
+  if (/s=1/.test(q)) sign = true;
+  if (/e=1/.test(q)) enc = true;
+  var am = q.match(/a=(read|tamp|forge)/); if (am) attack = am[1];
+  render();
+})();
+</script>
+</body></html>
