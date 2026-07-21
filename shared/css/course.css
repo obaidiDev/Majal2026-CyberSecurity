@@ -515,3 +515,50 @@ table.week tr.today td { background: rgba(0,86,125,.08); }
 .synth-note { grid-column: 1; font-size: .6em; color: var(--muted); font-family: var(--mono); }
 .synth-note.ok { color: var(--good); }
 .synth-score { margin-top: 12px; font-family: var(--mono); font-size: .74em; color: var(--petrol); font-weight: 700; }
+
+/* ---- animated encryption scenes (symmetric / asymmetric) ---------------- */
+.enc-stage { position: relative; height: 330px; background: var(--panel-2);
+  border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.enc-actor { position: absolute; width: 150px; text-align: center; z-index: 5; }
+.enc-actor .av { width: 54px; height: 54px; }
+.enc-actor .nm { font-size: .56em; font-weight: 700; color: var(--ink); margin-top: 2px; }
+.enc-actor .nm.eve { color: var(--bad); }
+.enc-alice { left: 14px; top: 18px; }
+.enc-bob { right: 14px; top: 18px; }
+.enc-eve { left: 50%; transform: translateX(-50%); bottom: 10px; }
+.enc-badge { display: inline-flex; align-items: center; justify-content: center; gap: 5px; margin-top: 5px;
+  font-family: var(--mono); font-size: .46em; color: var(--slate); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 999px; padding: 3px 9px; white-space: nowrap; }
+.enc-badge.glow { border-color: var(--petrol); box-shadow: 0 0 0 2px rgba(0,86,125,.25); animation: encglow 1s ease infinite alternate; }
+@keyframes encglow { to { box-shadow: 0 0 0 5px rgba(0,86,125,.10); } }
+.ic-key { width: 26px; height: 12px; }
+.ic-lock { width: 16px; height: 16px; }
+.enc-wire { position: absolute; left: 96px; right: 96px; top: 62px; border-top: 2px dashed var(--muted); }
+.enc-tap { position: absolute; left: 50%; top: 62px; width: 0; height: 170px; border-left: 2px dashed rgba(214,69,69,.5); }
+
+.enc-card { position: absolute; top: 42px; left: 84px; width: 150px; z-index: 6;
+  background: var(--code-bg); border: 1px solid var(--turq); border-radius: 6px; padding: 9px 11px;
+  box-shadow: 0 6px 18px rgba(4,48,63,.28); transition: left 1s ease; }
+.enc-card.move { left: calc(100% - 234px); }
+.enc-card .txt { font-family: var(--mono); font-size: 13px; letter-spacing: .08em; color: var(--turq); word-break: break-all; }
+.lockbadge { position: absolute; top: -13px; right: -11px; }
+.lockbadge svg { width: 24px; height: 24px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.3)); }
+
+.enc-ghost { position: absolute; left: 50%; transform: translateX(-50%); bottom: 92px; width: 140px; z-index: 6;
+  background: rgba(214,69,69,.12); border: 1px dashed var(--bad); border-radius: 6px; padding: 6px 9px;
+  opacity: 0; transition: opacity .3s; }
+.enc-ghost.show { opacity: 1; }
+.enc-ghost.shake { animation: kshake .45s; }
+.enc-ghost .txt { font-family: var(--mono); font-size: 12px; color: #c0554f; word-break: break-all; }
+
+.enc-key { position: absolute; top: 34px; left: 96px; z-index: 7; opacity: 0; transition: left 1s ease, opacity .25s; }
+.enc-key.show { opacity: 1; }
+.enc-key.go { left: calc(100% - 150px); }
+.enc-key svg { width: 32px; height: 15px; }
+
+.enc-board { position: absolute; top: 6px; left: 50%; transform: translateX(-50%); text-align: center; z-index: 4; }
+.enc-board .board-lbl { font-family: var(--mono); font-size: .44em; color: var(--muted); }
+.enc-board .board-lock svg { width: 26px; height: 26px; }
+
+.enc-ctl { display: flex; gap: 12px; margin-top: 12px; }
+.enc-cap { margin-top: 12px; font-size: .76em; color: var(--slate); min-height: 2.8em; line-height: 1.45; }
