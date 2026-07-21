@@ -6,7 +6,7 @@
   <title>Majal — Cyber Day 1: The CIA Triad</title>
   <link rel="stylesheet" href="../shared/dist/reset.css">
   <link rel="stylesheet" href="../shared/dist/reveal.css">
-  <link rel="stylesheet" href="../shared/css/course.css?v=2">
+  <link rel="stylesheet" href="../shared/css/course.css?v=3">
 </head>
 <body>
 <div class="reveal">
@@ -65,18 +65,18 @@
       WHY: 25 keys. Then the leap: real crypto keeps the method public and the keyspace impossible. Kerckhoffs's principle, without the name.</aside>
     </section>
 
-    <section data-w="symkey">
+    <section>
       <p class="kicker">Confidentiality · one shared key</p>
       <h2>Symmetric encryption — fast, but there's a catch</h2>
-      <div id="symkey-mount"></div>
+      <iframe class="wframe" src="widgets/enc_symmetric.html?v=3" title="Symmetric encryption" scrolling="no"></iframe>
       <aside class="notes">Press Play: the message visibly scrambles, travels, Eve copies gibberish, Bob unlocks with the SAME key.
       Then "show the problem": the key itself must travel, and Eve grabs it. That's the key-distribution problem — the setup for the next slide.</aside>
     </section>
 
-    <section data-w="asymkey">
+    <section>
       <p class="kicker">Confidentiality · a public lock + a private key</p>
       <h2>Asymmetric encryption — the idea that fixed it</h2>
-      <div id="asymkey-mount"></div>
+      <iframe class="wframe" src="widgets/enc_asymmetric.html?v=3" title="Asymmetric encryption" scrolling="no"></iframe>
       <aside class="notes">Bob publishes a PUBLIC lock anyone can use; only his PRIVATE key opens it, and it never leaves his machine.
       Eve has the ciphertext and the public lock, but a public lock only locks. No shared secret ever crosses the wire — this is what HTTPS does on connect.</aside>
     </section>
@@ -138,8 +138,8 @@
 <!-- scripts: reveal, notes, then engine + crypto + widgets -->
 <script src="../shared/dist/reveal.js"></script>
 <script src="../shared/plugin/notes/notes.js"></script>
-<script src="js/sha256.js?v=2"></script>
-<script src="js/state.js?v=2"></script>
-<script src="js/widgets/cia.js?v=2"></script>
+<script src="js/sha256.js?v=3"></script>
+<script src="js/state.js?v=3"></script>
+<script src="js/widgets/cia.js?v=3"></script>
 </body>
 </html>
