@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding:6px 8px; }
+  .w { padding:12px 14px; }
+
+  .bar { display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+  .bar .grow { flex:1; }
+  .stepc { font-size:12px; font-weight:800; color:#5C7880; letter-spacing:.03em; }
+  .dots { display:flex; gap:5px; }
+  .dot { width:9px; height:9px; border-radius:50%; background:#D3DEE0; transition:background .2s,transform .2s; }
+  .dot.done { background:#8FCFCA; }
+  .dot.now { background:#1F8F89; transform:scale(1.35); }
+
+  .cap { min-height:40px; font-size:14px; line-height:1.4; color:#12333D;
+    background:#F1F8F7; border-left:3px solid #1F8F89; border-radius:0 8px 8px 0;
+    padding:9px 13px; margin-bottom:11px; }
+  .cap b { color:#00567C; } .cap .k { color:#B8960A; font-weight:700; } .cap .dngr { color:#D64545; font-weight:700; }
+
+  .pubchip { display:inline-flex; align-items:center; gap:7px; font-size:12px; color:#00567C;
+    background:#EAF6F5; border:1px solid #33D3CB; border-radius:999px; padding:4px 11px; margin-bottom:10px;
+    font-weight:700; }
+  .pubchip .mono { font-family:"JetBrains Mono",monospace; }
+
+  .scene { display:grid; grid-template-columns:1fr 0.92fr 1fr; gap:11px; align-items:start; }
+  .col { border-radius:10px; padding:10px 12px; border:1px solid #E0E7E8; background:#fff; min-height:186px; }
+  .col.alice { border-top:4px solid #1F8F89; }
+  .col.bob   { border-top:4px solid #00567C; }
+  .col.mid   { border-top:4px solid #9DB4BA; background:#F8FAFA; }
+  .col .ch { font-size:12px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; margin-bottom:8px; }
+  .col.alice .ch { color:#1F8F89; } .col.bob .ch { color:#00567C; } .col.mid .ch { color:#5C7880; }
+
+  .item { border-radius:8px; padding:7px 9px; margin-bottom:7px; background:#F6F8F8; border:1px solid #E9EFEF;
+    font-size:13px; line-height:1.4; transition:box-shadow .2s, border-color .2s, opacity .25s, transform .25s; }
+  .item .t { font-size:11px; font-weight:700; color:#5C7880; display:block; margin-bottom:2px; }
+  .item .mono { font-family:"JetBrains Mono","SF Mono",Menlo,Consolas,monospace; font-size:13.5px;
+    color:#12333D; word-break:break-all; }
+  .item .mono .k { color:#B8960A; font-weight:700; }
+  .item .mono .res { background:#04303F; color:#33D3CB; padding:1px 6px; border-radius:5px; font-weight:700; }
+  .item .mono .plain { background:#E6F4E9; color:#1F8F89; padding:1px 6px; border-radius:5px; font-weight:700; }
+  .item.hidden { opacity:0; transform:translateY(6px); pointer-events:none; height:0; padding:0; margin:0; border:0; overflow:hidden; }
+  .env.hidden, .wire.hidden, .eve.hidden { display:none; }
+  .item.now { border-color:#1F8F89; box-shadow:0 0 0 3px rgba(31,143,137,.16); background:#fff; }
+
+  .env { border:1.5px solid #04303F; border-radius:9px; overflow:hidden; margin-bottom:8px;
+    font-family:"JetBrains Mono",monospace; font-size:12.5px; }
+  .env .part { padding:6px 9px; }
+  .env .seal { background:#EAF6F5; color:#00567C; border-bottom:1px dashed #9DB4BA; }
+  .env .seal b { color:#B8960A; }
+  .env .body { background:#04303F; color:#33D3CB; }
+  .env .flab { font-size:10px; color:#5C7880; font-weight:700; }
+  .env.now { box-shadow:0 0 0 3px rgba(0,86,124,.16); }
+  .wire { text-align:center; font-size:11px; color:#5C7880; font-weight:700; margin:-2px 0 8px; }
+
+  .eve { border-radius:8px; padding:7px 9px; background:#FBF0F0; border:1px solid #F0D4D4; font-size:12.5px;
+    line-height:1.4; color:#7a3b3b; }
+  .eve.now { box-shadow:0 0 0 3px rgba(214,69,69,.16); }
+  .eve b { color:#D64545; }
+
+  .tls { margin-top:11px; font-size:13px; line-height:1.45; color:#274b54;
+    background:#EDF3F6; border-left:3px solid #00567C; border-radius:0 8px 8px 0; padding:10px 13px; }
+  .tls.hidden { display:none; }
+  .tls b { color:#00567C; }
+</style>
+</head><body>
+<div class="w">
+  <div class="bar">
+    <button class="primary" id="play">▶ Play</button>
+    <button id="back">‹ Back</button>
+    <button id="next">Next ›</button>
+    <button id="reset">↺ New key</button>
+    <span class="grow"></span>
+    <span class="dots" id="dots"></span>
+    <span class="stepc" id="stepc">Step 0 / 7</span>
+  </div>
+
+  <div class="cap" id="cap"></div>
+
+  <div class="pubchip">🔓 Bob's public key, published for anyone: <span class="mono">e = 3 , n = 55</span></div>
+
+  <div class="scene">
+    <div class="col alice">
+      <div class="ch">🧕 Alice</div>
+      <div class="item" id="i-msg"><span class="t">message to send</span><span class="mono">MEET AT DAWN</span></div>
+      <div class="item hidden" id="i-key" data-min="1"><span class="t">① fresh session key (symmetric)</span><span class="mono">K = <span class="k" id="v-key">?</span></span></div>
+      <div class="item hidden" id="i-body" data-min="2"><span class="t">② encrypt body with K — fast, any size</span><span class="mono" id="v-body"></span></div>
+      <div class="item hidden" id="i-wrap" data-min="3"><span class="t">③ wrap K with Bob's public key</span><span class="mono">K³ mod 55 = <span class="res" id="v-wrap"></span></span></div>
+    </div>
+
+    <div class="col mid">
+      <div class="ch">📨 On the wire</div>
+      <div class="env hidden" id="i-env" data-min="4">
+        <div class="part seal"><span class="flab">RSA-sealed key</span><br>wK = <b id="v-env-wrap"></b></div>
+        <div class="part body"><span class="flab" style="color:#7fb9b4">symmetric ciphertext</span><br><span id="v-env-body"></span></div>
+      </div>
+      <div class="wire hidden" id="i-wire" data-min="4">▲ both parts sent together →</div>
+      <div class="eve hidden" id="i-eve" data-min="5">👁 <b>Eve</b> copied the envelope. She has <span class="mono">wK</span> and the ciphertext — but the key is <b>sealed with RSA she can't open</b>. Stuck.</div>
+    </div>
+
+    <div class="col bob">
+      <div class="ch">🧔 Bob</div>
+      <div class="item" id="i-priv"><span class="t">private key — his alone</span><span class="mono">d = 27</span></div>
+      <div class="item hidden" id="i-unwrap" data-min="6"><span class="t">⑥ unwrap the session key</span><span class="mono">wK²⁷ mod 55 = <span class="k" id="v-unwrap"></span></span></div>
+      <div class="item hidden" id="i-dec" data-min="7"><span class="t">⑦ decrypt body with K</span><span class="mono"><span class="plain" id="v-dec"></span></span></div>
+    </div>
+  </div>
+
+  <div class="tls hidden" id="tls">
+    <b>That's a TLS handshake in miniature.</b> When you open an <b>https://</b> site, your browser and the server
+    use public-key crypto <b>once</b> to deliver a session key, then switch to fast symmetric encryption for the
+    whole page. The 🔒 padlock is exactly this envelope — asymmetric to move the key, symmetric to move the data.
+    <span style="color:#5C7880">(Real keys are 256-bit; our K is a small number only because our toy RSA fits numbers under 55.)</span>
+  </div>
+</div>
+
+<script>
+(function () {
+  var MSG = "MEET AT DAWN", E = 3, D = 27, N = 55, K = 0;
+  function modpow(b, e, m) { var r = 1; b %= m; while (e > 0) { if (e & 1) r = (r * b) % m; e >>= 1; b = (b * b) % m; } return r; }
+  function hexBody(k) { var o = []; for (var i = 0; i < MSG.length; i++) o.push(("0" + (MSG.charCodeAt(i) ^ k).toString(16).toUpperCase()).slice(-2)); return o.join(" "); }
+  function shortBody(k) { var s = hexBody(k).split(" "); return s.slice(0, 5).join(" ") + " …"; }
+
+  var CAPS = [
+    "A real connection never encrypts your data with RSA directly — RSA is slow and can only hold a tiny number. Here's the trick it uses instead. Press <b>▶ Play</b> or <b>Next</b>.",
+    "① Alice rolls a <span class='k'>fresh one-time session key K</span> — a normal fast symmetric key.",
+    "② She encrypts the <b>whole message</b> with K. Symmetric is fast and handles any size.",
+    "③ Now she wraps <b>just the small key K</b> with Bob's <b>public</b> key — <span class='k'>K³ mod 55</span>.",
+    "④ The envelope travels: the <b>RSA-sealed key</b> + the <b>symmetric ciphertext</b>, together.",
+    "⑤ <span class='dngr'>Eve copies the envelope</span> — but the key is sealed with RSA she can't open. The body stays locked.",
+    "⑥ Bob unwraps the session key with his <b>private</b> key — <span class='k'>wK²⁷ mod 55</span> gives K back.",
+    "⑦ Bob decrypts the body with K. <b>Delivered.</b> Best of both: asymmetric moved the key, symmetric moved the data."
+  ];
+  var LAST = 7, step = 0, timer = null;
+
+  var els = {
+    key: document.getElementById("i-key"), body: document.getElementById("i-body"),
+    wrap: document.getElementById("i-wrap"), env: document.getElementById("i-env"),
+    wire: document.getElementById("i-wire"), eve: document.getElementById("i-eve"),
+    unwrap: document.getElementById("i-unwrap"), dec: document.getElementById("i-dec")
+  };
+  var cap = document.getElementById("cap"), stepc = document.getElementById("stepc"),
+      dots = document.getElementById("dots"), tls = document.getElementById("tls");
+  var btnPlay = document.getElementById("play"), btnNext = document.getElementById("next"),
+      btnBack = document.getElementById("back"), btnReset = document.getElementById("reset");
+
+  for (var i = 0; i <= LAST; i++) { var d = document.createElement("span"); d.className = "dot"; dots.appendChild(d); }
+  var dotEls = dots.querySelectorAll(".dot");
+
+  function rollKey() { K = 2 + ((Math.random() * 52) | 0); if (K === N) K--; }
+
+  function fill() {
+    var wK = modpow(K, E, N), un = modpow(wK, D, N);
+    document.getElementById("v-key").textContent = K;
+    document.getElementById("v-body").innerHTML = "MEET AT DAWN ⊕ K = " + hexBody(K);
+    document.getElementById("v-wrap").textContent = wK;
+    document.getElementById("v-env-wrap").textContent = wK;
+    document.getElementById("v-env-body").textContent = shortBody(K);
+    document.getElementById("v-unwrap").textContent = un;
+    document.getElementById("v-dec").textContent = "= MEET AT DAWN ✓";
+  }
+
+  function render() {
+    cap.innerHTML = CAPS[step];
+    stepc.textContent = "Step " + step + " / " + LAST;
+    for (var k in els) {
+      var el = els[k], min = +el.getAttribute("data-min");
+      if (step >= min) el.classList.remove("hidden"); else el.classList.add("hidden");
+      if (step === min) el.classList.add("now"); else el.classList.remove("now");
+    }
+    tls.classList.toggle("hidden", step < LAST);
+    for (var i = 0; i <= LAST; i++) {
+      dotEls[i].className = "dot" + (i < step ? " done" : "") + (i === step ? " now" : "");
+    }
+    btnBack.disabled = step === 0;
+    btnNext.disabled = step === LAST;
+  }
+
+  function go(s) { step = Math.max(0, Math.min(LAST, s)); render(); }
+  function stopPlay() { if (timer) clearInterval(timer); timer = null; btnPlay.textContent = step >= LAST ? "▶ Replay" : "▶ Play"; }
+  function play() {
+    if (timer) { stopPlay(); return; }
+    if (step >= LAST) { go(0); }
+    btnPlay.textContent = "⏸ Pause";
+    timer = setInterval(function () { if (step >= LAST) { stopPlay(); } else { go(step + 1); } }, 1700);
+  }
+
+  btnNext.addEventListener("click", function () { stopPlay(); go(step + 1); });
+  btnBack.addEventListener("click", function () { stopPlay(); go(step - 1); });
+  btnReset.addEventListener("click", function () { stopPlay(); rollKey(); fill(); go(0); });
+  btnPlay.addEventListener("click", play);
+
+  rollKey(); fill();
+  var sm = location.search.match(/step=(\d)/); if (sm) step = Math.min(LAST, +sm[1]);
+  render();
+})();
+</script>
+</body></html>
