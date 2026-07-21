@@ -1,16 +1,200 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding:6px 8px; }
+  .w { padding:12px 14px; }
+  .lead { font-size:13.5px; color:#42606A; margin:0 0 10px; line-height:1.4; }
+  .lead b { color:#00567C; }
+  .fields { display:flex; gap:18px; flex-wrap:wrap; margin-bottom:12px; }
+  .field { display:flex; flex-direction:column; gap:4px; }
+  .field label { font-size:11px; font-weight:700; letter-spacing:.04em;
+    text-transform:uppercase; color:#5C7880; }
+  .field input { font-family:"JetBrains Mono","SF Mono",Menlo,Consolas,monospace;
+    font-size:15px; font-weight:600; letter-spacing:.06em; color:#12333D;
+    border:1px solid #CDD8DA; border-radius:8px; padding:8px 10px; background:#fff;
+    width:220px; text-transform:uppercase; }
+  .field input:focus { outline:none; border-color:#1F8F89; box-shadow:0 0 0 3px rgba(31,143,137,.14); }
+  .field.bob input.bad  { border-color:#D64545; box-shadow:0 0 0 3px rgba(214,69,69,.14); }
+  .field.bob input.good { border-color:#1F8F89; }
+
+  .stage { border:1px solid #E0E7E8; border-radius:10px; background:#fff; padding:11px 13px; }
+  .stage + .stage { margin-top:0; }
+  .stitle { font-size:11px; font-weight:800; letter-spacing:.05em; text-transform:uppercase;
+    color:#00567C; margin:0 0 8px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .stitle .who { color:#1F8F89; }
+  .stitle .bobkey { display:flex; align-items:center; gap:6px; margin-left:auto; text-transform:none;
+    letter-spacing:0; font-weight:700; color:#5C7880; font-size:11px; }
+  .stitle .bobkey input { font-family:"JetBrains Mono",monospace; font-size:13px; font-weight:600;
+    letter-spacing:.05em; text-transform:uppercase; width:120px; padding:5px 8px; border-radius:7px;
+    border:1px solid #CDD8DA; }
+  .stitle .bobkey input.bad  { border-color:#D64545; box-shadow:0 0 0 2px rgba(214,69,69,.14); }
+  .stitle .bobkey input.good { border-color:#1F8F89; }
+
+  .gridwrap { overflow-x:auto; }
+  .grid { display:inline-block; min-width:100%; }
+  .row { display:flex; }
+  .row + .row { margin-top:4px; }
+  .cell { flex:0 0 34px; height:30px; display:flex; align-items:center; justify-content:center;
+    font-family:"JetBrains Mono","SF Mono",Menlo,Consolas,monospace; font-size:15px;
+    font-weight:600; border-radius:6px; cursor:pointer; user-select:none; }
+  .cell.tag { flex:0 0 30px; cursor:default; font-size:12px; font-weight:800; color:#5C7880;
+    justify-content:flex-end; padding-right:8px; }
+  .r-p .cell { background:#EAF6F5; color:#12333D; }
+  .r-k .cell { background:#FEF7CC; color:#7A6A00; }
+  .r-c .cell { background:#04303F; color:#33D3CB; }
+  .cell.sel { outline:2px solid #1F8F89; outline-offset:-2px; }
+  .r-d .cell.ok  { background:#E6F4E9; color:#1F8F89; }
+  .r-d .cell.no  { background:#FBE9E9; color:#D64545; }
+
+  .wire { display:flex; align-items:center; gap:10px; margin:9px 0; color:#5C7880; font-size:12px; }
+  .wire .line { flex:1; height:0; border-top:2px dashed #9DB4BA; }
+  .wire .eve { color:#D64545; font-weight:700; white-space:nowrap; }
+
+  .verdict { margin-top:9px; font-size:13.5px; line-height:1.45; }
+  .verdict.good { color:#1F8F89; } .verdict.bad { color:#D64545; }
+  .verdict b { color:inherit; }
+
+  .foot { display:flex; gap:12px; margin-top:11px; align-items:stretch; flex-wrap:wrap; }
+  .peek { flex:1 1 300px; border:1px dashed #CDD8DA; border-radius:9px; background:#F6F8F8;
+    padding:9px 12px; font-size:13px; }
+  .peek .hd { font-weight:700; color:#00567C; margin-bottom:5px; font-size:12px; }
+  .bits { font-family:"JetBrains Mono","SF Mono",Menlo,Consolas,monospace; font-size:13.5px;
+    display:grid; grid-template-columns:auto auto 1fr; gap:1px 12px; align-items:center; }
+  .bits .lab { color:#5C7880; font-weight:700; }
+  .bits .v.p { color:#1F8F89; } .bits .v.k { color:#B8960A; } .bits .v.c { color:#00567C; font-weight:700; }
+  .bits .sep { grid-column:1 / -1; height:1px; background:#E0E7E8; margin:2px 0; }
+
+  .insight { flex:1 1 300px; padding:9px 12px; border-left:3px solid #1F8F89;
+    background:#F1F8F7; border-radius:0 8px 8px 0; font-size:12.5px; line-height:1.45; color:#274b54; }
+  .insight b { color:#00567C; }
+</style>
 </head><body>
 <div class="w">
-  <canvas id="c"></canvas>
-  <div class="ctl">
-    <button class="primary" id="play">▶ Play</button>
-    <button id="prob" disabled>Then show the problem →</button>
-    <button id="reset">↺ Reset</button>
+  <p class="lead">One shared key. It <b>scrambles</b> the message — and the <b>same key unscrambles</b> it.
+    Type below, then click any column to see the actual bits.</p>
+
+  <div class="fields">
+    <div class="field">
+      <label>Alice's message</label>
+      <input id="msg" maxlength="16" value="MEET AT DAWN" spellcheck="false">
+    </div>
+    <div class="field">
+      <label>Shared key</label>
+      <input id="key" maxlength="12" value="FALCON" spellcheck="false">
+    </div>
   </div>
-  <div class="cap"></div>
+
+  <div class="stage">
+    <p class="stitle">Alice locks it &nbsp;·&nbsp; <span class="who">ciphertext = message ⊕ key</span></p>
+    <div class="gridwrap"><div class="grid" id="encgrid"></div></div>
+  </div>
+
+  <div class="wire">
+    <span class="line"></span><span class="eve">👁 Eve sees only the ciphertext — gibberish without the key</span><span class="line"></span>
+  </div>
+
+  <div class="stage">
+    <p class="stitle">Bob unlocks it &nbsp;·&nbsp; <span class="who">ciphertext ⊕ his key</span>
+      <span class="bobkey">Bob's key <input id="bkey" maxlength="12" value="FALCON" spellcheck="false"></span></p>
+    <div class="gridwrap"><div class="grid" id="decgrid"></div></div>
+    <p class="verdict" id="verdict"></p>
+  </div>
+
+  <div class="foot">
+    <div class="peek" id="peek"></div>
+    <div class="insight">
+      XOR is its own inverse: <b>(message ⊕ key) ⊕ key = message</b> — one shared key does both jobs.
+      The catch: change one letter of Bob's key and it's garbage, so both sides must <b>already share the
+      exact key</b>. How do they agree on it safely? → next slide.
+    </div>
+  </div>
 </div>
-<script src="enc_scene.js"></script>
-<script>ENC.mount(document.querySelector(".w"), "sym");</script>
+
+<script>
+(function () {
+  var msgEl = document.getElementById("msg"),
+      keyEl = document.getElementById("key"),
+      bkeyEl = document.getElementById("bkey"),
+      encEl = document.getElementById("encgrid"),
+      decEl = document.getElementById("decgrid"),
+      peekEl = document.getElementById("peek"),
+      verdictEl = document.getElementById("verdict");
+  var sel = 0;
+
+  function hex(n) { return ("0" + n.toString(16).toUpperCase()).slice(-2); }
+  function bin(n) { return ("00000000" + n.toString(2)).slice(-8); }
+  function keyAt(k, i) { return k.length ? k.charCodeAt(i % k.length) : 0; }
+  function show(ch) { return ch === " " ? "␣" : ch; }
+
+  function rowHTML(cls, tag, cells) {
+    var h = '<div class="row ' + cls + '"><span class="cell tag">' + tag + '</span>';
+    for (var i = 0; i < cells.length; i++) {
+      var c = cells[i];
+      h += '<span class="cell' + (c.cls ? " " + c.cls : "") + (i === sel ? " sel" : "") +
+           '" data-i="' + i + '">' + c.t + '</span>';
+    }
+    return h + '</div>';
+  }
+
+  function render() {
+    var msg = msgEl.value.toUpperCase(), key = keyEl.value.toUpperCase() || " ",
+        bkey = bkeyEl.value.toUpperCase() || " ";
+    var n = msg.length;
+    if (sel >= n) sel = Math.max(0, n - 1);
+
+    var pC = [], kC = [], cC = [], bkC = [], dC = [];
+    var allMatch = true;
+    for (var i = 0; i < n; i++) {
+      var p = msg.charCodeAt(i), k = keyAt(key, i), cipher = p ^ k;
+      var bk = keyAt(bkey, i), dec = cipher ^ bk;
+      pC.push({ t: show(msg[i]) });
+      kC.push({ t: show(String.fromCharCode(k)) });
+      cC.push({ t: hex(cipher) });
+      var ok = dec === p;
+      if (!ok) allMatch = false;
+      dC.push({ t: show(String.fromCharCode(dec)), cls: ok ? "ok" : "no" });
+    }
+
+    encEl.innerHTML = rowHTML("r-p", "M", pC) + rowHTML("r-k", "K", kC) + rowHTML("r-c", "C", cC);
+    decEl.innerHTML = rowHTML("r-d", "M", dC);
+
+    var same = bkey === key;
+    bkeyEl.className = same ? "good" : "bad";
+    if (allMatch) verdictEl.innerHTML = '<b>✓ Recovered:</b> "' + msg + '" — Bob\'s key matches Alice\'s, so XOR reverses cleanly.';
+    else verdictEl.innerHTML = '<b>✗ Garbage.</b> Bob\'s key doesn\'t match Alice\'s — even one wrong letter corrupts every column it touches.';
+    verdictEl.className = "verdict " + (allMatch ? "good" : "bad");
+
+    renderPeek(msg, key);
+    bindCells();
+  }
+
+  function renderPeek(msg, key) {
+    if (!msg.length) { peekEl.innerHTML = ""; return; }
+    var p = msg.charCodeAt(sel), k = keyAt(key, sel), c = p ^ k;
+    peekEl.innerHTML =
+      '<div class="hd">🔎 Inside column ' + (sel + 1) + ' — the actual XOR (click a cell to change)</div>' +
+      '<div class="bits">' +
+        '<span class="lab">message</span><span class="v p">' + show(msg[sel]) + '</span><span class="v p">' + bin(p) + '</span>' +
+        '<span class="lab">key ⊕</span><span class="v k">' + show(String.fromCharCode(k)) + '</span><span class="v k">' + bin(k) + '</span>' +
+        '<span class="sep"></span>' +
+        '<span class="lab">cipher =</span><span class="v c">' + hex(c) + '</span><span class="v c">' + bin(c) + '</span>' +
+      '</div>';
+  }
+
+  function bindCells() {
+    var cells = document.querySelectorAll(".cell[data-i]");
+    for (var i = 0; i < cells.length; i++) {
+      cells[i].addEventListener("click", function () {
+        sel = +this.getAttribute("data-i"); render();
+      });
+    }
+  }
+
+  msgEl.addEventListener("input", render);
+  keyEl.addEventListener("input", render);
+  bkeyEl.addEventListener("input", render);
+  render();
+})();
+</script>
 </body></html>
