@@ -90,6 +90,16 @@
       Eve has A and B but would have to solve the discrete log to recover a secret. This is what happens the instant every HTTPS page loads.</aside>
     </section>
 
+    <section>
+      <p class="kicker">Confidentiality · how HTTPS actually does it</p>
+      <h2>The digital envelope — asymmetric to deliver the key, symmetric for the data</h2>
+      <iframe class="wframe" style="height:566px" src="widgets/enc_hybrid.html?v=4" title="Hybrid encryption / digital envelope" scrolling="auto"></iframe>
+      <aside class="notes">The synthesis of the whole block. RSA is too slow and too small to encrypt a message directly,
+      so we never do. Step through it: Alice encrypts the body with a fast one-time symmetric key K, wraps just K with Bob's public key,
+      and sends both. Only Bob's private key unwraps K; Eve holds the sealed key and the ciphertext but can open neither. This IS a TLS
+      handshake — public-key once to move the key, symmetric for the page.</aside>
+    </section>
+
     <!-- ================= INTEGRITY ================= -->
     <section data-w="avalanche">
       <p class="kicker">Integrity · proof that nothing changed</p>
