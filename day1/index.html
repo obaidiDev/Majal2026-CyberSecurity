@@ -81,12 +81,13 @@
       Eve has the ciphertext and the public lock, but a public lock only locks. No shared secret ever crosses the wire — this is what HTTPS does on connect.</aside>
     </section>
 
-    <section data-w="dh">
+    <section>
       <p class="kicker">Confidentiality · agreeing on a secret in the open</p>
-      <h2>Diffie–Hellman, as mixing paint</h2>
-      <div id="dh-mount"></div>
-      <aside class="notes">The magic every student should see once: two people agree on a shared secret while an eavesdropper
-      watches every message — because un-mixing is hard. Move the sliders; the shared swatch always matches on both sides. This is what happens the instant every HTTPS page loads.</aside>
+      <h2>Diffie–Hellman — agree on a secret over an open wire</h2>
+      <iframe class="wframe" style="height:566px" src="widgets/enc_dh.html?v=4" title="Diffie–Hellman key exchange" scrolling="auto"></iframe>
+      <aside class="notes">The magic every student should see once: two people agree on a shared key while an eavesdropper
+      watches every message. Drag either secret — Alice computes Bᵃ, Bob computes Aᵇ, and both land on the SAME number, which never crossed the wire.
+      Eve has A and B but would have to solve the discrete log to recover a secret. This is what happens the instant every HTTPS page loads.</aside>
     </section>
 
     <!-- ================= INTEGRITY ================= -->
