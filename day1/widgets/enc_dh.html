@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding:6px 8px; }
+  .w { padding:12px 14px; }
+  .lead { font-size:13.5px; color:#42606A; margin:0 0 11px; line-height:1.4; }
+  .lead b { color:#00567C; }
+
+  .pub { display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    border:1.5px solid #33D3CB; background:#EAF6F5; border-radius:10px; padding:9px 14px; margin-bottom:11px; }
+  .pub .ph { font-size:11px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:#00567C; }
+  .pub .pv { font-family:"JetBrains Mono","SF Mono",Menlo,Consolas,monospace; font-size:19px;
+    font-weight:700; color:#00567C; }
+  .pub .pn { font-size:12px; color:#3d6570; margin-left:auto; }
+
+  .cols { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .party { border-radius:10px; padding:10px 13px; border:1px solid #E0E7E8; background:#fff; }
+  .party.alice { border-left:4px solid #1F8F89; }
+  .party.bob   { border-left:4px solid #00567C; }
+  .party .ph { font-size:11px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; margin-bottom:7px; }
+  .party.alice .ph { color:#1F8F89; } .party.bob .ph { color:#00567C; }
+  .secret { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .secret label { font-size:11px; font-weight:700; color:#5C7880; white-space:nowrap; }
+  .secret .val { font-family:"JetBrains Mono",monospace; font-weight:800; font-size:16px; width:26px; text-align:center; }
+  .party.alice .secret .val { color:#1F8F89; } .party.bob .secret .val { color:#00567C; }
+  .secret input[type=range] { flex:1; }
+  .party.alice input[type=range] { accent-color:#1F8F89; }
+  .party.bob input[type=range] { accent-color:#00567C; }
+  .calc { font-family:"JetBrains Mono","SF Mono",Menlo,Consolas,monospace; font-size:14px;
+    line-height:1.65; color:#12333D; }
+  .calc .res { padding:1px 7px; border-radius:6px; font-weight:700; }
+  .calc.pubmix .res { background:#04303F; color:#33D3CB; }
+  .calc.share  .res { background:#E6F4E9; color:#1F8F89; }
+  .sent { font-size:11px; font-weight:700; color:#B85C00; margin:2px 0 8px; }
+  .sent.r { text-align:right; }
+  .rule { height:1px; background:#E0E7E8; margin:8px 0; }
+
+  .shared { margin-top:11px; border-radius:10px; padding:10px 14px; text-align:center;
+    background:#E6F4E9; border:1.5px solid #1F8F89; }
+  .shared .big { font-family:"JetBrains Mono",monospace; font-weight:800; font-size:20px; color:#1F8F89; }
+  .shared .lab { font-size:12px; color:#3d6570; }
+  .shared.mismatch { background:#FBE9E9; border-color:#D64545; }
+  .shared.mismatch .big { color:#D64545; }
+
+  .eve { margin-top:11px; border-left:4px solid #D64545; background:#FBF0F0; border-radius:0 10px 10px 0;
+    padding:9px 13px; font-size:13px; line-height:1.5; color:#7a3b3b; }
+  .eve b { color:#D64545; }
+  .eve .hd { font-weight:800; color:#D64545; font-size:11px; letter-spacing:.04em; text-transform:uppercase; margin-bottom:4px; }
+  .eve .mono { font-family:"JetBrains Mono",monospace; color:#12333D; }
+  .eve .why button { font-size:12px; margin-top:6px; }
+  .eve .whybody { display:none; margin-top:6px; font-family:"JetBrains Mono",monospace; font-size:12.5px; color:#5a2f2f; }
+  .eve .whybody.open { display:block; }
+</style>
+</head><body>
+<div class="w">
+  <p class="lead">Alice and Bob agree on a shared key <b>while Eve watches every message</b> — and she still
+    can't compute it. Drag either secret; the two shared results always match.</p>
+
+  <div class="pub">
+    <span class="ph">Public · everyone (incl. Eve)</span>
+    <span class="pv">g = 5 , p = 23</span>
+    <span class="pn">The base "paint" both start from.</span>
+  </div>
+
+  <div class="cols">
+    <div class="party alice">
+      <div class="ph">🧕 Alice</div>
+      <div class="secret"><label>secret a =</label><span class="val" id="av">6</span>
+        <input type="range" id="a" min="1" max="22" value="6"></div>
+      <div class="calc pubmix" id="acalc"></div>
+      <div class="sent">▲ sends A across the wire →</div>
+      <div class="rule"></div>
+      <div class="calc share" id="ashare"></div>
+    </div>
+    <div class="party bob">
+      <div class="ph">🧔 Bob</div>
+      <div class="secret"><label>secret b =</label><span class="val" id="bv">15</span>
+        <input type="range" id="b" min="1" max="22" value="15"></div>
+      <div class="calc pubmix" id="bcalc"></div>
+      <div class="sent r">← sends B across the wire ▲</div>
+      <div class="rule"></div>
+      <div class="calc share" id="bshare"></div>
+    </div>
+  </div>
+
+  <div class="shared" id="shared">
+    <div class="lab">Shared key — computed on both sides, <b>never sent</b></div>
+    <div class="big" id="sharedval">2</div>
+  </div>
+
+  <div class="eve">
+    <div class="hd">👁 Eve, on the wire</div>
+    She saw <span class="mono" id="evehas">g=5, p=23, A=8, B=19</span> — everything. To get the key she must
+    find a secret from a public value: solve <span class="mono" id="evedl">5ˣ mod 23 = 8</span> for x.
+    That's the <b>discrete-log problem</b>: easy to compute one way, brutal to reverse.
+    <div class="why">
+      <button id="whybtn">Why can't she just try every x? ▾</button>
+      <div class="whybody" id="whybody"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var G = 5, P = 23;
+  var aEl = document.getElementById("a"), bEl = document.getElementById("b"),
+      avEl = document.getElementById("av"), bvEl = document.getElementById("bv"),
+      acalc = document.getElementById("acalc"), bcalc = document.getElementById("bcalc"),
+      ashare = document.getElementById("ashare"), bshare = document.getElementById("bshare"),
+      sharedEl = document.getElementById("shared"), sharedVal = document.getElementById("sharedval"),
+      eveHas = document.getElementById("evehas"), eveDl = document.getElementById("evedl");
+
+  function modpow(base, exp, m) { var r = 1; base %= m; while (exp > 0) { if (exp & 1) r = (r * base) % m; exp >>= 1; base = (base * base) % m; } return r; }
+  function res(t) { return '<span class="res">' + t + '</span>'; }
+
+  function render() {
+    var a = +aEl.value, b = +bEl.value;
+    avEl.textContent = a; bvEl.textContent = b;
+
+    var A = modpow(G, a, P), B = modpow(G, b, P);
+    acalc.innerHTML = 'A = g<sup>a</sup> mod p = 5<sup>' + a + '</sup> mod 23 = ' + res(A);
+    bcalc.innerHTML = 'B = g<sup>b</sup> mod p = 5<sup>' + b + '</sup> mod 23 = ' + res(B);
+
+    var sA = modpow(B, a, P), sB = modpow(A, b, P);
+    ashare.innerHTML = 's = B<sup>a</sup> mod p = ' + B + '<sup>' + a + '</sup> mod 23 = ' + res(sA);
+    bshare.innerHTML = 's = A<sup>b</sup> mod p = ' + A + '<sup>' + b + '</sup> mod 23 = ' + res(sB);
+
+    var ok = sA === sB;
+    sharedEl.className = "shared" + (ok ? "" : " mismatch");
+    sharedVal.textContent = ok ? sA : sA + " ≠ " + sB;
+
+    eveHas.textContent = "g=5, p=23, A=" + A + ", B=" + B;
+    eveDl.textContent = "5ˣ mod 23 = " + A;
+    renderWhy(A, a);
+  }
+
+  var whyEl = document.getElementById("whybody");
+  function renderWhy(A, a) {
+    // brute-force the discrete log for this tiny p to show it's *possible* here
+    var tries = [];
+    for (var x = 1; x <= 22; x++) { tries.push("5^" + x + "=" + modpow(G, x, P)); if (modpow(G, x, P) === A) break; }
+    whyEl.innerHTML = "At p=23 she can: try x=1,2,3…<br>" + tries.join(",  ") +
+      "  ← found a=" + a + "<br><br>Only 22 guesses here. With a <b>2048-bit p</b> there are ~10<sup>616</sup> " +
+      "values of x — more than atoms in the universe. No computer finishes. That gap is the whole security.";
+  }
+
+  aEl.addEventListener("input", render);
+  bEl.addEventListener("input", render);
+  document.getElementById("whybtn").addEventListener("click", function () {
+    var open = whyEl.classList.toggle("open");
+    this.textContent = open ? "Hide ▴" : "Why can't she just try every x? ▾";
+  });
+  render();
+})();
+</script>
+</body></html>

@@ -103,65 +103,8 @@ MAJAL.widget("caesarbreak", function (root) {
     "Trying them all is not slow; it is physically impossible." }));
 });
 
-/* ======================================================================= *
- *  CONFIDENTIALITY — 4. Diffie-Hellman as paint mixing                    *
- * ======================================================================= */
-MAJAL.widget("dh", function (root) {
-  var mount = root.querySelector("#dh-mount");
-  var BASE = [232, 205, 40];             // public base "paint" (yellow)
-
-  function hue(deg) { // secret colour from a slider (vivid)
-    var h = deg / 60, x = 1 - Math.abs((h % 2) - 1), r, g, b;
-    if (h < 1) { r = 1; g = x; b = 0; } else if (h < 2) { r = x; g = 1; b = 0; }
-    else if (h < 3) { r = 0; g = 1; b = x; } else if (h < 4) { r = 0; g = x; b = 1; }
-    else if (h < 5) { r = x; g = 0; b = 1; } else { r = 1; g = 0; b = x; }
-    return [Math.round(r * 220 + 20), Math.round(g * 220 + 20), Math.round(b * 220 + 20)];
-  }
-  function mix() { var a = arguments; var r = 0, g = 0, b = 0;
-    for (var i = 0; i < a.length; i++) { r += a[i][0]; g += a[i][1]; b += a[i][2]; }
-    return [r / a.length | 0, g / a.length | 0, b / a.length | 0]; }
-  function css(c) { return "rgb(" + c[0] + "," + c[1] + "," + c[2] + ")"; }
-
-  function swatch(label, sub) {
-    var sw = MAJAL.el("div", { class: "dh-swatch" });
-    var chip = MAJAL.el("div", { class: "dh-chip" });
-    sw.appendChild(chip);
-    sw.appendChild(MAJAL.el("div", { class: "dh-lbl", html: label }));
-    if (sub) sw.appendChild(MAJAL.el("div", { class: "hint", text: sub }));
-    sw._chip = chip; return sw;
-  }
-
-  var aRange = MAJAL.el("input", { type: "range", min: "0", max: "359", value: "20" });
-  var bRange = MAJAL.el("input", { type: "range", min: "0", max: "359", value: "210" });
-
-  var swBase = swatch("Public base<br><span class='hint'>everyone sees this</span>");
-  var swA = swatch("Alice's mix<br><span class='hint'>base + her secret · sent openly</span>");
-  var swB = swatch("Bob's mix<br><span class='hint'>base + his secret · sent openly</span>");
-  var swShared = swatch("SHARED SECRET<br><span class='hint'>both compute the same colour</span>");
-
-  function paint() {
-    var aSec = hue(+aRange.value), bSec = hue(+bRange.value);
-    var aMix = mix(BASE, aSec), bMix = mix(BASE, bSec);
-    var shared = mix(BASE, aSec, bSec);       // symmetric: both paths reach this
-    swBase._chip.style.background = css(BASE);
-    swA._chip.style.background = css(aMix);
-    swB._chip.style.background = css(bMix);
-    swShared._chip.style.background = css(shared);
-  }
-  aRange.addEventListener("input", paint);
-  bRange.addEventListener("input", paint);
-
-  mount.appendChild(MAJAL.el("div", { class: "dh-row" }, [ swBase, swA, swB, swShared ]));
-  mount.appendChild(MAJAL.el("div", { class: "dh-ctl" }, [
-    MAJAL.el("label", { class: "cz-lbl", html: "Alice's secret colour" }), aRange,
-    MAJAL.el("label", { class: "cz-lbl", html: "Bob's secret colour" }), bRange
-  ]));
-  mount.appendChild(MAJAL.el("div", { class: "callout", style: "margin-top:12px;font-size:.72em", html:
-    "Eve saw everything that crossed the wire — the <b>base</b>, <b>Alice's mix</b>, and <b>Bob's mix</b> — yet she cannot reproduce the shared colour, " +
-    "because <em>un-mixing paint is hard</em>. Alice and Bob agreed on a secret <b>without ever sending it</b>. " +
-    "Real Diffie-Hellman replaces paint with modular arithmetic, where the mixing genuinely can't be reversed." }));
-  paint();
-});
+/* Diffie-Hellman moved to an interactive iframe widget (widgets/enc_dh.html):
+   real modular arithmetic instead of the ambiguous paint metaphor. */
 
 /* ======================================================================= *
  *  INTEGRITY — 1. The hash avalanche                                      *
