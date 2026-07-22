@@ -414,10 +414,10 @@ table.week tr.today td { background: rgba(0,86,125,.08); }
   border-radius: 4px; padding: .7em 1em; margin-top: 6px; word-break: break-word; min-height: 1.6em; }
 
 /* ---- breaking Caesar ---------------------------------------------------- */
-.brute-list { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 20px; max-height: 300px; overflow: auto;
-  background: var(--code-bg); border: 1px solid var(--code-line); border-radius: 6px; padding: 10px 14px; }
-.brute-row { display: flex; gap: 12px; align-items: baseline; padding: 3px 6px; border-radius: 3px; cursor: pointer;
-  font-family: var(--mono); font-size: 14px; }
+.brute-list { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 20px; max-height: 300px; overflow: auto;
+  background: var(--code-bg); border: 1px solid var(--code-line); border-radius: 6px; padding: 8px 14px; }
+.brute-row { display: flex; gap: 12px; align-items: baseline; padding: 1px 6px; border-radius: 3px; cursor: pointer;
+  font-family: var(--mono); font-size: 13.5px; }
 .brute-row:hover { background: rgba(255,255,255,.06); }
 .brute-k { color: var(--muted); flex: 0 0 auto; }
 .brute-t { color: var(--code-ink); letter-spacing: .04em; }
