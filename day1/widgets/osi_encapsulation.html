@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding:6px 8px; }
+  .osi { padding:11px 14px; }
+  .lead { font-size:13px; color:#42606A; margin:0 0 9px; line-height:1.38; }
+  .lead b { color:#00567C; }
+
+  .grid { display:grid; grid-template-columns:236px 1fr 236px; gap:14px; align-items:start; }
+
+  .stk { display:flex; flex-direction:column; gap:4px; }
+  .stk .cap-s { font-size:10px; font-weight:800; letter-spacing:.05em; text-transform:uppercase;
+    color:#5C7880; text-align:center; margin-bottom:1px; }
+  .stk .cap-s b { color:#00567C; }
+  .row { display:flex; align-items:center; gap:8px; padding:5px 9px; border-radius:7px;
+    border:1px solid #E0E7E8; background:#fff; border-left:4px solid var(--lc); transition:all 140ms ease; }
+  .row .n { font-family:var(--mono); font-size:12px; font-weight:800; color:var(--lc); width:12px; text-align:center; }
+  .row .nm { font-size:12.5px; font-weight:700; color:#12333D; flex:1; line-height:1.05; }
+  .row .pd { font-family:var(--mono); font-size:10px; color:#8496a0; }
+  .row.act { background:#EAF6F5; border-color:var(--lc); box-shadow:inset 0 0 0 1px var(--lc); }
+  .row.act .nm { color:var(--lc); }
+  .row.done { opacity:.5; }
+
+  .center { display:flex; flex-direction:column; gap:9px; }
+  .pduwrap { border:1px solid #E0E7E8; border-radius:9px; background:#F6F8F8; padding:10px 12px; text-align:center; }
+  .pduwrap .pn { font-size:10px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:#00567C; margin-bottom:7px; }
+  .pdu { display:inline-flex; align-items:stretch; gap:0; min-height:44px; border-radius:6px; overflow:hidden;
+    box-shadow:0 2px 6px rgba(18,51,61,.18); }
+  .seg { display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-weight:800;
+    font-size:12px; color:#fff; padding:0 10px; border-right:1px solid rgba(255,255,255,.35); }
+  .seg:last-child { border-right:0; }
+  .seg.h-tcp { background:#00567C; } .seg.h-ip { background:#2E7DA6; }
+  .seg.h-fr { background:#C0871F; } .seg.h-fr.t { background:#D9A441; font-size:11px; }
+  .seg.data { background:#12333D; padding:0 22px; } .seg.data.enc { background:#3C5B4C; }
+  .pdu.bits { font-family:var(--mono); font-size:14px; font-weight:700; color:#1F8F89; letter-spacing:.12em;
+    background:#04303F; padding:12px 16px; box-shadow:none; }
+
+  .detail { border:1px solid #E0E7E8; border-radius:9px; background:#fff; padding:9px 12px; }
+  .detail .dh { font-size:10px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:#1F8F89; margin-bottom:5px; }
+  .detail .fld { display:flex; justify-content:space-between; gap:12px; font-family:var(--mono); font-size:12px;
+    color:#12333D; padding:2px 0; border-top:1px solid #F0F4F4; }
+  .detail .fld:first-of-type { border-top:0; }
+  .detail .fld span:first-child { color:#8496a0; }
+  .detail .fld b { color:#00567C; text-align:right; }
+
+  .cap { text-align:center; font-size:13px; color:#42606A; margin:9px 0 8px; min-height:20px; line-height:1.38; }
+  .cap b { color:#00567C; }
+
+  .ctlbar { display:flex; align-items:center; justify-content:center; gap:9px; }
+  .ctlbar .prog { font-family:var(--mono); font-size:12px; color:#5C7880; min-width:150px; text-align:center; }
+  .ctlbar .prog b { color:#00567C; }
+  .phase { font-family:var(--mono); font-size:11px; font-weight:700; padding:2px 9px; border-radius:999px; }
+  .phase.send { background:rgba(0,86,125,.12); color:#00567C; }
+  .phase.wire { background:rgba(92,120,128,.15); color:#42606A; }
+  .phase.recv { background:rgba(31,143,137,.14); color:#1F8F89; }
+</style>
+</head><body>
+<div class="osi">
+  <p class="lead">The same message, <b>down 7 layers</b> on the sender and <b>up 7</b> on the receiver. Each layer wraps the value in
+    its own <b>header</b> (encapsulation) — then the far side unwraps them in reverse. Press Play.</p>
+
+  <div class="grid">
+    <div class="stk" id="stkSend"><div class="cap-s">Sender &mdash; <b>encapsulate &darr;</b></div></div>
+    <div class="center">
+      <div class="pduwrap"><div class="pn" id="pduName">Protocol data unit</div><div id="pduBox"></div></div>
+      <div class="detail"><div class="dh" id="detH">Header at this layer</div><div id="detBody"></div></div>
+    </div>
+    <div class="stk" id="stkRecv"><div class="cap-s">Receiver &mdash; <b>decapsulate &uarr;</b></div></div>
+  </div>
+
+  <div class="cap" id="cap"></div>
+
+  <div class="ctlbar">
+    <span class="phase send" id="phase">Encapsulate &darr;</span>
+    <button id="back">&#8249;&nbsp; Back</button>
+    <button class="primary" id="play">&#9654;&nbsp; Play</button>
+    <button id="next">Next &#8250;</button>
+    <button id="reset">&#8635;&nbsp; Reset</button>
+    <span class="prog" id="prog">Step 1 / 15</span>
+  </div>
+</div>
+
+<script>
+(function () {
+  var LAYERS = [
+    { n:7, nm:"Application",  pd:"Data",    lc:"#1F8F89" },
+    { n:6, nm:"Presentation", pd:"Data",    lc:"#33B7B0" },
+    { n:5, nm:"Session",      pd:"Data",    lc:"#7FB2A8" },
+    { n:4, nm:"Transport",    pd:"Segment", lc:"#00567C" },
+    { n:3, nm:"Network",      pd:"Packet",  lc:"#2E7DA6" },
+    { n:2, nm:"Data Link",    pd:"Frame",   lc:"#C0871F" },
+    { n:1, nm:"Physical",     pd:"Bits",    lc:"#5C7880" }
+  ];
+  var DATA = '“HELLO” · GET /index.html';
+  var D = function (lab) { return { c:"data", lab:lab }; };
+  var DE = { c:"data enc", lab:"🔒 DATA" };
+  var TCP={c:"h-tcp",lab:"TCP"}, IP={c:"h-ip",lab:"IP"}, ETH={c:"h-fr",lab:"ETH"}, FCS={c:"h-fr t",lab:"FCS"};
+
+  var STEPS = [
+    // ---- down: sender encapsulates ----
+    { ph:"send", L:7, pn:"Data", dh:"L7 adds — the message",
+      f:[["payload",DATA]], segs:[D("DATA")],
+      cap:"<b>L7 Application</b> — your app produces the data. Nothing wrapped yet." },
+    { ph:"send", L:6, pn:"Data", dh:"L6 adds — encryption",
+      f:[["transform","encrypt (TLS)"],["value","→ ciphertext"]], segs:[DE],
+      cap:"<b>L6 Presentation</b> — encodes and <b>encrypts</b> the value (TLS). It’s now ciphertext." },
+    { ph:"send", L:5, pn:"Data", dh:"L5 adds — session",
+      f:[["session","open / keep-alive"]], segs:[DE],
+      cap:"<b>L5 Session</b> — opens and keeps the conversation between the two apps." },
+    { ph:"send", L:4, pn:"Segment", dh:"L4 adds — TCP header",
+      f:[["src port","50412"],["dst port","443"],["sequence","1 of 5"]], segs:[TCP,DE],
+      cap:"<b>L4 Transport</b> — adds a <b>TCP</b> header (ports + sequence). PDU is now a <b>Segment</b>." },
+    { ph:"send", L:3, pn:"Packet", dh:"L3 adds — IP header",
+      f:[["src IP","10.0.0.5"],["dst IP","93.184.216.34"],["TTL","64"]], segs:[IP,TCP,DE],
+      cap:"<b>L3 Network</b> — adds an <b>IP</b> header (source/dest IP, TTL). PDU is now a <b>Packet</b>." },
+    { ph:"send", L:2, pn:"Frame", dh:"L2 adds — frame header + trailer",
+      f:[["src MAC","a4:5e:…:0b"],["dst MAC","ff:…:c2"],["trailer","FCS checksum"]], segs:[ETH,IP,TCP,DE,FCS],
+      cap:"<b>L2 Data Link</b> — wraps a <b>Frame</b> (MAC addresses) + an <b>FCS</b> trailer to catch errors." },
+    { ph:"send", L:1, pn:"Bits", dh:"L1 adds — physical encoding",
+      f:[["on the wire","10110100 00101101 …"]], bits:"1011 0100 0010 1101 0110 1001 …",
+      cap:"<b>L1 Physical</b> — the whole frame becomes <b>bits</b>: a signal on the wire." },
+    // ---- wire ----
+    { ph:"wire", L:0, pn:"Bits", dh:"Transmission",
+      f:[["medium","copper / fibre / radio"]], bits:"→ 1011 0100 0010 1101 0110 →",
+      cap:"The bits travel across the physical medium to the receiver." },
+    // ---- up: receiver decapsulates ----
+    { ph:"recv", L:1, pn:"Frame", dh:"L1 reads — signal → bits",
+      f:[["recovered","the frame"]], segs:[ETH,IP,TCP,DE,FCS],
+      cap:"<b>L1 Physical</b> — reads the signal back into <b>bits</b>, reforming the Frame." },
+    { ph:"recv", L:2, pn:"Packet", dh:"L2 removes — frame + FCS",
+      f:[["FCS","✓ checksum OK"],["removed","Ethernet header"]], segs:[IP,TCP,DE],
+      cap:"<b>L2 Data Link</b> — verifies FCS, <b>strips the frame</b>. Back to a Packet." },
+    { ph:"recv", L:3, pn:"Segment", dh:"L3 removes — IP header",
+      f:[["check","I am 93.184.216.34"],["removed","IP header"]], segs:[TCP,DE],
+      cap:"<b>L3 Network</b> — confirms it’s the right host, <b>strips IP</b>. Now a Segment." },
+    { ph:"recv", L:4, pn:"Data", dh:"L4 removes — TCP header",
+      f:[["port → app","443"],["removed","TCP header"]], segs:[DE],
+      cap:"<b>L4 Transport</b> — uses the port to find the app, reorders by sequence, <b>strips TCP</b>." },
+    { ph:"recv", L:5, pn:"Data", dh:"L5 — session",
+      f:[["session","matched"]], segs:[DE],
+      cap:"<b>L5 Session</b> — matches this to the open conversation." },
+    { ph:"recv", L:6, pn:"Data", dh:"L6 removes — decrypt",
+      f:[["transform","decrypt (TLS)"],["value","→ plaintext"]], segs:[D("DATA")],
+      cap:"<b>L6 Presentation</b> — <b>decrypts</b> back to plaintext." },
+    { ph:"recv", L:7, pn:"Data", dh:"L7 — delivered",
+      f:[["payload",DATA]], segs:[D("DATA")],
+      cap:"<b>L7 Application</b> — the receiving app reads the original: <b>“HELLO”</b>. Same 7 layers, reversed." }
+  ];
+
+  // build stacks
+  function buildStack(el, side) {
+    LAYERS.forEach(function (L) {
+      var r = document.createElement("div"); r.className = "row"; r.style.setProperty("--lc", L.lc);
+      r.dataset.l = L.n; r.dataset.side = side;
+      r.innerHTML = '<span class="n">'+L.n+'</span><span class="nm">'+L.nm+'</span><span class="pd">'+L.pd+'</span>';
+      el.appendChild(r);
+    });
+  }
+  buildStack(document.getElementById("stkSend"), "send");
+  buildStack(document.getElementById("stkRecv"), "recv");
+
+  var pduName=document.getElementById("pduName"), pduBox=document.getElementById("pduBox"),
+      detH=document.getElementById("detH"), detBody=document.getElementById("detBody"),
+      cap=document.getElementById("cap"), prog=document.getElementById("prog"), phase=document.getElementById("phase");
+  var i = 0, timer = null;
+
+  function renderPDU(s) {
+    if (s.bits) { pduBox.innerHTML = '<div class="pdu bits">'+s.bits+'</div>'; return; }
+    var html = '<div class="pdu">';
+    s.segs.forEach(function (g) { html += '<div class="seg '+g.c+'">'+g.lab+'</div>'; });
+    pduBox.innerHTML = html + '</div>';
+  }
+  function render() {
+    var s = STEPS[i];
+    pduName.textContent = "PDU · " + s.pn;
+    renderPDU(s);
+    detH.textContent = s.dh;
+    detBody.innerHTML = s.f.map(function (kv) {
+      return '<div class="fld"><span>'+kv[0]+'</span><b>'+kv[1]+'</b></div>'; }).join("");
+    cap.innerHTML = s.cap;
+    prog.innerHTML = "Step <b>"+(i+1)+"</b> / 15";
+    phase.className = "phase "+s.ph;
+    phase.innerHTML = s.ph==="send" ? "Encapsulate ↓" : s.ph==="recv" ? "Decapsulate ↑" : "Transmit";
+    // stack highlighting
+    document.querySelectorAll(".row").forEach(function (r) {
+      r.classList.remove("act","done");
+      var ln = +r.dataset.l, side = r.dataset.side;
+      if (s.ph==="send" && side==="send") { if (ln===s.L) r.classList.add("act"); else if (ln>s.L) r.classList.add("done"); }
+      if (s.ph==="recv") {
+        if (side==="send") r.classList.add("done");
+        if (side==="recv") { if (ln===s.L) r.classList.add("act"); else if (ln<s.L) r.classList.add("done"); }
+      }
+      if (s.ph==="wire" && side==="send") r.classList.add("done");
+    });
+    document.getElementById("back").disabled = (i===0);
+    document.getElementById("next").disabled = (i===STEPS.length-1);
+  }
+  function go(n){ i = Math.max(0, Math.min(STEPS.length-1, n)); render(); }
+
+  function play(){
+    var btn=document.getElementById("play");
+    if (timer){ clearInterval(timer); timer=null; btn.innerHTML="▶︎ Play"; return; }
+    if (i===STEPS.length-1) i=-1;
+    btn.innerHTML="‖ Pause";
+    timer=setInterval(function(){
+      if (i>=STEPS.length-1){ clearInterval(timer); timer=null; btn.innerHTML="▶︎ Play"; return; }
+      go(i+1);
+    }, 1100);
+    go(i+1);
+  }
+  function stop(){ if(timer){ clearInterval(timer); timer=null; document.getElementById("play").innerHTML="▶︎ Play"; } }
+
+  document.getElementById("play").addEventListener("click", play);
+  document.getElementById("next").addEventListener("click", function(){ stop(); go(i+1); });
+  document.getElementById("back").addEventListener("click", function(){ stop(); go(i-1); });
+  document.getElementById("reset").addEventListener("click", function(){ stop(); go(0); });
+
+  var st=(location.search.match(/step=(\d+)/)||[])[1];
+  go(st!==undefined ? parseInt(st,10)-1 : 0);
+})();
+</script>
+</body></html>
