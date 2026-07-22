@@ -25,6 +25,22 @@ Before writing a widget, ask: **"What is the moving image here, and what does th
 learner grab to change it?"** If your answer is "a table of numbers updates,"
 push harder — find the picture.
 
+### 0.1 When NOT to build an interactive (read this first)
+
+**A widget must reveal something the audience does not already know.** If the
+point is common sense to a CS-literate learner — "reusing a password is risky,"
+"attackers log in with stolen credentials," "MFA helps" — then a toggle-sandbox
+that merely *restates* it is **worse than a good paragraph**: it dresses a truism
+as discovery, wastes the learner's time, and (in tiles/emoji) misses the visual
+bar anyway. In that case, **delete the widget and write a sharp explanation**
+using the deck's native `.card` / `.callout` styles.
+
+Build an interactive only where **manipulation exposes something you cannot just
+tell someone** — a counter-intuitive result, a mechanism that clicks only when
+you drive it, a relationship you feel by moving a slider (avalanche effect;
+Diffie–Hellman both sides meeting; RSA one-way-ness; why encryption ≠
+authenticity). Litmus test: *if a single sentence conveys it, a sentence should.*
+
 ---
 
 ## 1. Non-negotiable constraints (offline / air-gapped)
