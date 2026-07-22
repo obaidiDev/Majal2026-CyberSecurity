@@ -274,6 +274,22 @@
       tooling: every defence answers "which actor, going after what?"</aside>
     </section>
 
+    <!-- ================= NETWORK · OSI MODEL ================= -->
+    <section>
+      <p class="kicker">Network fundamentals · the 7-layer model</p>
+      <h2>The OSI model — each layer adds its own header</h2>
+      <iframe class="wframe" style="height:470px" src="widgets/osi_encapsulation.html?v=1"
+              title="OSI model — encapsulation, layer by layer" scrolling="auto"></iframe>
+      <aside class="notes">The map for "where does each thing live." Press Play. The SAME message goes DOWN 7 layers on the sender, each
+      layer wrapping the value in its own header (encapsulation), then UP 7 on the receiver, each header stripped in reverse (decapsulation).
+      Watch the PDU grow: L7 the data → L6 encrypts it (TLS) → L5 session → L4 adds a TCP header (ports + sequence) making a SEGMENT → L3 adds an
+      IP header (the addresses from the last slide) making a PACKET → L2 wraps a FRAME (MAC addresses) + an FCS error-check → L1 turns the whole thing
+      into BITS on the wire. The receiver undoes it in the exact reverse order. Two honest caveats to say aloud: (1) OSI is a MODEL — the real internet
+      (TCP/IP) folds layers 5-7 into "the app" and adds the concrete headers at 4-3-2, which is what we show; (2) each header is data ABOUT the data, read
+      only by its peer layer on the other side. Tie it forward: the IP header here is the packet's address label from the previous slide; Day 3's Wireshark
+      just opens these same headers on real traffic.</aside>
+    </section>
+
     <!-- ================= NETWORK · PACKET JOURNEY ================= -->
     <section>
       <p class="kicker">Network fundamentals · how data actually moves</p>
