@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding:6px 8px; }
+  .w { padding:12px 14px; }
+  .lead { font-size:13.5px; color:#42606A; margin:0 0 11px; line-height:1.4; }
+  .lead b { color:#00567C; } .lead .r { color:#D64545; font-weight:700; }
+
+  /* leaked credential */
+  .leak { border:1px solid #F0D4D4; background:#FCF3F3; border-radius:10px; padding:10px 12px; margin-bottom:11px; }
+  .chips { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
+  .chip { font-size:12px; font-weight:700; border:1.5px solid #E4CFCF; background:#fff; color:#8a5a5a;
+    border-radius:999px; padding:5px 11px; cursor:pointer; transition:all .12s; }
+  .chip:hover { border-color:#D64545; }
+  .chip.on { background:#D64545; color:#fff; border-color:#D64545; }
+  .cred { font-family:"JetBrains Mono",monospace; font-size:15px; font-weight:700; color:#B23; }
+  .cred .pw { background:#04303F; color:#FF9E9E; padding:1px 8px; border-radius:5px; }
+  .flav { font-size:12px; color:#7a3b3b; margin-top:5px; line-height:1.4; }
+
+  /* defenses */
+  .def { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+  .toggle { display:flex; align-items:center; gap:9px; flex:1 1 220px;
+    border:1.5px solid #CDD8DA; background:#fff; border-radius:10px; padding:9px 12px;
+    cursor:pointer; font-weight:700; font-size:13.5px; color:#42606A; transition:all .15s; }
+  .toggle .st { margin-left:auto; font-size:11px; font-weight:800; padding:2px 9px; border-radius:999px;
+    background:#EEF2F2; color:#8AA1A8; }
+  .toggle.on { border-color:#1F8F89; color:#12333D; background:#F1F8F7; }
+  .toggle.on .st { background:#1F8F89; color:#fff; }
+  .toggle.mfa.on { border-color:#00567C; background:#EDF3F6; } .toggle.mfa.on .st { background:#00567C; }
+
+  /* accounts */
+  .accounts { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:12px; }
+  .tile { position:relative; border:1.5px solid #E0E7E8; border-radius:11px; background:#fff; padding:11px 8px;
+    text-align:center; transition:transform .18s, box-shadow .2s, border-color .2s, background .2s; }
+  .tile .ico { font-size:26px; line-height:1; }
+  .tile .nm { font-size:12px; font-weight:700; color:#42606A; margin:5px 0 7px; }
+  .tile .lk { font-size:19px; }
+  .tile .stt { font-size:10.5px; font-weight:800; letter-spacing:.02em; margin-top:5px; min-height:14px; }
+  .tile.taken   { border-color:#D64545; background:#FCEDED; }
+  .tile.taken .stt   { color:#D64545; }
+  .tile.blocked { border-color:#00567C; background:#EDF3F6; }
+  .tile.blocked .stt { color:#00567C; }
+  .tile.safe    { border-color:#1F8F89; background:#F1F8F7; }
+  .tile.safe .stt    { color:#1a7a4f; }
+  .tile.try { transform:scale(1.06); box-shadow:0 6px 16px rgba(4,48,63,.14); border-color:#D64545; }
+  .tile .key { position:absolute; top:-8px; right:-6px; font-size:17px; opacity:0; transform:translateY(6px) rotate(-20deg);
+    transition:opacity .15s, transform .15s; }
+  .tile.try .key { opacity:1; transform:translateY(0) rotate(0); }
+  @keyframes pop { 0%{transform:scale(.6);opacity:0} 60%{transform:scale(1.25)} 100%{transform:scale(1);opacity:1} }
+  .tile.done .lk { animation:pop .3s ease; display:inline-block; }
+
+  .run { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:11px; }
+  .damage { font-weight:800; font-size:14px; }
+  .damage.bad { color:#D64545; } .damage.good { color:#1a7a4f; }
+
+  .insight { border-left:3px solid #00567C; background:#EDF3F6; border-radius:0 8px 8px 0;
+    padding:10px 13px; font-size:13.5px; line-height:1.45; color:#274b54; min-height:42px; }
+  .insight b { color:#00567C; } .insight .r { color:#c0392b; font-weight:700; } .insight .g { color:#1a7a4f; font-weight:700; }
+</style>
+</head><body>
+<div class="w">
+  <p class="lead"><b>You're the attacker.</b> You've got <b>Sara's</b> password from <b>one</b> flimsy site.
+    See how far it gets you across her other accounts — and what stops you.</p>
+
+  <div class="leak">
+    <div class="chips">
+      <button class="chip on" data-src="breach">💧 Leaked in a breach</button>
+      <button class="chip" data-src="phish">🎣 Phished</button>
+      <button class="chip" data-src="weak">🔡 Weak — guessed</button>
+    </div>
+    <div class="cred">sara@mail.com&nbsp; · &nbsp;<span class="pw">summer2024</span></div>
+    <div class="flav" id="flav"></div>
+  </div>
+
+  <div class="def">
+    <button class="toggle" id="tUniq"><span>🔑 Sara uses a unique password per site</span><span class="st">OFF</span></button>
+    <button class="toggle mfa" id="tMfa"><span>📱 Sara turned on MFA</span><span class="st">OFF</span></button>
+  </div>
+
+  <div class="accounts" id="accounts"></div>
+
+  <div class="run">
+    <button class="primary" id="attack">🎯 Reuse it on her accounts</button>
+    <span class="damage" id="damage"></span>
+  </div>
+
+  <div class="insight" id="insight"></div>
+</div>
+
+<script>
+(function () {
+  var SRC = {
+    breach: "FlimsyForum.com lost 5&nbsp;million passwords. Sara reused hers — it's in the public dump, free to download.",
+    phish:  "Sara clicked a fake “verify your account” email and typed her password straight into the attacker's page.",
+    weak:   "“summer2024” sits in every cracking wordlist. Automated guessing found it in seconds."
+  };
+  var ACCTS = [
+    { ico: "📧", nm: "Email" }, { ico: "🏦", nm: "Bank" },
+    { ico: "☁️", nm: "Cloud Drive" }, { ico: "💬", nm: "Social" }
+  ];
+  var src = "breach", uniq = false, mfa = false, timers = [];
+
+  var accEl = document.getElementById("accounts"), flavEl = document.getElementById("flav"),
+      dmgEl = document.getElementById("damage"), insEl = document.getElementById("insight");
+  var tiles = ACCTS.map(function (a) {
+    var t = document.createElement("div"); t.className = "tile";
+    t.innerHTML = '<div class="ico">' + a.ico + '</div><div class="nm">' + a.nm +
+      '</div><div class="lk">🔒</div><div class="stt"></div><span class="key">🔑</span>';
+    accEl.appendChild(t); return t;
+  });
+
+  function outcome() { return uniq ? "safe" : (mfa ? "blocked" : "taken"); }
+  function clearTimers() { timers.forEach(clearTimeout); timers = []; }
+
+  function setTile(t, state) {
+    t.className = "tile try";
+    var lk = t.querySelector(".lk"), stt = t.querySelector(".stt");
+    setTimeout(function () {
+      t.className = "tile done " + state;
+      if (state === "taken")   { lk.textContent = "🔓"; stt.textContent = "TAKEN OVER"; }
+      if (state === "blocked") { lk.textContent = "🛡️"; stt.textContent = "MFA — BLOCKED"; }
+      if (state === "safe")    { lk.textContent = "🔒"; stt.textContent = "PASSWORD ≠"; }
+    }, 200);
+  }
+
+  function runAttack() {
+    clearTimers();
+    var st = outcome();
+    document.getElementById("attack").disabled = true;
+    tiles.forEach(function (t, i) {
+      timers.push(setTimeout(function () { setTile(t, st); }, i * 240));
+    });
+    timers.push(setTimeout(function () { finish(st); }, tiles.length * 240 + 260));
+  }
+
+  function finish(st) {
+    document.getElementById("attack").disabled = false;
+    var taken = st === "taken" ? tiles.length : 0;
+    if (taken) { dmgEl.className = "damage bad"; dmgEl.innerHTML = "🔓 " + taken + " of " + tiles.length + " accounts taken over"; }
+    else       { dmgEl.className = "damage good"; dmgEl.innerHTML = "🛡️ 0 of " + tiles.length + " — you're locked out"; }
+
+    if (!uniq && !mfa)
+      insEl.innerHTML = "One leaked password unlocked <span class='r'>every reused account</span>. No exploit, no alarm — just a valid login. This is <b>credential stuffing</b>, the most common way in.";
+    else if (uniq && !mfa)
+      insEl.innerHTML = "<span class='g'>Unique passwords contained the leak</span> — only the flimsy site fell, nothing else matched. A <b>password manager</b> makes this effortless.";
+    else if (!uniq && mfa)
+      insEl.innerHTML = "The password was <b>right</b>, but <span class='g'>MFA demanded a second factor</span> you don't have. This is why MFA blocks the #1 attack even when your password leaks.";
+    else
+      insEl.innerHTML = "<span class='g'>Both defenses on</span> — wrong password everywhere, and MFA behind it. The leak goes nowhere.";
+  }
+
+  function render() {
+    flavEl.innerHTML = SRC[src];
+    document.querySelectorAll(".chip").forEach(function (c) { c.classList.toggle("on", c.getAttribute("data-src") === src); });
+    document.getElementById("tUniq").classList.toggle("on", uniq);
+    document.getElementById("tMfa").classList.toggle("on", mfa);
+    document.getElementById("tUniq").querySelector(".st").textContent = uniq ? "ON" : "OFF";
+    document.getElementById("tMfa").querySelector(".st").textContent = mfa ? "ON" : "OFF";
+    runAttack();
+  }
+
+  document.querySelectorAll(".chip").forEach(function (c) {
+    c.addEventListener("click", function () { src = c.getAttribute("data-src"); render(); });
+  });
+  document.getElementById("tUniq").addEventListener("click", function () { uniq = !uniq; render(); });
+  document.getElementById("tMfa").addEventListener("click", function () { mfa = !mfa; render(); });
+  document.getElementById("attack").addEventListener("click", runAttack);
+
+  render();
+})();
+</script>
+</body></html>
