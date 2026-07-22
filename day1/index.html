@@ -156,44 +156,38 @@
     <!-- ============ THEY LOG IN, THEY DON'T HACK ============ -->
     <section>
       <p class="kicker">Reality check · how break-ins actually begin</p>
-      <h2>Most attackers don't break in — they <em>log in</em></h2>
-      <p class="sub" style="max-width:36em">Finding and exploiting a bug in the code is rare, expensive, and dies the moment it's patched.
-      Signing in with a valid password is cheap, quiet, and reliable — so that is what attackers overwhelmingly do.
-      Nothing gets "hacked": they simply authenticate as you. The only question is where the password came from.</p>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:20px 0 18px">
-        <div class="card"><div style="font-size:1.7em;line-height:1">🎣</div>
-          <p><strong>Phishing</strong></p>
-          <p class="sub">A fake login page in an email or text — you type your password straight into the attacker's hands.</p></div>
-        <div class="card"><div style="font-size:1.7em;line-height:1">💧</div>
-          <p><strong>Breach dumps</strong></p>
-          <p class="sub">Billions of real passwords leaked from other hacked sites, packaged and sold — often given away free.</p></div>
-        <div class="card"><div style="font-size:1.7em;line-height:1">🔡</div>
-          <p><strong>Weak &amp; guessed</strong></p>
-          <p class="sub">Common choices like "summer2024" fall to automated guessing in seconds, long before anyone notices.</p></div>
+      <h2>They don't break in — they <em>log in</em></h2>
+      <p class="sub">Exploiting code is rare and gets patched. A valid password is cheap and quiet. Where it comes from:</p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:22px 0">
+        <div class="card"><div style="font-size:2em;line-height:1">🎣</div>
+          <p style="margin-bottom:0"><strong>Phishing</strong></p>
+          <p class="sub">A fake login page.</p></div>
+        <div class="card"><div style="font-size:2em;line-height:1">💧</div>
+          <p style="margin-bottom:0"><strong>Breach dumps</strong></p>
+          <p class="sub">Billions leaked, free.</p></div>
+        <div class="card"><div style="font-size:2em;line-height:1">🔡</div>
+          <p style="margin-bottom:0"><strong>Weak &amp; guessed</strong></p>
+          <p class="sub">Cracked in seconds.</p></div>
       </div>
-      <div class="callout hot"><strong>Reuse is the multiplier.</strong> One password used on many sites means a single leak opens
-      them all — and attackers automate it, replaying leaked passwords across thousands of sites at once. It has a name,
-      <em>credential stuffing</em>, and it is the most common attack on the internet.</div>
-      <aside class="notes">Bust the movie myth for a CS audience in one line: intrusions are logins, not exploits, because logging in is
-      cheaper and quieter. The three cards are just WHERE the password comes from — phishing, breach dumps, weak-guessing. The multiplier is reuse.
-      Keep it fast; the payoff is the next slide's fix.</aside>
+      <div class="callout hot"><strong>Reuse is the multiplier</strong> — one leak opens every account. That's <em>credential stuffing</em>.</div>
+      <aside class="notes">Movie myth, busted in a line: intrusions are logins, not exploits — cheaper and quieter. The three cards are just
+      WHERE the password comes from: phishing, breach dumps, weak-guessing. The engine that turns one leak into many is password reuse — credential
+      stuffing, replayed across thousands of sites automatically. It's the most common attack on the internet. Keep it fast; the fix is next.</aside>
     </section>
 
     <section>
       <p class="kicker">Reality check · the defence that costs nothing</p>
-      <h2>You can't stop a leak — but you can make it <em>worthless</em></h2>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:18px 0">
-        <div class="card"><p style="margin-top:0"><strong>🔑 A unique password per site</strong></p>
-          <p class="sub">A different password everywhere means a leak from one site can't open any other — it <em>contains the blast radius</em>.
-          A <strong>password manager</strong> generates and remembers them, so this costs you no effort and no memory.</p></div>
-        <div class="card"><p style="margin-top:0"><strong>📱 Multi-factor authentication (MFA)</strong></p>
-          <p class="sub">A second factor — a tap on your phone or a one-time code — blocks the login <em>even when the password is correct</em>.
-          It is the single highest-value control you can switch on.</p></div>
+      <h2>Make the leak <em>worthless</em></h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:22px 0">
+        <div class="card"><p style="margin-top:0;margin-bottom:0"><strong>🔑 Unique password per site</strong></p>
+          <p class="sub">A leak can't spread. Use a manager.</p></div>
+        <div class="card"><p style="margin-top:0;margin-bottom:0"><strong>📱 Turn on MFA</strong></p>
+          <p class="sub">Blocks the login even with the right password.</p></div>
       </div>
-      <div class="callout"><strong>The takeaway for the week:</strong> most "hacks" are logins. Unique passwords contain the damage;
-      MFA stops the login outright. Together they neutralise the attack behind the majority of breaches — for free.</div>
-      <aside class="notes">The fix, delivered plainly. Unique passwords (via a manager) limit spread; MFA defeats the login even with the right
-      password, which is why it's the highest-leverage habit. Frame it as the practical action every student should take today.</aside>
+      <div class="callout"><strong>You can't stop leaks — you can make them worthless.</strong></div>
+      <aside class="notes">The fix, plainly. Unique passwords (via a manager) contain the blast radius so one leak can't spread; MFA defeats the
+      login even when the password is correct — the highest-leverage habit there is. Together they neutralise the attack behind most breaches, for free.
+      Frame it as the action every student should take today.</aside>
     </section>
 
   </div>
