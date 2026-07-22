@@ -155,21 +155,45 @@
 
     <!-- ============ THEY LOG IN, THEY DON'T HACK ============ -->
     <section>
-      <p class="kicker">They log in, they don't hack · the reality</p>
-      <h2>The easiest way in isn't a bug — it's a login</h2>
-      <iframe class="wframe" style="height:540px" src="widgets/login_paths.html?v=1" title="Break in vs log in" scrolling="auto"></iframe>
-      <aside class="notes">Bust the movie myth. Send both attackers: the exploit path needs a rare, expensive 0-day and dies when patched;
-      the login path just walks in with a phished/leaked/guessed password. Toggle "harden the code" — the exploit path dies, the door is untouched.
-      Land it: defenders obsess over the walls; attackers use the door. Sets up the credential-reuse demo next.</aside>
+      <p class="kicker">Reality check · how break-ins actually begin</p>
+      <h2>Most attackers don't break in — they <em>log in</em></h2>
+      <p class="sub" style="max-width:36em">Finding and exploiting a bug in the code is rare, expensive, and dies the moment it's patched.
+      Signing in with a valid password is cheap, quiet, and reliable — so that is what attackers overwhelmingly do.
+      Nothing gets "hacked": they simply authenticate as you. The only question is where the password came from.</p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:20px 0 18px">
+        <div class="card"><div style="font-size:1.7em;line-height:1">🎣</div>
+          <p><strong>Phishing</strong></p>
+          <p class="sub">A fake login page in an email or text — you type your password straight into the attacker's hands.</p></div>
+        <div class="card"><div style="font-size:1.7em;line-height:1">💧</div>
+          <p><strong>Breach dumps</strong></p>
+          <p class="sub">Billions of real passwords leaked from other hacked sites, packaged and sold — often given away free.</p></div>
+        <div class="card"><div style="font-size:1.7em;line-height:1">🔡</div>
+          <p><strong>Weak &amp; guessed</strong></p>
+          <p class="sub">Common choices like "summer2024" fall to automated guessing in seconds, long before anyone notices.</p></div>
+      </div>
+      <div class="callout hot"><strong>Reuse is the multiplier.</strong> One password used on many sites means a single leak opens
+      them all — and attackers automate it, replaying leaked passwords across thousands of sites at once. It has a name,
+      <em>credential stuffing</em>, and it is the most common attack on the internet.</div>
+      <aside class="notes">Bust the movie myth for a CS audience in one line: intrusions are logins, not exploits, because logging in is
+      cheaper and quieter. The three cards are just WHERE the password comes from — phishing, breach dumps, weak-guessing. The multiplier is reuse.
+      Keep it fast; the payoff is the next slide's fix.</aside>
     </section>
 
     <section>
-      <p class="kicker">They log in, they don't hack · one password, many doors</p>
-      <h2>How far does one leaked password get — and what stops it?</h2>
-      <iframe class="wframe" style="height:566px" src="widgets/cred_stuffing.html?v=1" title="Credential stuffing sandbox" scrolling="auto"></iframe>
-      <aside class="notes">Play the attacker. However the password was obtained (breach / phishing / weak-guess), reuse turns one leak into every account —
-      that's credential stuffing. Then flip the two defences: unique passwords contain the blast radius; MFA blocks the login even when the password is
-      correct. Land the takeaway: a password manager + MFA neutralise the most common attack on earth.</aside>
+      <p class="kicker">Reality check · the defence that costs nothing</p>
+      <h2>You can't stop a leak — but you can make it <em>worthless</em></h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:18px 0">
+        <div class="card"><p style="margin-top:0"><strong>🔑 A unique password per site</strong></p>
+          <p class="sub">A different password everywhere means a leak from one site can't open any other — it <em>contains the blast radius</em>.
+          A <strong>password manager</strong> generates and remembers them, so this costs you no effort and no memory.</p></div>
+        <div class="card"><p style="margin-top:0"><strong>📱 Multi-factor authentication (MFA)</strong></p>
+          <p class="sub">A second factor — a tap on your phone or a one-time code — blocks the login <em>even when the password is correct</em>.
+          It is the single highest-value control you can switch on.</p></div>
+      </div>
+      <div class="callout"><strong>The takeaway for the week:</strong> most "hacks" are logins. Unique passwords contain the damage;
+      MFA stops the login outright. Together they neutralise the attack behind the majority of breaches — for free.</div>
+      <aside class="notes">The fix, delivered plainly. Unique passwords (via a manager) limit spread; MFA defeats the login even with the right
+      password, which is why it's the highest-leverage habit. Frame it as the practical action every student should take today.</aside>
     </section>
 
   </div>
