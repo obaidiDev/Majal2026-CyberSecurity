@@ -305,6 +305,46 @@
       today they just need this picture: addressed packets, independent paths, reassembly by sequence.</aside>
     </section>
 
+    <!-- ================= RECAP ================= -->
+    <section>
+      <p class="kicker">Day 1 · recap</p>
+      <h2>What you built today</h2>
+      <div class="triad">
+        <div class="card triad-c">
+          <span class="pill c">Confidentiality</span>
+          <p class="triad-q">Only the right people can <strong>read</strong> it.</p>
+          <p class="sub">Caesar → XOR → tiny-RSA → Diffie–Hellman → the digital envelope. Keep the <em>method public</em>, the <em>keyspace impossible</em>.</p>
+        </div>
+        <div class="card triad-i">
+          <span class="pill i">Integrity</span>
+          <p class="triad-q">The data is <strong>exactly</strong> what it should be.</p>
+          <p class="sub">SHA-256 fingerprints, checksums, salted passwords, signatures. A hash proves <em>nothing changed</em> — and encryption ≠ authenticity.</p>
+        </div>
+        <div class="card triad-a">
+          <span class="pill a">Availability</span>
+          <p class="triad-q">Authorised users can <strong>reach</strong> it.</p>
+          <p class="sub">You watched a DDoS drop real users — and the defences that bring them back. A security property, not “IT’s problem”.</p>
+        </div>
+      </div>
+      <div class="callout"><strong>Beyond the triad:</strong> attackers <em>log in</em>, they don’t hack — so make the leak worthless. Risk = <em>Likelihood × Impact</em>, and you attack the weakness, not the strength. <em>Who’s coming for you</em> decides how you defend. And data moves as addressed packets, wrapped layer by layer.</div>
+      <aside class="notes">Bookend to the opener — the same three cards, now full of what they built. Walk the spine C · I · A quickly, then the four cross-cutting
+      reflexes in the callout (logins over exploits; risk = likelihood × impact; match the control to the actor; packets & layers). The one sentence to leave
+      them with: every tool this week produces or breaks one of C, I, A — that question comes first, always.</aside>
+    </section>
+
+    <!-- ================= THANK YOU ================= -->
+    <section>
+      <p class="kicker">Day 1 · done</p>
+      <h1>Thank you.</h1>
+      <p class="sub" style="max-width:24em;margin-top:1.1em">You arrived not knowing the words. You leave with the reflex: look at any system
+      and ask the question that outlasts every tool — <em>Confidentiality, Integrity, Availability — which one?</em> Tomorrow, we put it to work.</p>
+      <div style="margin-top:1.5em;display:flex;gap:10px">
+        <span class="pill c">Confidentiality</span><span class="pill i">Integrity</span><span class="pill a">Availability</span>
+      </div>
+      <aside class="notes">Close warm and short. They came in without the vocabulary; they leave with the instinct. Thank them, point forward to Day 2,
+      and open the floor for questions.</aside>
+    </section>
+
   </div>
 </div>
 
