@@ -274,6 +274,21 @@
       tooling: every defence answers "which actor, going after what?"</aside>
     </section>
 
+    <!-- ================= NETWORK · PACKET JOURNEY ================= -->
+    <section>
+      <p class="kicker">Network fundamentals · how data actually moves</p>
+      <h2>A message travels as packets, not one stream</h2>
+      <iframe class="wframe" style="height:566px" src="widgets/packet_journey.html?v=1"
+              title="Packet journey — split, route, reassemble" scrolling="auto"></iframe>
+      <aside class="notes">The mental model for the whole week. Press Send: "HELLO" is SPLIT into 5 packets, each carrying its own header
+      (from-IP, to-IP, sequence number, TTL). Packets HOP router-to-router — laptop → home router → ISP → a backbone router → server — and
+      DIFFERENT packets take DIFFERENT paths (top vs bottom). They ARRIVE OUT OF ORDER (watch the reassembly strip: 2, 4, 3, 5, 1) and the server
+      REORDERS them by sequence number to recover "HELLO". Point at the inspector: TTL drops by one each hop — that's the "hop limit" that stops packets
+      looping forever. Then hit "Cut the top link" and Send again: every packet REROUTES through the bottom path — the network routes around damage,
+      which is literally why it was built. Nothing here needs the destination to be reachable by a single wire. Day 3 opens real packets in Wireshark;
+      today they just need this picture: addressed packets, independent paths, reassembly by sequence.</aside>
+    </section>
+
   </div>
 </div>
 
