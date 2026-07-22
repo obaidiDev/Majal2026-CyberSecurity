@@ -97,7 +97,7 @@ MAJAL.widget("caesarbreak", function (root) {
   var verdict = MAJAL.el("div", { class: "cz-verdict", html:
     "Click the line that reads as English. &nbsp;<span class='hint'>The whole keyspace fits on one screen — that's the problem.</span>" });
   mount.appendChild(verdict);
-  mount.appendChild(MAJAL.el("div", { class: "callout hot", style: "margin-top:14px;font-size:.72em", html:
+  mount.appendChild(MAJAL.el("div", { class: "callout hot", style: "margin-top:9px;font-size:.66em", html:
     "Real encryption keeps the <em>method</em> public and makes the <em>keyspace</em> astronomical. " +
     "AES-256 has <b>2<sup>256</sup></b> keys — more than there are atoms in the observable universe. " +
     "Trying them all is not slow; it is physically impossible." }));
