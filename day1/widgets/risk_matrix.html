@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding:6px 8px; }
+  .rm { padding:12px 14px; }
+  .lead { font-size:13.5px; color:#42606A; margin:0 0 11px; line-height:1.4; }
+  .lead b { color:#00567C; } .lead .r { color:#D64545; font-weight:700; }
+
+  .rm-grid { display:grid; grid-template-columns:500px 1fr; gap:16px; align-items:start; }
+  .rm-matrix svg { width:100%; height:auto; display:block; }
+
+  .rm-side { display:flex; flex-direction:column; gap:11px; }
+  .rm-h { font-size:11px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:#00567C; margin:0 0 2px; }
+
+  .ctl-list { display:flex; flex-direction:column; gap:7px; }
+  .ctl-btn { display:flex; align-items:flex-start; gap:9px; text-align:left; width:100%;
+    border:1px solid #CDD8DA; background:#fff; border-radius:9px; padding:8px 11px; cursor:pointer;
+    font-family:inherit; transition:all 120ms ease; }
+  .ctl-btn:hover { border-color:#8AA1A8; background:#F1F6F6; }
+  .ctl-btn.on { border-color:#1F8F89; background:#E9F6F1; box-shadow:inset 0 0 0 1px #1F8F89; }
+  .ctl-box { flex:none; width:20px; height:20px; border-radius:5px; border:1.5px solid #B7C6C9;
+    background:#fff; position:relative; margin-top:1px; }
+  .ctl-btn.on .ctl-box { background:#1F8F89; border-color:#1F8F89; }
+  .ctl-btn.on .ctl-box::after { content:""; position:absolute; left:6px; top:2px; width:5px; height:10px;
+    border:solid #fff; border-width:0 2.5px 2.5px 0; transform:rotate(42deg); }
+  .ctl-txt b { display:block; font-size:13px; color:#12333D; line-height:1.2; }
+  .ctl-txt span { display:block; font-size:11px; color:#5C7880; margin-top:1px; }
+  .ctl-txt em { font-style:normal; font-weight:700; }
+  .ctl-txt .dl { color:#C05621; } .ctl-txt .di { color:#00567C; }
+
+  .legend { border:1px solid #E0E7E8; border-radius:9px; background:#fff; padding:8px 10px; }
+  .lg-row { display:flex; align-items:center; gap:8px; padding:3px 0; font-size:12px; color:#3d5560; }
+  .lg-dot { flex:none; width:20px; height:20px; border-radius:50%; background:#12333D; color:#fff;
+    font-size:11px; font-weight:800; display:flex; align-items:center; justify-content:center; }
+  .lg-name { flex:1; line-height:1.15; }
+  .lg-badge { flex:none; font-size:10px; font-weight:800; letter-spacing:.03em; text-transform:uppercase;
+    padding:2px 7px; border-radius:999px; transition:all 400ms ease; }
+
+  .tally { display:flex; gap:6px; }
+  .tally .t { flex:1; text-align:center; border-radius:8px; padding:5px 0; }
+  .tally .t b { display:block; font-size:17px; font-weight:800; line-height:1; }
+  .tally .t span { font-size:9.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
+
+  .foot { grid-column:1 / -1; font-size:11.5px; color:#5C7880; line-height:1.45; margin-top:2px;
+    border-top:1px solid #E0E7E8; padding-top:8px; }
+  .foot b { color:#00567C; }
+  .foot .btn-reset { float:right; }
+</style>
+</head><body>
+<div class="w rm">
+  <p class="lead">Toggle a <b>control</b> and watch each threat slide toward the green. Risk = <b>Likelihood × Impact</b>
+    — every control pushes one lever or the other. The <span class="r">red corner</span> is where you act first.</p>
+
+  <div class="rm-grid">
+    <div class="rm-matrix"><svg id="mx" viewBox="0 0 500 430" aria-label="Risk matrix"></svg></div>
+
+    <div class="rm-side">
+      <div>
+        <p class="rm-h">Controls — flip these on</p>
+        <div class="ctl-list" id="ctls"></div>
+      </div>
+      <div class="legend">
+        <p class="rm-h">Threats to Superman</p>
+        <div id="legend"></div>
+      </div>
+      <div class="tally" id="tally"></div>
+    </div>
+
+    <div class="foot">
+      <button class="btn-reset" id="reset" style="font-size:12px;padding:5px 12px">Reset controls</button>
+      <b>Residual risk</b> = where a dot lands <em>after</em> your controls. Notice: you can shove Lex out of the red,
+      but no control reaches the bottom-left corner — risk never hits zero. You manage it down to a level you accept.
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  // ---- geometry -----------------------------------------------------------
+  var X0 = 56, Y0 = 12, CW = 86, CH = 72;        // 5x5 plot, cols=Impact, rows=Likelihood
+  var cx = function (i) { return X0 + (i - 1) * CW + CW / 2; };   // impact 1..5 -> centre x
+  var cy = function (l) { return Y0 + (5 - l) * CH + CH / 2; };   // likelihood 1..5 -> centre y
+
+  function zone(l, i) {
+    var s = l * i;
+    if (s <= 4)  return { key:"low",  fill:"#E4F3E9", col:"#1F8F89", name:"Low" };
+    if (s <= 9)  return { key:"med",  fill:"#FDF1C4", col:"#9C7A16", name:"Medium" };
+    if (s <= 14) return { key:"high", fill:"#FADFC6", col:"#C05621", name:"High" };
+    return             { key:"crit", fill:"#F6D2D2", col:"#D64545", name:"Critical" };
+  }
+
+  // ---- data: real Superman threats + controls that push L or I ------------
+  var risks = [
+    { id:1, name:"Lex forges a kryptonite ring",   L:4, I:5, kr:true  },
+    { id:2, name:"Kryptonite meteor near Metropolis", L:1, I:5, kr:true  },
+    { id:3, name:"Brainiac breaches the Fortress", L:3, I:4, kr:false },
+    { id:4, name:"Toyman's gadget prank",          L:4, I:1, kr:false }
+  ];
+  var controls = [
+    { id:"hide",  name:"Secure &amp; hide the kryptonite", eff:"<em class='dl'>&#9660; Likelihood</em> of kryptonite threats",
+      dL:2, dI:0, only:"kr" },
+    { id:"vault", name:"Lead-lined vault / shielding",     eff:"<em class='di'>&#9660; Impact</em> of kryptonite threats",
+      dL:0, dI:2, only:"kr" },
+    { id:"league",name:"Justice League on call",           eff:"<em class='di'>&#9660; Impact</em> of every threat",
+      dL:0, dI:1, only:null }
+  ];
+  var on = {};                                    // control id -> bool
+  // optional state hook for screenshots/presenter: ?on=hide,vault,league
+  (location.search.match(/on=([^&]*)/) || [,""])[1].split(",").forEach(function (s) {
+    if (s) on[s] = true;
+  });
+
+  function eff(r) {                               // effective L,I after active controls
+    var L = r.L, I = r.I;
+    controls.forEach(function (c) {
+      if (!on[c.id]) return;
+      if (c.only === "kr" && !r.kr) return;
+      L -= c.dL; I -= c.dI;
+    });
+    return { L: Math.max(1, L), I: Math.max(1, I) };
+  }
+
+  // ---- build the SVG matrix ----------------------------------------------
+  var svg = document.getElementById("mx"), NS = "http://www.w3.org/2000/svg";
+  function el(tag, at) { var e = document.createElementNS(NS, tag);
+    for (var k in at) e.setAttribute(k, at[k]); return e; }
+
+  for (var i = 1; i <= 5; i++) for (var l = 1; l <= 5; l++) {
+    var z = zone(l, i);
+    svg.appendChild(el("rect", { x:X0 + (i-1)*CW, y:Y0 + (5-l)*CH, width:CW-2, height:CH-2,
+      rx:6, fill:z.fill, stroke:"#fff", "stroke-width":2 }));
+  }
+  // axis tick labels
+  for (var i2 = 1; i2 <= 5; i2++) {
+    var tx = el("text", { x:cx(i2), y:398, "text-anchor":"middle", "font-size":13,
+      "font-family":"'JetBrains Mono',monospace", fill:"#5C7880", "font-weight":700 });
+    tx.textContent = i2; svg.appendChild(tx);
+  }
+  for (var l2 = 1; l2 <= 5; l2++) {
+    var ty = el("text", { x:44, y:cy(l2)+4, "text-anchor":"end", "font-size":13,
+      "font-family":"'JetBrains Mono',monospace", fill:"#5C7880", "font-weight":700 });
+    ty.textContent = l2; svg.appendChild(ty);
+  }
+  // axis titles
+  var xt = el("text", { x:X0 + 5*CW/2, y:422, "text-anchor":"middle", "font-size":12,
+    "font-family":"'Avenir Next',sans-serif", "font-weight":800, fill:"#00567C", "letter-spacing":"1.5" });
+  xt.textContent = "IMPACT →"; svg.appendChild(xt);
+  var yt = el("text", { x:16, y:Y0 + 5*CH/2, "text-anchor":"middle", "font-size":12,
+    "font-family":"'Avenir Next',sans-serif", "font-weight":800, fill:"#00567C", "letter-spacing":"1.5",
+    transform:"rotate(-90 16 " + (Y0 + 5*CH/2) + ")" });
+  yt.textContent = "LIKELIHOOD →"; svg.appendChild(yt);
+
+  // dots (one <g> per risk; animate via transform)
+  var dots = {};
+  risks.forEach(function (r) {
+    var g = el("g", { style:"transition:transform 650ms cubic-bezier(.34,1.2,.5,1)" });
+    var c = el("circle", { r:17, fill:"#12333D", stroke:"#fff", "stroke-width":3 });
+    var t = el("text", { "text-anchor":"middle", y:5, "font-size":15, "font-weight":800,
+      fill:"#fff", "font-family":"'Avenir Next',sans-serif" });
+    t.textContent = r.id;
+    g.appendChild(c); g.appendChild(t); svg.appendChild(g);
+    dots[r.id] = g;
+  });
+
+  // ---- controls UI --------------------------------------------------------
+  var ctlWrap = document.getElementById("ctls");
+  controls.forEach(function (c) {
+    var b = document.createElement("button");
+    b.className = "ctl-btn" + (on[c.id] ? " on" : ""); b.type = "button";
+    b.innerHTML = '<span class="ctl-box"></span><span class="ctl-txt"><b>' + c.name +
+      '</b><span>' + c.eff + '</span></span>';
+    b.addEventListener("click", function () { on[c.id] = !on[c.id];
+      b.classList.toggle("on", !!on[c.id]); render(); });
+    ctlWrap.appendChild(b); c._btn = b;
+  });
+  document.getElementById("reset").addEventListener("click", function () {
+    controls.forEach(function (c) { on[c.id] = false; c._btn.classList.remove("on"); }); render();
+  });
+
+  // ---- legend + tally -----------------------------------------------------
+  var legWrap = document.getElementById("legend");
+  risks.forEach(function (r) {
+    var row = document.createElement("div"); row.className = "lg-row";
+    row.innerHTML = '<span class="lg-dot">' + r.id + '</span><span class="lg-name">' + r.name +
+      '</span><span class="lg-badge" id="badge' + r.id + '"></span>';
+    legWrap.appendChild(row);
+  });
+  var tallyDefs = [
+    { key:"crit", name:"Critical", col:"#D64545", bg:"#F6D2D2" },
+    { key:"high", name:"High",     col:"#C05621", bg:"#FADFC6" },
+    { key:"med",  name:"Medium",   col:"#9C7A16", bg:"#FDF1C4" },
+    { key:"low",  name:"Low",      col:"#1F8F89", bg:"#E4F3E9" }
+  ];
+  var tallyWrap = document.getElementById("tally");
+  tallyDefs.forEach(function (d) {
+    var t = document.createElement("div"); t.className = "t";
+    t.style.background = d.bg; t.style.color = d.col;
+    t.innerHTML = '<b id="tn_' + d.key + '">0</b><span>' + d.name + '</span>';
+    tallyWrap.appendChild(t);
+  });
+
+  // ---- render -------------------------------------------------------------
+  function render() {
+    var counts = { low:0, med:0, high:0, crit:0 };
+    risks.forEach(function (r) {
+      var e = eff(r), z = zone(e.L, e.I);
+      dots[r.id].setAttribute("transform", "translate(" + cx(e.I) + "," + cy(e.L) + ")");
+      counts[z.key]++;
+      var badge = document.getElementById("badge" + r.id);
+      badge.textContent = z.name; badge.style.background = z.fill; badge.style.color = z.col;
+    });
+    for (var k in counts) document.getElementById("tn_" + k).textContent = counts[k];
+  }
+  render();
+})();
+</script>
+</body></html>
