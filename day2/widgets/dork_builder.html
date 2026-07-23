@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="_shared.css?v=1">
+<style>
+  body { padding: 6px; }
+  .wrap { display: flex; flex-direction: column; gap: 11px; }
+
+  /* ---- Google-style query bar ---------------------------------------- */
+  .bar { display: flex; align-items: center; gap: 10px; background: #fff;
+    border: 1px solid #D3E1E1; border-radius: 26px; padding: 9px 10px 9px 16px;
+    box-shadow: 0 2px 10px rgba(0,86,124,.10); }
+  .bar svg { flex: 0 0 auto; }
+  .query { flex: 1; font-family: "JetBrains Mono", Menlo, Consolas, monospace;
+    font-size: 15px; line-height: 1.5; color: #12333D; overflow-x: auto; white-space: nowrap;
+    padding: 2px 0; }
+  .query .ph { color: #9BB0B6; }
+  .tok { font-weight: 700; }
+  .tok.kw { color: #12333D; font-weight: 600; }
+  .tok.phrase { color: #146d68; }
+  .tok.site { color: #00567C; }
+  .tok.filetype { color: #1F8F89; }
+  .tok.intitle { color: #A9820A; }
+  .tok.inurl { color: #46707A; }
+  .tok.intext { color: #0E7C86; }
+  .tok.exclude { color: #D64545; }
+  .barbtns { display: flex; gap: 7px; flex: 0 0 auto; }
+  .barbtns button, .barbtns a { font-family: inherit; font-size: 12.5px; font-weight: 700;
+    border-radius: 999px; padding: 8px 14px; cursor: pointer; text-decoration: none;
+    border: 1px solid #CDD8DA; background: #fff; color: #12333D; white-space: nowrap; }
+  .barbtns .go { background: #1F8F89; color: #fff; border-color: #1F8F89; }
+  .barbtns .go:hover { background: #33D3CB; border-color: #33D3CB; }
+  .barbtns button:hover { background: #EEF3F3; }
+
+  .translate { font-size: 12.5px; color: #46707A; line-height: 1.4; padding: 0 4px;
+    min-height: 34px; }
+  .translate b { color: #00567C; font-weight: 700; }
+
+  /* ---- two columns ---------------------------------------------------- */
+  .cols { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 14px; align-items: start; }
+  .colhd { font-size: 10.5px; font-weight: 800; letter-spacing: .15em; text-transform: uppercase;
+    color: #8AA1A8; margin: 0 0 8px; }
+
+  .op { display: grid; grid-template-columns: 98px 1fr 150px; gap: 9px; align-items: center;
+    margin-bottom: 8px; }
+  .op .chip { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 12.5px;
+    font-weight: 700; text-align: center; padding: 7px 4px; border-radius: 7px;
+    background: #EEF3F3; color: #12333D; }
+  .op.site .chip { background: rgba(0,86,124,.12); color: #00567C; }
+  .op.filetype .chip { background: rgba(31,143,137,.14); color: #146d68; }
+  .op.intitle .chip { background: rgba(169,130,10,.16); color: #8a6a08; }
+  .op.inurl .chip { background: rgba(70,112,122,.14); color: #46707A; }
+  .op.intext .chip { background: rgba(14,124,134,.13); color: #0E7C86; }
+  .op.phrase .chip { background: rgba(20,109,104,.13); color: #146d68; }
+  .op.exclude .chip { background: rgba(214,69,69,.13); color: #C1403f; }
+  .op input { width: 100%; font-family: inherit; font-size: 13.5px; color: #12333D;
+    border: 1px solid #D3E1E1; border-radius: 7px; padding: 8px 10px; background: #fff; }
+  .op input:focus { outline: none; border-color: #1F8F89; box-shadow: 0 0 0 3px rgba(31,143,137,.13); }
+  .op .eff { font-size: 10.5px; color: #8AA1A8; line-height: 1.28; }
+
+  /* ---- missions ------------------------------------------------------- */
+  .goal { border-radius: 9px; padding: 9px 11px; font-size: 12.5px; line-height: 1.4;
+    background: rgba(31,143,137,.10); border: 1px solid rgba(31,143,137,.34); color: #12333D;
+    margin-bottom: 10px; }
+  .goal .lab { font-weight: 800; color: #146d68; letter-spacing: .04em; }
+  .goal .tip { display: block; margin-top: 3px; color: #46707A; }
+  .goal.empty { background: #F1F5F5; border-color: #E0E7E8; color: #7A9198; }
+  .mcards { display: flex; flex-direction: column; gap: 7px; }
+  .mcard { text-align: left; border: 1px solid #D3E1E1; background: #fff; border-radius: 9px;
+    padding: 9px 11px; cursor: pointer; transition: all 120ms; }
+  .mcard:hover { border-color: #1F8F89; background: #F6FbFb; }
+  .mcard.on { border-color: #1F8F89; background: rgba(31,143,137,.09); box-shadow: inset 3px 0 0 #1F8F89; }
+  .mcard .mt { display: block; font-weight: 800; font-size: 13px; color: #00567C; }
+  .mcard.on .mt { color: #146d68; }
+  .mcard .md { display: block; font-size: 11px; color: #7A9198; margin-top: 1px; line-height: 1.3; }
+
+  .ethics { display: none; margin-top: 9px; font-size: 11.5px; line-height: 1.4;
+    border-left: 3px solid #D64545; background: rgba(214,69,69,.06); border-radius: 0 7px 7px 0;
+    padding: 8px 10px; color: #8a3a3a; }
+  .ethics.show { display: block; }
+</style>
+</head><body>
+<div class="wrap">
+
+  <!-- assembled query, Google-style -->
+  <div class="bar">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8AA1A8" stroke-width="2.2">
+      <circle cx="11" cy="11" r="7"></circle><line x1="16.5" y1="16.5" x2="21" y2="21"></line></svg>
+    <div class="query" id="query"></div>
+    <div class="barbtns">
+      <button id="copy">Copy</button>
+      <a class="go" id="go" target="_blank" rel="noopener">Search ↗</a>
+    </div>
+  </div>
+  <div class="translate" id="translate"></div>
+
+  <div class="cols">
+    <!-- builder -->
+    <div class="builder">
+      <p class="colhd">Build your search · fill what you need</p>
+      <div class="op"          data-k="q">        <span class="chip">keywords</span>       <input data-k="q"        placeholder="plain words — e.g. Aramco software engineer"><span class="eff">any of these words, anywhere</span></div>
+      <div class="op phrase"   data-k="phrase">   <span class="chip">"…"</span>            <input data-k="phrase"   placeholder="Talent Acquisition"><span class="eff">these words together, in order</span></div>
+      <div class="op site"     data-k="site">     <span class="chip">site:</span>          <input data-k="site"     placeholder="linkedin.com"><span class="eff">only this site or domain</span></div>
+      <div class="op filetype" data-k="filetype"> <span class="chip">filetype:</span>      <input data-k="filetype" placeholder="pdf"><span class="eff">only this file type (pdf, xlsx…)</span></div>
+      <div class="op intitle"  data-k="intitle">  <span class="chip">intitle:</span>       <input data-k="intitle"  placeholder="careers"><span class="eff">word must be in the title</span></div>
+      <div class="op inurl"    data-k="inurl">    <span class="chip">inurl:</span>         <input data-k="inurl"    placeholder="login"><span class="eff">word must be in the URL</span></div>
+      <div class="op intext"   data-k="intext">   <span class="chip">intext:</span>        <input data-k="intext"   placeholder="confidential"><span class="eff">word must be in the body</span></div>
+      <div class="op exclude"  data-k="exclude">  <span class="chip">-minus</span>         <input data-k="exclude"  placeholder="internship"><span class="eff">drop results with this word</span></div>
+    </div>
+
+    <!-- missions -->
+    <div class="missions">
+      <div class="goal empty" id="goal"><span class="lab">PICK A MISSION →</span> or just start typing. Build a query, then hit <b>Search&nbsp;↗</b> to run it for real.</div>
+      <p class="colhd">Missions · run each for real</p>
+      <div class="mcards" id="mcards"></div>
+      <div class="ethics" id="ethics"><b>Finding is legal — accessing is not.</b> Google only indexes pages that were left public. Look to understand your exposure; never open, download, or use data that isn't yours.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (s, r) { return (r||document).querySelector(s); };
+  var fields = { q:"", phrase:"", site:"", filetype:"", intitle:"", inurl:"", intext:"", exclude:"" };
+  var inputs = {};
+  Array.prototype.forEach.call(document.querySelectorAll(".op input"), function (el) {
+    inputs[el.getAttribute("data-k")] = el;
+    el.addEventListener("input", function () { fields[el.getAttribute("data-k")] = el.value; render(); });
+  });
+
+  function qquote(v) { return /\s/.test(v.trim()) ? '"' + v.trim() + '"' : v.trim(); }
+
+  // -> array of {t, cls} tokens for display + a plain query string
+  function tokens() {
+    var out = [];
+    var f = fields;
+    if (f.q.trim())        out.push({ t: f.q.trim(), cls: "kw" });
+    if (f.phrase.trim())   out.push({ t: '"' + f.phrase.trim() + '"', cls: "phrase" });
+    if (f.site.trim())     out.push({ t: "site:" + f.site.trim(), cls: "site" });
+    if (f.filetype.trim()) out.push({ t: "filetype:" + f.filetype.trim(), cls: "filetype" });
+    if (f.intitle.trim())  out.push({ t: "intitle:" + qquote(f.intitle), cls: "intitle" });
+    if (f.inurl.trim())    out.push({ t: "inurl:" + f.inurl.trim(), cls: "inurl" });
+    if (f.intext.trim())   out.push({ t: "intext:" + qquote(f.intext), cls: "intext" });
+    if (f.exclude.trim())  f.exclude.trim().split(/\s+/).forEach(function (w) {
+      out.push({ t: "-" + w, cls: "exclude" }); });
+    return out;
+  }
+
+  function translate() {
+    var f = fields, p = [];
+    if (f.site.trim())     p.push("only on <b>" + f.site.trim() + "</b>");
+    if (f.filetype.trim()) p.push("only <b>" + f.filetype.trim().toUpperCase() + "</b> files");
+    if (f.phrase.trim())   p.push("containing the exact phrase &ldquo;<b>" + f.phrase.trim() + "</b>&rdquo;");
+    if (f.intitle.trim())  p.push("with &ldquo;<b>" + f.intitle.trim() + "</b>&rdquo; in the title");
+    if (f.inurl.trim())    p.push("with &ldquo;<b>" + f.inurl.trim() + "</b>&rdquo; in the URL");
+    if (f.intext.trim())   p.push("with &ldquo;<b>" + f.intext.trim() + "</b>&rdquo; in the page text");
+    if (f.q.trim())        p.push("mentioning <b>" + f.q.trim() + "</b>");
+    if (f.exclude.trim())  p.push("but never <b>" + f.exclude.trim() + "</b>");
+    if (!p.length) return "";
+    return "You're asking Google for pages " + p.join(", ") + ".";
+  }
+
+  function render() {
+    var toks = tokens(), qEl = $("#query");
+    if (!toks.length) {
+      qEl.innerHTML = '<span class="ph">your search will appear here…</span>';
+    } else {
+      qEl.innerHTML = toks.map(function (k, i) {
+        return '<span class="tok ' + k.cls + '">' + esc(k.t) + '</span>'; }).join(" ");
+    }
+    var plain = toks.map(function (k) { return k.t; }).join(" ");
+    $("#go").href = "https://www.google.com/search?q=" + encodeURIComponent(plain);
+    var tr = translate();
+    $("#translate").innerHTML = tr || '<span style="color:#9BB0B6">Fill a field to see, in plain English, exactly what you’re asking Google.</span>';
+    window._dorkQuery = plain;
+  }
+  function esc(s) { return s.replace(/[&<>"]/g, function (c) {
+    return { "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]; }); }
+
+  // ---- missions ----
+  var MISSIONS = [
+    { id:"recruiter", mt:"Find a recruiter", md:"Talent Acquisition at a company you want",
+      set:{ site:"linkedin.com/in", phrase:"Talent Acquisition", q:"Aramco" },
+      tip:"Swap in your target company. Try “Recruiter” or “HR Manager” as the phrase too.", ethics:false,
+      goal:"Find a recruiter / Talent Acquisition person at a company you’d love to work for." },
+    { id:"jobs", mt:"Find open jobs", md:"Careers pages & postings at a target",
+      set:{ intitle:"careers", q:"STC", phrase:"software engineer" },
+      tip:"Add filetype:pdf to surface downloadable job descriptions.", ethics:false,
+      goal:"Find open job postings and careers pages at a company you’re targeting." },
+    { id:"price", mt:"Price-hunt a product", md:"Cheapest listing for something you want",
+      set:{ phrase:"iPhone 15 Pro", q:"price", exclude:"refurbished" },
+      tip:"Add site:amazon.sa, or a number range like 3000..4000 to bound the price.", ethics:false,
+      goal:"Find the cheapest listing (and hidden deals) for a product you want to buy." },
+    { id:"exposed", mt:"Find exposed files", md:"The attacker’s move — public docs never meant to be",
+      set:{ filetype:"pdf", intext:"confidential", q:"budget" },
+      tip:"Try intitle:“index of” or inurl:login. These reveal how much slips out by accident.", ethics:true,
+      goal:"See what an attacker sees: documents that were left public by mistake." }
+  ];
+  var mc = $("#mcards");
+  MISSIONS.forEach(function (m) {
+    var b = document.createElement("button");
+    b.className = "mcard"; b.setAttribute("data-m", m.id);
+    b.innerHTML = '<span class="mt">' + m.mt + '</span><span class="md">' + m.md + '</span>';
+    b.addEventListener("click", function () { loadMission(m, b); });
+    mc.appendChild(b);
+  });
+
+  function loadMission(m, btn) {
+    Array.prototype.forEach.call(mc.children, function (c) { c.classList.remove("on"); });
+    if (btn) btn.classList.add("on");
+    for (var k in fields) { fields[k] = (m.set && m.set[k]) || ""; if (inputs[k]) inputs[k].value = fields[k]; }
+    $("#goal").className = "goal";
+    $("#goal").innerHTML = '<span class="lab">MISSION:</span> ' + m.goal +
+      '<span class="tip">Tip: ' + m.tip + '</span>';
+    $("#ethics").className = "ethics" + (m.ethics ? " show" : "");
+    render();
+  }
+
+  // ?mission=exposed hook for screenshots / presenter jumps
+  var pre = new URLSearchParams(location.search).get("mission");
+  var m0 = MISSIONS.filter(function (m) { return m.id === pre; })[0];
+  if (m0) loadMission(m0, mc.querySelector('[data-m="' + m0.id + '"]'));
+  else render();
+
+  // copy
+  $("#copy").addEventListener("click", function () {
+    var q = window._dorkQuery || "";
+    if (!q) return;
+    var done = function () { var b = $("#copy"); b.textContent = "Copied ✓"; setTimeout(function () { b.textContent = "Copy"; }, 1200); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(q).then(done, done);
+    else { var t = document.createElement("textarea"); t.value = q; document.body.appendChild(t); t.select();
+      try { document.execCommand("copy"); } catch (e) {} document.body.removeChild(t); done(); }
+  });
+})();
+</script>
+</body></html>
