@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="_shared.css?v=1">
+<style>
+  body { padding: 6px; }
+  .wrap { display: flex; flex-direction: column; gap: 10px; }
+
+  .privacy { display: flex; align-items: center; gap: 9px; font-size: 11.5px; line-height: 1.35;
+    color: #146d68; background: rgba(31,143,137,.09); border: 1px solid rgba(31,143,137,.3);
+    border-radius: 9px; padding: 8px 12px; }
+  .privacy b { color: #12333D; }
+  .privacy svg { flex: 0 0 auto; }
+
+  .lab { display: grid; grid-template-columns: 300px 1fr; gap: 14px; align-items: start; }
+  .colhd { font-size: 10.5px; font-weight: 800; letter-spacing: .15em; text-transform: uppercase;
+    color: #8AA1A8; margin: 0 0 9px; }
+
+  /* ---- identity panel ---- */
+  .idrow { margin-bottom: 9px; }
+  .idrow label { display: block; font-size: 11px; font-weight: 700; color: #46707A; margin-bottom: 3px; }
+  .idrow input { width: 100%; font-family: inherit; font-size: 13.5px; color: #12333D;
+    border: 1px solid #D3E1E1; border-radius: 8px; padding: 8px 10px; background: #fff; }
+  .idrow input:focus { outline: none; border-color: #1F8F89; box-shadow: 0 0 0 3px rgba(31,143,137,.13); }
+  .idbtns { display: flex; gap: 7px; margin: 4px 0 12px; }
+  .idbtns button { font-family: inherit; font-size: 12px; font-weight: 700; border-radius: 999px;
+    padding: 7px 13px; cursor: pointer; border: 1px solid #CDD8DA; background: #fff; color: #12333D; }
+  .idbtns .demo { background: #00567C; color: #fff; border-color: #00567C; }
+  .idbtns .demo:hover { background: #0a6e9c; }
+  .idbtns button:hover { background: #EEF3F3; }
+
+  .meter .mlab { display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 11.5px; font-weight: 700; color: #12333D; margin-bottom: 4px; }
+  .meter .mlab .v { font-family: "JetBrains Mono", Menlo, Consolas, monospace; color: #C1403f; }
+  .track { height: 10px; background: #EAF0F0; border-radius: 6px; overflow: hidden; }
+  .fill { height: 100%; width: 0; border-radius: 6px; transition: width .3s ease;
+    background: linear-gradient(90deg, #E07A7A, #D64545); }
+  .meter .note { font-size: 10.5px; color: #8AA1A8; margin-top: 5px; line-height: 1.35; }
+
+  /* ---- exposure cards ---- */
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+  .card { position: relative; border: 1px solid #E0E7E8; border-radius: 11px; background: #F7FAFA;
+    padding: 11px 12px 12px; overflow: hidden; opacity: .5; filter: grayscale(.5);
+    transition: opacity .2s, filter .2s, box-shadow .2s; }
+  .card.on { opacity: 1; filter: none; box-shadow: 0 3px 12px rgba(0,86,124,.12); }
+  .card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: #CDD8DA; }
+  .card.on.sev-hi::before { background: #D64545; }
+  .card.on.sev-md::before { background: #E0A100; }
+  .card .ct { font-weight: 800; font-size: 13.5px; color: #00567C; }
+  .card .cval { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 11px;
+    color: #46707A; margin-top: 1px; min-height: 14px; word-break: break-all; }
+  .card .att { font-size: 11.5px; color: #42606A; line-height: 1.38; margin: 7px 0 8px; }
+  .card .checks { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .card .checks a { font-family: inherit; font-size: 11.5px; font-weight: 700; text-decoration: none;
+    border-radius: 999px; padding: 5px 11px; background: #1F8F89; color: #fff; border: 1px solid #1F8F89; }
+  .card .checks a.alt { background: #fff; color: #00567C; border-color: #CDD8DA; }
+  .card .checks a:hover { filter: brightness(1.06); }
+  .card .tip { font-size: 11px; color: #146d68; line-height: 1.35; }
+  .card .tip b { color: #12333D; }
+  .card.off .att, .card.off .checks, .card.off .tip { display: none; }
+  .card .ghost { font-size: 11.5px; color: #9BB0B6; margin-top: 7px; line-height: 1.35; }
+  .card.on .ghost { display: none; }
+
+  .cascade { display: none; margin-top: 2px; border-radius: 10px; padding: 10px 13px;
+    background: rgba(214,69,69,.09); border: 1px solid rgba(214,69,69,.34); }
+  .cascade.show { display: block; }
+  .cascade .h { font-weight: 800; color: #C1403f; font-size: 12.5px; letter-spacing: .03em; }
+  .cascade p { margin: 3px 0 0; font-size: 12px; color: #6a3a3a; line-height: 1.4; }
+</style>
+</head><body>
+<div class="wrap">
+
+  <div class="privacy">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1F8F89" stroke-width="2">
+      <rect x="4" y="10" width="16" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>
+    <span><b>Runs entirely in your browser — offline.</b> What you type is never sent anywhere. The
+    “Check live →” links are your choice: a Google check puts that term in your search; Have I Been Pwned only sees what you paste there.</span>
+  </div>
+
+  <div class="lab">
+    <!-- identity inputs -->
+    <div class="identity">
+      <p class="colhd">Your identity · type your own</p>
+      <div class="idrow"><label>Full name</label><input data-k="name" placeholder="e.g. Layla Al-Harbi"></div>
+      <div class="idrow"><label>Email</label><input data-k="email" placeholder="you@gmail.com"></div>
+      <div class="idrow"><label>Username / handle</label><input data-k="username" placeholder="the one you reuse"></div>
+      <div class="idrow"><label>Phone</label><input data-k="phone" placeholder="+9665…"></div>
+      <div class="idbtns">
+        <button class="demo" id="demo">Show demo persona</button>
+        <button id="clear">Clear</button>
+      </div>
+      <div class="meter">
+        <div class="mlab"><span>Attacker's dossier on you</span><span class="v" id="score">0 / 4</span></div>
+        <div class="track"><div class="fill" id="fill"></div></div>
+        <div class="note" id="mnote">Each identifier you leak is another thread an attacker can pull — and they connect.</div>
+      </div>
+    </div>
+
+    <!-- exposure cards -->
+    <div class="exposure">
+      <p class="colhd">What an attacker assembles from it</p>
+      <div class="cards" id="cards"></div>
+    </div>
+  </div>
+
+  <div class="cascade" id="cascade">
+    <div class="h">⛓ Cascade — this is why one leak becomes total</div>
+    <p>A breached password (from your <b>email</b>) + the same <b>handle</b> reused across sites means an attacker
+    who cracks one account walks into all of them. The individual leaks aren't the danger — the <b>links between them</b> are.</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (s, r) { return (r||document).querySelector(s); };
+  var enc = encodeURIComponent;
+  var vals = { name:"", email:"", username:"", phone:"" };
+
+  function gdork(q) { return "https://www.google.com/search?q=" + enc(q); }
+  function gimg(q)  { return "https://www.google.com/search?tbm=isch&q=" + enc(q); }
+
+  // one exposure card per identifier
+  var CARDS = [
+    { k:"name", sev:"md", title:"People-search & data brokers",
+      att:"Address history, relatives, employer and photos — packaged by data-broker sites and indexed by Google.",
+      ghost:"Add your name to see what's public about you.",
+      checks:function(v){ return [["Google you", gdork('"'+v+'"')], ["Image search", gimg(v), true]]; },
+      tip:"<b>Shrink it:</b> search “&lt;broker&gt; opt out” and remove yourself; lock down social-profile privacy." },
+    { k:"email", sev:"hi", title:"Breaches & password reuse",
+      att:"Which breaches leaked this email — and the password you may have reused on other sites.",
+      ghost:"Add your email to check breach exposure.",
+      checks:function(v){ return [["Have I Been Pwned", "https://haveibeenpwned.com/"], ["Google it", gdork('"'+v+'"'), true]]; },
+      tip:"<b>Shrink it:</b> a unique password per site + a password manager; turn on 2-factor everywhere." },
+    { k:"username", sev:"hi", title:"Cross-site accounts",
+      att:"One handle maps every profile you own — old forums, accounts and opinions you forgot were public.",
+      ghost:"Add a handle you reuse to trace your accounts.",
+      checks:function(v){ return [["WhatsMyName", "https://whatsmyname.app/"], ["Google it", gdork('"'+v+'"'), true]]; },
+      tip:"<b>Shrink it:</b> use a different handle for sensitive or private accounts." },
+    { k:"phone", sev:"md", title:"Reverse lookup & chat apps",
+      att:"Reverse-lookup your name from the number, and probe messaging apps that reveal you by phone.",
+      ghost:"Add your phone to see what it exposes.",
+      checks:function(v){ return [["Google the number", gdork('"'+v+'"')]]; },
+      tip:"<b>Shrink it:</b> use a separate number for sign-ups; disable “find me by number” in chat apps." }
+  ];
+
+  var wrap = $("#cards");
+  CARDS.forEach(function (c) {
+    var el = document.createElement("div");
+    el.className = "card off sev-" + c.sev; el.setAttribute("data-k", c.k);
+    el.innerHTML =
+      '<div class="ct">' + c.title + '</div>' +
+      '<div class="cval"></div>' +
+      '<div class="att">' + c.att + '</div>' +
+      '<div class="checks"></div>' +
+      '<div class="tip">' + c.tip + '</div>' +
+      '<div class="ghost">' + c.ghost + '</div>';
+    c.el = el; wrap.appendChild(el);
+  });
+
+  var inputs = {};
+  Array.prototype.forEach.call(document.querySelectorAll(".idrow input"), function (el) {
+    inputs[el.getAttribute("data-k")] = el;
+    el.addEventListener("input", function () { vals[el.getAttribute("data-k")] = el.value; render(); });
+  });
+
+  function render() {
+    var filled = 0;
+    CARDS.forEach(function (c) {
+      var v = (vals[c.k] || "").trim();
+      var on = !!v;
+      if (on) filled++;
+      c.el.classList.toggle("on", on);
+      c.el.classList.toggle("off", !on);
+      $(".cval", c.el).textContent = on ? v : "";
+      if (on) {
+        $(".checks", c.el).innerHTML = c.checks(v).map(function (ch) {
+          return '<a target="_blank" rel="noopener" class="' + (ch[2] ? "alt" : "") + '" href="' + ch[1] + '">' + ch[0] + ' ↗</a>';
+        }).join("");
+      }
+    });
+    $("#score").textContent = filled + " / 4";
+    $("#fill").style.width = (filled / 4 * 100) + "%";
+    var cascade = !!(vals.email.trim() && vals.username.trim());
+    $("#cascade").classList.toggle("show", cascade);
+    $("#mnote").textContent = filled >= 3
+      ? "That's a full dossier — name, contact and a handle that links your accounts. This is what recon collects before a single attack."
+      : "Each identifier you leak is another thread an attacker can pull — and they connect.";
+  }
+
+  $("#demo").addEventListener("click", function () {
+    vals = { name:"Layla Al-Harbi", email:"layla.alharbi@gmail.com", username:"laylah_codes", phone:"+966555123456" };
+    for (var k in inputs) inputs[k].value = vals[k];
+    render();
+  });
+  $("#clear").addEventListener("click", function () {
+    vals = { name:"", email:"", username:"", phone:"" };
+    for (var k in inputs) inputs[k].value = "";
+    render();
+  });
+
+  if (new URLSearchParams(location.search).get("demo") === "1") $("#demo").click();
+  else render();
+})();
+</script>
+</body></html>
