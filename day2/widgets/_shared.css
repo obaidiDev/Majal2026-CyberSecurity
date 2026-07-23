@@ -1,0 +1,29 @@
+/* Shared styling for Day 1 iframe widgets — offline (no web fonts, no CDN).
+   Mirrors the Majal identity palette used across the deck. */
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 8px;
+  font-family: "Avenir Next", "Avenir", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  font-size: 15px; color: #12333D; background: transparent;
+}
+.w { border: 1px solid #E0E7E8; border-radius: 12px; background: #F6F8F8; padding: 14px; }
+button {
+  font-family: inherit; font-size: 13px; font-weight: 700;
+  border: 1px solid #CDD8DA; background: #fff; color: #12333D;
+  border-radius: 999px; padding: 8px 15px; cursor: pointer;
+  transition: all 120ms ease;
+}
+button:hover { border-color: #8AA1A8; background: #EEF3F3; }
+button.on { background: #00567C; color: #fff; border-color: #00567C; }
+button.primary { background: #1F8F89; color: #fff; border-color: #1F8F89; }
+button.primary:hover { background: #33D3CB; border-color: #33D3CB; }
+button:disabled { opacity: .4; cursor: not-allowed; }
+.mono { font-family: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace; }
+
+canvas { width: 100%; height: 336px; display: block;
+  border: 1px solid #E0E7E8; border-radius: 10px; background: #fff; }
+.ctl { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
+.cap { margin-top: 11px; font-size: 14px; color: #42606A; min-height: 42px; line-height: 1.45; }
+.cap b { color: #00567C; } .cap em { color: #1F8F89; font-style: normal; font-weight: 700; }
+.cap .dngr { color: #D64545; font-weight: 700; }
+.cap .good { color: #1F8F89; font-weight: 700; }
