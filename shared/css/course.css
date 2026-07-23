@@ -141,11 +141,7 @@ textarea { width: 100%; resize: vertical; line-height: 1.4; }
 /* ---- persistent brand chrome (logo + slogan on every slide) ------------- */
 .brandmark { position: fixed; top: 22px; left: 26px; z-index: 40;
   display: flex; align-items: center; gap: 12px; opacity: .95; pointer-events: none; }
-.brandmark svg { width: 34px; height: 34px; }
-.brandmark .wm { font-family: var(--sans); font-weight: 800; letter-spacing: .22em;
-  font-size: 15px; color: var(--petrol); }
-.brandmark .wm small { display: block; font-weight: 600; letter-spacing: .04em;
-  font-size: 9px; color: var(--muted); text-transform: none; margin-top: 1px; }
+.brandmark .logo { height: 40px; width: auto; mix-blend-mode: multiply; }
 .dayflag { position: fixed; top: 24px; right: 28px; z-index: 40; font-family: var(--mono);
   font-size: 11px; letter-spacing: .18em; color: var(--muted); pointer-events: none; }
 
