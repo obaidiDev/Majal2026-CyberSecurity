@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="_shared.css?v=1">
+<style>
+  body { padding: 6px; }
+  .lab { display: grid; grid-template-columns: 296px 1fr; gap: 14px; align-items: start; }
+  .colhd { font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+    color: #8AA1A8; margin: 0 0 7px; }
+
+  /* ---- left: target / loot / defences ---- */
+  .panel { background: #F7FAFA; border: 1px solid #E0E7E8; border-radius: 10px;
+    padding: 10px 12px; margin-bottom: 10px; }
+  .panel.loot { border-left: 3px solid #D64545; }
+  .svc { display: flex; align-items: baseline; gap: 8px; font-family: "JetBrains Mono", Menlo, Consolas, monospace;
+    font-size: 12px; color: #29474F; margin: 3px 0; }
+  .svc .port { color: #00567C; font-weight: 700; }
+  .svc .cve { color: #C1403f; font-weight: 700; font-size: 10.5px; }
+  .host { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 12.5px;
+    color: #12333D; font-weight: 700; margin-bottom: 6px; }
+  .cred { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 13px; color: #C1403f; font-weight: 700; }
+  .cred small { display: block; font-family: inherit; font-weight: 400; color: #8AA1A8; font-size: 10.5px; margin-top: 2px; }
+
+  .defs { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+  .def { font-family: inherit; font-size: 12px; font-weight: 700; text-align: left;
+    border: 1px solid #CDD8DA; background: #fff; color: #6a808a; border-radius: 8px;
+    padding: 8px 10px; cursor: pointer; transition: all 120ms; }
+  .def::before { content: "○ "; font-weight: 800; }
+  .def.on { background: rgba(31,143,137,.13); border-color: #1F8F89; color: #146d68; }
+  .def.on::before { content: "● "; }
+  .def:hover { background: #EEF3F3; }
+  .def.on:hover { background: rgba(31,143,137,.2); }
+
+  /* ---- right: attack console ---- */
+  .toolbar { display: flex; align-items: center; gap: 7px; margin-bottom: 9px; flex-wrap: wrap; }
+  .method { font-family: inherit; font-size: 12.5px; font-weight: 700; border-radius: 999px;
+    padding: 7px 13px; cursor: pointer; border: 1px solid #CDD8DA; background: #fff; color: #12333D; }
+  .method.sel { background: #D64545; border-color: #D64545; color: #fff; }
+  .method:hover:not(.sel) { background: #FBEDED; border-color: #E7B4b4; }
+  .run { margin-left: auto; font-family: inherit; font-size: 13px; font-weight: 800; border-radius: 999px;
+    padding: 8px 18px; cursor: pointer; border: 1px solid #B23333; background: #D64545; color: #fff; }
+  .run:hover { background: #C1403f; }
+  .run:disabled { opacity: .5; cursor: default; }
+  .badge { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 11.5px; font-weight: 700;
+    padding: 6px 11px; border-radius: 7px; letter-spacing: .04em; }
+  .badge.idle { background: #EEF3F3; color: #8AA1A8; }
+  .badge.shell { background: rgba(214,69,69,.15); color: #C1403f; }
+  .badge.blocked { background: rgba(31,143,137,.15); color: #146d68; }
+
+  .term { background: #06232B; border: 1px solid #0C3A46; border-radius: 10px; padding: 13px 15px;
+    font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.6;
+    height: 344px; overflow-y: auto; color: #BFE0E2; white-space: pre-wrap; word-break: break-word; }
+  .term::-webkit-scrollbar { width: 8px; } .term::-webkit-scrollbar-thumb { background: #1F5563; border-radius: 4px; }
+  .term .cmd { color: #33D3CB; } .term .cmd .p { color: #7FE3DC; }
+  .term .out { color: #7C9BA2; }
+  .term .ok  { color: #46C08A; }
+  .term .bad { color: #FF7A7A; }
+  .term .sh  { color: #EAF7F5; } .term .sh .u { color: #33D3CB; }
+  .term .cursor { color: #33D3CB; animation: blink 1s step-end infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .takeaway { margin-top: 9px; font-size: 12.5px; line-height: 1.4; min-height: 34px; padding: 0 2px; }
+  .takeaway.shell { color: #C1403f; } .takeaway.blocked { color: #146d68; }
+  .takeaway b { font-weight: 800; }
+</style>
+</head><body>
+<div class="lab">
+  <!-- left -->
+  <div class="left">
+    <div class="panel">
+      <p class="colhd">Target · from your recon</p>
+      <div class="host">10.0.0.7 &nbsp;vpn-gw01</div>
+      <div class="svc"><span class="port">22</span> SSH &nbsp;OpenSSH 8.2</div>
+      <div class="svc"><span class="port">8080</span> WebApp v1.4 <span class="cve">CVE-2023-1337</span></div>
+      <div class="svc"><span class="port">3389</span> Admin panel &nbsp;(login)</div>
+    </div>
+    <div class="panel loot">
+      <p class="colhd">Loot · from the breach dump</p>
+      <div class="cred">admin : Summer2024!<small>reused password, seen in a Have I Been Pwned leak</small></div>
+    </div>
+    <div>
+      <p class="colhd">Target's defences · flip to harden</p>
+      <div class="defs" id="defs">
+        <button class="def" data-d="mfa">MFA</button>
+        <button class="def" data-d="uniquePw">Unique&nbsp;pw</button>
+        <button class="def" data-d="patched">Patched</button>
+        <button class="def" data-d="edr">EDR&nbsp;/&nbsp;AV</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- right -->
+  <div class="right">
+    <div class="toolbar">
+      <button class="method sel" data-m="reused">Reused password</button>
+      <button class="method" data-m="default">Default creds</button>
+      <button class="method" data-m="cve">Known CVE</button>
+      <button class="run" id="run">▶ Attempt access</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:9px;margin-bottom:9px">
+      <span class="badge idle" id="badge">AWAITING ATTEMPT</span>
+    </div>
+    <div class="term" id="term"></div>
+    <div class="takeaway" id="takeaway"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (s, r) { return (r||document).querySelector(s); };
+  var defs = { mfa:false, uniquePw:false, patched:false, edr:false };
+  var method = "reused", running = false;
+
+  Array.prototype.forEach.call(document.querySelectorAll(".def"), function (b) {
+    b.addEventListener("click", function () {
+      var k = b.getAttribute("data-d"); defs[k] = !defs[k]; b.classList.toggle("on", defs[k]);
+    });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll(".method"), function (b) {
+    b.addEventListener("click", function () {
+      if (running) return;
+      method = b.getAttribute("data-m");
+      Array.prototype.forEach.call(document.querySelectorAll(".method"), function (x) { x.classList.remove("sel"); });
+      b.classList.add("sel");
+    });
+  });
+
+  // C = command, O = dim output, K = ok(green), X = bad(red), S = shell prompt line
+  function L(cls, t, d) { return { cls: cls, t: t, d: d || 220 }; }
+
+  function scenario() {
+    if (method === "reused") {
+      var base = [ L("cmd", "$ ssh admin@10.0.0.7"),
+                   L("out", "admin@10.0.0.7's password: ••••••••", 520) ];
+      if (defs.mfa)      return { by:"MFA", lines: base.concat([
+                            L("out", "Password accepted — 2FA verification code required:"),
+                            L("bad", "[!] No second factor. Access denied.") ]) };
+      if (defs.uniquePw) return { by:"a unique password", lines: base.concat([
+                            L("bad", "[!] Permission denied. The breached password doesn't work here —"),
+                            L("bad", "    this account uses a unique password.") ]) };
+      return { shell:true, user:"admin@vpn-gw01", lines: base.concat([
+                L("ok",  "[+] Breached password reused here. Accepted."),
+                L("out", "Last login: Tue 03:14 from 185.220.101.7", 300),
+                L("sh",  '<span class="u">admin@vpn-gw01</span>:~$ whoami'),
+                L("sh",  "admin") ]) };
+    }
+    if (method === "default") {
+      var b2 = [ L("cmd", "$ hydra -l admin -p admin 10.0.0.7 http-get /admin"),
+                 L("out", "[*] trying admin:admin on http://10.0.0.7:8080/admin ...", 520) ];
+      if (defs.uniquePw) return { by:"changed default credentials", lines: b2.concat([
+                            L("bad", "[!] admin:admin rejected — the default password was changed.") ]) };
+      if (defs.mfa)      return { by:"MFA", lines: b2.concat([
+                            L("ok",  "[+] admin:admin accepted —"),
+                            L("bad", "[!] but a one-time code is required. Locked out.") ]) };
+      return { shell:true, user:"www-data@vpn-gw01", lines: b2.concat([
+                L("ok",  "[+] admin:admin accepted — default was never changed."),
+                L("out", "[*] uploading web shell ... done.", 320),
+                L("sh",  '<span class="u">www-data@vpn-gw01</span>:/var/www$ id'),
+                L("sh",  "uid=33(www-data) gid=33(www-data)") ]) };
+    }
+    // cve
+    var b3 = [ L("cmd", "$ ./exploit.py --target 10.0.0.7:8080"),
+               L("out", "[*] WebApp v1.4 detected — CVE-2023-1337 (unauth RCE)", 380),
+               L("out", "[*] sending exploit ...", 520) ];
+    if (defs.patched) return { by:"a patch", lines: b3.concat([
+                          L("bad", "[!] target runs WebApp v1.6 — not vulnerable. Exploit failed.") ]) };
+    if (defs.edr)     return { by:"EDR", lines: b3.concat([
+                          L("ok",  "[+] payload delivered ..."),
+                          L("bad", "[!] EDR flagged the payload and killed it. No shell.") ]) };
+    return { shell:true, user:"www-data@vpn-gw01", lines: b3.concat([
+              L("ok",  "[+] reverse shell received."),
+              L("sh",  '<span class="u">www-data@vpn-gw01</span>:/$ uname -a'),
+              L("sh",  "Linux vpn-gw01 5.4.0 #1 SMP x86_64 GNU/Linux") ]) };
+  }
+
+  function setBadge(kind, txt) { var b = $("#badge"); b.className = "badge " + kind; b.textContent = txt; }
+  function addLine(l) {
+    var d = document.createElement("div"); d.className = l.cls; d.innerHTML =
+      l.cls === "cmd" ? l.t.replace(/^\$/, '<span class="p">$</span>') : l.t;
+    $("#term").appendChild(d); $("#term").scrollTop = $("#term").scrollHeight;
+  }
+  function finish(res) {
+    running = false; $("#run").disabled = false;
+    var tk = $("#takeaway");
+    if (res.shell) {
+      setBadge("shell", "● SHELL OPENED · " + res.user);
+      tk.className = "takeaway shell";
+      tk.innerHTML = "<b>First foothold.</b> No movie hack — just a login or an unpatched box. This is where an attacker actually gets in. What you do next — move, escalate — is <b>Day 3</b>.";
+    } else {
+      setBadge("blocked", "✕ BLOCKED");
+      tk.className = "takeaway blocked";
+      tk.innerHTML = "<b>Blocked by " + res.by + ".</b> One control on the left closed this exact door. Turn them all on and every path here dies.";
+    }
+  }
+  function run(instant) {
+    if (running) return;
+    running = true; $("#run").disabled = true; $("#term").innerHTML = ""; setBadge("idle", "… running");
+    var res = scenario(), i = 0;
+    if (instant) { res.lines.forEach(addLine); finish(res); return; }
+    (function step() {
+      if (i >= res.lines.length) { finish(res); return; }
+      addLine(res.lines[i]); var d = res.lines[i].d; i++; setTimeout(step, d);
+    })();
+  }
+  $("#run").addEventListener("click", function () { run(false); });
+
+  // hooks: ?method=cve&def=patched,edr  (instant render for screenshots)
+  var qs = new URLSearchParams(location.search);
+  if (qs.get("method")) { method = qs.get("method");
+    Array.prototype.forEach.call(document.querySelectorAll(".method"), function (x) {
+      x.classList.toggle("sel", x.getAttribute("data-m") === method); }); }
+  (qs.get("def") || "").split(",").forEach(function (k) { if (k in defs) { defs[k] = true;
+    var el = $('.def[data-d="' + k + '"]'); if (el) el.classList.add("on"); } });
+  if (qs.get("method") || qs.get("def")) run(true);
+  else { $("#term").innerHTML = '<div class="out">Pick a method, set the defences, then <span class="ok">▶ Attempt access</span>.<span class="cursor"> ▋</span></div>'; }
+})();
+</script>
+</body></html>
