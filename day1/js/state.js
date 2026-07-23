@@ -33,18 +33,12 @@ MAJAL._runSlide = function (section) {
   try { MAJAL._widgets[id](section); } catch (e) { console.error("widget " + id + " failed:", e); }
 };
 
-/* ---- persistent brand chrome (logo mark + wordmark + day flag) ---------- */
-MAJAL.logoSVG = function () {
-  return '<svg viewBox="0 0 100 100" aria-label="Majal">'
-    + '<polygon points="0,0 47,0 47,18 18,18 18,47 0,47" fill="#33d2cb"/>'
-    + '<polygon points="100,0 100,47 82,47 82,18 53,18 53,0" fill="#00567d"/>'
-    + '<polygon points="0,53 18,53 18,82 47,82 47,100 0,100" fill="#00567d"/>'
-    + '<polygon points="100,53 100,100 53,100 53,82 82,82 82,53" fill="#f2d200"/>'
-    + '</svg>';
+/* ---- persistent brand chrome (logo lockup + day flag) ------------------- */
+MAJAL.logoIMG = function () {
+  return '<img class="logo" src="../MajalLogo.jpg" alt="Majal — Unlocking your tech horizons">';
 };
 MAJAL.mountChrome = function () {
-  var b = MAJAL.el("div", { class: "brandmark", html:
-    MAJAL.logoSVG() + '<div class="wm">MAJAL<small>Unlocking your tech horizons</small></div>' });
+  var b = MAJAL.el("div", { class: "brandmark", html: MAJAL.logoIMG() });
   var d = MAJAL.el("div", { class: "dayflag", text: "DAY 1 · FOUNDATIONS" });
   document.body.appendChild(b);
   document.body.appendChild(d);
