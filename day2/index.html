@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Majal — Cyber Day 2: The First Foothold</title>
+  <link rel="stylesheet" href="../shared/dist/reset.css">
+  <link rel="stylesheet" href="../shared/dist/reveal.css">
+  <link rel="stylesheet" href="../shared/css/course.css?v=5">
+  <style>
+    /* Day-2 kill-chain strip (native palette, offline) */
+    .chain { display: flex; align-items: stretch; gap: 0; margin: .3em 0 .2em; }
+    .chain .stage { flex: 1; text-align: center; padding: .7em .4em; position: relative;
+      border: 1px solid var(--line); border-right: 0; background: var(--panel); }
+    .chain .stage:first-child { border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
+    .chain .stage:last-child { border-right: 1px solid var(--line);
+      border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
+    .chain .stage .n { font-size: .5em; font-weight: 800; letter-spacing: .14em;
+      color: var(--muted); text-transform: uppercase; }
+    .chain .stage .t { font-weight: 800; color: var(--petrol); font-size: .92em; margin-top: .15em; }
+    .chain .stage.today { background: rgba(31,143,137,.10); border-color: var(--teal); }
+    .chain .stage.today .t { color: var(--teal); }
+    .chain .stage.next { opacity: .5; }
+    .chain .arrow { align-self: center; color: var(--muted); font-weight: 800; padding: 0 .25em; }
+  </style>
+</head>
+<body>
+<div class="reveal">
+  <div class="slides">
+
+    <!-- ================= TITLE ================= -->
+    <section>
+      <p class="kicker">Day 2 · The First Foothold</p>
+      <h1>Every breach starts with<br>one way in.</h1>
+      <p class="sub" style="margin-top:1.2em;max-width:24em">Yesterday you learned what a system is <em>supposed</em> to protect.
+      Today you switch sides: you are the attacker. Before you can touch anything inside, you have to <em>find</em> a target,
+      <em>learn</em> it, and <em>get through the door</em> — without ever "hacking" in the movie sense.</p>
+      <aside class="notes">Set the role-play: for the next three days they are the attacker. Today is only the entry —
+      pick a target, study it, get the first foothold. We stop the moment we're inside; what happens next is Day 3.</aside>
+    </section>
+
+    <!-- ================= FRAMING / KILL CHAIN ================= -->
+    <section>
+      <p class="kicker">The road to a foothold</p>
+      <h2>You don't start inside — you earn your way in</h2>
+      <div class="chain">
+        <div class="stage today"><div class="n">Step 1</div><div class="t">Recon</div></div>
+        <span class="arrow">›</span>
+        <div class="stage today"><div class="n">Step 2</div><div class="t">Weaponise</div></div>
+        <span class="arrow">›</span>
+        <div class="stage today"><div class="n">Step 3</div><div class="t">Deliver</div></div>
+        <span class="arrow">›</span>
+        <div class="stage today"><div class="n">Step 4</div><div class="t">Foothold</div></div>
+        <span class="arrow">›</span>
+        <div class="stage next"><div class="n">Day 3</div><div class="t">Move through</div></div>
+      </div>
+      <div class="callout" style="margin-top:1em"><strong>Today's job:</strong> gather what's public about a target (recon),
+      turn it into a way in (a lure, a weak password, an exposed service), and land the <em>first foothold</em>.
+      The moment you're inside, we stop — pivoting and privilege live in Day 3.</div>
+      <div class="callout hot" style="margin-top:.7em">The attacker's biggest advantage isn't a tool — it's <em>information</em>.
+      Almost everything they need, you left in public. First we'll go get it; then we'll weaponise it.</div>
+      <aside class="notes">Walk the strip left to right. The four teal stages are today. Land the through-line:
+      recon feeds delivery — the more they know, the better the lure. This sets up why OSINT matters before we phish.
+      Keep it to the map; don't pre-explain each stage — each gets its own slice.</aside>
+    </section>
+
+    <!-- ================= PHISHING / BUILD-A-LURE ================= -->
+    <section>
+      <p class="kicker">Deliver · social engineering</p>
+      <h2>Build the lure: believable enough to click, quiet enough to slip filters</h2>
+      <iframe class="wframe" style="height:566px"
+              src="widgets/phish_lure.html?v=1"
+              title="Build-a-Lure phishing sandbox" scrolling="auto"></iframe>
+      <aside class="notes">Hand them the attacker's console. Have them toggle the cheap tricks first
+      (urgency, look-alike domain, masked link) — watch click-likelihood rise but the red-flag score rise with it,
+      and the defender panel name each tell. Then toggle <strong>Personalise (OSINT)</strong> alone: click-likelihood
+      jumps, red-flag score barely moves. That's the lesson — the detail that makes a lure land came from the recon
+      they'll do earlier in the day. Hover the button to expose the real link (masked-link tell).
+      Land it: this is why <em>spear</em>-phishing beats spray-and-pray, and why your public footprint is the ammunition.</aside>
+    </section>
+
+  </div>
+</div>
+
+<!-- scripts: reveal, notes, then engine -->
+<script src="../shared/dist/reveal.js"></script>
+<script src="../shared/plugin/notes/notes.js"></script>
+<script src="js/state.js?v=1"></script>
+</body>
+</html>

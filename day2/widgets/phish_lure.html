@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="_shared.css?v=1">
+<style>
+  body { padding: 6px; }
+  .lab { display: grid; grid-template-columns: 1.08fr 0.92fr; gap: 16px; align-items: start; }
+
+  /* ---- the email the victim sees (left) -------------------------------- */
+  .mailwrap { position: relative; background: #fff; border: 1px solid #E0E7E8;
+    border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(18,51,61,.07); }
+  .mail-toolbar { display: flex; align-items: center; gap: 8px; padding: 7px 12px;
+    background: #F1F5F5; border-bottom: 1px solid #E0E7E8; font-size: 11px; color: #7A9198; }
+  .mail-toolbar .dot { width: 9px; height: 9px; border-radius: 50%; background: #CDD8DA; }
+  .mail-toolbar .tb-label { margin-left: auto; letter-spacing: .04em; }
+  .mail-head { padding: 12px 14px 10px; border-bottom: 1px solid #EEF3F3; }
+  .mail-subject { font-size: 16px; font-weight: 800; color: #12333D; line-height: 1.25; margin-bottom: 9px; }
+  .mail-from { display: flex; align-items: center; gap: 10px; }
+  .avatar { flex: 0 0 auto; width: 36px; height: 36px; border-radius: 50%;
+    background: #00567C; color: #fff; display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 14px; }
+  .from-name { font-weight: 700; font-size: 13.5px; color: #12333D; }
+  .from-addr { font-size: 11.5px; color: #5C7880; margin-top: 1px; }
+  .from-addr .warn { color: #D64545; font-weight: 700; }
+  .to-line { font-size: 11.5px; color: #94A7AD; margin-top: 3px; }
+
+  .brandbar { display: flex; align-items: center; gap: 11px; padding: 12px 16px;
+    background: linear-gradient(90deg, #00567C, #1F8F89); color: #fff; }
+  .brandbar .mark { width: 26px; height: 26px; border-radius: 6px; background: #F2D200;
+    display: flex; align-items: center; justify-content: center; color: #00567C; font-weight: 900; font-size: 15px; }
+  .brandbar .bn { font-weight: 800; letter-spacing: .1em; font-size: 14px; }
+  .brandbar .bn small { display: block; font-weight: 600; letter-spacing: .02em; font-size: 9px; opacity: .85; }
+
+  .mail-body { padding: 15px 16px 18px; font-size: 13.5px; line-height: 1.55; color: #29474F; }
+  .mail-body .greet { font-weight: 700; color: #12333D; margin-bottom: 8px; }
+  .mail-body p { margin: 0 0 9px; }
+  .expire { color: #B23333; font-weight: 700; background: #FBEDED; border: 1px solid #F3CFCF;
+    border-radius: 7px; padding: 8px 10px; margin: 10px 0; }
+  .cta { display: inline-block; margin-top: 4px; background: #1F8F89; color: #fff;
+    padding: 10px 20px; border-radius: 8px; font-weight: 800; font-size: 13.5px;
+    text-decoration: none; cursor: pointer; }
+  .sig { margin-top: 12px; font-size: 12.5px; color: #5C7880; }
+  .statusbar { position: absolute; left: 0; bottom: 0; max-width: 100%;
+    background: #12333D; color: #DCEBEE; font-size: 11px; padding: 4px 10px;
+    border-top-right-radius: 6px; opacity: 0; transform: translateY(4px);
+    transition: opacity .12s, transform .12s; pointer-events: none; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; }
+  .statusbar.show { opacity: 1; transform: translateY(0); }
+
+  /* ---- attacker console (right) ---------------------------------------- */
+  .panel { display: flex; flex-direction: column; gap: 13px; }
+  .phead { font-size: 11px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase;
+    color: #5C7880; margin-bottom: -4px; }
+  .toggles { display: flex; flex-wrap: wrap; gap: 7px; }
+  button.tog { position: relative; }
+  button.tog.osint.on { background: #D64545; border-color: #D64545; }
+  button.tog .tag { display: inline-block; font-size: 9px; font-weight: 800; letter-spacing: .06em;
+    margin-left: 6px; padding: 1px 5px; border-radius: 999px; background: rgba(214,69,69,.14); color: #D64545; }
+  button.tog.on .tag { background: rgba(255,255,255,.22); color: #fff; }
+
+  .meters { display: flex; flex-direction: column; gap: 10px; }
+  .meter .mlab { display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 12px; font-weight: 700; color: #12333D; margin-bottom: 4px; }
+  .meter .mlab .v { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 12px; }
+  .meter .mlab .sub { font-weight: 600; color: #94A7AD; font-size: 10.5px; }
+  .track { height: 11px; background: #EAF0F0; border-radius: 6px; overflow: hidden; }
+  .fill { height: 100%; width: 0; border-radius: 6px; transition: width .28s ease; }
+  .fill.click { background: linear-gradient(90deg, #1F8F89, #33D3CB); }
+  .fill.detect { background: linear-gradient(90deg, #E07A7A, #D64545); }
+
+  .verdict { border-radius: 9px; padding: 10px 12px; font-size: 13px; font-weight: 700; line-height: 1.4; }
+  .verdict.weak { background: #EEF3F3; color: #5C7880; border: 1px solid #E0E7E8; }
+  .verdict.mixed { background: rgba(242,210,0,.12); color: #8A7400; border: 1px solid rgba(242,210,0,.4); }
+  .verdict.caught { background: rgba(31,143,137,.12); color: #146d68; border: 1px solid rgba(31,143,137,.4); }
+  .verdict.danger { background: rgba(214,69,69,.11); color: #B23333; border: 1px solid rgba(214,69,69,.4); }
+
+  .defender { background: #FBFcFc; border: 1px solid #E0E7E8; border-left: 4px solid #D64545;
+    border-radius: 9px; padding: 10px 12px; }
+  .defender h4 { margin: 0 0 6px; font-size: 11px; font-weight: 800; letter-spacing: .12em;
+    text-transform: uppercase; color: #B23333; }
+  .defender ul { margin: 0; padding-left: 16px; }
+  .defender li { font-size: 12px; color: #42606A; margin: 3px 0; line-height: 1.4; }
+  .defender .clean { font-size: 12px; color: #146d68; font-weight: 700; }
+
+  .lesson { grid-column: 1 / -1; font-size: 12px; color: #42606A; line-height: 1.45;
+    border-top: 1px dashed #CDD8DA; padding-top: 9px; margin-top: 1px; }
+  .lesson b { color: #D64545; }
+</style>
+</head><body>
+<div class="lab">
+
+  <!-- ===== Victim's inbox ===== -->
+  <div class="mailwrap">
+    <div class="mail-toolbar">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="tb-label mono">Inbox — 1 new message</span>
+    </div>
+    <div class="mail-head">
+      <div class="mail-subject" id="subj"></div>
+      <div class="mail-from">
+        <div class="avatar" id="avatar">F</div>
+        <div>
+          <div class="from-name" id="fromName"></div>
+          <div class="from-addr mono" id="fromAddr"></div>
+          <div class="to-line mono">to: you@your-company.com</div>
+        </div>
+      </div>
+    </div>
+    <div id="brandbar"></div>
+    <div class="mail-body">
+      <div class="greet" id="greet"></div>
+      <p id="body1"></p>
+      <div id="expire"></div>
+      <a class="cta" id="cta">Review Offer &amp; Confirm</a>
+      <div class="sig">Best regards,<br>Recruitment Team · Falcon Talent</div>
+    </div>
+    <div class="statusbar mono" id="status"></div>
+  </div>
+
+  <!-- ===== Attacker console ===== -->
+  <div class="panel">
+    <div>
+      <div class="phead">You are the attacker · build the lure</div>
+      <div class="toggles" id="toggles"></div>
+    </div>
+
+    <div class="meters">
+      <div class="meter">
+        <div class="mlab"><span>Victim click-likelihood <span class="sub">(you want this high)</span></span><span class="v" id="clickV">0%</span></div>
+        <div class="track"><div class="fill click" id="clickFill"></div></div>
+      </div>
+      <div class="meter">
+        <div class="mlab"><span>Filter &amp; red-flag score <span class="sub">(defence catches you)</span></span><span class="v" id="detectV">0%</span></div>
+        <div class="track"><div class="fill detect" id="detectFill"></div></div>
+      </div>
+    </div>
+
+    <div class="verdict weak" id="verdict"></div>
+
+    <div class="defender">
+      <h4>What a defender / filter notices</h4>
+      <div id="flags"></div>
+    </div>
+  </div>
+
+  <div class="lesson" id="lesson"></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+
+  // Each lure technique: click-lift, detectability-lift, and the tell it leaves.
+  var TECHS = [
+    { id: "spoof",     label: "Display-name spoof",  click: 14, detect: 18,
+      flag: "From-name looks corporate, but the address behind it doesn't match." },
+    { id: "lookalike", label: "Look-alike domain",   click: 12, detect: 16,
+      flag: "Sender domain is a homoglyph — falcon-ta1ent.com uses “1” for “l”." },
+    { id: "urgency",   label: "Urgency / deadline",  click: 14, detect: 14,
+      flag: "Pressure language (“expires in 24h”) — a classic manipulation tell." },
+    { id: "brand",     label: "Brand styling",       click: 12, detect: 4,
+      flag: null },
+    { id: "personal",  label: "Personalise (OSINT)", click: 28, detect: 2, osint: true,
+      flag: null },
+    { id: "masked",    label: "Masked link",         click: 10, detect: 22,
+      flag: "Button text ≠ real destination — it points to a .ru login page." }
+  ];
+  var BASE_CLICK = 6, BASE_DETECT = 4;
+
+  var state = {};
+  TECHS.forEach(function (t) { state[t.id] = false; });
+
+  // ?on=personal,urgency  — preset toggles for screenshots / presenter jumps.
+  var on = new URLSearchParams(location.search).get("on");
+  if (on) on.split(",").forEach(function (id) { if (id in state) state[id] = true; });
+
+  // Build toggle buttons.
+  var tg = $("toggles");
+  TECHS.forEach(function (t) {
+    var b = document.createElement("button");
+    b.className = "tog" + (t.osint ? " osint" : "");
+    b.innerHTML = t.label + (t.osint ? '<span class="tag">low-detect</span>' : "");
+    b.addEventListener("click", function () { state[t.id] = !state[t.id]; render(); });
+    b.dataset.id = t.id;
+    tg.appendChild(b);
+  });
+
+  function realURL() {
+    return state.masked ? "http://falcon-ta1ent-offer.ru/secure-login"
+                        : "http://falcontalent.com/careers/offer";
+  }
+
+  function render() {
+    // ---- toggle button states
+    Array.prototype.forEach.call(tg.children, function (b) {
+      b.classList.toggle("on", !!state[b.dataset.id]);
+    });
+
+    // ---- sender identity
+    $("fromName").textContent = state.spoof ? "Falcon Talent — Talent Acquisition" : "falcon.talent.hr";
+    var addr = state.lookalike ? "hr@falcon-ta1ent.com" : "falcontalent.hr@gmail.com";
+    var mismatch = state.spoof; // corporate-looking name over a non-matching address
+    $("fromAddr").innerHTML = "&lt;" + addr + "&gt;" +
+      (mismatch ? ' <span class="warn">⚠ name ≠ address</span>' : "");
+    $("avatar").textContent = state.brand ? "FT" : "F";
+
+    // ---- subject
+    $("subj").textContent = (state.urgency ? "[Action required] " : "") +
+      "Software Engineer offer — Falcon Talent" + (state.urgency ? " (respond in 24h)" : "");
+
+    // ---- brand banner
+    $("brandbar").innerHTML = state.brand
+      ? '<div class="brandbar"><div class="mark">F</div><div class="bn">FALCON TALENT<small>Connecting talent with opportunity</small></div></div>'
+      : "";
+
+    // ---- greeting (personalised via OSINT vs generic)
+    $("greet").textContent = state.personal ? "Dear Fadhel Al-Obaidi," : "Dear Applicant,";
+    $("body1").innerHTML = state.personal
+      ? "We came across your GitHub (<b>obaidiDev</b>) and were impressed by your React and security projects. We'd like to fast-track you for the Software Engineer role and confirm a few details before scheduling your interview."
+      : "We are hiring for a Software Engineer position and would like to move your application forward. Please confirm your details so we can schedule an interview.";
+    // (bold-ish emphasis without real <b> semantics)
+    $("body1").innerHTML = $("body1").innerHTML.replace("<b>", '<span style="font-weight:700;color:#12333D">').replace("</b>", "</span>");
+
+    // ---- urgency block
+    $("expire").innerHTML = state.urgency
+      ? '<div class="expire">⏳ This offer expires in 24 hours. Confirm now to keep your slot.</div>'
+      : "";
+
+    // ---- meters
+    var c = BASE_CLICK, d = BASE_DETECT;
+    TECHS.forEach(function (t) { if (state[t.id]) { c += t.click; d += t.detect; } });
+    c = Math.min(100, c); d = Math.min(100, d);
+    $("clickFill").style.width = c + "%"; $("detectFill").style.width = d + "%";
+    $("clickV").textContent = c + "%"; $("detectV").textContent = d + "%";
+
+    // ---- verdict (the payoff insight — not a quiz)
+    var v = $("verdict"), cls, msg;
+    if (c < 30)        { cls = "weak";   msg = "Weak lure — few victims would act. Add believability."; }
+    else if (d >= 45)  { cls = "caught"; msg = "Loud: convincing, but it trips filters. Bulk-phish territory — most copies get quarantined before anyone reads them."; }
+    else if (d < 28)   { cls = "danger"; msg = "Dangerous: convincing AND it slips the filters. This is spear-phishing — the kind that actually lands."; }
+    else               { cls = "mixed";  msg = "Effective, but it leaves tells a trained eye catches. One loud trick away from the spam folder."; }
+    v.className = "verdict " + cls; v.textContent = msg;
+
+    // ---- defender panel
+    var tells = TECHS.filter(function (t) { return state[t.id] && t.flag; });
+    if (tells.length) {
+      $("flags").innerHTML = "<ul>" + tells.map(function (t) {
+        return "<li>" + t.flag + "</li>"; }).join("") + "</ul>";
+    } else {
+      $("flags").innerHTML = '<div class="clean">No obvious technical tells — this would slip most filters. Only a careful human would hesitate.</div>';
+    }
+  }
+
+  // Browser-style status bar reveals the true link on hover (masked-link tell).
+  var cta = $("cta");
+  cta.addEventListener("mouseenter", function () {
+    $("status").textContent = realURL(); $("status").classList.add("show");
+  });
+  cta.addEventListener("mouseleave", function () { $("status").classList.remove("show"); });
+  cta.addEventListener("click", function (e) { e.preventDefault(); });
+
+  render();
+
+  // Screenshot / presenter hook: ?lesson=1 highlights the takeaway line already shown.
+  $("lesson").innerHTML =
+    "The one trick that buys the most believability for the <b>fewest</b> red flags is " +
+    "<b>personalisation</b> — and every personal detail comes straight from the OSINT recon " +
+    "you did earlier today. That's why targeted <b>spear-phishing</b> beats spray-and-pray.";
+})();
+</script>
+</body></html>
