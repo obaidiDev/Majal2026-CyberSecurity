@@ -7,6 +7,32 @@
   <link rel="stylesheet" href="../shared/dist/reset.css">
   <link rel="stylesheet" href="../shared/dist/reveal.css">
   <link rel="stylesheet" href="../shared/css/course.css?v=5">
+  <style>
+    /* Day-2 concept slides — native cards/grids */
+    .k2 { display: grid; gap: 14px; margin-top: .3em; }
+    .k2.c2 { grid-template-columns: 1fr 1fr; }
+    .k2.c3 { grid-template-columns: repeat(3,1fr); }
+    .k2.c5 { grid-template-columns: repeat(5,1fr); }
+    .k2 .card h3 { margin: 0 0 .3em; font-size: .82em; color: var(--petrol); letter-spacing: -.01em; }
+    .k2 .card h3 .tag { font-family: var(--mono); font-size: .58em; font-weight: 700; color: var(--muted);
+      letter-spacing: .05em; text-transform: uppercase; margin-left: .4em; }
+    .k2 .card p { margin: 0; font-size: .64em; color: var(--muted); line-height: 1.42; }
+    .k2 .card .ex { display: block; margin-top: .55em; font-size: .6em; color: var(--slate);
+      border-top: 1px dashed var(--line); padding-top: .45em; }
+    .k2 .card .ex b { color: var(--petrol); font-weight: 700; }
+    .k2.lev .card { border-top-color: var(--yellow); }
+    .k2.lev .card h3 { color: var(--ink); }
+    /* initial-access vector rows */
+    .vecs { margin-top: .4em; }
+    .vec { display: grid; grid-template-columns: 210px 1fr; gap: 16px; align-items: baseline;
+      padding: .42em 0; border-bottom: 1px solid var(--line); }
+    .vec:last-child { border-bottom: 0; }
+    .vec .vname { font-weight: 800; color: var(--petrol); font-size: .82em; }
+    .vec .vname .most { font-family: var(--mono); font-size: .56em; color: var(--good); font-weight: 700;
+      letter-spacing: .04em; display: block; margin-top: .15em; }
+    .vec .vd { font-size: .72em; color: var(--muted); line-height: 1.4; }
+    .vec .vd b { color: var(--ink); font-weight: 700; }
+  </style>
 </head>
 <body>
 <div class="reveal">
@@ -38,6 +64,33 @@
       envelope (deliver), a door lock (foothold), a corridor (move through). Land the through-line: recon feeds
       delivery — the more they know, the better the lure. Sets up why OSINT matters before we phish.
       (Stage photos: CC0 / public-domain via Openverse, petrol-duotoned.)</aside>
+    </section>
+
+    <!-- ================= RECON & OSINT — DEFINED ================= -->
+    <section>
+      <p class="kicker">Recon · gathering intel</p>
+      <h2>Reconnaissance: learn the target before you touch it</h2>
+      <div class="k2 c2">
+        <div class="card">
+          <h3>Passive <span class="tag">no contact</span></h3>
+          <p>You only read what's <strong>already public</strong> — the target never sees you. Google &amp; dorking,
+          social media, breach dumps, WHOIS/DNS, job posts, GitHub. Invisible, unlimited, and almost always legal.</p>
+          <span class="ex"><b>Example:</b> finding an employee's email pattern and tech stack from LinkedIn + a leaked PDF.</span>
+        </div>
+        <div class="card" style="border-top-color:var(--bad)">
+          <h3>Active <span class="tag">you touch it</span></h3>
+          <p>You <strong>interact</strong> with the target's systems — port scans, banner grabbing, probing logins.
+          Faster and far richer, but it hits their servers, can be <strong>logged</strong>, and is illegal without permission.</p>
+          <span class="ex"><b>Example:</b> port-scanning a company's IP to see which services (SSH, RDP, web) are exposed.</span>
+        </div>
+      </div>
+      <div class="callout" style="margin-top:1em"><strong>OSINT = Open-Source INTelligence:</strong> intelligence built from
+      publicly available sources. Most recon is passive OSINT — and it's astonishing how much is simply <em>there</em>, waiting.</div>
+      <div class="callout hot" style="margin-top:.55em"><strong>The line:</strong> passive OSINT on public data is generally legal;
+      active scanning without authorisation is not. This week you only touch systems you've been given.</div>
+      <aside class="notes">Ground the next two tools. The key distinction is passive vs active: passive never touches the
+      target (can't get you in trouble, can't be seen); active does (logged, needs permission). The dork builder and the
+      footprint slide are both passive OSINT. Land the surprise: the volume of passive intel is the attacker's real edge.</aside>
     </section>
 
     <!-- ================= RECON / GOOGLE DORKING ================= -->
@@ -72,6 +125,40 @@
       every card has a "shrink it" fix. This is the defender's mindset sneaking into the attacker's week.</aside>
     </section>
 
+    <!-- ================= SOCIAL ENGINEERING — LEVERS ================= -->
+    <section>
+      <p class="kicker">Deliver · the human exploit</p>
+      <h2>Social engineering: hack the person, not the machine</h2>
+      <div class="callout"><strong>Social engineering</strong> = manipulating people into breaking security —
+      handing over information, clicking a link, or granting access. No firewall stops it, because it targets <em>trust</em>.
+      Every lure below pulls one or more of these five levers.</div>
+      <div class="k2 c5 lev" style="margin-top:.7em">
+        <div class="card"><h3>Authority</h3><p>We obey people who seem in charge.</p><span class="ex">&ldquo;This is IT — reset your password now.&rdquo;</span></div>
+        <div class="card"><h3>Urgency</h3><p>A deadline stops us thinking.</p><span class="ex">&ldquo;Your account closes in 24 hours.&rdquo;</span></div>
+        <div class="card"><h3>Scarcity</h3><p>Fear of missing out overrides caution.</p><span class="ex">&ldquo;Only 3 offer slots left.&rdquo;</span></div>
+        <div class="card"><h3>Familiarity</h3><p>We trust the known — a brand, a colleague.</p><span class="ex">&ldquo;Hi, it's Sara from Finance…&rdquo;</span></div>
+        <div class="card"><h3>Fear</h3><p>Panic makes us act, then verify.</p><span class="ex">&ldquo;Suspicious login — secure your account.&rdquo;</span></div>
+      </div>
+      <div class="callout hot" style="margin-top:.8em"><strong>Phishing is social engineering at scale.</strong>
+      When you build a lure in two slides' time, notice which levers you're pulling — and why they work on all of us.</div>
+      <aside class="notes">The umbrella concept before phishing. Land: social engineering targets trust, not tech — which is
+      why it beats every firewall. Walk the five levers fast; they'll recognise all of them from real messages. Point
+      forward: phishing = these levers delivered by message, at scale. Ask the room which lever fooled them last.</aside>
+    </section>
+
+    <!-- ================= PHISHING — DEFINED + TYPES ================= -->
+    <section>
+      <p class="kicker">Deliver · phishing</p>
+      <h2>Phishing: one con, many delivery channels</h2>
+      <iframe class="wframe" style="height:566px"
+              src="widgets/phishing_types.html?v=1"
+              title="Types of phishing with examples" scrolling="auto"></iframe>
+      <aside class="notes">Definition first: phishing is a fraudulent message impersonating someone you trust to make you
+      click, log in, or pay. Then the taxonomy — click each type to see a real-looking example with its red flags called out.
+      Land the axes: it's the same con delivered by email / SMS / voice, and it scales from bulk (spray-and-pray) to
+      targeted (spear, whaling, BEC — where the OSINT from earlier pays off). These examples set up the lure they build next.</aside>
+    </section>
+
     <!-- ================= PHISHING / BUILD-A-LURE ================= -->
     <section>
       <p class="kicker">Deliver · social engineering</p>
@@ -85,6 +172,29 @@
       jumps, red-flag score barely moves. That's the lesson — the detail that makes a lure land came from the recon
       they'll do earlier in the day. Hover the button to expose the real link (masked-link tell).
       Land it: this is why <em>spear</em>-phishing beats spray-and-pray, and why your public footprint is the ammunition.</aside>
+    </section>
+
+    <!-- ================= INITIAL-ACCESS LANDSCAPE ================= -->
+    <section>
+      <p class="kicker">Foothold · the ways in</p>
+      <h2>Initial access: how attackers really get in</h2>
+      <div class="vecs">
+        <div class="vec"><div class="vname">Phishing<span class="most">most common</span></div>
+          <div class="vd">Trick a human into clicking, logging in, or running your file. <b>You just saw how the lure is built.</b></div></div>
+        <div class="vec"><div class="vname">Valid accounts<span class="most">stolen / reused creds</span></div>
+          <div class="vd">Log in with passwords that were <b>leaked, reused, or bought</b> — the account from your footprint cascade.</div></div>
+        <div class="vec"><div class="vname">Public-facing exploit</div>
+          <div class="vd">Fire a <b>known CVE</b> at an internet-exposed app or service that was never patched.</div></div>
+        <div class="vec"><div class="vname">Default &amp; weak creds</div>
+          <div class="vd"><b>admin / admin</b> on a device, panel, or database that was never changed.</div></div>
+        <div class="vec"><div class="vname">Exposed remote services</div>
+          <div class="vd">RDP, SSH, or a VPN left <b>open to the whole internet</b> — an open door waiting to be tried.</div></div>
+      </div>
+      <div class="callout hot" style="margin-top:.9em"><strong>Notice what's <em>not</em> here:</strong> movie-style &ldquo;hacking.&rdquo;
+      Initial access is mostly <em>logging in</em> and <em>known holes</em> — which is exactly what you'll drive in the console next.</div>
+      <aside class="notes">The landscape before the console. These are the real initial-access vectors (they map to MITRE
+      ATT&CK's Initial Access tactic — mention, don't deep-dive). The through-line to land: none of this is movie hacking;
+      it's logins and unpatched boxes. The next slide lets them drive three of these and watch defences block each one.</aside>
     </section>
 
     <!-- ================= LAND THE FIRST SHELL ================= -->
