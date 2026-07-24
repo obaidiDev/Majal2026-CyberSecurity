@@ -125,35 +125,17 @@
     <!-- ================= WEAPONISE — PAYLOAD TYPES ================= -->
     <section>
       <p class="kicker">Weaponise · build the payload</p>
-      <h2>Weaponise: turn intel into something that acts</h2>
-      <div class="k2 c4" style="margin-top:.7em">
-        <div class="card">
-          <h3>Credential harvester</h3>
-          <p>A fake login page. They &ldquo;sign in&rdquo; — you get the password.</p>
-          <span class="ex">The #1 phishing payload.</span>
-        </div>
-        <div class="card">
-          <h3>Malicious attachment</h3>
-          <p>A doc, installer, or ISO that runs code the moment it's opened.</p>
-          <span class="ex">Macro doc · fake setup · .lnk</span>
-        </div>
-        <div class="card">
-          <h3>Malicious link</h3>
-          <p>One click to an exploit page — or to the harvester above.</p>
-          <span class="ex">Often hidden behind a short URL.</span>
-        </div>
-        <div class="card">
-          <h3>Malicious QR <span class="tag">quishing</span></h3>
-          <p>A QR hides the URL, so no one checks where it really goes.</p>
-          <span class="ex">Posters, fake parking meters, emails.</span>
-        </div>
-      </div>
-      <div class="callout hot" style="margin-top:1.1em">The best weapon is <strong>believable</strong> and
-      <strong>evasive</strong> — it looks normal and slips filters. That's exactly what you'll tune in the lure, next.</div>
-      <aside class="notes">The missing kill-chain stage: weaponise = packaging intel into a payload the target will trust
-      and run. Four families — a credential harvester (fake login, the most common), a malicious attachment (runs code),
-      a malicious link, and a malicious QR (quishing). Don't dwell; the point is what the lure CARRIES. It sets up the
-      believable-vs-evasive tension they'll drive in the phishing lab two slides on.</aside>
+      <h2>Weaponise: the payload the lure carries</h2>
+      <iframe class="wframe" style="height:566px"
+              src="widgets/weaponise.html?v=1"
+              title="Payload types — interactive examples" scrolling="auto"></iframe>
+      <aside class="notes">The missing kill-chain stage: weaponise = the payload the lure carries. Drive each tab live:
+      (1) Credential harvester — type in the fake login, watch every keystroke mirror to the attacker's console;
+      (2) Malicious attachment — click "Enable Content" and the hidden macro runs a reverse shell (then flip the
+      "macros blocked" toggle and it dies); (3) Malicious link — hover the Google-looking link to expose the real
+      g00gle-drive.ru destination, and expand a short URL; (4) Malicious QR — you can't read it by eye; "scan" it to
+      reveal the phishing domain. The through-line: a payload must be believable AND evasive — the tension they tune in
+      the lure next.</aside>
     </section>
 
     <!-- ================= SOCIAL ENGINEERING — LEVERS ================= -->
