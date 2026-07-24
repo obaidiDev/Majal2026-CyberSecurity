@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding: 6px 8px; }
+  .w { padding: 12px 14px; }
+  .lay { display: grid; grid-template-columns: 1fr 360px; gap: 14px; align-items: start; }
+  .scanwrap { position: relative; border: 1px solid #E0E7E8; border-radius: 10px; background: #fff; padding: 12px; }
+  .thost { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .thost .ip { font-family: var(--mono, monospace); font-weight: 800; color: #00567C; font-size: 15px; }
+  .thost .sub { font-size: 11.5px; color: #7a8f96; }
+  .thost .fwbadge { margin-left: auto; font-family: var(--mono,monospace); font-size: 10.5px; font-weight: 800;
+    padding: .25em .6em; border-radius: 999px; letter-spacing: .03em; }
+  .fwbadge.off { background: #F1F5F5; color: #8496a0; } .fwbadge.on { background: #FBF3D6; color: #8a6d00; }
+  .grid { position: relative; display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .cell { position: relative; border-radius: 6px; text-align: center; padding: 7px 2px 6px; border: 1px solid #E6ECEC;
+    background: #F4F7F7; transition: background .18s, border-color .18s, color .18s, transform .18s; }
+  .cell .pn { font-family: var(--mono,monospace); font-size: 12px; font-weight: 800; color: #5C7880; }
+  .cell .sv { display: block; font-size: 8.5px; color: #93a4aa; margin-top: 1px; min-height: 10px; letter-spacing: .01em; }
+  .cell.unknown { border-style: dashed; color: #b7c3c6; }
+  .cell.closed { background: #F1F4F4; border-color: #E6ECEC; opacity: .55; }
+  .cell.open { background: #1F8F89; border-color: #1F8F89; transform: translateY(-1px); box-shadow: 0 2px 7px rgba(31,143,137,.28); }
+  .cell.open .pn { color: #fff; } .cell.open .sv { color: #d6f2ef; font-weight: 700; }
+  .cell.filtered { background: #FBF3D6; border-color: #EBD98A; }
+  .cell.filtered .pn { color: #8a6d00; } .cell.filtered .sv { color: #a98a1f; }
+  .sweep { position: absolute; top: 0; bottom: 0; width: 3px; background: linear-gradient(#33D3CB,#00567C);
+    box-shadow: 0 0 12px 3px rgba(51,211,203,.55); border-radius: 3px; opacity: 0; pointer-events: none; }
+  .res { border: 1px solid #E0E7E8; border-radius: 10px; background: #fff; padding: 10px 11px; }
+  .res h4 { margin: 0 0 7px; font-size: 11px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: #5C7880; }
+  table.nm { width: 100%; border-collapse: collapse; font-family: var(--mono, monospace); font-size: 11px; }
+  table.nm th { text-align: left; color: #93a4aa; font-weight: 700; font-size: 9.5px; text-transform: uppercase;
+    letter-spacing: .05em; padding: 0 4px 4px; border-bottom: 1px solid #E6ECEC; }
+  table.nm td { padding: 3px 4px; border-bottom: 1px solid #F0F4F4; vertical-align: top; }
+  table.nm td.p { color: #00567C; font-weight: 700; } table.nm td.s { color: #1F8F89; font-weight: 700; }
+  table.nm td.v { color: #7a8f96; }
+  table.nm tr td.note { font-family: var(--sans); font-size: 9.5px; color: #a06a2a; padding-top: 0; padding-bottom: 6px; }
+  .res .empty { color: #a8b6bb; font-style: italic; font-size: 12px; text-align: center; padding: 14px 0; }
+  .cap { min-height: 40px; }
+</style>
+</head><body>
+<div class="w">
+  <div class="lay">
+    <div class="scanwrap">
+      <div class="thost">
+        <span class="ip">192.168.1.5</span>
+        <span class="sub">File server · 65,535 possible ports</span>
+        <span class="fwbadge off" id="fwb">firewall: off</span>
+      </div>
+      <div class="grid" id="grid"><div class="sweep" id="sweep"></div></div>
+    </div>
+    <div class="res">
+      <h4>Scan results (open ports = live services)</h4>
+      <table class="nm"><thead><tr><th>Port</th><th>Service</th><th>Version</th></tr></thead>
+        <tbody id="nmbody"><tr><td colspan="3" class="empty">— not scanned yet —</td></tr></tbody></table>
+    </div>
+  </div>
+  <div class="cap" id="cap">A machine has one IP but <b>65,535 ports</b>. Each <em>listening</em> port is a running service — a door.
+    <b>Scan</b> to find which doors are open.</div>
+  <div class="ctl">
+    <button class="primary" id="scan">▶ Scan common ports</button>
+    <button id="fw">Toggle firewall</button>
+    <button id="reset">↺ Reset</button>
+  </div>
+</div>
+<script>
+// Common ports on this target. open:true → a live service. note → why the attacker cares.
+var PORTS = [
+  {p:21,  s:"ftp"},        {p:22,  s:"ssh",   open:1, v:"OpenSSH 8.2",  note:"remote login → credential attack"},
+  {p:23,  s:"telnet"},     {p:25,  s:"smtp"},
+  {p:53,  s:"dns"},        {p:80,  s:"http",  open:1, v:"nginx 1.18",   note:"web app → Day 4"},
+  {p:110, s:"pop3"},
+  {p:111, s:"rpcbind"},    {p:135, s:"msrpc"},        {p:139, s:"netbios"},   {p:143, s:"imap"},
+  {p:389, s:"ldap"},       {p:443, s:"https", open:1, v:"nginx 1.18",   note:"web app → Day 4"},
+  {p:445, s:"smb",   open:1, v:"Samba 4.13", note:"file shares → lateral movement", sens:1},
+  {p:993, s:"imaps"},      {p:995, s:"pop3s"},        {p:1433,s:"mssql"},
+  {p:3306,s:"mysql", open:1, v:"MySQL 8.0",  note:"database → the crown jewels", sens:1},
+  {p:3389,s:"rdp",   open:1, v:"ms-wbt",     note:"remote desktop → lateral movement", sens:1},
+  {p:5432,s:"pgsql"},      {p:5900,s:"vnc"},          {p:6379,s:"redis"},
+  {p:8080,s:"http-alt"},   {p:8443,s:"https-alt"},    {p:9200,s:"elastic"},   {p:27017,s:"mongo"}
+];
+// on this target's SSH we also need 22 sensitive under firewall
+PORTS.forEach(function(o){ if(o.p===22) o.sens=1; });
+
+var grid = document.getElementById("grid"), sweep = document.getElementById("sweep");
+var cells = [];
+PORTS.forEach(function(o,i){
+  var c = document.createElement("div"); c.className="cell unknown";
+  c.innerHTML = '<span class="pn">'+o.p+'</span><span class="sv"></span>';
+  grid.appendChild(c); cells.push(c);
+});
+
+var fwOn = false, scanning = false, timer = null;
+function fwBadge(){ var b=document.getElementById("fwb"); b.className="fwbadge "+(fwOn?"on":"off");
+  b.textContent = "firewall: "+(fwOn?"on":"off"); }
+function stateOf(o){
+  if(o.open){ if(fwOn && o.sens) return "filtered"; return "open"; }
+  return "closed";
+}
+function resetCells(){
+  cells.forEach(function(c){ c.className="cell unknown";
+    c.querySelector(".sv").textContent=""; });
+  document.getElementById("nmbody").innerHTML='<tr><td colspan="3" class="empty">— not scanned yet —</td></tr>';
+  sweep.style.opacity=0;
+}
+function resolveCell(i){
+  var o=PORTS[i], c=cells[i], st=stateOf(o);
+  c.className="cell "+st;
+  c.querySelector(".sv").textContent = st==="open" ? o.s : (st==="filtered" ? "filtered" : "");
+}
+function buildTable(){
+  var open = PORTS.filter(function(o){ return stateOf(o)==="open"; });
+  var filt = PORTS.filter(function(o){ return stateOf(o)==="filtered"; });
+  var body = document.getElementById("nmbody"); body.innerHTML="";
+  open.forEach(function(o){
+    var tr=document.createElement("tr");
+    tr.innerHTML='<td class="p">'+o.p+'/tcp</td><td class="s">'+o.s+'</td><td class="v">'+o.v+'</td>';
+    body.appendChild(tr);
+    var nr=document.createElement("tr");
+    nr.innerHTML='<td></td><td colspan="2" class="note">↳ '+o.note+'</td>';
+    body.appendChild(nr);
+  });
+  if(filt.length){
+    var tr=document.createElement("tr");
+    tr.innerHTML='<td colspan="3" class="note" style="color:#8a6d00;padding-top:6px">'+filt.length+
+      ' port(s) <b>filtered</b> — firewall dropped the probe (you can\'t tell what\'s behind).</td>';
+    body.appendChild(tr);
+  }
+  if(!open.length && !filt.length) body.innerHTML='<tr><td colspan="3" class="empty">no open ports found</td></tr>';
+}
+function setCap(done){
+  var cap=document.getElementById("cap");
+  if(!done){ cap.innerHTML='Probing all common ports…'; return; }
+  var open=PORTS.filter(function(o){return stateOf(o)==="open";}).length;
+  if(fwOn) cap.innerHTML='Firewall on: the sensitive services (<b>SSH, SMB, RDP, MySQL</b>) now answer <em>nothing</em> — '+
+    '<b>filtered</b>. Only the public web ports (80/443) still show. <span class="good">Fewer doors = smaller attack surface.</span>';
+  else cap.innerHTML='<b>'+open+' open ports</b> = '+open+' running services. Each is a way in — and each maps to an attack: '+
+    'SSH→login, SMB/RDP→<em>lateral movement</em>, MySQL→data, HTTP(S)→Day&nbsp;4.';
+}
+
+// columns resolve left→right as the sweep passes (7 columns)
+var COLS=7, ROWS=Math.ceil(PORTS.length/COLS);
+function runScan(){
+  if(scanning) return; scanning=true; resetCells();
+  document.getElementById("scan").disabled=true; setCap(false);
+  sweep.style.opacity=1;
+  var gw = grid.clientWidth, colStep = gw/COLS, dur=1900, t0=0, resolvedCols=0;
+  function frame(ts){
+    if(!t0) t0=ts; var p=Math.min(1,(ts-t0)/dur);
+    var x = p*gw; sweep.style.left = Math.min(gw-3,x)+"px";
+    var reachedCol = Math.floor(x/colStep);
+    while(resolvedCols<=reachedCol && resolvedCols<COLS){
+      for(var r=0;r<ROWS;r++){ var idx=r*COLS+resolvedCols; if(idx<PORTS.length) resolveCell(idx); }
+      resolvedCols++;
+    }
+    if(p<1){ requestAnimationFrame(frame); }
+    else { for(var i=0;i<PORTS.length;i++) resolveCell(i); sweep.style.opacity=0;
+      buildTable(); setCap(true); scanning=false; document.getElementById("scan").disabled=false; }
+  }
+  requestAnimationFrame(frame);
+}
+function showFinal(){ // instant, for screenshots / firewall re-toggle after a scan
+  for(var i=0;i<PORTS.length;i++) resolveCell(i); buildTable(); setCap(true); sweep.style.opacity=0;
+}
+
+document.getElementById("scan").onclick=runScan;
+document.getElementById("fw").onclick=function(){ fwOn=!fwOn; fwBadge();
+  // if already scanned, update live; else just flip the badge
+  var scanned = cells.some(function(c){ return !c.classList.contains("unknown"); });
+  if(scanned && !scanning) showFinal();
+};
+document.getElementById("reset").onclick=function(){ if(scanning)return; resetCells();
+  document.getElementById("cap").innerHTML='A machine has one IP but <b>65,535 ports</b>. Each <em>listening</em> port is a running service — a door. <b>Scan</b> to find which doors are open.'; };
+
+// hooks: ?scan=done shows final state; ?fw=1 starts with firewall on
+if(/fw=1/.test(location.search)){ fwOn=true; fwBadge(); }
+if(/scan=done/.test(location.search)){ showFinal(); }
+</script>
+</body></html>

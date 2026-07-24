@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Majal — Cyber Day 3: Moving Through</title>
+  <link rel="stylesheet" href="../shared/dist/reset.css">
+  <link rel="stylesheet" href="../shared/dist/reveal.css">
+  <link rel="stylesheet" href="../shared/css/course.css?v=5">
+  <style>
+    /* Day-3 concept slides — native cards/grids (shared vocab with Day 2) */
+    .k2 { display: grid; gap: 14px; margin-top: .3em; }
+    .k2.c2 { grid-template-columns: 1fr 1fr; }
+    .k2.c3 { grid-template-columns: repeat(3,1fr); }
+    .k2.c4 { grid-template-columns: repeat(4,1fr); }
+    .k2.c5 { grid-template-columns: repeat(5,1fr); }
+    .k2 .card h3 { margin: 0 0 .3em; font-size: .82em; color: var(--petrol); letter-spacing: -.01em; }
+    .k2 .card h3 .tag { font-family: var(--mono); font-size: .58em; font-weight: 700; color: var(--muted);
+      letter-spacing: .05em; text-transform: uppercase; margin-left: .4em; }
+    .k2 .card p { margin: 0; font-size: .64em; color: var(--muted); line-height: 1.42; }
+    .k2 .card .ex { display: block; margin-top: .55em; font-size: .6em; color: var(--slate);
+      border-top: 1px dashed var(--line); padding-top: .45em; }
+    .k2 .card .ex b { color: var(--petrol); font-weight: 700; }
+
+    /* Protocol map — the TCP/IP stack with real protocols slotted onto Day 1's layers */
+    .pstack { display: flex; flex-direction: column; gap: 8px; margin-top: .45em; }
+    .player { display: grid; grid-template-columns: 200px 1fr 250px; align-items: center; gap: 18px;
+      background: var(--panel); border: 1px solid var(--line); border-left: 5px solid var(--edge, var(--petrol));
+      border-radius: 3px; padding: .42em .9em; }
+    .player .lname { font-weight: 800; color: var(--ink); font-size: .82em; line-height: 1.15; }
+    .player .lname small { display: block; font-family: var(--mono); font-size: .56em; font-weight: 700;
+      color: var(--muted); letter-spacing: .04em; text-transform: uppercase; margin-top: .2em; }
+    .player .prots { display: flex; gap: 7px; flex-wrap: wrap; }
+    .player .prot { font-family: var(--mono); font-weight: 700; font-size: .66em; color: #fff;
+      background: var(--edge, var(--petrol)); border-radius: 999px; padding: .22em .7em; letter-spacing: .02em; }
+    .player .job { font-size: .68em; color: var(--muted); line-height: 1.35; }
+    .player .job b { color: var(--ink); font-weight: 700; }
+    .player.app  { --edge: var(--teal); }
+    .player.tran { --edge: var(--petrol); }
+    .player.net  { --edge: #7a5cc4; }
+    .player.link { --edge: var(--muted); }
+  </style>
+</head>
+<body>
+<div class="reveal">
+  <div class="slides">
+
+    <!-- ================= TITLE ================= -->
+    <section>
+      <p class="kicker">Day 3 · Moving Through</p>
+      <h1>One foothold isn't the prize —<br>the network is.</h1>
+      <p class="sub" style="margin-top:1.2em;max-width:25em">Yesterday you landed a single shell. Today you turn it into
+      control of everything reachable. But first you have to speak the network's <em>language</em> — the real protocols
+      underneath Day&nbsp;1's diagrams. <strong>Learn the mechanism, then watch each one become a way through.</strong></p>
+      <aside class="notes">Frame the two acts. ACT 1: the network's language — the concrete protocols (ARP, ports/TCP/UDP,
+      DNS, HTTP/TLS) that Day 1 deliberately left as a cartoon. ACT 2: moving through — every attack today weaponises a
+      protocol they just learned. The spine of the day: learn the mechanism, then abuse it. They are still the attacker
+      (Day 2's role), now inside the network with one low-privilege shell, aiming for the whole domain.</aside>
+    </section>
+
+    <!-- ================= ACT 1 · PROTOCOL MAP ================= -->
+    <section>
+      <p class="kicker">Act 1 · the network's language</p>
+      <h2>Day 1 gave you the layers — here are the real protocols</h2>
+      <div class="pstack">
+        <div class="player app">
+          <div class="lname">Application<small>Layer 7</small></div>
+          <div class="prots"><span class="prot">HTTP/S</span><span class="prot">DNS</span><span class="prot">SSH</span><span class="prot">RDP</span></div>
+          <div class="job">What you actually use — <b>pages, names, remote logins</b>.</div>
+        </div>
+        <div class="player tran">
+          <div class="lname">Transport<small>Layer 4</small></div>
+          <div class="prots"><span class="prot">TCP</span><span class="prot">UDP</span></div>
+          <div class="job">Reliable stream vs. fire-and-forget. <b>Ports live here.</b></div>
+        </div>
+        <div class="player net">
+          <div class="lname">Internet<small>Layer 3</small></div>
+          <div class="prots"><span class="prot">IP</span><span class="prot">ICMP</span></div>
+          <div class="job">Addressing &amp; routing <b>across</b> networks — the end-to-end address.</div>
+        </div>
+        <div class="player link">
+          <div class="lname">Link<small>Layer 2</small></div>
+          <div class="prots"><span class="prot">Ethernet</span><span class="prot">Wi-Fi</span><span class="prot">ARP</span></div>
+          <div class="job">The <b>local</b> wire — MAC addresses, one hop at a time.</div>
+        </div>
+      </div>
+      <div class="callout" style="margin-top:.7em"><strong>Day 1 showed a packet get wrapped layer by layer.</strong>
+      Today we open the wrappers by name — and every one of these protocols becomes a door in Act 2.</div>
+      <aside class="notes">The orientation slide. Day 1's OSI stepper showed encapsulation abstractly; now name the real
+      protocols and where each lives (this is TCP/IP — layers 5–7 folded into "Application"). Read bottom-up if it helps:
+      the frame on the local wire (Ethernet + ARP, MAC addresses) → the packet across networks (IP) → the connection
+      (TCP/UDP, where ports live) → what you use (HTTP, DNS, SSH, RDP). Land the promise: each row is both a mechanism
+      we'll learn and a door we'll abuse — ARP→spoofing, ports→scanning, TCP→stealth scans, HTTP→cleartext sniffing.
+      Keep it ~90 seconds; the depth comes in the next slides.</aside>
+    </section>
+
+    <!-- ================= ACT 1 · IP vs MAC + ARP ================= -->
+    <section>
+      <p class="kicker">Act 1 · addressing on the local wire</p>
+      <h2>Two addresses: IP is <em>who</em>, MAC is <em>where</em></h2>
+      <iframe class="wframe" style="height:556px"
+              src="widgets/arp_lan.html?v=1"
+              title="ARP resolution on a small LAN" scrolling="no"></iframe>
+      <aside class="notes">The first mechanism. Every device carries TWO addresses: an IP (logical, end-to-end — Day 1's
+      packet label) and a MAC (physical, burned into the network card, only meaningful on this local wire). To actually
+      put a frame on the wire you need the destination's MAC — but you usually only know its IP. ARP bridges the gap.
+      Drive the player: (0) you know .5's IP but not its MAC; (1) you BROADCAST "who has .5?" to everyone — dst MAC
+      ff:ff:ff:ff:ff:ff; (2) only .5 replies with its MAC, the rest ignore it; (3) you cache the mapping; (4) now the real
+      data frame goes straight to .5's MAC. The two things to land: (a) IP vs MAC — who vs where-on-this-wire; (b) the
+      trapdoor — ARP is an unauthenticated broadcast: ANY machine can shout "that's me." Hold that; in Act 2 we become the
+      liar (ARP spoofing). Real-world scale: a busy LAN resolves thousands of these a minute, all cached for ~seconds.</aside>
+    </section>
+
+    <!-- ================= ACT 1 · PORTS & SERVICES ================= -->
+    <section>
+      <p class="kicker">Act 1 · ports &amp; services</p>
+      <h2>One IP, many doors — a port scan finds the open ones</h2>
+      <iframe class="wframe" style="height:462px"
+              src="widgets/port_scan.html?v=1"
+              title="Port scanner — open services on a host" scrolling="no"></iframe>
+      <div class="callout" style="margin-top:.5em"><strong>An open port is a running service — a door with something behind it.</strong>
+      Finding them is the attacker's first move once inside; each service maps to its own attack.</div>
+      <aside class="notes">Now that you can reach a host (ARP got you its MAC), what can you talk to? A machine has one IP but
+      65,535 ports; a port that's <em>listening</em> = a running service = a door. Press Scan: the sweep probes every common
+      port and each resolves open / closed / filtered. Land the mapping — every open port is a specific attack surface:
+      22 SSH → credential attack, 445 SMB &amp; 3389 RDP → <em>lateral movement</em> (Act 2), 3306 MySQL → the data itself,
+      80/443 → the web app (Day 4). Then hit Toggle firewall: the sensitive internal services go <em>filtered</em> — the
+      probe is dropped, you can't even tell what's there. That's the defender's lever: fewer open doors = smaller attack
+      surface. This is nmap at toy scale; a real scan sweeps all 65,535 ports and fingerprints versions to match known CVEs.</aside>
+    </section>
+
+    <!-- ================= ACT 1 · TCP vs UDP + SYN SCAN ================= -->
+    <section>
+      <p class="kicker">Act 1 · connections</p>
+      <h2>TCP shakes hands before it talks — UDP just fires</h2>
+      <iframe class="wframe" style="height:532px"
+              src="widgets/tcp_udp.html?v=1"
+              title="TCP handshake vs UDP, and the SYN scan" scrolling="no"></iframe>
+      <aside class="notes">How do two machines actually hold a conversation? Switch between the three tabs and Play each.
+      <b>TCP</b>: the 3-way handshake — SYN, SYN-ACK, ACK — builds a connection BEFORE any data; watch both sides walk
+      CLOSED/LISTEN → ESTABLISHED. The payoff line: three packets before a single byte, and that cost buys reliability
+      (ordering, retransmits). SSH, HTTP(S), RDP all ride TCP. <b>UDP</b>: no handshake, no state — packets just fly and a
+      lost one is simply gone; great for DNS, voice, video. <b>SYN scan</b>: the attacker's trick — send only the SYN, read
+      the reply (SYN-ACK = open, RST = closed), then send RST to bail before completing. That half-open scan is exactly how
+      the port sweep two slides back found the doors — fast and quiet. Ties the connection mechanism to the recon they saw.</aside>
+    </section>
+
+    <!-- ================= ACT 1 · DNS ================= -->
+    <section>
+      <p class="kicker">Act 1 · names → addresses</p>
+      <h2>DNS: the internet's phonebook (and who it trusts)</h2>
+      <iframe class="wframe" style="height:502px"
+              src="widgets/dns_resolve.html?v=1"
+              title="DNS recursive resolution" scrolling="no"></iframe>
+      <aside class="notes">Machines route to IPs, but humans remember names — DNS bridges the two. Press Resolve and watch
+      the recursive walk: your resolver asks a <b>root</b> server (→ "ask .sa"), then the <b>.sa TLD</b> (→ "ask ns1.majal.sa"),
+      then the <b>authoritative</b> server, which finally returns the IP. The resolver caches it — hit "Resolve again" to see
+      the instant cache hit (no walk). Land two points: (1) it's a hierarchy of referrals, not one lookup; (2) the security
+      gap that rhymes with ARP — <em>DNS is trust-by-answer</em>: whoever replies first is believed, so a forged reply
+      (cache poisoning / spoofing) silently sends the victim to the attacker's server. Real scale: billions of queries/sec,
+      cached at every layer. We won't build the spoof here — the ARP version in Act 2 makes the same point on the wire.</aside>
+    </section>
+
+    <!-- ================= ACT 1 · WIRESHARK (marquee) ================= -->
+    <section>
+      <p class="kicker">Act 1 · open a real packet</p>
+      <h2>Wireshark: one login, every layer you learned</h2>
+      <iframe class="wframe" style="height:520px"
+              src="widgets/wireshark.html?v=1"
+              title="Wireshark capture — HTTP cleartext vs HTTPS/TLS" scrolling="no"></iframe>
+      <aside class="notes">The payoff of Act 1 — Day 1 promised "Day 3 opens real packets in Wireshark," and here it is.
+      This is a real capture of one login. Walk the packet list: notice packets 1–3 are the <em>TCP handshake</em> from two
+      slides ago. Click packet 4 (POST /login) and open the dissection tree: it is literally every layer they learned as one
+      row each — <b>Ethernet</b> (the MAC addresses ARP resolved), <b>IP</b> (the addresses), <b>TCP</b> (the ports that pick
+      the service), then <b>HTTP</b>. Then the gut-punch: the hex pane on the right shows <span class="dngr">username=alice
+      &amp; password=Summer2026!</span> in plain readable text. Now flip to <b>HTTPS :443</b> and click the Application Data
+      packet — same login, but TLS has sealed it; the bytes are opaque ciphertext, no password to see. Two lands: (1) a packet
+      is just these nested headers you can read; (2) HTTP exposes everything to anyone on the wire, HTTPS doesn't — which is
+      exactly the attack we run next. Bridge to Act 2: "so how does an attacker get onto the wire to read HTTP? Watch."</aside>
+    </section>
+
+  </div>
+</div>
+
+<!-- scripts: reveal, notes, then engine -->
+<script src="../shared/dist/reveal.js"></script>
+<script src="../shared/plugin/notes/notes.js"></script>
+<script src="js/state.js?v=1"></script>
+</body>
+</html>

@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding: 6px 8px; }
+  .w { padding: 10px 12px; }
+  .bar { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .modes { display: inline-flex; border: 1px solid #CDD8DA; border-radius: 8px; overflow: hidden; }
+  .modes button { border: 0; border-radius: 0; margin: 0; padding: 7px 14px; font-family: var(--mono,monospace);
+    font-size: 12px; font-weight: 800; background: #fff; color: #5C7880; }
+  .modes button.on { background: #00567C; color: #fff; }
+  .filter { flex: 1; font-family: var(--mono,monospace); font-size: 11.5px; color: #2b6b47;
+    background: #eafaf0; border: 1px solid #bfe6cf; border-radius: 6px; padding: 6px 9px; }
+  .ws { border: 1px solid #C9D3D5; border-radius: 8px; overflow: hidden; background: #fff; }
+  table.pl { width: 100%; border-collapse: collapse; font-family: var(--mono,monospace); font-size: 11px; table-layout: fixed; }
+  table.pl th { background: #eef2f3; color: #5c7880; font-weight: 700; text-align: left; padding: 4px 7px;
+    border-bottom: 1px solid #C9D3D5; font-size: 10px; text-transform: uppercase; letter-spacing: .03em; }
+  table.pl td { padding: 3px 7px; border-bottom: 1px solid #eef2f2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  table.pl tr { cursor: pointer; }
+  table.pl tr.tcp  td { background: #f5f7f8; }
+  table.pl tr.http td { background: #e7f3e7; }
+  table.pl tr.tls  td { background: #ede9fa; }
+  table.pl tr.sel td { background: #2b6cb0 !important; color: #fff; }
+  table.pl tr.sel td .fl { color: #cfe0f5; }
+  .fl { color: #8a97a0; }
+  .panes { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid #C9D3D5; }
+  .detail { border-right: 1px solid #C9D3D5; padding: 7px 9px; height: 250px; overflow: auto; }
+  .hex { padding: 7px 9px; height: 250px; overflow: auto; font-family: var(--mono,monospace); font-size: 11px; line-height: 1.5; }
+  .lyr { font-family: var(--mono,monospace); font-size: 11px; }
+  .lyr > .hd { cursor: pointer; padding: 2px 0; color: #12333D; font-weight: 700; user-select: none; }
+  .lyr > .hd .tw { display: inline-block; width: 11px; color: #8a97a0; }
+  .lyr .kids { padding-left: 15px; }
+  .lyr .kids .kv { padding: 1px 0; color: #42606A; }
+  .lyr .kids .kv b { color: #00567C; } .lyr .note { color: #93a4aa; font-style: italic; font-size: 10px; }
+  .cred { background: #ffe3e3; color: #b3261e; font-weight: 800; padding: 0 3px; border-radius: 3px; }
+  .enc  { background: #e4f3f1; color: #17726d; padding: 0 3px; border-radius: 3px; }
+  .hex .off { color: #a8b6bb; } .hex .as { color: #5C7880; }
+  .hex .hl { background: #ffe3e3; color: #b3261e; font-weight: 700; }
+  .hex .as .hl { background: #ffe3e3; }
+  .cap { min-height: 40px; margin-top: 8px; }
+</style>
+</head><body>
+<div class="w">
+  <div class="bar">
+    <span class="modes">
+      <button id="m-http" class="on">HTTP :80</button>
+      <button id="m-https">HTTPS :443</button>
+    </span>
+    <span class="filter" id="filter">ip.addr == 192.168.1.5</span>
+  </div>
+  <div class="ws">
+    <table class="pl">
+      <thead><tr>
+        <th style="width:34px">No.</th><th style="width:52px">Time</th><th style="width:96px">Source</th>
+        <th style="width:96px">Dest</th><th style="width:66px">Proto</th><th style="width:42px">Len</th><th>Info</th>
+      </tr></thead>
+      <tbody id="plist"></tbody>
+    </table>
+    <div class="panes">
+      <div class="detail" id="detail"></div>
+      <div class="hex" id="hex"></div>
+    </div>
+  </div>
+  <div class="cap" id="cap"></div>
+</div>
+<script>
+var MAC={ c:"1a:2b:3c:00:00:10", s:"aa:bb:cc:00:00:05" }, IP={ c:"192.168.1.10", s:"192.168.1.5" };
+var REQ = "POST /login HTTP/1.1\r\nHost: 192.168.1.5\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: 35\r\n\r\nusername=alice&password=Summer2026!";
+var CREDWORD = "password=Summer2026!";
+function randHex(n){ var s=""; for(var i=0;i<n;i++) s+=Math.floor(Math.random()*256); return s; } // placeholder
+// deterministic pseudo-random bytes for TLS payload
+function tlsBytes(n){ var a=[], x=1337; for(var i=0;i<n;i++){ x=(x*1103515245+12345)&0x7fffffff; a.push(x&0xff);} return a; }
+
+var CAPS = {
+  http: {
+    filterInfo: "ip.addr == 192.168.1.5",
+    packets: [
+      {no:1,t:"0.000",src:IP.c,dst:IP.s,proto:"TCP",cls:"tcp",len:74, info:'52344 → 80 [SYN] Seq=0', sport:52344,dport:80,app:null},
+      {no:2,t:"0.001",src:IP.s,dst:IP.c,proto:"TCP",cls:"tcp",len:74, info:'80 → 52344 [SYN, ACK]', sport:80,dport:52344,app:null},
+      {no:3,t:"0.001",src:IP.c,dst:IP.s,proto:"TCP",cls:"tcp",len:66, info:'52344 → 80 [ACK]', sport:52344,dport:80,app:null},
+      {no:4,t:"0.003",src:IP.c,dst:IP.s,proto:"HTTP",cls:"http",len:481,info:'POST /login HTTP/1.1  (application/x-www-form-urlencoded)', sport:52344,dport:80,app:"http-req",focus:1},
+      {no:5,t:"0.012",src:IP.s,dst:IP.c,proto:"HTTP",cls:"http",len:333,info:'HTTP/1.1 200 OK  (Set-Cookie: session=…)', sport:80,dport:52344,app:"http-res"},
+      {no:6,t:"0.012",src:IP.c,dst:IP.s,proto:"TCP",cls:"tcp",len:66, info:'52344 → 80 [ACK]', sport:52344,dport:80,app:null}
+    ]
+  },
+  https: {
+    filterInfo: "ip.addr == 192.168.1.5",
+    packets: [
+      {no:1,t:"0.000",src:IP.c,dst:IP.s,proto:"TCP",cls:"tcp",len:74, info:'52101 → 443 [SYN] Seq=0', sport:52101,dport:443,app:null},
+      {no:2,t:"0.001",src:IP.s,dst:IP.c,proto:"TCP",cls:"tcp",len:74, info:'443 → 52101 [SYN, ACK]', sport:443,dport:52101,app:null},
+      {no:3,t:"0.001",src:IP.c,dst:IP.s,proto:"TCP",cls:"tcp",len:66, info:'52101 → 443 [ACK]', sport:52101,dport:443,app:null},
+      {no:4,t:"0.004",src:IP.c,dst:IP.s,proto:"TLSv1.3",cls:"tls",len:571,info:'Client Hello', sport:52101,dport:443,app:"tls-hello"},
+      {no:5,t:"0.009",src:IP.s,dst:IP.c,proto:"TLSv1.3",cls:"tls",len:1484,info:'Server Hello, Certificate, …', sport:443,dport:52101,app:"tls-hello2"},
+      {no:6,t:"0.021",src:IP.c,dst:IP.s,proto:"TLSv1.3",cls:"tls",len:481,info:'Application Data', sport:52101,dport:443,app:"tls-appdata",focus:1},
+      {no:7,t:"0.030",src:IP.s,dst:IP.c,proto:"TLSv1.3",cls:"tls",len:333,info:'Application Data', sport:443,dport:52101,app:"tls-appdata"}
+    ]
+  }
+};
+
+var mode="http", sel=null;
+function esc(s){ return String(s).replace(/[&<>]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;"}[c];}); }
+
+function renderList(){
+  var tb=document.getElementById("plist"); tb.innerHTML="";
+  CAPS[mode].packets.forEach(function(p,i){
+    var tr=document.createElement("tr"); tr.className=p.cls+(sel===i?" sel":"");
+    tr.innerHTML='<td>'+p.no+'</td><td>'+p.t+'</td><td>'+p.src+'</td><td>'+p.dst+'</td>'+
+      '<td>'+p.proto+'</td><td>'+p.len+'</td><td>'+infoCell(p)+'</td>';
+    tr.onclick=function(){ sel=i; renderAll(); };
+    tb.appendChild(tr);
+  });
+}
+function infoCell(p){
+  if(p.focus && mode==="http") return 'POST /login HTTP/1.1  <span class="cred">password in the clear</span>';
+  if(p.focus && mode==="https") return 'Application Data  <span class="enc">encrypted</span>';
+  return '<span class="fl">'+esc(p.info)+'</span>';
+}
+
+function lyr(head, kidsHTML, open){
+  var id="l"+Math.random().toString(36).slice(2,7);
+  return '<div class="lyr"><div class="hd" data-t="'+id+'"><span class="tw">'+(open?"▾":"▸")+'</span>'+head+'</div>'+
+    '<div class="kids" id="'+id+'" style="display:'+(open?"block":"none")+'">'+kidsHTML+'</div></div>';
+}
+function renderDetail(){
+  var p=CAPS[mode].packets[sel], d=document.getElementById("detail");
+  if(!p){ d.innerHTML='<div class="note">Select a packet above to dissect it.</div>'; return; }
+  var h="";
+  h+=lyr('Frame '+p.no+': '+p.len+' bytes on wire', '<div class="kv">Arrival time: '+p.t+' s · captured on eth0</div>', false);
+  h+=lyr('Ethernet II', '<div class="kv">Src: <b>'+(p.src===IP.c?MAC.c:MAC.s)+'</b></div>'+
+      '<div class="kv">Dst: <b>'+(p.dst===IP.s?MAC.s:MAC.c)+'</b></div><div class="note">MAC addresses — resolved by ARP</div>', true);
+  h+=lyr('Internet Protocol Version 4', '<div class="kv">Src: <b>'+p.src+'</b></div><div class="kv">Dst: <b>'+p.dst+'</b></div>', true);
+  h+=lyr('Transmission Control Protocol', '<div class="kv">Src Port: <b>'+p.sport+'</b> · Dst Port: <b>'+p.dport+'</b></div>'+
+      '<div class="note">the port picks the service — 80=http, 443=https</div>', true);
+  if(p.app==="http-req"){
+    h+=lyr('Hypertext Transfer Protocol', '<div class="kv">POST /login HTTP/1.1</div><div class="kv">Host: 192.168.1.5</div>'+
+      '<div class="kv">Content-Type: application/x-www-form-urlencoded</div>', true);
+    h+=lyr('HTML Form URL Encoded: 2 fields', '<div class="kv">Form item: "username" = "alice"</div>'+
+      '<div class="kv">Form item: "password" = <span class="cred">"Summer2026!"</span></div>', true);
+  } else if(p.app==="http-res"){
+    h+=lyr('Hypertext Transfer Protocol', '<div class="kv">HTTP/1.1 200 OK</div>'+
+      '<div class="kv">Set-Cookie: session=8f3ac91b… <span class="cred">(session token, also readable)</span></div>', true);
+  } else if(p.app==="tls-hello"||p.app==="tls-hello2"){
+    h+=lyr('Transport Layer Security', '<div class="kv">TLSv1.3 Record Layer: Handshake</div>'+
+      '<div class="kv">'+(p.app==="tls-hello"?"Client Hello":"Server Hello, Certificate")+'</div>'+
+      '<div class="note">key exchange — after this, everything is encrypted</div>', true);
+  } else if(p.app==="tls-appdata"){
+    h+=lyr('Transport Layer Security', '<div class="kv">TLSv1.3 Record Layer: Application Data</div>'+
+      '<div class="kv">Encrypted Application Data: <span class="enc">a3 f1 9c 2e … (opaque)</span></div>'+
+      '<div class="note">the login is sealed inside TLS — no password field to see</div>', true);
+  } else {
+    h+='<div class="note" style="margin-top:6px">TCP control packet (handshake / ACK) — no application data.</div>';
+  }
+  d.innerHTML=h;
+  d.querySelectorAll(".hd").forEach(function(hd){ hd.onclick=function(){
+    var k=document.getElementById(hd.dataset.t); var open=k.style.display!=="none";
+    k.style.display=open?"none":"block"; hd.querySelector(".tw").textContent=open?"▸":"▾"; }; });
+}
+
+function hexDump(bytes, hlStart, hlEnd){
+  var out="";
+  for(var off=0; off<bytes.length; off+=16){
+    var hexs="", asc="";
+    for(var i=0;i<16;i++){
+      var idx=off+i;
+      if(idx<bytes.length){
+        var b=bytes[idx], hx=("0"+b.toString(16)).slice(-2);
+        var hot = (hlStart!=null && idx>=hlStart && idx<hlEnd);
+        hexs+= (hot?'<span class="hl">'+hx+'</span>':hx)+" ";
+        var ch=(b>=32&&b<127)?String.fromCharCode(b):".";
+        asc+= hot?'<span class="hl">'+esc(ch)+'</span>':esc(ch);
+      } else { hexs+="   "; asc+=" "; }
+    }
+    out+='<div><span class="off">'+("000"+off.toString(16)).slice(-4)+'</span>  '+hexs+' <span class="as">'+asc+'</span></div>';
+  }
+  return out;
+}
+function renderHex(){
+  var p=CAPS[mode].packets[sel], hx=document.getElementById("hex");
+  if(!p){ hx.innerHTML=""; return; }
+  if(p.app==="http-req"){
+    var bytes=[]; for(var i=0;i<REQ.length;i++) bytes.push(REQ.charCodeAt(i));
+    var hs=REQ.indexOf(CREDWORD), he=hs+CREDWORD.length;
+    hx.innerHTML=hexDump(bytes, hs, he);
+  } else if(p.app==="http-res"){
+    var R="HTTP/1.1 200 OK\r\nSet-Cookie: session=8f3ac91b7d\r\nContent-Length: 12\r\n\r\nWelcome back";
+    var b=[]; for(var j=0;j<R.length;j++) b.push(R.charCodeAt(j)); hx.innerHTML=hexDump(b,null,null);
+  } else if(p.app && p.app.indexOf("tls")===0){
+    hx.innerHTML=hexDump(tlsBytes(96),null,null);
+  } else {
+    hx.innerHTML='<div class="note" style="color:#a8b6bb">TCP header only — no payload bytes.</div>';
+  }
+}
+function renderCap(){
+  var p=CAPS[mode].packets[sel], c=document.getElementById("cap");
+  if(!p){ c.innerHTML='Click packet <b>4</b> (the login) and read the bytes on the right.'; return; }
+  if(p.focus && mode==="http"){
+    c.innerHTML='<span class="dngr">The password crossed the wire as plain text.</span> Anyone sniffing this network — see Act 2 — reads <b>Summer2026!</b> straight out of the bytes. HTTP has no encryption.'; return; }
+  if(p.focus && mode==="https"){
+    c.innerHTML='<span class="good">Same login — sealed by TLS.</span> The sniffer sees only <b>Application Data</b>: ciphertext. No username, no password. This is why HTTPS everywhere matters.'; return; }
+  c.innerHTML='Every layer you learned in Act 1 is one row of this dissection — <b>Ethernet</b> (MAC/ARP), <b>IP</b>, <b>TCP</b> (ports), then the app. Open packet <b>'+(mode==="http"?"4":"6")+'</b>.';
+}
+function renderAll(){ renderList(); renderDetail(); renderHex(); renderCap();
+  document.getElementById("filter").textContent=CAPS[mode].filterInfo; }
+
+function setMode(mm){ mode=mm; sel=null;
+  document.getElementById("m-http").classList.toggle("on",mm==="http");
+  document.getElementById("m-https").classList.toggle("on",mm==="https");
+  // auto-select the focus packet so the point is immediate
+  CAPS[mode].packets.forEach(function(p,i){ if(p.focus) sel=i; });
+  renderAll();
+}
+document.getElementById("m-http").onclick=function(){ setMode("http"); };
+document.getElementById("m-https").onclick=function(){ setMode("https"); };
+
+// hooks: ?mode=http|https  ?sel=N
+var mm=(location.search.match(/mode=(https?|https)/)||[])[1];
+setMode(mm==="https"?"https":"http");
+var sq=(location.search.match(/sel=(\d+)/)||[])[1];
+if(sq!=null){ sel=Math.max(0,Math.min(CAPS[mode].packets.length-1,+sq)); renderAll(); }
+</script>
+</body></html>

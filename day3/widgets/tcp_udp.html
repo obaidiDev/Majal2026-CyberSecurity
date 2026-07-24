@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding: 6px 8px; }
+  .w { padding: 12px 14px; }
+  .modes { display: flex; gap: 8px; margin-bottom: 10px; }
+  .modes button { flex: 0 0 auto; }
+  canvas.seq { width: 100%; height: 384px; border: 1px solid #E0E7E8; border-radius: 10px; background: #fff; }
+  .cap { min-height: 40px; }
+  .legend { display:flex; gap:14px; margin-left:auto; align-items:center; font-size:11px; color:#7a8f96; }
+  .legend i { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:4px; vertical-align:-1px; }
+</style>
+</head><body>
+<div class="w">
+  <div class="modes">
+    <button class="primary on" id="m-tcp" data-m="tcp">TCP connection</button>
+    <button id="m-udp" data-m="udp">UDP</button>
+    <button id="m-syn" data-m="synscan">SYN scan (attacker)</button>
+    <span class="legend"><span><i style="background:#00567C"></i>client</span><span><i style="background:#1F8F89"></i>server</span></span>
+  </div>
+  <canvas class="seq" id="cv"></canvas>
+  <div class="cap" id="cap"></div>
+  <div class="ctl">
+    <button class="primary" id="play">▶ Play</button>
+    <button id="back">‹ Back</button>
+    <button id="next">Next ›</button>
+    <button id="reset">↺ Reset</button>
+    <span class="dots" id="dots" style="margin-left:auto;display:inline-flex;gap:6px"></span>
+  </div>
+</div>
+<script>
+// Each mode = a list of messages. dir:1 client→server, -1 server→client.
+// cs/ss = state labels AFTER this message. kind styles the arrow.
+var MODES = {
+  tcp: {
+    role: "client",
+    cap0: 'TCP sets up a <b>connection</b> before any data — the 3-way handshake. Watch the states change.',
+    msgs: [
+      {dir:1, label:"SYN",     kind:"ctrl", cs:"SYN-SENT",   ss:"LISTEN",      note:'&ldquo;let&rsquo;s talk&rdquo; — client picks a start sequence number.'},
+      {dir:-1,label:"SYN-ACK", kind:"ctrl", cs:"SYN-SENT",   ss:"SYN-RCVD",    note:'server agrees and answers with its own sequence number.'},
+      {dir:1, label:"ACK",     kind:"ctrl", cs:"ESTABLISHED",ss:"ESTABLISHED", note:'handshake done — the connection is <b>ESTABLISHED</b>.'},
+      {dir:1, label:"DATA  GET /report.pdf", kind:"data", cs:"ESTABLISHED", ss:"ESTABLISHED", note:'only NOW does real data flow — reliable, ordered.'},
+      {dir:-1,label:"ACK  (got it)", kind:"ctrl", cs:"ESTABLISHED", ss:"ESTABLISHED", note:'every segment is acknowledged; losses get retransmitted.'}
+    ],
+    capEnd: '<b>Three packets before a single byte of data.</b> That cost buys reliability: ordering, retransmits, flow control. SSH, HTTP(S), RDP all ride TCP.'
+  },
+  udp: {
+    role: "client",
+    cap0: 'UDP does <em>none</em> of that — no handshake, no state. Just fire packets.',
+    msgs: [
+      {dir:1, label:"DATA  packet 1", kind:"data", cs:"(stateless)", ss:"(stateless)", note:'no setup — the first packet just goes.'},
+      {dir:1, label:"DATA  packet 2", kind:"lost", cs:"(stateless)", ss:"(stateless)", note:'this one is <span class="dngr">lost</span> — and nobody notices or resends.'},
+      {dir:1, label:"DATA  packet 3", kind:"data", cs:"(stateless)", ss:"(stateless)", note:'packets can arrive out of order; the app must cope.'}
+    ],
+    capEnd: '<b>No setup, no guarantee — fast and lean.</b> Perfect for DNS lookups, voice/video, and games, where a dropped packet beats a stalled one.'
+  },
+  synscan: {
+    role: "attacker",
+    cap0: 'The attacker abuses the handshake to <em>scan</em> — start it, read the reply, never finish.',
+    msgs: [
+      {dir:1, label:"SYN → port 22", kind:"atk", cs:"probing", ss:"", note:'send just the first handshake packet to a port.'},
+      {dir:-1,label:"SYN-ACK", kind:"open", cs:"probing", ss:"", note:'a SYN-ACK means something is <span class="good">listening</span> — port <b>OPEN</b>.'},
+      {dir:1, label:"RST (bail)", kind:"atk", cs:"half-open", ss:"", note:'send RST instead of ACK — <em>half-open</em>: the connection never completes, so it&rsquo;s quiet.'},
+      {dir:1, label:"SYN → port 23", kind:"atk", cs:"probing", ss:"", note:'now probe a different port.'},
+      {dir:-1,label:"RST", kind:"closed", cs:"done", ss:"", note:'an RST means nothing is there — port <span class="dngr">CLOSED</span>.'}
+    ],
+    capEnd: '<b>SYN-ACK = open, RST = closed.</b> This half-open &ldquo;SYN scan&rdquo; is exactly what mapped the doors two slides ago — fast and hard to log.'
+  }
+};
+
+var cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+var W=760, H=384, DPR=1;
+function fit(){ var cssW=cv.clientWidth||W; DPR=window.devicePixelRatio||1;
+  cv.width=cssW*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); W=cssW; draw(); }
+window.addEventListener("resize", fit);
+
+var mode="tcp", cur=0, prog=1, playing=false, raf=null, t0=0;
+function M(){ return MODES[mode]; }
+function clientColor(){ return M().role==="attacker" ? "#D64545" : "#00567C"; }
+
+var CX=140, Y0=112, STEP=50, HDRY=34, HDRH=48;
+function SX(){ return W-140; }
+function roundRect(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+
+function actorBox(cx, label, sub, color){
+  var w=150, x=cx-w/2, y=HDRY;
+  roundRect(x,y,w,HDRH,9); ctx.fillStyle=color; ctx.fill();
+  ctx.fillStyle="#fff"; ctx.textAlign="center"; ctx.font="800 14px 'Avenir Next',system-ui,sans-serif";
+  ctx.fillText(label, cx, y+21);
+  ctx.font="700 10px 'JetBrains Mono',monospace"; ctx.fillStyle="rgba(255,255,255,.82)";
+  ctx.fillText(sub, cx, y+37);
+}
+function arrow(x1,y1,x2,y2,color,dash){
+  ctx.save(); ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=2.4;
+  if(dash) ctx.setLineDash([5,4]);
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); ctx.setLineDash([]);
+  var a=Math.atan2(y2-y1,x2-x1);
+  ctx.beginPath(); ctx.moveTo(x2,y2);
+  ctx.lineTo(x2-10*Math.cos(a-0.4), y2-10*Math.sin(a-0.4));
+  ctx.lineTo(x2-10*Math.cos(a+0.4), y2-10*Math.sin(a+0.4)); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+function msgColor(kind){
+  return {ctrl:"#5C7880", data:"#00567C", lost:"#D64545", atk:"#D64545",
+          open:"#1F8F89", closed:"#D64545"}[kind] || "#5C7880";
+}
+function drawMsg(i, frac){ // frac 1 = fully drawn; <1 animate packet
+  var m=M().msgs[i], y=Y0+i*STEP;
+  var fromX = m.dir===1 ? CX : SX(), toX = m.dir===1 ? SX() : CX;
+  var col=msgColor(m.kind);
+  // label above the line
+  ctx.font="700 11.5px 'JetBrains Mono',monospace"; ctx.textAlign="center";
+  ctx.fillStyle= (m.kind==="data"||m.kind==="atk"||m.kind==="lost"||m.kind==="open"||m.kind==="closed")? col : "#42606A";
+  if(frac>=1) ctx.fillText(m.label, (CX+SX())/2, y-7);
+  if(m.kind==="lost"){
+    // packet dies mid-way
+    var midX = fromX + (toX-fromX)*0.55;
+    arrow(fromX,y, fromX+(midX-fromX)*Math.min(frac,1), y, col, true);
+    if(frac>=1){ ctx.fillStyle=col; ctx.font="700 10px 'Avenir Next',sans-serif";
+      ctx.textAlign="left"; ctx.fillText("✕ dropped", midX+10, y+13); ctx.textAlign="center"; }
+    return;
+  }
+  if(frac>=1){ arrow(fromX,y,toX,y,col, m.kind==="ctrl"); }
+  else {
+    var px=fromX+(toX-fromX)*frac;
+    ctx.strokeStyle=col; ctx.lineWidth=2.4; if(m.kind==="ctrl") ctx.setLineDash([5,4]);
+    ctx.beginPath(); ctx.moveTo(fromX,y); ctx.lineTo(px,y); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle=col; ctx.beginPath(); ctx.arc(px,y,4.5,0,7); ctx.fill();
+  }
+}
+function stateBadge(cx, txt, color){
+  if(!txt) return;
+  ctx.font="700 10.5px 'JetBrains Mono',monospace";
+  var w=ctx.measureText(txt).width+16;
+  roundRect(cx-w/2, HDRY+HDRH+8, w, 18, 9); ctx.fillStyle="#F1F5F5"; ctx.fill();
+  ctx.strokeStyle=color; ctx.lineWidth=1.3; ctx.stroke();
+  ctx.fillStyle=color; ctx.textAlign="center"; ctx.fillText(txt, cx, HDRY+HDRH+20);
+}
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  var m=M();
+  // lifelines
+  ctx.strokeStyle="#E0E7E8"; ctx.lineWidth=1.5; ctx.setLineDash([4,4]);
+  [CX,SX()].forEach(function(x){ ctx.beginPath(); ctx.moveTo(x,HDRY+HDRH); ctx.lineTo(x,H-10); ctx.stroke(); });
+  ctx.setLineDash([]);
+  // settled messages
+  for(var i=0;i<cur;i++) drawMsg(i,1);
+  // current message (animating or settled)
+  if(cur<m.msgs.length) drawMsg(cur, prog);
+  // actor boxes + current states — show state after the last completed message
+  var li = Math.min(cur-1, m.msgs.length-1);
+  var cs="", ss="";
+  if(li>=0){ cs=m.msgs[li].cs; ss=m.msgs[li].ss; }
+  else { cs = m.role==="attacker" ? "" : "CLOSED"; ss = m.role==="attacker" ? "" : "LISTEN"; }
+  actorBox(CX, m.role==="attacker"?"Attacker":"Client", m.role==="attacker"?"you":"192.168.1.10", clientColor());
+  actorBox(SX(), "Server", "192.168.1.5", "#1F8F89");
+  stateBadge(CX, cs, clientColor());
+  stateBadge(SX(), ss, "#1F8F89");
+}
+
+function setDots(){ var d=document.getElementById("dots"); d.innerHTML="";
+  M().msgs.forEach(function(_,i){ var s=document.createElement("span"); s.className="dot";
+    s.style.cssText="width:8px;height:8px;border-radius:50%;background:"+(i<cur?"#1F8F89":(i===cur&&prog<1?"#00567C":"#CDD8DA"));
+    d.appendChild(s); }); }
+function setCap(){
+  var c=document.getElementById("cap"), m=M();
+  if(cur>=m.msgs.length){ c.innerHTML=m.capEnd; return; }
+  if(cur===0 && prog<1){ c.innerHTML=m.cap0; return; }
+  var i = prog<1 ? cur : cur-1;   // in-flight message, else the one just settled
+  if(i<0){ c.innerHTML=m.cap0; return; }
+  c.innerHTML = m.msgs[Math.min(i,m.msgs.length-1)].note;
+}
+function render(){ draw(); setDots(); setCap();
+  document.getElementById("next").disabled = cur>=M().msgs.length;
+  document.getElementById("back").disabled = cur===0 && prog>=1;
+}
+var DUR=700;
+function animate(ts){ if(!t0)t0=ts; prog=Math.min(1,(ts-t0)/DUR); draw(); setDots();
+  if(prog<1){ raf=requestAnimationFrame(animate); }
+  else { cur++; setCap();
+    if(playing){ if(cur<M().msgs.length){ prog=0; t0=0; setCap(); raf=requestAnimationFrame(animate); }
+      else { playing=false; document.getElementById("play").textContent="▶ Play"; prog=1; render(); } }
+    else { render(); }
+  }
+}
+function step(){ prog=0; t0=0; if(raf)cancelAnimationFrame(raf); setCap(); setDots(); raf=requestAnimationFrame(animate); }
+
+function setMode(mm){
+  mode=mm; cur=0; prog=1; playing=false;
+  document.getElementById("play").textContent="▶ Play";
+  ["tcp","udp","synscan"].forEach(function(k){ var b=document.getElementById("m-"+(k==="synscan"?"syn":k));
+    b.classList.toggle("on", k===mm); b.classList.toggle("primary", k===mm); });
+  if(raf)cancelAnimationFrame(raf); render();
+}
+document.querySelectorAll(".modes button[data-m]").forEach(function(b){ b.onclick=function(){ setMode(b.dataset.m); }; });
+document.getElementById("play").onclick=function(){
+  if(playing){ playing=false; this.textContent="▶ Play"; if(raf)cancelAnimationFrame(raf); prog=1; render(); return; }
+  playing=true; this.textContent="⏸ Pause";
+  if(cur>=M().msgs.length){ cur=0; } prog=0; step();
+};
+document.getElementById("next").onclick=function(){ if(playing)return; if(cur<M().msgs.length){ step(); } };
+document.getElementById("back").onclick=function(){ if(playing)return;
+  if(prog<1){ prog=1; render(); return; } if(cur>0){ cur--; prog=1; render(); } };
+document.getElementById("reset").onclick=function(){ setMode(mode); };
+
+// hooks: ?mode=tcp|udp|synscan & ?step=N (settled state)
+var mm=(location.search.match(/mode=(tcp|udp|synscan)/)||[])[1];
+var sp=(location.search.match(/step=(\d+)/)||[])[1];
+fit();
+setMode(mm||"tcp");
+if(sp!=null){ cur=Math.max(0,Math.min(M().msgs.length, +sp)); prog=1; render(); }
+</script>
+</body></html>
