@@ -153,7 +153,7 @@
       <p class="kicker">Act 1 · addressing on the local wire</p>
       <h2>Two addresses: IP is <em>who</em>, MAC is <em>where</em></h2>
       <iframe class="wframe" style="height:556px"
-              src="widgets/arp_lan.html?v=1"
+              src="widgets/arp_lan.html?v=2"
               title="ARP resolution on a small LAN" scrolling="no"></iframe>
       <aside class="notes">The first mechanism. Every device carries TWO addresses: an IP (logical, end-to-end — Day 1's
       packet label) and a MAC (physical, burned into the network card, only meaningful on this local wire). To actually
@@ -223,7 +223,7 @@
       <p class="kicker">Act 1 · connections</p>
       <h2>TCP shakes hands before it talks — UDP just fires</h2>
       <iframe class="wframe" style="height:532px"
-              src="widgets/tcp_udp.html?v=1"
+              src="widgets/tcp_udp.html?v=2"
               title="TCP handshake vs UDP, and the SYN scan" scrolling="no"></iframe>
       <aside class="notes">How do two machines actually hold a conversation? Switch between the three tabs and Play each.
       <b>TCP</b>: the 3-way handshake — SYN, SYN-ACK, ACK — builds a connection BEFORE any data; watch both sides walk
@@ -239,7 +239,7 @@
       <p class="kicker">Act 1 · names → addresses</p>
       <h2>DNS: the internet's phonebook (and who it trusts)</h2>
       <iframe class="wframe" style="height:502px"
-              src="widgets/dns_resolve.html?v=1"
+              src="widgets/dns_resolve.html?v=2"
               title="DNS recursive resolution" scrolling="no"></iframe>
       <aside class="notes">Machines route to IPs, but humans remember names — DNS bridges the two. Press Resolve and watch
       the recursive walk: your resolver asks a <b>root</b> server (→ "ask .sa"), then the <b>.sa TLD</b> (→ "ask ns1.majal.sa"),
@@ -273,7 +273,7 @@
       <p class="kicker">Act 1 · the lock, opened up</p>
       <h2>Why HTTPS beats you: certificates, not just encryption</h2>
       <iframe class="wframe" style="height:518px"
-              src="widgets/tls_cert.html?v=1"
+              src="widgets/tls_cert.html?v=2"
               title="The TLS handshake, certificates, and the MITM warning" scrolling="no"></iframe>
       <aside class="notes">The slide that answers the question the Wireshark slide raised and never explained: <em>why</em> is
       HTTPS opaque? Play it in <b>Just the server</b> first. ClientHello (nothing secret yet, all in the clear) → ServerHello +

@@ -294,7 +294,7 @@
     if (playing) { stop(); return; }
     if (cur >= steps.length) { cur = 0; render(); }
     $("#play").textContent = "❚❚ Pause";
-    playing = setInterval(next, 1250);
+    playing = setInterval(next, 3200);   // long enough to read the message + caption before the next one
     next();
   };
   $("#next").onclick = function () { stop(); next(); };

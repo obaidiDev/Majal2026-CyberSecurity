@@ -176,14 +176,21 @@ function render(){ draw(); setDots(); setCap();
   document.getElementById("next").disabled = cur>=M().msgs.length;
   document.getElementById("back").disabled = cur===0 && prog>=1;
 }
-var DUR=700;
+var DUR=1100, HOLD=2000, holdTimer=null;
+function clearHold(){ if(holdTimer){ clearTimeout(holdTimer); holdTimer=null; } }
 function animate(ts){ if(!t0)t0=ts; prog=Math.min(1,(ts-t0)/DUR); draw(); setDots();
-  if(prog<1){ raf=requestAnimationFrame(animate); }
-  else { cur++; setCap();
-    if(playing){ if(cur<M().msgs.length){ prog=0; t0=0; setCap(); raf=requestAnimationFrame(animate); }
-      else { playing=false; document.getElementById("play").textContent="▶ Play"; prog=1; render(); } }
-    else { render(); }
+  if(prog<1){ raf=requestAnimationFrame(animate); return; }
+  cur++; setCap();
+  if(playing){
+    // pause on the settled message so its caption is readable before the next one flies
+    render();
+    if(cur<M().msgs.length){
+      clearHold(); holdTimer=setTimeout(function(){ holdTimer=null; if(!playing) return;
+        prog=0; t0=0; setCap(); raf=requestAnimationFrame(animate); }, HOLD);
+    }
+    else { playing=false; document.getElementById("play").textContent="▶ Play"; prog=1; render(); }
   }
+  else { render(); }
 }
 function step(){ prog=0; t0=0; if(raf)cancelAnimationFrame(raf); setCap(); setDots(); raf=requestAnimationFrame(animate); }
 
@@ -192,16 +199,16 @@ function setMode(mm){
   document.getElementById("play").textContent="▶ Play";
   ["tcp","udp","synscan"].forEach(function(k){ var b=document.getElementById("m-"+(k==="synscan"?"syn":k));
     b.classList.toggle("on", k===mm); b.classList.toggle("primary", k===mm); });
-  if(raf)cancelAnimationFrame(raf); render();
+  clearHold(); if(raf)cancelAnimationFrame(raf); render();
 }
 document.querySelectorAll(".modes button[data-m]").forEach(function(b){ b.onclick=function(){ setMode(b.dataset.m); }; });
 document.getElementById("play").onclick=function(){
-  if(playing){ playing=false; this.textContent="▶ Play"; if(raf)cancelAnimationFrame(raf); prog=1; render(); return; }
+  if(playing){ playing=false; this.textContent="▶ Play"; clearHold(); if(raf)cancelAnimationFrame(raf); prog=1; render(); return; }
   playing=true; this.textContent="⏸ Pause";
   if(cur>=M().msgs.length){ cur=0; } prog=0; step();
 };
-document.getElementById("next").onclick=function(){ if(playing)return; if(cur<M().msgs.length){ step(); } };
-document.getElementById("back").onclick=function(){ if(playing)return;
+document.getElementById("next").onclick=function(){ if(playing)return; clearHold(); if(cur<M().msgs.length){ step(); } };
+document.getElementById("back").onclick=function(){ if(playing)return; clearHold();
   if(prog<1){ prog=1; render(); return; } if(cur>0){ cur--; prog=1; render(); } };
 document.getElementById("reset").onclick=function(){ setMode(mode); };
 

@@ -96,6 +96,8 @@ window.addEventListener("resize", fit);
 
 var cur = 0, prog = 1, playing = false, raf = null, t0 = 0;
 var DUR = { request: 1500, reply: 1400, cache: 500, data: 1400, idle: 400 };
+var HOLD = 2200, holdTimer = null;
+function clearHold(){ if(holdTimer){ clearTimeout(holdTimer); holdTimer=null; } }
 
 function lerp(a,b,t){ return a+(b-a)*t; }
 function seg(ax,ay,bx,by,t){ return { x:lerp(ax,bx,t), y:lerp(ay,by,t) }; }
@@ -231,28 +233,30 @@ function animate(ts){
   var ph=STEPS[cur].ph, dur=DUR[ph]||1000;
   prog = Math.min(1,(ts-t0)/dur);
   draw();
-  if(prog<1){ raf=requestAnimationFrame(animate); }
-  else {
-    setInsp(); setArp(); setDots();
-    if(playing){
-      if(cur<STEPS.length-1){ cur++; prog=0; t0=0; document.getElementById("cap").innerHTML=STEPS[cur].cap;
-        raf=requestAnimationFrame(animate); }
-      else { playing=false; document.getElementById("play").textContent="▶ Play"; render(); }
+  if(prog<1){ raf=requestAnimationFrame(animate); return; }
+  setInsp(); setArp(); setDots();
+  if(playing){
+    if(cur<STEPS.length-1){
+      // hold on the completed step so its caption can be read before the next one runs
+      clearHold(); holdTimer=setTimeout(function(){ holdTimer=null; if(!playing) return;
+        cur++; prog=0; t0=0; document.getElementById("cap").innerHTML=STEPS[cur].cap;
+        raf=requestAnimationFrame(animate); }, HOLD);
     }
+    else { playing=false; document.getElementById("play").textContent="▶ Play"; render(); }
   }
 }
 function startStep(){ prog=0; t0=0; if(raf) cancelAnimationFrame(raf); render(); raf=requestAnimationFrame(animate); }
 
 document.getElementById("play").onclick=function(){
-  if(playing){ playing=false; this.textContent="▶ Play"; if(raf)cancelAnimationFrame(raf); prog=1; render(); return; }
+  if(playing){ playing=false; this.textContent="▶ Play"; clearHold(); if(raf)cancelAnimationFrame(raf); prog=1; render(); return; }
   playing=true; this.textContent="⏸ Pause";
   if(cur===STEPS.length-1 && prog>=1){ cur=0; }
   startStep();
 };
-document.getElementById("next").onclick=function(){ if(playing)return; if(cur<STEPS.length-1){ cur++; startStep(); } };
-document.getElementById("back").onclick=function(){ if(playing)return; if(prog<1){ prog=1; render(); return; } if(cur>0){ cur--; startStep(); } };
+document.getElementById("next").onclick=function(){ if(playing)return; clearHold(); if(cur<STEPS.length-1){ cur++; startStep(); } };
+document.getElementById("back").onclick=function(){ if(playing)return; clearHold(); if(prog<1){ prog=1; render(); return; } if(cur>0){ cur--; startStep(); } };
 document.getElementById("reset").onclick=function(){ playing=false; document.getElementById("play").textContent="▶ Play";
-  if(raf)cancelAnimationFrame(raf); cur=0; prog=1; render(); };
+  clearHold(); if(raf)cancelAnimationFrame(raf); cur=0; prog=1; render(); };
 
 // ?step= hook for deterministic screenshots (renders settled state of that step)
 var m = location.search.match(/step=(\d+)/);

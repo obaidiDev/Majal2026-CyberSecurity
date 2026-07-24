@@ -129,31 +129,36 @@ function render(){ draw(); setDots(); setCap();
   document.getElementById("back").disabled = cur===0 && prog>=1;
   document.getElementById("again").style.display = (cur>=STEPS.length)? "inline-block":"none";
 }
-var DUR=1000;
+var DUR=1400, HOLD=2600, holdTimer=null;
+function clearHold(){ if(holdTimer){ clearTimeout(holdTimer); holdTimer=null; } }
+// advance to the next referral (or finish)
+function advance(){
+  cur++; if(cur>=STEPS.length){ cached=true; }
+  setDots();
+  if(playing && cur<STEPS.length){ prog=0; t0=0; setCap(); raf=requestAnimationFrame(animate); }
+  else { playing=false; document.getElementById("play").textContent="▶ Resolve majal.sa"; prog=1; render(); }
+}
 function animate(ts){ if(!t0)t0=ts; prog=Math.min(1,(ts-t0)/DUR); draw();
-  if(prog<1){ raf=requestAnimationFrame(animate); }
-  else {
-    if(cacheAnim){ cacheAnim=false; render(); return; }
-    cur++; if(cur>=STEPS.length){ cached=true; }
-    setDots();
-    if(playing && cur<STEPS.length){ prog=0; t0=0; setCap(); raf=requestAnimationFrame(animate); }
-    else { playing=false; document.getElementById("play").textContent="▶ Resolve majal.sa"; prog=1; render(); }
-  }
+  if(prog<1){ raf=requestAnimationFrame(animate); return; }
+  if(cacheAnim){ cacheAnim=false; render(); return; }
+  // the hop has landed — hold here so its caption can actually be read before moving on
+  if(playing){ clearHold(); holdTimer=setTimeout(function(){ holdTimer=null; advance(); }, HOLD); }
+  else advance();
 }
 function step(){ prog=0; t0=0; if(raf)cancelAnimationFrame(raf); setCap(); setDots(); raf=requestAnimationFrame(animate); }
 
 document.getElementById("play").onclick=function(){
-  if(playing){ playing=false; this.textContent="▶ Resolve majal.sa"; if(raf)cancelAnimationFrame(raf); prog=1; render(); return; }
+  if(playing){ playing=false; this.textContent="▶ Resolve majal.sa"; clearHold(); if(raf)cancelAnimationFrame(raf); prog=1; render(); return; }
   if(cur>=STEPS.length){ cur=0; cached=false; }
   playing=true; this.textContent="⏸ Pause"; step();
 };
-document.getElementById("next").onclick=function(){ if(playing)return; if(cur<STEPS.length){ step(); } };
-document.getElementById("back").onclick=function(){ if(playing)return;
+document.getElementById("next").onclick=function(){ if(playing)return; clearHold(); if(cur<STEPS.length){ step(); } };
+document.getElementById("back").onclick=function(){ if(playing)return; clearHold();
   if(prog<1){ prog=1; render(); return; } if(cur>0){ cur--; cached=false; prog=1; render(); } };
 document.getElementById("again").onclick=function(){ if(playing||cacheAnim)return; cacheAnim=true; prog=0; t0=0;
-  if(raf)cancelAnimationFrame(raf); setCap(); raf=requestAnimationFrame(animate); };
+  clearHold(); if(raf)cancelAnimationFrame(raf); setCap(); raf=requestAnimationFrame(animate); };
 document.getElementById("reset").onclick=function(){ playing=false; cacheAnim=false; cached=false;
-  document.getElementById("play").textContent="▶ Resolve majal.sa"; if(raf)cancelAnimationFrame(raf); cur=0; prog=1; render(); };
+  document.getElementById("play").textContent="▶ Resolve majal.sa"; clearHold(); if(raf)cancelAnimationFrame(raf); cur=0; prog=1; render(); };
 
 var sp=(location.search.match(/step=(\d+)/)||[])[1];
 loadImgs(function(){ fit();
