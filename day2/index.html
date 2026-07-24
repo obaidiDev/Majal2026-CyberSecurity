@@ -69,28 +69,24 @@
     <!-- ================= RECON & OSINT — DEFINED ================= -->
     <section>
       <p class="kicker">Recon · gathering intel</p>
-      <h2>Reconnaissance: learn the target before you touch it</h2>
-      <div class="k2 c2">
+      <h2>Recon: learn the target before you touch it</h2>
+      <div class="k2 c2" style="margin-top:.7em">
         <div class="card">
           <h3>Passive <span class="tag">no contact</span></h3>
-          <p>You only read what's <strong>already public</strong> — the target never sees you. Google &amp; dorking,
-          social media, breach dumps, WHOIS/DNS, job posts, GitHub. Invisible, unlimited, and almost always legal.</p>
-          <span class="ex"><b>Example:</b> finding an employee's email pattern and tech stack from LinkedIn + a leaked PDF.</span>
+          <p>Read what's <strong>already public</strong>. Invisible &amp; legal.</p>
+          <span class="ex">Google, socials, breach dumps, WHOIS, job posts.</span>
         </div>
         <div class="card" style="border-top-color:var(--bad)">
           <h3>Active <span class="tag">you touch it</span></h3>
-          <p>You <strong>interact</strong> with the target's systems — port scans, banner grabbing, probing logins.
-          Faster and far richer, but it hits their servers, can be <strong>logged</strong>, and is illegal without permission.</p>
-          <span class="ex"><b>Example:</b> port-scanning a company's IP to see which services (SSH, RDP, web) are exposed.</span>
+          <p>Probe their systems directly. Richer — but <strong>logged</strong>.</p>
+          <span class="ex">Port scans, banner grabbing, probing logins.</span>
         </div>
       </div>
-      <div class="callout" style="margin-top:1em"><strong>OSINT = Open-Source INTelligence:</strong> intelligence built from
-      publicly available sources. Most recon is passive OSINT — and it's astonishing how much is simply <em>there</em>, waiting.</div>
-      <div class="callout hot" style="margin-top:.55em"><strong>The line:</strong> passive OSINT on public data is generally legal;
-      active scanning without authorisation is not. This week you only touch systems you've been given.</div>
-      <aside class="notes">Ground the next two tools. The key distinction is passive vs active: passive never touches the
-      target (can't get you in trouble, can't be seen); active does (logged, needs permission). The dork builder and the
-      footprint slide are both passive OSINT. Land the surprise: the volume of passive intel is the attacker's real edge.</aside>
+      <div class="callout hot" style="margin-top:1.1em"><strong>OSINT</strong> = intel from public sources. Passive is
+      legal and unseen; active scanning without permission isn't. Both tools next are passive.</div>
+      <aside class="notes">Ground the next two tools. Passive never touches the target (unseen, legal); active does
+      (logged, needs permission). The dork builder and footprint slides are both passive OSINT. Land the surprise:
+      the sheer volume of passive intel is the attacker's real edge. Give the fuller examples verbally here.</aside>
     </section>
 
     <!-- ================= RECON / GOOGLE DORKING ================= -->
@@ -98,7 +94,7 @@
       <p class="kicker">Recon · Google dorking</p>
       <h2>Turn Google into a precision recon tool</h2>
       <iframe class="wframe" style="height:566px"
-              src="widgets/dork_builder.html?v=1"
+              src="widgets/dork_builder.html?v=2"
               title="Google Dork Builder" scrolling="auto"></iframe>
       <aside class="notes">Everyone can type words into Google; almost no one uses its <em>operators</em>.
       Build a query live and watch the plain-English line explain exactly what each operator narrows.
@@ -114,7 +110,7 @@
       <p class="kicker">Recon · turn it on yourself</p>
       <h2>Now OSINT the easiest target you have: you</h2>
       <iframe class="wframe" style="height:566px"
-              src="widgets/footprint.html?v=1"
+              src="widgets/footprint.html?v=2"
               title="Your digital footprint" scrolling="auto"></iframe>
       <aside class="notes">The dork skills they just learned point at a company — now aim them at themselves.
       Everything is offline and private: what they type never leaves the browser (say this out loud — real email/phone).
@@ -151,7 +147,7 @@
       <p class="kicker">Deliver · phishing</p>
       <h2>Phishing: one con, many delivery channels</h2>
       <iframe class="wframe" style="height:566px"
-              src="widgets/phishing_types.html?v=1"
+              src="widgets/phishing_types.html?v=2"
               title="Types of phishing with examples" scrolling="auto"></iframe>
       <aside class="notes">Definition first: phishing is a fraudulent message impersonating someone you trust to make you
       click, log in, or pay. Then the taxonomy — click each type to see a real-looking example with its red flags called out.
@@ -164,7 +160,7 @@
       <p class="kicker">Deliver · social engineering</p>
       <h2>Build the lure: believable enough to click, quiet enough to slip filters</h2>
       <iframe class="wframe" style="height:566px"
-              src="widgets/phish_lure.html?v=2"
+              src="widgets/phish_lure.html?v=3"
               title="Build-a-Lure phishing sandbox" scrolling="auto"></iframe>
       <aside class="notes">Hand them the attacker's console. Have them toggle the cheap tricks first
       (urgency, look-alike domain, masked link) — watch click-likelihood rise but the red-flag score rise with it,

@@ -4,7 +4,7 @@
 <link rel="stylesheet" href="_shared.css?v=1">
 <style>
   body { padding: 6px; }
-  .def { font-size: 12.5px; line-height: 1.4; color: #29474F; background: rgba(0,86,124,.06);
+  .def { font-size: 14.5px; line-height: 1.4; color: #29474F; background: rgba(0,86,124,.06);
     border-left: 4px solid #00567C; border-radius: 0 8px 8px 0; padding: 9px 13px; margin-bottom: 11px; }
   .def b { color: #00567C; }
   .cols { display: grid; grid-template-columns: 292px 1fr; gap: 14px; align-items: start; }
@@ -15,10 +15,10 @@
     padding: 8px 11px; cursor: pointer; transition: all 120ms; }
   .type:hover { border-color: #1F8F89; background: #F6FbFb; }
   .type.on { border-color: #1F8F89; background: rgba(31,143,137,.09); box-shadow: inset 3px 0 0 #1F8F89; }
-  .type .tn { font-weight: 800; font-size: 13px; color: #00567C; }
+  .type .tn { font-weight: 800; font-size: 15.1px; color: #00567C; }
   .type.on .tn { color: #146d68; }
-  .type .td { font-size: 10.8px; color: #7A9198; margin-top: 1px; line-height: 1.3; }
-  .chan { display: inline-block; font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 8.5px;
+  .type .td { font-size: 12.5px; color: #7A9198; margin-top: 1px; line-height: 1.3; }
+  .chan { display: inline-block; font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 9.9px;
     font-weight: 700; letter-spacing: .05em; padding: 1px 6px; border-radius: 999px; margin-left: 6px; vertical-align: middle; }
   .chan.email { background: rgba(0,86,124,.12); color: #00567C; }
   .chan.sms { background: rgba(31,143,137,.14); color: #146d68; }
@@ -27,8 +27,8 @@
   /* ---- example viewer ---- */
   .viewer { border: 1px solid #E0E7E8; border-radius: 12px; background: #F7FAFA; padding: 13px 14px 14px; }
   .vh { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
-  .vh .vn { font-weight: 800; font-size: 15px; color: #12333D; }
-  .vh .rch { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 9px; font-weight: 700;
+  .vh .vn { font-weight: 800; font-size: 17.4px; color: #12333D; }
+  .vh .rch { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 10.4px; font-weight: 700;
     letter-spacing: .06em; padding: 2px 8px; border-radius: 999px; }
   .rch.bulk { background: #EEF3F3; color: #7A9198; }
   .rch.targeted { background: rgba(214,69,69,.13); color: #C1403f; }
@@ -40,35 +40,35 @@
   /* email mock */
   .m-email { background: #fff; border: 1px solid #E0E7E8; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(18,51,61,.06); }
   .me-head { padding: 10px 12px; border-bottom: 1px solid #EEF3F3; }
-  .me-subj { font-weight: 800; font-size: 13.5px; color: #12333D; margin-bottom: 5px; line-height: 1.2; }
-  .me-from { font-size: 11.5px; color: #46707A; }
-  .me-from .addr { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 10.5px; color: #7A9198; }
-  .me-body { padding: 11px 12px 13px; font-size: 12.5px; line-height: 1.5; color: #29474F; }
+  .me-subj { font-weight: 800; font-size: 15.7px; color: #12333D; margin-bottom: 5px; line-height: 1.2; }
+  .me-from { font-size: 13.3px; color: #46707A; }
+  .me-from .addr { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 12.2px; color: #7A9198; }
+  .me-body { padding: 11px 12px 13px; font-size: 14.5px; line-height: 1.5; color: #29474F; }
   .me-cta { display: inline-block; margin-top: 9px; background: #1F8F89; color: #fff; padding: 7px 15px;
-    border-radius: 7px; font-weight: 800; font-size: 12px; }
+    border-radius: 7px; font-weight: 800; font-size: 13.9px; }
 
   /* sms mock */
   .m-sms { background: #ECF1F3; border: 1px solid #E0E7E8; border-radius: 14px; padding: 12px; }
-  .sms-top { text-align: center; font-size: 10.5px; color: #8AA1A8; font-weight: 700; margin-bottom: 9px; }
+  .sms-top { text-align: center; font-size: 12.2px; color: #8AA1A8; font-weight: 700; margin-bottom: 9px; }
   .sms-bubble { max-width: 82%; background: #fff; border: 1px solid #E0E7E8; border-radius: 4px 15px 15px 15px;
-    padding: 9px 12px; font-size: 12.5px; line-height: 1.45; color: #12333D; box-shadow: 0 1px 2px rgba(18,51,61,.06); }
+    padding: 9px 12px; font-size: 14.5px; line-height: 1.45; color: #12333D; box-shadow: 0 1px 2px rgba(18,51,61,.06); }
   .sms-bubble .lnk { color: #2f6bd6; text-decoration: underline; }
 
   /* call mock */
   .m-call { background: linear-gradient(160deg,#0a2b34,#06232B); border-radius: 16px; padding: 18px 16px 15px;
     text-align: center; color: #EAF7F5; }
-  .call-caller { font-size: 17px; font-weight: 800; }
-  .call-num { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 11px; color: #7FB8BE; margin-top: 3px; }
-  .call-status { font-size: 10.5px; color: #7FE3DC; letter-spacing: .1em; text-transform: uppercase; margin: 9px 0 12px; }
-  .call-script { background: rgba(255,255,255,.07); border-radius: 12px; padding: 10px 12px; font-size: 12.5px;
+  .call-caller { font-size: 19.7px; font-weight: 800; }
+  .call-num { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 12.8px; color: #7FB8BE; margin-top: 3px; }
+  .call-status { font-size: 12.2px; color: #7FE3DC; letter-spacing: .1em; text-transform: uppercase; margin: 9px 0 12px; }
+  .call-script { background: rgba(255,255,255,.07); border-radius: 12px; padding: 10px 12px; font-size: 14.5px;
     line-height: 1.5; color: #CFE6E7; text-align: left; font-style: italic; }
 
   /* red flags */
-  .flags h4 { margin: 0 0 7px; font-size: 10.5px; font-weight: 800; letter-spacing: .12em;
+  .flags h4 { margin: 0 0 7px; font-size: 12.2px; font-weight: 800; letter-spacing: .12em;
     text-transform: uppercase; color: #C1403f; }
   .flags ul { margin: 0; padding: 0; list-style: none; }
-  .flags li { position: relative; padding-left: 20px; font-size: 11.8px; color: #42606A; line-height: 1.35; margin-bottom: 8px; }
-  .flags li::before { content: "\2691"; position: absolute; left: 0; top: -1px; color: #D64545; font-size: 13px; }
+  .flags li { position: relative; padding-left: 20px; font-size: 13.7px; color: #42606A; line-height: 1.35; margin-bottom: 8px; }
+  .flags li::before { content: "\2691"; position: absolute; left: 0; top: -1px; color: #D64545; font-size: 15.1px; }
 </style>
 </head><body>
   <div class="def"><b>Phishing:</b> a fraudulent message that impersonates someone you trust to make you click a link,

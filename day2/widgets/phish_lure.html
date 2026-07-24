@@ -10,38 +10,38 @@
   .mailwrap { position: relative; background: #fff; border: 1px solid #E0E7E8;
     border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(18,51,61,.07); }
   .mail-toolbar { display: flex; align-items: center; gap: 8px; padding: 7px 12px;
-    background: #F1F5F5; border-bottom: 1px solid #E0E7E8; font-size: 11px; color: #7A9198; }
+    background: #F1F5F5; border-bottom: 1px solid #E0E7E8; font-size: 12.5px; color: #7A9198; }
   .mail-toolbar .dot { width: 9px; height: 9px; border-radius: 50%; background: #CDD8DA; }
   .mail-toolbar .tb-label { margin-left: auto; letter-spacing: .04em; }
   .mail-head { padding: 12px 14px 10px; border-bottom: 1px solid #EEF3F3; }
-  .mail-subject { font-size: 16px; font-weight: 800; color: #12333D; line-height: 1.25; margin-bottom: 9px; }
+  .mail-subject { font-size: 18.2px; font-weight: 800; color: #12333D; line-height: 1.25; margin-bottom: 9px; }
   .mail-from { display: flex; align-items: center; gap: 10px; }
   .avatar { flex: 0 0 auto; width: 36px; height: 36px; border-radius: 50%;
     background: #00567C; color: #fff; display: flex; align-items: center; justify-content: center;
-    font-weight: 800; font-size: 14px; }
-  .from-name { font-weight: 700; font-size: 13.5px; color: #12333D; }
-  .from-addr { font-size: 11.5px; color: #5C7880; margin-top: 1px; }
+    font-weight: 800; font-size: 16px; }
+  .from-name { font-weight: 700; font-size: 15.4px; color: #12333D; }
+  .from-addr { font-size: 13.1px; color: #5C7880; margin-top: 1px; }
   .from-addr .warn { color: #D64545; font-weight: 700; }
-  .to-line { font-size: 11.5px; color: #94A7AD; margin-top: 3px; }
+  .to-line { font-size: 13.1px; color: #94A7AD; margin-top: 3px; }
 
   .brandbar { display: flex; align-items: center; gap: 11px; padding: 12px 16px;
     background: linear-gradient(90deg, #00567C, #1F8F89); color: #fff; }
   .brandbar .mark { width: 26px; height: 26px; border-radius: 6px; background: #F2D200;
-    display: flex; align-items: center; justify-content: center; color: #00567C; font-weight: 900; font-size: 15px; }
-  .brandbar .bn { font-weight: 800; letter-spacing: .1em; font-size: 14px; }
-  .brandbar .bn small { display: block; font-weight: 600; letter-spacing: .02em; font-size: 9px; opacity: .85; }
+    display: flex; align-items: center; justify-content: center; color: #00567C; font-weight: 900; font-size: 17.1px; }
+  .brandbar .bn { font-weight: 800; letter-spacing: .1em; font-size: 16px; }
+  .brandbar .bn small { display: block; font-weight: 600; letter-spacing: .02em; font-size: 10.3px; opacity: .85; }
 
-  .mail-body { padding: 15px 16px 18px; font-size: 13.5px; line-height: 1.55; color: #29474F; }
+  .mail-body { padding: 15px 16px 18px; font-size: 15.4px; line-height: 1.55; color: #29474F; }
   .mail-body .greet { font-weight: 700; color: #12333D; margin-bottom: 8px; }
   .mail-body p { margin: 0 0 9px; }
   .expire { color: #B23333; font-weight: 700; background: #FBEDED; border: 1px solid #F3CFCF;
     border-radius: 7px; padding: 8px 10px; margin: 10px 0; }
   .cta { display: inline-block; margin-top: 4px; background: #1F8F89; color: #fff;
-    padding: 10px 20px; border-radius: 8px; font-weight: 800; font-size: 13.5px;
+    padding: 10px 20px; border-radius: 8px; font-weight: 800; font-size: 15.4px;
     text-decoration: none; cursor: pointer; }
-  .sig { margin-top: 12px; font-size: 12.5px; color: #5C7880; }
+  .sig { margin-top: 12px; font-size: 14.2px; color: #5C7880; }
   .statusbar { position: absolute; left: 0; bottom: 0; max-width: 100%;
-    background: #12333D; color: #DCEBEE; font-size: 11px; padding: 4px 10px;
+    background: #12333D; color: #DCEBEE; font-size: 12.5px; padding: 4px 10px;
     border-top-right-radius: 6px; opacity: 0; transform: translateY(4px);
     transition: opacity .12s, transform .12s; pointer-events: none; white-space: nowrap;
     overflow: hidden; text-overflow: ellipsis; }
@@ -49,26 +49,26 @@
 
   /* ---- attacker console (right) ---------------------------------------- */
   .panel { display: flex; flex-direction: column; gap: 13px; }
-  .phead { font-size: 11px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase;
+  .phead { font-size: 12.5px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase;
     color: #5C7880; margin: 0 0 10px; }
   .toggles { display: flex; flex-wrap: wrap; gap: 7px; }
   button.tog { position: relative; }
   button.tog.osint.on { background: #D64545; border-color: #D64545; }
-  button.tog .tag { display: inline-block; font-size: 9px; font-weight: 800; letter-spacing: .06em;
+  button.tog .tag { display: inline-block; font-size: 10.3px; font-weight: 800; letter-spacing: .06em;
     margin-left: 6px; padding: 1px 5px; border-radius: 999px; background: rgba(214,69,69,.14); color: #D64545; }
   button.tog.on .tag { background: rgba(255,255,255,.22); color: #fff; }
 
   .meters { display: flex; flex-direction: column; gap: 10px; }
   .meter .mlab { display: flex; justify-content: space-between; align-items: baseline;
-    font-size: 12px; font-weight: 700; color: #12333D; margin-bottom: 4px; }
-  .meter .mlab .v { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 12px; }
-  .meter .mlab .sub { font-weight: 600; color: #94A7AD; font-size: 10.5px; }
+    font-size: 13.7px; font-weight: 700; color: #12333D; margin-bottom: 4px; }
+  .meter .mlab .v { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 13.7px; }
+  .meter .mlab .sub { font-weight: 600; color: #94A7AD; font-size: 12px; }
   .track { height: 11px; background: #EAF0F0; border-radius: 6px; overflow: hidden; }
   .fill { height: 100%; width: 0; border-radius: 6px; transition: width .28s ease; }
   .fill.click { background: linear-gradient(90deg, #1F8F89, #33D3CB); }
   .fill.detect { background: linear-gradient(90deg, #E07A7A, #D64545); }
 
-  .verdict { border-radius: 9px; padding: 10px 12px; font-size: 13px; font-weight: 700; line-height: 1.4; }
+  .verdict { border-radius: 9px; padding: 10px 12px; font-size: 14.8px; font-weight: 700; line-height: 1.4; }
   .verdict.weak { background: #EEF3F3; color: #5C7880; border: 1px solid #E0E7E8; }
   .verdict.mixed { background: rgba(242,210,0,.12); color: #8A7400; border: 1px solid rgba(242,210,0,.4); }
   .verdict.caught { background: rgba(31,143,137,.12); color: #146d68; border: 1px solid rgba(31,143,137,.4); }
@@ -76,13 +76,13 @@
 
   .defender { background: #FBFcFc; border: 1px solid #E0E7E8; border-left: 4px solid #D64545;
     border-radius: 9px; padding: 10px 12px; }
-  .defender h4 { margin: 0 0 6px; font-size: 11px; font-weight: 800; letter-spacing: .12em;
+  .defender h4 { margin: 0 0 6px; font-size: 12.5px; font-weight: 800; letter-spacing: .12em;
     text-transform: uppercase; color: #B23333; }
   .defender ul { margin: 0; padding-left: 16px; }
-  .defender li { font-size: 12px; color: #42606A; margin: 3px 0; line-height: 1.4; }
-  .defender .clean { font-size: 12px; color: #146d68; font-weight: 700; }
+  .defender li { font-size: 13.7px; color: #42606A; margin: 3px 0; line-height: 1.4; }
+  .defender .clean { font-size: 13.7px; color: #146d68; font-weight: 700; }
 
-  .lesson { grid-column: 1 / -1; font-size: 12px; color: #42606A; line-height: 1.45;
+  .lesson { grid-column: 1 / -1; font-size: 13.7px; color: #42606A; line-height: 1.45;
     border-top: 1px dashed #CDD8DA; padding-top: 9px; margin-top: 1px; }
   .lesson b { color: #D64545; }
 </style>
