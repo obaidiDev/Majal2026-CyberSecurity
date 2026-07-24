@@ -373,6 +373,51 @@
       today they just need this picture: addressed packets, independent paths, reassembly by sequence.</aside>
     </section>
 
+    <!-- ================= NETWORK · WI-FI & THE EVIL TWIN ================= -->
+    <section>
+      <p class="kicker">Network fundamentals · the wireless edge</p>
+      <h2>Wi-Fi is a shared room, not a private wire</h2>
+      <style>
+        .wf { display:grid; grid-template-columns:repeat(4,1fr); gap:15px; margin:.5em 0 0; }
+        .wf .card h3 { margin:0 0 .35em; font-size:.8em; color:var(--petrol); letter-spacing:-.01em; }
+        .wf .card p { margin:0; font-size:.63em; color:var(--muted); line-height:1.45; }
+        .wf .card .ex { display:block; margin-top:.6em; font-size:.58em; color:var(--slate);
+          border-top:1px dashed var(--line); padding-top:.5em; }
+        .wf .card .ex b { color:var(--petrol); font-weight:700; }
+      </style>
+      <div class="wf">
+        <div class="card"><h3>Radio reaches everyone</h3>
+          <p>A cable carries your packets to one place. Wi-Fi <strong>broadcasts them into the air</strong>, where every device
+          in range can hear them.</p>
+          <span class="ex"><b>So:</b> privacy on Wi-Fi is done by <em>encryption</em>, not by the wire.</span></div>
+        <div class="card"><h3>WPA2 / WPA3 — the password</h3>
+          <p>The network key encrypts the radio link, so neighbours hear noise instead of your traffic.</p>
+          <span class="ex"><b>But:</b> it protects the <em>air</em> only — everyone who knows the café password is inside it
+          with you.</span></div>
+        <div class="card" style="border-top-color:#D64545"><h3>Open networks</h3>
+          <p>"Free Airport WiFi" with no password means <strong>no encryption at all</strong>. Anyone nearby with a laptop can
+          read what isn't otherwise protected.</p>
+          <span class="ex"><b>Your last defence:</b> HTTPS, on every single site.</span></div>
+        <div class="card" style="border-top-color:#D64545"><h3>The evil twin</h3>
+          <p>An attacker runs an access point using the <strong>same network name</strong>. Your phone prefers the stronger
+          signal — and joins it automatically, without asking.</p>
+          <span class="ex"><b>Result:</b> all your traffic now flows through them.</span></div>
+      </div>
+      <div class="callout hot" style="margin-top:1em">The lesson isn't "avoid public Wi-Fi" — it's that
+      <strong>the network is never what's protecting you</strong>. End-to-end encryption is. That's why the padlock matters, and why
+      a certificate warning on a café network should end the session.</div>
+      <aside class="notes">Closes the network block with the one piece of it students touch every day. Beats: (1) a wire delivers
+      to one socket, radio delivers to <em>everyone in range</em> — so on Wi-Fi, privacy has to come from encryption; that
+      re-frames the WPA password not as "permission to join" but as "the key that scrambles the air". (2) WPA2/WPA3 secures the
+      radio hop only — on a shared café password, everyone who has it is inside the encrypted zone with you; it is not a private
+      tunnel. (3) An <b>open</b> network has none of that: the traffic is literally readable by anyone with a cheap adapter,
+      which is why HTTPS-everywhere stopped being optional. (4) The <b>evil twin</b> is the memorable one — devices auto-join
+      the strongest signal with a remembered name, so an attacker just names their access point "Starbucks WiFi" and waits.
+      Ask the room how many phones would join automatically right now. Land the callout hard: the defence isn't avoiding
+      networks, it's assuming every network is hostile and relying on end-to-end encryption instead — which is exactly what
+      Day 3 will prove, when we sit in the middle of a network and try (and fail) to read HTTPS.</aside>
+    </section>
+
     <!-- ================= RECAP ================= -->
     <section>
       <p class="kicker">Day 1 · recap</p>

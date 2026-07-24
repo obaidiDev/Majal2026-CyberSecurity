@@ -53,9 +53,9 @@
     .loop.goal .stg:last-child h4 { color: var(--bad); }
 
     /* Recap · learned → weaponised pairing */
-    .recap { display: flex; flex-direction: column; gap: 6px; margin-top: .35em; }
+    .recap { display: flex; flex-direction: column; gap: 4px; margin-top: .25em; }
     .pair { display: grid; grid-template-columns: 1fr 46px 1fr; align-items: center; gap: 8px; }
-    .pair .a1, .pair .a2 { background: var(--panel); border: 1px solid var(--line); border-radius: 3px; padding: .4em .85em; }
+    .pair .a1, .pair .a2 { background: var(--panel); border: 1px solid var(--line); border-radius: 3px; padding: .26em .8em; }
     .pair .a1 { border-left: 4px solid var(--teal); } .pair .a2 { border-left: 4px solid var(--bad); background: #fff; }
     .pair b { display: block; font-size: .74em; color: var(--petrol); letter-spacing: -.01em; }
     .pair .a2 b { color: var(--bad); }
@@ -127,6 +127,27 @@
       Keep it ~90 seconds; the depth comes in the next slides.</aside>
     </section>
 
+    <!-- ================= ACT 1 · ADDRESSING, SUBNETS, NAT ================= -->
+    <section>
+      <p class="kicker">Act 1 · addressing &amp; reach</p>
+      <h2>Two halves of an address — and the wall called NAT</h2>
+      <iframe class="wframe" style="height:470px"
+              src="widgets/subnet_nat.html?v=1"
+              title="Subnets, reachability and NAT" scrolling="no"></iframe>
+      <aside class="notes">The foundation everything else stands on — do this before ARP. An IP address isn't one number,
+      it's <b>two</b>: a network part and a host part, and the <b>subnet mask</b> is what says where the split falls. Walk the
+      bits: at /24 the first 24 bits are the network, so every 192.168.1.x is on the same wire and you reach them
+      <em>directly</em> (that's ARP, next slide). Slide to /25 and /26 and watch db01 and fileserver fall OUT of your subnet —
+      still reachable, but only <b>through the router</b>, which can log, filter or refuse. That is <b>segmentation</b>, and
+      it's the single most effective defence against the lateral movement we do in Act 2: it shrinks the blast radius of one
+      compromised box. Name the switch/router distinction here: a <b>switch</b> moves frames inside one subnet using MACs; a
+      <b>router</b> moves packets between subnets using IPs. Then flip to <b>Attacker on the internet</b> for the big land:
+      192.168.x.x is a <em>private</em> range — millions of networks use it, so the internet won't route to it. The router does
+      <b>NAT</b>, which lets the office out and matches up the replies, but nothing outside can start a conversation in. Ask
+      the room the question this answers: "if the office is unreachable, how did we get in on Day 2?" — you didn't knock, you
+      got <em>invited</em>, by phishing. Every attack today only works because you're already on the wire.</aside>
+    </section>
+
     <!-- ================= ACT 1 · IP vs MAC + ARP ================= -->
     <section>
       <p class="kicker">Act 1 · addressing on the local wire</p>
@@ -142,6 +163,41 @@
       data frame goes straight to .5's MAC. The two things to land: (a) IP vs MAC — who vs where-on-this-wire; (b) the
       trapdoor — ARP is an unauthenticated broadcast: ANY machine can shout "that's me." Hold that; in Act 2 we become the
       liar (ARP spoofing). Real-world scale: a busy LAN resolves thousands of these a minute, all cached for ~seconds.</aside>
+    </section>
+
+    <!-- ================= ACT 1 · DISCOVERY / THE PLUMBING ================= -->
+    <section>
+      <p class="kicker">Act 1 · discovery · the quiet plumbing</p>
+      <h2>Before you attack a host, you have to find it</h2>
+      <div class="k2 c5" style="margin-top:.6em">
+        <div class="card"><h3>DHCP <span class="tag">your IP</span></h3>
+          <p>Broadcast: <em>"anyone got an address for me?"</em> The reply hands you an IP, mask, <strong>gateway</strong>
+          and <strong>DNS</strong>.</p>
+          <span class="ex"><b>Trapdoor:</b> trust-by-answer, like ARP — a rogue server names <em>itself</em> your gateway.</span></div>
+        <div class="card"><h3>ICMP · ping <span class="tag">alive?</span></h3>
+          <p>Not a port, not a service — a <strong>control message</strong>. Echo request out, echo reply back.</p>
+          <span class="ex"><b>But:</b> many hosts drop ICMP on purpose. <em>Silent is not dead.</em></span></div>
+        <div class="card"><h3>Ping sweep <span class="tag">the map</span></h3>
+          <p>Ping every address in the subnet and list who answers.</p>
+          <span class="ex"><b>Step 0 of every scan:</b> hosts first, <em>then</em> ports — that's the next slide.</span></div>
+        <div class="card"><h3>ARP scan <span class="tag">on-wire</span></h3>
+          <p>On your own subnet, ask by ARP. A host can ignore ping — it <strong>can't</strong> ignore ARP and still work.</p>
+          <span class="ex"><b>So:</b> ARP finds what ping misses.</span></div>
+        <div class="card"><h3>traceroute <span class="tag">the path</span></h3>
+          <p>Packets with a deliberately short lifespan (TTL) — each router in turn reports itself.</p>
+          <span class="ex"><b>Reveals:</b> the hops between you and the target — and where the firewalls sit.</span></div>
+      </div>
+      <div class="callout hot" style="margin-top:.9em"><strong>None of this is an exploit.</strong> Every one of these is a
+      protocol doing exactly what it was designed to do — which is precisely why discovery is so hard to block.</div>
+      <aside class="notes">A short, brisk slide — cards, not a toy, because each of these is a one-sentence idea. It sits here
+      because discovery logically precedes the port scan: first <em>which machines exist</em>, then <em>which doors each one
+      has</em>. Beats to land: (1) <b>DHCP</b> answers "where did my IP even come from" and completes the addressing story from
+      two slides back — and note the rogue-DHCP trapdoor, the exact same trust-by-answer flaw as ARP and DNS; that pattern
+      repeating three times is the real lesson of Act 1. (2) <b>ping/ICMP</b> — worth saying explicitly that ICMP is not TCP or
+      UDP and has no ports; it's the network's own signalling. (3) <b>ping sweep</b> — the mental model of hosts-then-ports.
+      (4) <b>ARP scan</b> — the nice attacker detail: a host can firewall off ICMP but cannot refuse ARP and still function.
+      (5) <b>traceroute</b> — the TTL trick is genuinely clever, worth 20 seconds. Close on the callout: discovery abuses
+      nothing, so defenders can't simply "patch" it — they can only segment and monitor.</aside>
     </section>
 
     <!-- ================= ACT 1 · PORTS & SERVICES ================= -->
@@ -212,6 +268,28 @@
       exactly the attack we run next. Bridge to Act 2: "so how does an attacker get onto the wire to read HTTP? Watch."</aside>
     </section>
 
+    <!-- ================= ACT 1 · TLS & CERTIFICATES ================= -->
+    <section>
+      <p class="kicker">Act 1 · the lock, opened up</p>
+      <h2>Why HTTPS beats you: certificates, not just encryption</h2>
+      <iframe class="wframe" style="height:518px"
+              src="widgets/tls_cert.html?v=1"
+              title="The TLS handshake, certificates, and the MITM warning" scrolling="no"></iframe>
+      <aside class="notes">The slide that answers the question the Wireshark slide raised and never explained: <em>why</em> is
+      HTTPS opaque? Play it in <b>Just the server</b> first. ClientHello (nothing secret yet, all in the clear) → ServerHello +
+      <b>Certificate</b> → the browser <b>verifies</b> it → key exchange → sealed Application Data. Land the one idea students
+      usually miss: <strong>encryption is the easy half — knowing WHO you encrypted to is the hard half.</strong> Anyone can
+      encrypt; the certificate is what binds a public key to the name "majal.sa", and a <b>Certificate Authority's signature</b>
+      is what makes that binding believable. Day 1 already built the key exchange (Diffie–Hellman) — point at that step and say
+      "this is that, running for real". Then switch to <b>Attacker in the middle</b>: you're ARP-spoofed into the path from the
+      MITM slide, so you must terminate TLS yourself, which means handing alice a certificate for majal.sa. You can type the
+      name, but you cannot forge a CA signature — so you self-sign, and the browser catches it instantly and throws
+      NET::ERR_CERT_AUTHORITY_INVALID. <b>Now make someone in the room click "Proceed anyway."</b> Watch the password appear in
+      your pane. The final land, and the best line of the day: TLS did not fail — <em>alice overrode it</em>. The last defence
+      was a human decision, which is exactly Day 2's territory. This is also why browsers made that warning so ugly and hard to
+      bypass, and why a cert warning on a public Wi-Fi network should end the session.</aside>
+    </section>
+
     <!-- ================= ACT 2 · THE INSIDE LOOP ================= -->
     <section>
       <p class="kicker">Act 2 · moving through</p>
@@ -229,12 +307,38 @@
       </div>
       <div class="callout hot" style="margin-top:.9em"><strong>It's a loop, not a straight line.</strong> Each new box you land on
       restarts the cycle — orient, escalate, loot, move — and every turn is powered by a protocol you just learned in Act 1.</div>
+      <div class="callout" style="margin-top:.5em"><strong>Say it once, plainly:</strong> everything from here is a <em>crime</em>
+      on a network you don't own. Day 2's rule was "passive is legal, active needs permission" — inside the network there is no
+      passive. These techniques are legal in exactly two places: <strong>a lab you built</strong>, or <strong>an engagement you
+      have written authorisation for</strong>.</div>
       <aside class="notes">The map for Act 2. Yesterday ended at a single low-privilege shell; today is the loop that turns it
       into the whole network. Walk the five stages: <b>orient</b> (situational awareness — the port/service skills from Act 1),
       <b>escalate</b> (become admin/root on this box), <b>loot</b> (harvest credentials), <b>move</b> (reuse that loot to log
       into the next machine) — then the ↺: you're on a new box, so you start over. Land the two through-lines: (1) it's
       iterative — attackers pivot machine to machine, each hop widening access toward domain admin; (2) none of it is movie
       hacking — it's scanning, logging in, and reusing credentials. Each following slide drills one stage of this loop.</aside>
+    </section>
+
+    <!-- ================= ACT 2 · C2 / KEEPING THE SHELL ================= -->
+    <section>
+      <p class="kicker">Act 2 · staying in touch · command &amp; control</p>
+      <h2>Your shell has to phone home</h2>
+      <iframe class="wframe" style="height:430px"
+              src="widgets/c2_shell.html?v=1"
+              title="Bind shell vs reverse shell vs C2 over HTTPS" scrolling="no"></iframe>
+      <div class="callout hot" style="margin-top:.55em"><strong>A firewall guards the door, not the exit.</strong>
+      That asymmetry is why virtually every real implant is built to <em>call out</em> rather than be called.</div>
+      <aside class="notes">The plumbing question Act 2 otherwise skips: you have a shell on web01 — but <em>how are you still
+      talking to it?</em> Run all three. <b>Bind shell</b>: web01 listens on 4444 and you dial in — the obvious design, and it
+      dies instantly, because inbound-deny is the one rule every edge firewall has (tie back to the firewall toggle on the port
+      scan slide). <b>Reverse shell</b>: flip the arrow — web01 dials out to you, and the firewall waves it through, because
+      outbound is how staff get work done. That inversion is the whole insight, and it's how nearly every real foothold works;
+      Day 2's payload did exactly this. But 4444 outbound is odd-looking, so a defender watching egress can spot it.
+      <b>C2 over HTTPS</b>: beacon out on 443 wrapped in TLS, at intervals. The firewall must allow 443, and the content is
+      encrypted — note the irony out loud: <em>the same TLS that protected alice two slides ago is now hiding the attacker.</em>
+      The tell is not the content but the <b>rhythm</b> — human browsing is bursty and irregular, a beacon is metronomic, and
+      that timing signature is exactly what a defender hunts for on Friday. Real tools: Cobalt Strike, Sliver, Mythic; the
+      "beacon" name comes from this behaviour.</aside>
     </section>
 
     <!-- ================= ACT 2 · ENUMERATION (orient) ================= -->
@@ -318,6 +422,42 @@
       can't save an account once its hash leaks — and that stolen credential is the fuel for the next slide, lateral movement.</aside>
     </section>
 
+    <!-- ================= ACT 2 · WHAT A DOMAIN IS ================= -->
+    <section>
+      <p class="kicker">Act 2 · the target · what "the domain" means</p>
+      <h2>The domain: one login that opens every machine</h2>
+      <div class="k2 c4" style="margin-top:.6em">
+        <div class="card"><h3>The problem it solves</h3>
+          <p>500 computers shouldn't mean 500 separate accounts. So the organisation runs one central directory —
+          <strong>Active Directory</strong> — holding every user, group and machine.</p>
+          <span class="ex"><b>You get:</b> one username and password, and every company machine accepts it.</span></div>
+        <div class="card"><h3>The Domain Controller</h3>
+          <p>The server that <em>is</em> that directory. Every login in the building is checked by it.</p>
+          <span class="ex"><b>Which means:</b> it stores the password hash of <strong>every account in the organisation</strong>
+          — including yours.</span></div>
+        <div class="card" style="border-top-color:var(--bad)"><h3>Domain Admin</h3>
+          <p>A group whose members are administrator on <strong>every domain-joined machine at once</strong>.</p>
+          <span class="ex"><b>Not</b> "an admin somewhere" — <em>the</em> admin, everywhere, by design.</span></div>
+        <div class="card" style="border-top-color:var(--bad)"><h3>Why you aim here</h3>
+          <p>From the DC you can reset any password, read any file share, and push software to every endpoint in the company.</p>
+          <span class="ex"><b>Convenience for IT</b> is the same thing as <b>leverage for you</b>.</span></div>
+      </div>
+      <div class="callout hot" style="margin-top:.9em">This is why the loop ends at the Domain Controller. Every hop you make is
+      really a hunt for <strong>one credential the whole domain trusts</strong> — and once you hold it, you stop hacking and
+      simply <em>log in</em>.</div>
+      <aside class="notes">A definition slide, deliberately not a toy — and it must come before lateral movement, because until
+      now "domain admin" has been an undefined goal. Same discipline as Act 1: teach the mechanism before you weaponise it.
+      Explain it from the IT side first so it doesn't sound sinister: managing hundreds of machines with local accounts is
+      impossible, so Windows networks centralise identity in Active Directory. Then turn each convenience into leverage —
+      (1) one credential works everywhere, so one stolen credential works everywhere; (2) the DC must know every hash in order
+      to check every login, which makes it the single richest target in the building; (3) Domain Admin is a group, not a
+      person, and membership means administrator on every joined machine simultaneously. Land the framing line: attackers don't
+      break into the domain, they <em>authenticate</em> to it — the pass-the-hash from the last slide is the key, and the next
+      slide is the lock. Mention that Linux/macOS shops have equivalents (LDAP, Kerberos realms, SSO/Entra ID) and the logic is
+      identical: centralised identity is a huge security win <em>and</em> a huge single point of failure. Defences arrive
+      Friday — tiered admin, separate admin accounts, and never letting a domain admin log into an ordinary workstation.</aside>
+    </section>
+
     <!-- ================= ACT 2 · LATERAL MOVEMENT (marquee) ================= -->
     <section>
       <p class="kicker">Act 2 · move · lateral movement</p>
@@ -398,14 +538,15 @@
       <h2>You learned the network — then weaponised it</h2>
       <div class="recap">
         <div class="pair"><span class="hd">Act 1 · you learned</span><span></span><span class="hd">Act 2 · you weaponised it</span></div>
+        <div class="pair"><div class="a1"><b>IP, subnets &amp; NAT</b><small>which wire you're on, who can route to it</small></div><div class="ar">›</div><div class="a2"><b>Your blast radius</b><small>and why you had to be phished in at all</small></div></div>
         <div class="pair"><div class="a1"><b>ARP</b><small>who's at which MAC on the wire</small></div><div class="ar">›</div><div class="a2"><b>ARP-spoof MITM</b><small>sit in the middle, sniff cleartext creds</small></div></div>
         <div class="pair"><div class="a1"><b>Ports &amp; services · TCP</b><small>doors, and the handshake</small></div><div class="ar">›</div><div class="a2"><b>Scan &amp; pick targets</b><small>stealth SYN scan → what to attack next</small></div></div>
-        <div class="pair"><div class="a1"><b>HTTP vs HTTPS / TLS</b><small>a packet is readable headers</small></div><div class="ar">›</div><div class="a2"><b>Sniff the login</b><small>plaintext password on the wire</small></div></div>
-        <div class="pair"><div class="a1"><b>Hashes</b><small>passwords stored one-way</small></div><div class="ar">›</div><div class="a2"><b>Crack &amp; pass-the-hash</b><small>reuse the hash to move laterally</small></div></div>
-        <div class="pair"><div class="a1"><b>One low-priv shell</b><small>where Day 2 left you</small></div><div class="ar">›</div><div class="a2"><b>Domain admin</b><small>orient → escalate → loot → move → repeat</small></div></div>
+        <div class="pair"><div class="a1"><b>HTTP, TLS &amp; certificates</b><small>encryption, and who you encrypted to</small></div><div class="ar">›</div><div class="a2"><b>Sniff it — then the click-through</b><small>TLS held; the human overrode it</small></div></div>
+        <div class="pair"><div class="a1"><b>Firewalls block inbound</b><small>direction is everything</small></div><div class="ar">›</div><div class="a2"><b>Reverse shell &amp; C2</b><small>make the victim call out on 443</small></div></div>
+        <div class="pair"><div class="a1"><b>Hashes &amp; the domain</b><small>one identity, every machine</small></div><div class="ar">›</div><div class="a2"><b>Crack &amp; pass-the-hash</b><small>one low-priv shell → Domain Admin</small></div></div>
       </div>
-      <div class="callout hot" style="margin-top:.85em"><strong>The whole day in one line:</strong> understand the mechanism, and it becomes a way through.
-      Tomorrow — <em>Day 4, Breaking the App</em> — you stop attacking the network and go after the application itself.</div>
+      <div class="callout hot" style="margin-top:.5em"><strong>The whole day in one line:</strong> understand the mechanism, and it
+      becomes a way through. Tomorrow — <em>Day 4, Breaking the App</em> — you leave the network and attack the application.</div>
       <aside class="notes">Close the loop. Every attack today was a protocol you'd just learned, turned around — that pairing IS
       the lesson: defenders and attackers study the exact same mechanisms. Recap the arc verbally: from one shell to the whole
       domain, powered by ARP, ports, TCP, HTTP/TLS, and hashes. Then point forward: Day 4 leaves the network layer and attacks

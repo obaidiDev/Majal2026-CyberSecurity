@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding: 6px 8px; }
+  .w { padding: 11px 13px; }
+  .lay { display: grid; grid-template-columns: 1fr 322px; gap: 13px; align-items: start; }
+
+  /* ---------- left: the conversation ---------- */
+  .flow { border: 1px solid #E0E7E8; border-radius: 10px; background: #fff; padding: 10px 12px 11px; }
+  .actors { display: grid; gap: 8px; margin-bottom: 9px; }
+  .actors.m2 { grid-template-columns: 1fr 1fr; }
+  .actors.m3 { grid-template-columns: 1fr 1fr 1fr; }
+  .ac { border: 1px solid #E6ECEC; border-radius: 8px; background: #F4F7F7; padding: 6px 8px; text-align: center; }
+  .ac .nm { font-size: 11px; font-weight: 800; color: #12333D; }
+  .ac .sub { font-family: var(--mono,monospace); font-size: 9px; color: #93a4aa; margin-top: 1px; }
+  .ac.cli { border-color: #9fd4cf; background: rgba(31,143,137,.10); } .ac.cli .nm { color: #167a75; }
+  .ac.srv { border-color: #b9d2e0; background: rgba(0,86,124,.08); } .ac.srv .nm { color: #00567C; }
+  .ac.atk { border-color: #E9C4C4; background: #FDF4F4; } .ac.atk .nm { color: #C1403f; }
+
+  .msgs { display: flex; flex-direction: column; gap: 6px; min-height: 236px; }
+  .msg { border: 1px solid #E6ECEC; border-radius: 7px; background: #F8FAFA; padding: 6px 9px;
+    animation: pop .26s ease both; }
+  @keyframes pop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+  .msg .hd { display: flex; align-items: baseline; gap: 7px; }
+  .msg .ar { font-family: var(--mono,monospace); font-size: 11px; font-weight: 800; color: #8AA1A8; letter-spacing: -.04em; }
+  .msg .ti { font-family: var(--mono,monospace); font-size: 11.5px; font-weight: 800; color: #00567C; }
+  .msg .dt { display: block; margin-top: 2px; font-size: 10.5px; color: #7a8f96; line-height: 1.38; }
+  .msg.c2s { border-left: 3px solid #1F8F89; } .msg.s2c { border-left: 3px solid #00567C; }
+  .msg.evil { border-left: 3px solid #D64545; background: #FDF6F6; } .msg.evil .ti { color: #C1403f; }
+  .msg.sealed { border-left: 3px solid #1F8F89; background: rgba(31,143,137,.07); }
+  .msg .cipher { display: block; margin-top: 3px; font-family: var(--mono,monospace); font-size: 9.5px;
+    color: #9db3ba; word-break: break-all; line-height: 1.3; }
+  .msg .clear { display: block; margin-top: 3px; font-family: var(--mono,monospace); font-size: 10.5px;
+    font-weight: 700; color: #C1403f; }
+  .empty { color: #a8b6bb; font-style: italic; font-size: 12px; padding: 16px 0; text-align: center; }
+
+  /* ---------- right: certificate / warning ---------- */
+  .panel { border: 1px solid #E0E7E8; border-radius: 10px; background: #fff; overflow: hidden; min-height: 292px; }
+  .ph { background: #F4F7F7; border-bottom: 1px solid #E6ECEC; padding: 7px 11px;
+    font-size: 10px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: #7a8f96; }
+  .pb { padding: 10px 11px; }
+  .pb .waiting { color: #a8b6bb; font-style: italic; font-size: 11.5px; text-align: center; padding: 26px 8px; line-height: 1.5; }
+  .fld { display: grid; grid-template-columns: 74px 1fr; gap: 7px; padding: 4px 0; border-bottom: 1px solid #F2F6F6; }
+  .fld .k { font-size: 9.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: #a3b3b8; padding-top: 1px; }
+  .fld .v { font-family: var(--mono,monospace); font-size: 11px; color: #12333D; word-break: break-word; }
+  .fld .v.bad { color: #C1403f; font-weight: 700; }
+  .checks { margin-top: 8px; border-top: 1px dashed #DCE5E6; padding-top: 7px; display: flex; flex-direction: column; gap: 4px; }
+  .chk { display: grid; grid-template-columns: 16px 1fr; gap: 5px; font-size: 10.5px; line-height: 1.35; }
+  .chk .ic { font-weight: 800; text-align: center; }
+  .chk.ok .ic { color: #1F8F89; } .chk.ok .t { color: #5C7880; }
+  .chk.no .ic { color: #D64545; } .chk.no .t { color: #C1403f; font-weight: 700; }
+
+  /* browser warning */
+  .warn { background: #6E2222; color: #fff; padding: 15px 14px 13px; min-height: 292px; }
+  .warn .ico { font-size: 30px; line-height: 1; }
+  .warn h5 { margin: 9px 0 6px; font-size: 15px; font-weight: 800; letter-spacing: -.01em; }
+  .warn p { margin: 0 0 8px; font-size: 11px; line-height: 1.5; color: #F0D6D6; }
+  .warn .code { font-family: var(--mono,monospace); font-size: 10px; color: #FFB3B3; letter-spacing: .02em; }
+  .warn .btns { display: flex; gap: 7px; margin-top: 11px; flex-wrap: wrap; }
+  .warn button { font-size: 11.5px; padding: 7px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,.45);
+    background: transparent; color: #fff; font-weight: 700; }
+  .warn button:hover { background: rgba(255,255,255,.14); border-color: #fff; }
+  .warn button.safe { background: #fff; color: #6E2222; border-color: #fff; }
+
+  .cap { min-height: 44px; }
+  .ctl .lab { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #93a4aa; }
+  .ctl .seg { display: flex; border: 1px solid #CDD8DA; border-radius: 999px; overflow: hidden; }
+  .ctl .seg button { border: none; border-radius: 0; border-right: 1px solid #CDD8DA; padding: 8px 13px; }
+  .ctl .seg button:last-child { border-right: none; }
+  .dots { display: flex; gap: 5px; margin-left: auto; align-items: center; }
+  .dots i { width: 7px; height: 7px; border-radius: 50%; background: #DCE5E6; display: block; }
+  .dots i.on { background: #00567C; }
+</style>
+</head><body>
+<div class="w">
+  <div class="lay">
+    <div class="flow">
+      <div class="actors m2" id="actors"></div>
+      <div class="msgs" id="msgs"><div class="empty">Press <b>Play</b> to open a secure connection to majal.sa</div></div>
+    </div>
+    <div class="panel" id="panel">
+      <div class="ph" id="ph">The server's certificate</div>
+      <div class="pb" id="pb"><div class="waiting">The browser hasn't been handed a certificate yet.<br>Step through the handshake.</div></div>
+    </div>
+  </div>
+
+  <div class="cap" id="cap">HTTPS isn't magic — it's a <b>handshake</b>. Before any password is typed, the browser has to answer one
+    question: <em>am I really talking to majal.sa?</em> Play it through.</div>
+
+  <div class="ctl">
+    <button class="primary" id="play">▶ Play</button>
+    <button id="next">Next ▸</button>
+    <button id="reset">↺ Reset</button>
+    <span class="lab" style="margin-left:8px">Who's on the wire</span>
+    <div class="seg" id="segmode">
+      <button data-m="real" class="on">Just the server</button>
+      <button data-m="mitm">Attacker in the middle</button>
+    </div>
+    <div class="dots" id="dots"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (s) { return document.querySelector(s); };
+
+  var CERT_GOOD = {
+    cn: "majal.sa", issuer: "DigiCert Global G2", valid: "until 14 Mar 2027",
+    checks: [
+      { ok: 1, t: "<b>Name matches</b> — the certificate is issued to majal.sa, the site you asked for" },
+      { ok: 1, t: "<b>Signed by a CA your browser trusts</b> — DigiCert is in the built-in trust store" },
+      { ok: 1, t: "<b>Still valid</b> — not expired, not revoked" }
+    ]
+  };
+  var CERT_BAD = {
+    cn: "majal.sa", issuer: "mitm-proxy (self-signed)", valid: "until 14 Mar 2027", bad: 1,
+    checks: [
+      { ok: 1, t: "<b>Name matches</b> — the attacker simply typed majal.sa into their own certificate" },
+      { ok: 0, t: "<b>Signed by nobody you trust</b> — self-signed. No CA vouches for it, and the attacker cannot forge a real CA's signature" },
+      { ok: 1, t: "Dates look fine — trivially faked" }
+    ]
+  };
+
+  // step kinds: msg | verify | warn | sealed | pwned
+  var REAL = [
+    { k: "msg", cls: "c2s", ar: "→", ti: "ClientHello", dt: "TLS 1.3 · the cipher suites I support · a random number" },
+    { k: "msg", cls: "s2c", ar: "←", ti: "ServerHello + Certificate", dt: "the chosen cipher, another random — and the server's certificate" },
+    { k: "verify", cert: CERT_GOOD },
+    { k: "msg", cls: "c2s", ar: "⇄", ti: "Key exchange", dt: "both sides derive the <b>same session key</b> — Day 1's Diffie–Hellman. The key itself never crosses the wire." },
+    { k: "sealed" }
+  ];
+  var MITM = [
+    { k: "msg", cls: "c2s", ar: "→", ti: "ClientHello", dt: "…but you ARP-spoofed the LAN, so it reaches the attacker, not the server" },
+    { k: "msg", cls: "evil", ar: "←", ti: "ServerHello + Certificate", dt: "the attacker must present <b>some</b> certificate for majal.sa — so they make their own" },
+    { k: "verify", cert: CERT_BAD },
+    { k: "warn" }
+  ];
+
+  var mode = "real", steps = REAL, cur = 0, playing = null;
+
+  function drawActors() {
+    var a = $("#actors");
+    if (mode === "real") {
+      a.className = "actors m2";
+      a.innerHTML = '<div class="ac cli"><div class="nm">Browser</div><div class="sub">alice · 192.168.1.20</div></div>' +
+        '<div class="ac srv"><div class="nm">majal.sa</div><div class="sub">the real server</div></div>';
+    } else {
+      a.className = "actors m3";
+      a.innerHTML = '<div class="ac cli"><div class="nm">Browser</div><div class="sub">alice · 192.168.1.20</div></div>' +
+        '<div class="ac atk"><div class="nm">You</div><div class="sub">in the middle</div></div>' +
+        '<div class="ac srv"><div class="nm">majal.sa</div><div class="sub">the real server</div></div>';
+    }
+  }
+
+  function certHTML(c) {
+    var h = '<div class="fld"><span class="k">Issued to</span><span class="v">' + c.cn + '</span></div>' +
+      '<div class="fld"><span class="k">Issued by</span><span class="v' + (c.bad ? " bad" : "") + '">' + c.issuer + '</span></div>' +
+      '<div class="fld"><span class="k">Valid</span><span class="v">' + c.valid + '</span></div>' +
+      '<div class="fld"><span class="k">Public key</span><span class="v">RSA 2048-bit</span></div><div class="checks">';
+    c.checks.forEach(function (k) {
+      h += '<div class="chk ' + (k.ok ? "ok" : "no") + '"><span class="ic">' + (k.ok ? "✓" : "✕") + '</span><span class="t">' + k.t + '</span></div>';
+    });
+    return h + "</div>";
+  }
+
+  function render() {
+    var box = $("#msgs"); box.innerHTML = "";
+    if (!cur) {
+      box.innerHTML = '<div class="empty">Press <b>Play</b> to open a secure connection to majal.sa</div>';
+      $("#ph").textContent = "The server's certificate";
+      $("#panel").innerHTML = '<div class="ph" id="ph">The server\'s certificate</div>' +
+        '<div class="pb"><div class="waiting">The browser hasn\'t been handed a certificate yet.<br>Step through the handshake.</div></div>';
+      setCap();
+      drawDots();
+      return;
+    }
+    var shownCert = null, warn = false, sealed = false, pwned = false;
+    for (var i = 0; i < cur && i < steps.length; i++) {
+      var s = steps[i];
+      if (s.k === "msg") {
+        var d = document.createElement("div");
+        d.className = "msg " + s.cls;
+        d.innerHTML = '<div class="hd"><span class="ar">' + s.ar + '</span><span class="ti">' + s.ti + '</span></div>' +
+          '<span class="dt">' + s.dt + "</span>";
+        box.appendChild(d);
+      } else if (s.k === "verify") {
+        shownCert = s.cert;
+        var v = document.createElement("div");
+        v.className = "msg " + (s.cert.bad ? "evil" : "s2c");
+        v.innerHTML = '<div class="hd"><span class="ar">⧗</span><span class="ti">Browser verifies the certificate</span></div>' +
+          '<span class="dt">' + (s.cert.bad
+            ? "checking the signature chain… <b>no trusted CA vouches for this</b>"
+            : "name, signature chain and dates all check out") + "</span>";
+        box.appendChild(v);
+      } else if (s.k === "warn") { warn = true; }
+      else if (s.k === "sealed") {
+        sealed = true;
+        var e = document.createElement("div");
+        e.className = "msg sealed";
+        e.innerHTML = '<div class="hd"><span class="ar">🔒</span><span class="ti">Application Data</span></div>' +
+          '<span class="dt">the login now travels sealed with the session key — this is all an eavesdropper sees:</span>' +
+          '<span class="cipher">17 03 03 00 6a 8f 2c d1 4b e0 91 7a c3 5f 88 12 a4 9e 6b 30 db f7 1c 55 a0 …</span>';
+        box.appendChild(e);
+      } else if (s.k === "pwned") {
+        pwned = true;
+        var p = document.createElement("div");
+        p.className = "msg evil";
+        p.innerHTML = '<div class="hd"><span class="ar">🔓</span><span class="ti">Application Data — through you</span></div>' +
+          '<span class="dt">alice clicked through. Her browser trusts <b>your</b> certificate, so it encrypts to <b>you</b> — ' +
+          'you decrypt, read, and re-encrypt to the real server. She still sees a padlock.</span>' +
+          '<span class="clear">POST /login &nbsp; username=alice&amp;password=Summer2026!</span>';
+        box.appendChild(p);
+      }
+    }
+    box.scrollTop = box.scrollHeight;
+
+    if (warn) {
+      $("#panel").innerHTML = '<div class="warn"><div class="ico">⚠</div>' +
+        '<h5>Your connection is not private</h5>' +
+        '<p>Attackers might be trying to steal your information from <b>majal.sa</b> — for example passwords or credit cards.</p>' +
+        '<p class="code">NET::ERR_CERT_AUTHORITY_INVALID</p>' +
+        '<div class="btns"><button class="safe" id="wback">← Back to safety</button>' +
+        '<button id="wgo">Advanced ▸ Proceed anyway</button></div></div>';
+      $("#wback").onclick = function () { mode = "real"; setMode("real"); cur = steps.length; render(); };
+      $("#wgo").onclick = function () { steps = MITM.concat([{ k: "pwned" }]); cur = steps.length; render(); };
+    } else if (shownCert) {
+      $("#panel").innerHTML = '<div class="ph">' + (shownCert.bad ? "The certificate you were handed" : "The server's certificate") +
+        '</div><div class="pb">' + certHTML(shownCert) + "</div>";
+    } else {
+      $("#panel").innerHTML = '<div class="ph">The server\'s certificate</div>' +
+        '<div class="pb"><div class="waiting">Not handed over yet — it arrives with the ServerHello.</div></div>';
+    }
+    setCap(warn, sealed, pwned);
+    drawDots();
+  }
+
+  function setCap(warn, sealed, pwned) {
+    var c = $("#cap");
+    if (pwned) {
+      c.innerHTML = "<span class='dngr'>And there it is.</span> TLS never broke — <b>alice overrode it</b>. The certificate " +
+        "was the one thing standing between her and you, and a single click threw it away. " +
+        "<b>This is why the warning is scary-looking, and why the real attack is on the human</b> — straight back to Day 2.";
+      return;
+    }
+    if (warn) {
+      c.innerHTML = "You're in the middle, but you're <span class='dngr'>stuck</span>. To decrypt you must present a certificate " +
+        "for majal.sa — and you can't get one <b>signed by a CA</b>, because you don't control majal.sa. So you self-sign, " +
+        "and the browser catches it instantly. <b>Your only way in is to make alice click through.</b>";
+      return;
+    }
+    if (sealed) {
+      c.innerHTML = "<span class='good'>Sealed.</span> Compare this to the Wireshark slide: same login, same wire — but the " +
+        "attacker now sees only ciphertext. The session key was <b>derived, never sent</b>, so capturing every packet doesn't help.";
+      return;
+    }
+    if (!cur) {
+      c.innerHTML = "HTTPS isn't magic — it's a <b>handshake</b>. Before any password is typed, the browser has to answer one " +
+        "question: <em>am I really talking to majal.sa?</em> Play it through.";
+      return;
+    }
+    var s = steps[cur - 1];
+    if (s && s.k === "verify") {
+      c.innerHTML = s.cert.bad
+        ? "The attacker's certificate <b>claims</b> to be majal.sa — anyone can type that. What they can't fake is the " +
+          "<b>signature of a Certificate Authority</b>. Encryption alone was never enough; <em>identity</em> is the hard part."
+        : "This is the step that actually protects you. Encryption is easy — <b>knowing who you encrypted to</b> is the hard " +
+          "part, and that's what the certificate and its CA signature buy.";
+    } else if (s && s.k === "msg" && cur === 1) {
+      c.innerHTML = "The browser opens with what it can do. Note it hasn't sent <em>anything</em> secret yet — no password, " +
+        "no key. Everything so far is in the clear.";
+    } else if (s && s.k === "msg" && cur === 2) {
+      c.innerHTML = mode === "mitm"
+        ? "To read alice's traffic you must terminate the TLS yourself — which means <b>you</b> have to hand her a certificate."
+        : "The server proves who it is by handing over a <b>certificate</b>: its name, its public key, and a signature from a CA.";
+    } else if (s && s.k === "msg") {
+      c.innerHTML = "Now both sides agree a shared secret without ever transmitting it — exactly Day 1's key exchange, " +
+        "running for real.";
+    }
+  }
+
+  function drawDots() {
+    var d = $("#dots"); d.innerHTML = "";
+    for (var i = 0; i < steps.length; i++) {
+      var e = document.createElement("i"); if (i < cur) e.className = "on"; d.appendChild(e);
+    }
+  }
+
+  function stop() { if (playing) { clearInterval(playing); playing = null; $("#play").textContent = "▶ Play"; } }
+  function next() { if (cur < steps.length) { cur++; render(); } if (cur >= steps.length) stop(); }
+
+  $("#play").onclick = function () {
+    if (playing) { stop(); return; }
+    if (cur >= steps.length) { cur = 0; render(); }
+    $("#play").textContent = "❚❚ Pause";
+    playing = setInterval(next, 1250);
+    next();
+  };
+  $("#next").onclick = function () { stop(); next(); };
+  $("#reset").onclick = function () { stop(); steps = (mode === "real" ? REAL : MITM); cur = 0; render(); };
+
+  function setMode(m) {
+    mode = m; stop(); steps = (m === "real" ? REAL : MITM); cur = 0;
+    [].forEach.call($("#segmode").querySelectorAll("button"), function (x) {
+      x.classList.toggle("on", x.getAttribute("data-m") === m); });
+    drawActors(); render();
+  }
+  $("#segmode").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return; setMode(b.getAttribute("data-m"));
+  });
+
+  // hooks: ?mode=mitm&step=4  (step beyond length in mitm shows the pwned state)
+  var q = new URLSearchParams(location.search);
+  var m0 = q.get("mode") === "mitm" ? "mitm" : "real";
+  mode = m0; steps = (m0 === "real" ? REAL : MITM);
+  [].forEach.call($("#segmode").querySelectorAll("button"), function (x) {
+    x.classList.toggle("on", x.getAttribute("data-m") === m0); });
+  if (q.get("pwned") === "1") { steps = MITM.concat([{ k: "pwned" }]); cur = steps.length; }
+  else if (q.get("step")) { cur = Math.max(0, Math.min(steps.length, +q.get("step"))); }
+  drawActors(); render();
+})();
+</script>
+</body></html>

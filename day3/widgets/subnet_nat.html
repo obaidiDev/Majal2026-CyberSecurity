@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding: 6px 8px; }
+  .w { padding: 12px 14px; }
+
+  /* ---- address decomposition ---- */
+  .addr { display: grid; grid-template-columns: 1fr 300px; gap: 16px; align-items: center;
+    border: 1px solid #E0E7E8; border-radius: 10px; background: #fff; padding: 10px 13px; }
+  .octs { display: flex; align-items: flex-end; gap: 6px; }
+  .oct { text-align: center; }
+  .oct .dv { font-family: var(--mono, monospace); font-size: 19px; font-weight: 800; color: #12333D; line-height: 1; }
+  .oct .bits { display: flex; gap: 2px; margin-top: 5px; }
+  .bit { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
+    width: 12px; height: 16px; border-radius: 2px; font-family: var(--mono,monospace); font-size: 9px;
+    line-height: 1; text-align: center; font-weight: 700; transition: background .22s, color .22s; }
+  .bit.net { background: #00567C; color: #cfe4ef; }
+  .bit.host { background: #D8EEEC; color: #1F8F89; }
+  .dot { font-size: 17px; font-weight: 800; color: #a8b6bb; padding-bottom: 19px; }
+  .maskbox { border-left: 1px dashed #DCE5E6; padding-left: 14px; }
+  .maskbox .lbl { font-size: 10px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: #93a4aa; }
+  .maskbox .val { font-family: var(--mono,monospace); font-size: 13px; font-weight: 800; color: #00567C; margin-top: 3px; }
+  .maskbox .rng { font-family: var(--mono,monospace); font-size: 11px; color: #5C7880; margin-top: 4px; }
+  .legend { display: flex; gap: 12px; margin-top: 7px; font-size: 10.5px; color: #7a8f96; }
+  .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 4px; }
+  .legend .n i { background: #00567C; } .legend .h i { background: #D8EEEC; border: 1px solid #9fd4cf; }
+
+  /* ---- the wire ---- */
+  .wire { position: relative; margin-top: 11px; border: 1px solid #E0E7E8; border-radius: 10px;
+    background: #fff; padding: 12px 13px 11px; }
+  .wtitle { font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+    color: #93a4aa; margin-bottom: 9px; }
+  .hosts { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+  .host { border: 1px solid #E6ECEC; border-radius: 8px; background: #F4F7F7; padding: 8px 4px 7px;
+    text-align: center; transition: all .25s ease; position: relative; }
+  .host .nm { font-size: 10.5px; font-weight: 800; color: #12333D; }
+  .host .ip { font-family: var(--mono,monospace); font-size: 10px; color: #7a8f96; margin-top: 2px; }
+  .host .st { display: block; margin-top: 5px; font-family: var(--mono,monospace); font-size: 8.5px;
+    font-weight: 700; letter-spacing: .02em; min-height: 11px; }
+  .host.you { border-color: #F2D200; background: #FDF9E0; box-shadow: 0 0 0 2px rgba(242,210,0,.28); }
+  .host.you .st { color: #8a6d00; }
+  .host.same { border-color: #1F8F89; background: rgba(31,143,137,.10); }
+  .host.same .st { color: #167a75; }
+  .host.routed { border-color: #EBD98A; background: #FBF3D6; }
+  .host.routed .st { color: #8a6d00; }
+  .host.dark { border-color: #E6ECEC; background: #F1F4F4; opacity: .45; }
+  .host.dark .st { color: #93a4aa; }
+
+  /* ---- outside view ---- */
+  .out { display: grid; grid-template-columns: 150px 46px 1fr; gap: 10px; align-items: center;
+    margin-top: 10px; border: 1px solid #E0E7E8; border-radius: 10px; background: #fff; padding: 10px 13px; }
+  .out.hid { display: none; }
+  .atk { border: 1px solid #E9C4C4; background: #FDF4F4; border-radius: 8px; padding: 7px 8px; text-align: center; }
+  .atk .nm { font-size: 10.5px; font-weight: 800; color: #C1403f; }
+  .atk .ip { font-family: var(--mono,monospace); font-size: 10px; color: #b07070; margin-top: 2px; }
+  .barrier { text-align: center; font-size: 9px; font-weight: 800; color: #C1403f; letter-spacing: .04em; line-height: 1.3; }
+  .barrier .x { display: block; font-size: 19px; line-height: 1; }
+  .natnote { font-size: 11.5px; color: #5C7880; line-height: 1.45; }
+  .natnote b { color: #12333D; }
+
+  .cap { min-height: 46px; }
+  .ctl .seg { display: flex; gap: 0; border: 1px solid #CDD8DA; border-radius: 999px; overflow: hidden; }
+  .ctl .seg button { border: none; border-radius: 0; border-right: 1px solid #CDD8DA; padding: 8px 13px; }
+  .ctl .seg button:last-child { border-right: none; }
+  .ctl .lab { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #93a4aa; }
+</style>
+</head><body>
+<div class="w">
+
+  <div class="addr">
+    <div>
+      <div class="octs" id="octs"></div>
+      <div class="legend">
+        <span class="n"><i></i>network — <b>which wire</b></span>
+        <span class="h"><i></i>host — <b>which machine on it</b></span>
+      </div>
+    </div>
+    <div class="maskbox">
+      <div class="lbl">Subnet mask</div>
+      <div class="val" id="mval">255.255.255.0 &nbsp;(/24)</div>
+      <div class="rng" id="mrng"></div>
+    </div>
+  </div>
+
+  <div class="wire">
+    <div class="wtitle" id="wtitle">The office network — who you can reach <b>directly</b></div>
+    <div class="hosts" id="hosts"></div>
+  </div>
+
+  <div class="out hid" id="out">
+    <div class="atk"><div class="nm">You, on the internet</div><div class="ip">185.220.101.7</div></div>
+    <div class="barrier"><span class="x">✕</span>NAT +<br>firewall</div>
+    <div class="natnote" id="natnote"></div>
+  </div>
+
+  <div class="cap" id="cap"></div>
+
+  <div class="ctl">
+    <span class="lab">Mask</span>
+    <div class="seg" id="segmask">
+      <button data-m="24" class="on">/24</button>
+      <button data-m="25">/25</button>
+      <button data-m="26">/26</button>
+    </div>
+    <span class="lab" style="margin-left:10px">Point of view</span>
+    <div class="seg" id="segview">
+      <button data-v="in" class="on">Inside the LAN</button>
+      <button data-v="out">Attacker on the internet</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (s) { return document.querySelector(s); };
+
+  var YOU = 50;
+  var HOSTS = [
+    { n: "gateway",    o: 1,   note: "the router — your door to every other network" },
+    { n: "web01",      o: 10,  note: "your foothold from Day 2" },
+    { n: "dev-pc",     o: 20,  note: "alice's desktop" },
+    { n: "you",        o: 50,  note: "the shell you're sitting in" },
+    { n: "db01",       o: 120, note: "the customer database" },
+    { n: "fileserver", o: 200, note: "the file shares" }
+  ];
+  var mask = 24, view = "in";
+
+  // ---- address maths ----
+  function netStart(m) { return Math.floor(YOU / Math.pow(2, 32 - m)) * Math.pow(2, 32 - m); }
+  function netSize(m) { return Math.pow(2, 32 - m); }
+  function maskDotted(m) { return "255.255.255." + (256 - netSize(m)); }
+  function sameSubnet(o, m) { var s = netStart(m); return o >= s && o < s + netSize(m); }
+
+  // ---- the address, drawn bit by bit ----
+  var OCT = [192, 168, 1, YOU];
+  function drawAddr() {
+    var wrap = $("#octs"); wrap.innerHTML = "";
+    OCT.forEach(function (v, i) {
+      if (i) { var d = document.createElement("span"); d.className = "dot"; d.textContent = "."; wrap.appendChild(d); }
+      var box = document.createElement("div"); box.className = "oct";
+      var bits = "";
+      for (var b = 7; b >= 0; b--) {
+        var idx = i * 8 + (7 - b);                 // 0..31, position in the whole address
+        var cls = idx < mask ? "net" : "host";
+        bits += '<span class="bit ' + cls + '">' + ((v >> b) & 1) + "</span>";
+      }
+      box.innerHTML = '<div class="dv">' + v + '</div><div class="bits">' + bits + "</div>";
+      wrap.appendChild(box);
+    });
+    var s = netStart(mask), sz = netSize(mask);
+    $("#mval").innerHTML = maskDotted(mask) + " &nbsp;(/" + mask + ")";
+    $("#mrng").innerHTML = "network <b>192.168.1." + s + "</b> · usable ." + (s + 1) + "–." + (s + sz - 2) +
+      "<br>" + (sz - 2) + " machines share this wire";
+  }
+
+  // ---- the wire ----
+  function drawHosts() {
+    var wrap = $("#hosts"); wrap.innerHTML = "";
+    HOSTS.forEach(function (h) {
+      var el = document.createElement("div");
+      var cls = "host", st = "";
+      if (view === "out") { cls += " dark"; st = "unreachable"; }
+      else if (h.o === YOU) { cls += " you"; st = "you are here"; }
+      else if (sameSubnet(h.o, mask)) { cls += " same"; st = "direct · ARP"; }
+      else { cls += " routed"; st = "via router"; }
+      el.className = cls;
+      el.innerHTML = '<div class="nm">' + h.n + '</div><div class="ip">192.168.1.' + h.o +
+        '</div><span class="st">' + st + "</span>";
+      wrap.appendChild(el);
+    });
+  }
+
+  // ---- captions ----
+  function update() {
+    drawAddr(); drawHosts();
+    var sz = netSize(mask), s = netStart(mask);
+    var routed = HOSTS.filter(function (h) { return h.o !== YOU && !sameSubnet(h.o, mask); });
+
+    if (view === "out") {
+      $("#out").classList.remove("hid");
+      $("#wtitle").innerHTML = 'The office network — <b>invisible from out here</b>';
+      $("#natnote").innerHTML = "<b>192.168.x.x is a private address.</b> It exists on millions of networks at once, " +
+        "so the internet refuses to route to it. The router does <b>NAT</b>: it lets the office out and remembers the " +
+        "replies — but nothing outside can start a conversation in.";
+      $("#cap").innerHTML = "From the internet there is <span class='dngr'>nothing to attack</span> — no port to scan, " +
+        "no host to reach. <b>This is why Day 2 needed phishing.</b> You can't knock on the door, so you get someone " +
+        "inside to open it for you. Every attack today only works <em>because you are already on the wire</em>.";
+      return;
+    }
+    $("#out").classList.add("hid");
+    $("#wtitle").innerHTML = 'The office network — who you can reach <b>directly</b>';
+
+    if (!routed.length) {
+      $("#cap").innerHTML = "The mask splits your address: <b>network</b> then <b>host</b>. At <b>/24</b> everything from " +
+        ".1 to .254 shares one wire — you reach all " + (sz - 2) + " <em>directly</em>, by ARP, with no router involved. " +
+        "One flat network means one flat blast radius.";
+    } else {
+      var names = routed.map(function (h) { return "<b>" + h.n + "</b>"; }).join(" and ");
+      $("#cap").innerHTML = "At <b>/" + mask + "</b> the wire shrinks to ." + s + "–." + (s + sz - 1) + " — " + names +
+        " fell <em>outside</em> your subnet. You can still reach them, but only <b>through the router</b>, which can " +
+        "log, filter or refuse. <span class='good'>That's segmentation: the same defence as the firewall, drawn on the map.</span>";
+    }
+  }
+
+  // ---- controls ----
+  $("#segmask").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    mask = +b.getAttribute("data-m");
+    [].forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("on", x === b); });
+    update();
+  });
+  $("#segview").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    view = b.getAttribute("data-v");
+    [].forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("on", x === b); });
+    update();
+  });
+
+  // hooks: ?mask=26&view=out
+  var q = new URLSearchParams(location.search);
+  if (q.get("mask")) {
+    mask = +q.get("mask");
+    [].forEach.call($("#segmask").querySelectorAll("button"), function (x) {
+      x.classList.toggle("on", +x.getAttribute("data-m") === mask); });
+  }
+  if (q.get("view") === "out") {
+    view = "out";
+    [].forEach.call($("#segview").querySelectorAll("button"), function (x) {
+      x.classList.toggle("on", x.getAttribute("data-v") === "out"); });
+  }
+  update();
+})();
+</script>
+</body></html>
