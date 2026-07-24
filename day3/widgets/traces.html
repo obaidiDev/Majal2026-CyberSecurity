@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="_shared.css?v=1">
+<style>
+  body { padding: 6px; }
+  .lab { display: grid; grid-template-columns: 330px 1fr; gap: 15px; align-items: start; }
+  .colhd { font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #8AA1A8; margin: 0 0 9px; }
+  .acts { display: flex; flex-direction: column; gap: 6px; }
+  .act { text-align: left; border: 1px solid #D3E1E1; background: #fff; border-radius: 9px; padding: 8px 12px; cursor: pointer; transition: all 120ms; }
+  .act:hover { border-color: #D64545; background: #FDF4F4; }
+  .act.done { opacity: .55; }
+  .act.done.quiet { border-color: #1F8F89; background: rgba(31,143,137,.07); opacity: 1; }
+  .act.done.loud { border-color: #D64545; background: rgba(214,69,69,.06); opacity: 1; }
+  .act .an { display: block; font-weight: 800; font-size: 13px; color: #12333D; }
+  .act .as { display: block; font-size: 10.5px; color: #8AA1A8; margin-top: 1px; font-family: "JetBrains Mono", Menlo, monospace; }
+  .act .tag { float: right; font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 9px; font-weight: 700;
+    letter-spacing: .05em; padding: 2px 7px; border-radius: 999px; margin-top: 1px; }
+  .tag.p { background: rgba(31,143,137,.14); color: #146d68; }
+  .tag.a { background: rgba(214,69,69,.14); color: #C1403f; }
+  .runbar { display: flex; gap: 7px; margin-top: 10px; }
+  .runbar button { font-family: inherit; font-size: 12.5px; font-weight: 700; border-radius: 999px; padding: 8px 15px;
+    cursor: pointer; border: 1px solid #CDD8DA; background: #fff; color: #12333D; }
+  .runbar .all { background: #00567C; color: #fff; border-color: #00567C; }
+  .console { background: #06232B; border: 1px solid #0C3A46; border-radius: 12px; overflow: hidden; }
+  .con-head { display: flex; align-items: center; gap: 9px; background: #0A2E38; padding: 9px 14px; border-bottom: 1px solid #0C3A46; }
+  .con-head .t { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 12px; font-weight: 700; color: #7FE3DC; letter-spacing: .04em; }
+  .con-head .counts { margin-left: auto; font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 11.5px; }
+  .con-head .counts .cri { color: #FF7A7A; } .con-head .counts .inv { color: #46C08A; }
+  .log { height: 372px; overflow-y: auto; padding: 12px 14px; font-family: "JetBrains Mono", Menlo, Consolas, monospace;
+    font-size: 12.5px; line-height: 1.5; color: #BFE0E2; }
+  .log .empty { color: #6B8A90; }
+  .row { padding: 6px 0; border-bottom: 1px solid rgba(31,85,99,.35); }
+  .row .sev { font-weight: 700; } .row .src { color: #7C9BA2; }
+  .row.crit .sev { color: #FF7A7A; } .row.warn .sev { color: #F2C14E; } .row.none .sev { color: #46C08A; }
+  .row .msg { color: #DCEBEE; } .row.none .msg { color: #8FB0B6; }
+  .foot { grid-column: 1 / -1; margin-top: 10px; font-size: 12.5px; line-height: 1.45; color: #42606A;
+    border-top: 1px dashed #CDD8DA; padding-top: 9px; }
+  .foot b { color: #12333D; } .foot .p { color: #146d68; font-weight: 700; } .foot .a { color: #C1403f; font-weight: 700; }
+</style>
+</head><body>
+<div class="lab">
+  <div>
+    <p class="colhd">Your inside-loop moves · click to replay</p>
+    <div class="acts" id="acts"></div>
+    <div class="runbar"><button class="all" id="runall">▶ Replay all</button><button id="reset">Reset</button></div>
+  </div>
+  <div>
+    <p class="colhd">The defender's console · what they saw</p>
+    <div class="console">
+      <div class="con-head"><span class="t">◈ SIEM — live alerts</span>
+        <span class="counts"><span class="cri" id="ccrit">0 alerts</span> · <span class="inv" id="cinv">0 silent</span></span></div>
+      <div class="log" id="log"><span class="empty">Replay a move on the left. Watch which ones the defender sees — and which leave nothing at all.</span></div>
+    </div>
+  </div>
+  <div class="foot" id="foot"></div>
+</div>
+<script>
+(function () {
+  "use strict";
+  var $ = function (s){ return document.querySelector(s); };
+  var MOVES = [
+    { id:"enum", an:"Enumerated the host", as:"id · sudo -l · ps · arp -a", kind:"quiet",
+      sev:"none", src:"—", msg:"nothing. All local reads — no packet left web01, no sensor fired." },
+    { id:"crack", an:"Cracked the hashes offline", as:"hashcat on your own laptop", kind:"quiet",
+      sev:"none", src:"—", msg:"nothing. Cracking happens on your machine — the target can't see it at all." },
+    { id:"scan", an:"Scanned the internal subnet", as:"nmap from web01", kind:"loud",
+      sev:"warn", src:"IDS", msg:"internal host web01 probed 20 hosts × 1000 ports in 3s — scan signature." },
+    { id:"arp", an:"ARP-spoofed the LAN", as:"became the man-in-the-middle", kind:"loud",
+      sev:"crit", src:"arpwatch", msg:"gateway 192.168.1.1 MAC changed to web01's — gratuitous-ARP flood. Classic MITM." },
+    { id:"privesc", an:"Escalated to root", as:"SUID abuse on web01", kind:"loud",
+      sev:"warn", src:"EDR", msg:"web01: root shell spawned by 'www-data' via SUID binary — privilege-escalation heuristic." },
+    { id:"pth", an:"Pass-the-hash to the DC", as:"administrator NTLM hash", kind:"loud",
+      sev:"crit", src:"Identity", msg:"'administrator' logged into DC from web01 via NTLM at 03:12 — never seen before." },
+    { id:"exfil", an:"Exfiltrated the database", as:"2.1 GB → cloud drive", kind:"loud",
+      sev:"crit", src:"DLP", msg:"2.1 GB outbound to unknown host at 03:20 — 40× this host's normal egress." }
+  ];
+  var done = {}, crit = 0, inv = 0, running = false;
+  var actsEl = $("#acts");
+  MOVES.forEach(function (m) {
+    var b = document.createElement("button");
+    b.className = "act"; b.setAttribute("data-id", m.id);
+    b.innerHTML = '<span class="tag ' + (m.kind==="quiet"?"p":"a") + '">' + (m.kind==="quiet"?"QUIET":"LOUD") + '</span>' +
+      '<span class="an">' + m.an + '</span><span class="as">' + m.as + '</span>';
+    b.addEventListener("click", function () { fire(m); });
+    m.el = b; actsEl.appendChild(b);
+  });
+  function fire(m) {
+    if (done[m.id]) return;
+    done[m.id] = true;
+    m.el.classList.add("done", m.kind);
+    if ($("#log").querySelector(".empty")) $("#log").innerHTML = "";
+    var row = document.createElement("div");
+    row.className = "row " + m.sev;
+    var sevtxt = m.sev==="crit" ? "CRITICAL" : m.sev==="warn" ? "WARNING " : "no alert";
+    row.innerHTML = '<span class="sev">[' + sevtxt + ']</span> <span class="src">' + m.src + '</span> — <span class="msg">' + m.msg + '</span>';
+    $("#log").appendChild(row); $("#log").scrollTop = $("#log").scrollHeight;
+    if (m.sev === "none") { inv++; } else { crit++; }
+    $("#ccrit").textContent = crit + (crit===1?" alert":" alerts");
+    $("#cinv").textContent = inv + " silent";
+    updateFoot();
+  }
+  function updateFoot() {
+    var anyLoud = MOVES.some(function(m){ return done[m.id] && m.kind==="loud"; });
+    var anyQuiet = MOVES.some(function(m){ return done[m.id] && m.kind==="quiet"; });
+    if (!anyLoud && !anyQuiet) { $("#foot").innerHTML = ""; return; }
+    $("#foot").innerHTML = "<b>The asymmetry:</b> <span class='p'>local, offline work stayed invisible</span> — enumeration and cracking touched nothing. " +
+      "But the instant you <span class='a'>touched the network or used a credential</span> — scan, spoof, escalate, log in, exfil — you wrote a line in someone's log. " +
+      "On Friday you'll sit at <em>this</em> console and reconstruct today's whole break-in from exactly these alerts.";
+  }
+  $("#reset").addEventListener("click", function () {
+    done = {}; crit = 0; inv = 0; running = false;
+    MOVES.forEach(function(m){ m.el.classList.remove("done","quiet","loud"); });
+    $("#log").innerHTML = '<span class="empty">Replay a move on the left. Watch which ones the defender sees — and which leave nothing at all.</span>';
+    $("#ccrit").textContent = "0 alerts"; $("#cinv").textContent = "0 silent"; $("#foot").innerHTML = "";
+  });
+  $("#runall").addEventListener("click", function () {
+    if (running) return; running = true; var i = 0;
+    (function step(){ if (i>=MOVES.length){ running=false; return; } fire(MOVES[i]); i++; setTimeout(step, 560); })();
+  });
+  if (new URLSearchParams(location.search).get("all") === "1") { MOVES.forEach(fire); }
+})();
+</script>
+</body></html>

@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding: 6px 8px; }
+  .w { padding: 12px 14px; }
+  .dump { border: 1px solid #E0E7E8; border-radius: 9px; overflow: hidden; background: #fff; }
+  table.cr { width: 100%; border-collapse: collapse; font-family: var(--mono,monospace); font-size: 12px; }
+  table.cr th { background: #eef2f3; color: #5c7880; text-align: left; padding: 6px 10px; font-size: 10px;
+    text-transform: uppercase; letter-spacing: .04em; border-bottom: 1px solid #C9D3D5; }
+  table.cr td { padding: 7px 10px; border-bottom: 1px solid #eef2f2; }
+  table.cr td.user { color: #00567C; font-weight: 700; }
+  table.cr td.hash { color: #93a4aa; font-size: 11px; }
+  .res .q { color: #a8b6bb; } .res .try { color: #a06a2a; }
+  .res .crk { color: #b3261e; font-weight: 700; } .res .crk .pw { background:#ffe3e3; padding:0 4px; border-radius:3px; }
+  .res .safe { color: #2b7a4b; font-weight: 700; }
+  .res .pth { color: #7a2fb0; font-weight: 800; }
+  .stt { font-size: .6em; color: #93a4aa; }
+  .status { display: flex; align-items: center; gap: 14px; margin: 9px 0; padding: 8px 11px; border-radius: 8px;
+    background: #04121a; color: #9fb3b8; font-family: var(--mono,monospace); font-size: 11.5px; min-height: 20px; }
+  .status .k { color: #5c7d86; } .status b { color: #33D3CB; } .status .word { color: #ffd23f; }
+  .status.idle { color:#5c7d86; }
+  .cap { min-height: 42px; margin-top: 4px; }
+</style>
+</head><body>
+<div class="w">
+  <div class="dump">
+    <table class="cr">
+      <thead><tr><th style="width:130px">User</th><th style="width:230px">NTLM hash (dumped as root)</th><th>Result</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+  <div class="status idle" id="status">idle — passwords are stored as one-way <b style="color:#5c7d86">hashes</b>, not plain text. Crack them offline, or reuse them directly.</div>
+  <div class="ctl">
+    <button class="primary" id="crack">▶ Run dictionary attack</button>
+    <button id="pth" disabled>🔑 Pass-the-hash (administrator)</button>
+    <button id="reset">↺ Reset</button>
+  </div>
+  <div class="cap" id="cap"></div>
+</div>
+<script>
+var ACCTS = [
+  {user:"bob",           hash:"8846f7eaee8fb117ad06bdd830b7586c", pw:"sunshine",     ms:600,  tc:"instant (top-100 list)"},
+  {user:"alice",         hash:"a9fdfa038c4b75ebc76dc855dd74f0da", pw:"Summer2026!",  ms:2200, tc:"~seconds (word+rules)"},
+  {user:"svc_backup",    hash:"5835048ce94ad0564e29a924a03510ef", pw:"P@ssw0rd!",    ms:3400, tc:"~seconds (common)"},
+  {user:"administrator", hash:"64f12cddaa88057e06a81b54e73b949b", pw:null,          ms:Infinity, tc:"~ centuries (16 random chars)"}
+];
+var WORDS = ["123456","password","qwerty","sunshine","iloveyou","P@ssw0rd","Summer2025","dragon",
+  "hunter2","Summer2026!","monkey","football","letmein","admin123","P@ssw0rd!","trustno1"];
+
+var rowsEl=document.getElementById("rows"), statusEl=document.getElementById("status");
+var cracking=false, raf=null, t0=0, done=false, pthDone=false;
+
+function rowHTML(a, state){
+  var res;
+  if(state==="idle") res='<span class="q">— not attempted —</span>';
+  else if(state==="trying") res='<span class="try">cracking…</span>';
+  else if(state==="cracked") res='<span class="crk">cracked → <span class="pw">'+a.pw+'</span></span> <span class="stt">'+a.tc+'</span>';
+  else if(state==="safe") res='<span class="safe">not in wordlist</span> <span class="stt">'+a.tc+'</span>';
+  else if(state==="pth") res='<span class="pth">✓ OWNED via pass-the-hash</span> <span class="stt">(password never learned)</span>';
+  return '<tr><td class="user">'+a.user+'</td><td class="hash">'+a.hash+'</td><td class="res">'+res+'</td></tr>';
+}
+function render(states){ rowsEl.innerHTML = ACCTS.map(function(a,i){ return rowHTML(a, states[i]); }).join(""); }
+var STATES = ["idle","idle","idle","idle"];
+render(STATES);
+
+function setStatus(html, idle){ statusEl.className = "status"+(idle?" idle":""); statusEl.innerHTML = html; }
+
+function runCrack(){
+  if(cracking||done) return; cracking=true; document.getElementById("crack").disabled=true;
+  STATES = ["trying","trying","trying","trying"]; render(STATES);
+  t0=0; var TOTAL=4200;
+  function frame(ts){
+    if(!t0) t0=ts; var el=ts-t0;
+    // spinning stats
+    var gps = 9.4 + Math.random()*1.2; // million guesses/sec
+    var tried = Math.floor(el/1000 * gps * 1e6);
+    var word = WORDS[Math.floor(el/90)%WORDS.length];
+    setStatus('<span class="k">hashcat</span> · <b>'+gps.toFixed(1)+'M</b> guesses/sec · tried <b>'+tried.toLocaleString()+
+      '</b> · now: <span class="word">'+word+'</span>');
+    ACCTS.forEach(function(a,i){ if(STATES[i]==="trying" && el>=a.ms){ STATES[i]="cracked"; } });
+    render(STATES);
+    if(el<TOTAL){ raf=requestAnimationFrame(frame); }
+    else {
+      ACCTS.forEach(function(a,i){ if(a.ms===Infinity){ STATES[i]="safe"; } });
+      render(STATES); cracking=false; done=true;
+      document.getElementById("pth").disabled=false;
+      var n=ACCTS.filter(function(a){return a.ms!==Infinity;}).length;
+      setStatus('done — <b style="color:#7fd18b">'+n+' of 4 cracked</b>. Weak &amp; seasonal passwords fell in seconds; the 16-char random one didn\'t.', true);
+      document.getElementById("cap").innerHTML='Offline cracking speed is set entirely by <b>password strength</b>. bob, alice and svc_backup used guessable passwords — gone in seconds. <b>administrator</b> used 16 random chars: uncrackable this way. So don\'t crack it — <span class="pth" style="color:#7a2fb0">pass the hash</span>.';
+    }
+  }
+  raf=requestAnimationFrame(frame);
+}
+function runPth(){
+  if(!done||pthDone) return; pthDone=true;
+  STATES[3]="pth"; render(STATES);
+  setStatus('<span class="k">$</span> impacket-psexec -hashes :64f12cddaa88057e06a81b54e73b949b <span style="color:#33D3CB">administrator</span>@192.168.1.7 → <b style="color:#7fd18b">authenticated</b>');
+  document.getElementById("pth").disabled=true;
+  document.getElementById("cap").innerHTML='<span class="dngr">You logged in as administrator without ever knowing the password.</span> For NTLM/SMB, the <b>hash itself is the key</b> — a strong password can\'t save an account once its hash leaks. This is the engine of <b>lateral movement</b> — next.';
+}
+document.getElementById("crack").onclick=runCrack;
+document.getElementById("pth").onclick=runPth;
+document.getElementById("reset").onclick=function(){ if(raf)cancelAnimationFrame(raf); cracking=false; done=false; pthDone=false;
+  STATES=["idle","idle","idle","idle"]; render(STATES); document.getElementById("crack").disabled=false; document.getElementById("pth").disabled=true;
+  setStatus('idle — passwords are stored as one-way <b style="color:#5c7d86">hashes</b>, not plain text. Crack them offline, or reuse them directly.', true);
+  document.getElementById("cap").innerHTML=''; };
+
+document.getElementById("cap").innerHTML='As root you dumped every account\'s password <b>hash</b> (a one-way fingerprint — Day 1). You can\'t read them directly. Two ways forward: <b>crack</b> them offline, or <b>reuse</b> the hash as-is.';
+
+// hooks: ?state=cracked|pth
+var st=(location.search.match(/state=(\w+)/)||[])[1];
+if(st==="cracked"||st==="pth"){
+  STATES=["cracked","cracked","cracked","safe"];
+  if(st==="pth"){ STATES[3]="pth"; }
+  render(STATES); done=true; document.getElementById("crack").disabled=true;
+  document.getElementById("pth").disabled = (st==="pth");
+  if(st==="pth"){ pthDone=true;
+    setStatus('<span class="k">$</span> impacket-psexec -hashes :64f12cddaa88057e06a81b54e73b949b <span style="color:#33D3CB">administrator</span>@192.168.1.7 → <b style="color:#7fd18b">authenticated</b>');
+    document.getElementById("cap").innerHTML='<span class="dngr">You logged in as administrator without ever knowing the password.</span> For NTLM/SMB, the <b>hash itself is the key</b>. This is the engine of <b>lateral movement</b> — next.';
+  } else {
+    setStatus('done — <b style="color:#7fd18b">3 of 4 cracked</b>. Weak &amp; seasonal passwords fell in seconds; the 16-char random one didn\'t.', true);
+    document.getElementById("cap").innerHTML='Offline cracking speed is set entirely by <b>password strength</b>. The 16-char random administrator password is uncrackable this way — so <span class="pth" style="color:#7a2fb0">pass the hash</span> instead.';
+  }
+}
+</script>
+</body></html>

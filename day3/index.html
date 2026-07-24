@@ -39,6 +39,39 @@
     .player.tran { --edge: var(--petrol); }
     .player.net  { --edge: #7a5cc4; }
     .player.link { --edge: var(--muted); }
+
+    /* Act 2 · the inside loop */
+    .loop { display: flex; align-items: stretch; gap: 0; margin: .6em 0 .3em; }
+    .loop .stg { flex: 1; background: var(--panel); border: 1px solid var(--line);
+      border-top: 3px solid var(--petrol); border-radius: 3px; padding: .75em .7em; text-align: center; }
+    .loop .stg .n { font-family: var(--mono); font-size: .58em; font-weight: 800; color: var(--muted); letter-spacing: .05em; }
+    .loop .stg h4 { margin: .2em 0 .3em; font-size: .8em; color: var(--petrol); }
+    .loop .stg p { margin: 0; font-size: .56em; color: var(--muted); line-height: 1.38; }
+    .loop .stg .tool { display:block; margin-top:.45em; font-family:var(--mono); font-size:.52em; color:var(--slate); }
+    .loop .arr { align-self: center; color: var(--petrol); font-weight: 800; font-size: 1.05em; padding: 0 .28em; }
+    .loop.goal .stg:last-child { border-top-color: var(--bad); }
+    .loop.goal .stg:last-child h4 { color: var(--bad); }
+
+    /* Recap · learned → weaponised pairing */
+    .recap { display: flex; flex-direction: column; gap: 6px; margin-top: .35em; }
+    .pair { display: grid; grid-template-columns: 1fr 46px 1fr; align-items: center; gap: 8px; }
+    .pair .a1, .pair .a2 { background: var(--panel); border: 1px solid var(--line); border-radius: 3px; padding: .4em .85em; }
+    .pair .a1 { border-left: 4px solid var(--teal); } .pair .a2 { border-left: 4px solid var(--bad); background: #fff; }
+    .pair b { display: block; font-size: .74em; color: var(--petrol); letter-spacing: -.01em; }
+    .pair .a2 b { color: var(--bad); }
+    .pair small { font-size: .58em; color: var(--muted); font-family: var(--mono); }
+    .pair .ar { text-align: center; color: var(--bad); font-weight: 800; font-size: 1.05em; }
+    .pair .hd { font-size: .58em; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+
+    /* Act 2 · enumeration — dark terminal cards */
+    .enum { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-top: .5em; }
+    .enum .t { background: #04303F; border: 1px solid #0a4657; border-radius: 8px; padding: .7em .82em; }
+    .enum .t .cmd { font-family: var(--mono); font-size: .64em; color: #33D3CB; font-weight: 700; }
+    .enum .t .cmd::before { content: "$ "; color: #5C7880; }
+    .enum .t .rev { display: block; margin-top: .4em; font-size: .58em; color: #d7e6e7; line-height: 1.4; }
+    .enum .t .why { display: block; margin-top: .4em; font-size: .55em; color: #86b4b7;
+      border-top: 1px solid #0a4657; padding-top: .38em; }
+    .enum .t .why b { color: #F2D200; font-weight: 700; }
   </style>
 </head>
 <body>
@@ -177,6 +210,207 @@
       packet — same login, but TLS has sealed it; the bytes are opaque ciphertext, no password to see. Two lands: (1) a packet
       is just these nested headers you can read; (2) HTTP exposes everything to anyone on the wire, HTTPS doesn't — which is
       exactly the attack we run next. Bridge to Act 2: "so how does an attacker get onto the wire to read HTTP? Watch."</aside>
+    </section>
+
+    <!-- ================= ACT 2 · THE INSIDE LOOP ================= -->
+    <section>
+      <p class="kicker">Act 2 · moving through</p>
+      <h2>Inside now — one shell becomes the whole domain</h2>
+      <div class="loop goal">
+        <div class="stg"><div class="n">01</div><h4>Orient</h4><p>Where am I? Who am I? What's reachable?</p><span class="tool">scan · enumerate</span></div>
+        <span class="arr">›</span>
+        <div class="stg"><div class="n">02</div><h4>Escalate</h4><p>Low-priv user → admin / root on this box.</p><span class="tool">privilege escalation</span></div>
+        <span class="arr">›</span>
+        <div class="stg"><div class="n">03</div><h4>Loot</h4><p>Steal passwords, hashes, tokens, keys.</p><span class="tool">credential access</span></div>
+        <span class="arr">›</span>
+        <div class="stg"><div class="n">04</div><h4>Move</h4><p>Use the loot to log into the next box.</p><span class="tool">lateral movement</span></div>
+        <span class="arr">↺</span>
+        <div class="stg"><div class="n">GOAL</div><h4>Own the domain</h4><p>Repeat until you hold the crown jewels.</p><span class="tool">exfiltrate</span></div>
+      </div>
+      <div class="callout hot" style="margin-top:.9em"><strong>It's a loop, not a straight line.</strong> Each new box you land on
+      restarts the cycle — orient, escalate, loot, move — and every turn is powered by a protocol you just learned in Act 1.</div>
+      <aside class="notes">The map for Act 2. Yesterday ended at a single low-privilege shell; today is the loop that turns it
+      into the whole network. Walk the five stages: <b>orient</b> (situational awareness — the port/service skills from Act 1),
+      <b>escalate</b> (become admin/root on this box), <b>loot</b> (harvest credentials), <b>move</b> (reuse that loot to log
+      into the next machine) — then the ↺: you're on a new box, so you start over. Land the two through-lines: (1) it's
+      iterative — attackers pivot machine to machine, each hop widening access toward domain admin; (2) none of it is movie
+      hacking — it's scanning, logging in, and reusing credentials. Each following slide drills one stage of this loop.</aside>
+    </section>
+
+    <!-- ================= ACT 2 · ENUMERATION (orient) ================= -->
+    <section>
+      <p class="kicker">Act 2 · orient · situational awareness</p>
+      <h2>You land blind — enumeration turns on the lights</h2>
+      <div class="enum">
+        <div class="t"><span class="cmd">id</span><span class="rev">Your user and groups.</span>
+          <span class="why">Are you <b>already privileged</b>? If not, escalation is next.</span></div>
+        <div class="t"><span class="cmd">ip a &nbsp;·&nbsp; arp -a</span><span class="rev">Your subnet and the neighbours in your ARP cache.</span>
+          <span class="why">The <b>map</b> of who else to attack — straight from Act&nbsp;1's ARP.</span></div>
+        <div class="t"><span class="cmd">ss -tlnp</span><span class="rev">Services listening on <em>this</em> box — including localhost-only ones a scan can't see.</span>
+          <span class="why">More <b>doors</b>, now from the inside.</span></div>
+        <div class="t"><span class="cmd">sudo -l</span><span class="rev">What you're allowed to run as root.</span>
+          <span class="why">The <b>#1 lead</b> for privilege escalation (next slide).</span></div>
+        <div class="t"><span class="cmd">cat ~/.bash_history &nbsp;·&nbsp; ls ~/.ssh</span><span class="rev">Typed commands, saved passwords, private keys.</span>
+          <span class="why">Often <b>free credentials</b> lying on disk.</span></div>
+        <div class="t"><span class="cmd">ps aux &nbsp;·&nbsp; crontab -l</span><span class="rev">Running processes and scheduled jobs.</span>
+          <span class="why">What's <b>valuable</b> here — and more escalation leads.</span></div>
+      </div>
+      <div class="callout hot" style="margin-top:.9em">None of this is loud or clever — it's just <strong>looking around</strong>.
+      But it's quiet (all local) and it feeds every other stage: escalation leads, credentials, and the next targets.</div>
+      <aside class="notes">Stage 1 of the loop. When a shell lands you know almost nothing — enumeration is orientation.
+      Don't drill every command; land the <em>mindset</em>: three questions — who am I (privileges), where am I (network +
+      the ARP neighbours from Act 1), what's here (services, creds, jobs). Two takeaways: (1) it's all local and quiet, so it
+      rarely alerts anyone; (2) it's not busywork — each command feeds a later stage (sudo -l → privesc, .ssh → loot, arp -a →
+      lateral targets). This is a checklist attackers automate (tools like LinPEAS); we keep it to the six that matter.</aside>
+    </section>
+
+    <!-- ================= ACT 2 · ARP-SPOOF MITM (marquee) ================= -->
+    <section>
+      <p class="kicker">Act 2 · sniff the wire · man-in-the-middle</p>
+      <h2>Become the middle: ARP-spoof, then read the traffic</h2>
+      <iframe class="wframe" style="height:480px"
+              src="widgets/mitm.html?v=1"
+              title="ARP spoofing man-in-the-middle capture" scrolling="no"></iframe>
+      <aside class="notes">The two Act-1 mechanisms fired at once. Remember slide 2: ARP is an unauthenticated broadcast —
+      anyone can lie. Here you do. First press <em>Victim logs in</em> while normal: the traffic goes straight to the gateway,
+      your capture pane is empty (a switch only sends frames to their real destination). Now hit <b>Spoof ARP</b>: you send
+      forged replies telling the victim "I'm the gateway" and the gateway "I'm the victim" — both cache your MAC, and the
+      path visibly bends through you. Log in again: now the victim's packets cross your machine, and the capture pane shows
+      the <span class="dngr">cleartext HTTP login — password=Summer2026!</span>. Finally flip the victim to <b>HTTPS</b>: you're
+      still in the middle, but you relay only encrypted Application Data — no password. Lands the whole arc: this is why
+      HTTPS-everywhere matters, and why "inside the LAN" is not "safe." Real tools: Ettercap, Bettercap, arpspoof. This also
+      seeds Day 5 — ARP spoofing is noisy and detectable, which the defender will catch.</aside>
+    </section>
+
+    <!-- ================= ACT 2 · PRIVILEGE ESCALATION ================= -->
+    <section>
+      <p class="kicker">Act 2 · escalate · low-priv → root</p>
+      <h2>Privilege escalation: turn a misconfig into root</h2>
+      <iframe class="wframe" style="height:448px"
+              src="widgets/privesc.html?v=1"
+              title="Privilege escalation sandbox" scrolling="no"></iframe>
+      <aside class="notes">Stage 2 of the loop. You have alice's shell, not root's — escalation is abusing a
+      <em>misconfiguration</em> to become root. Have them click each lead and read the terminal: <b>SUID</b> (a root-owned
+      binary with the s-bit runs as root — abuse it), <b>sudo NOPASSWD find</b> (allowed to run find as root, and find can
+      spawn a shell — GTFOBins), <b>writable cron</b> (a root job you can edit = scheduled root code execution). Then the
+      teaching trap: <b>/tmp writable</b> — click it and it <em>fails</em>, staying alice. Land that: "writable" is not
+      "exploitable"; it only matters if something privileged runs your file. The prompt flips alice$ → root#, uid 1000 → 0.
+      Two lands: (1) privesc is misconfigurations, not 0-days; (2) the fix is hygiene — least privilege, audit SUID/sudoers.
+      Real hunters automate this with LinPEAS/WinPEAS; every technique here is real (toy targets).</aside>
+    </section>
+
+    <!-- ================= ACT 2 · CREDENTIAL LOOT ================= -->
+    <section>
+      <p class="kicker">Act 2 · loot · credential access</p>
+      <h2>Loot the credentials: crack them, or just reuse the hash</h2>
+      <iframe class="wframe" style="height:310px"
+              src="widgets/credloot.html?v=1"
+              title="Credential dumping, cracking, and pass-the-hash" scrolling="no"></iframe>
+      <div class="callout" style="margin-top:.5em"><strong>Passwords are stored as one-way hashes</strong> (Day&nbsp;1) — but a
+      weak one still falls to an offline dictionary in seconds, and for NTLM the hash <em>itself</em> logs you in.</div>
+      <aside class="notes">Stage 3 of the loop. As root you dumped every account's password <b>hash</b> (mimikatz on Windows,
+      /etc/shadow on Linux — a one-way fingerprint from Day 1, not plaintext). Press <b>Run dictionary attack</b>: watch the
+      guesses/sec counter and the wordlist fly. bob (sunshine), alice (Summer2026!) and svc_backup (P@ssw0rd!) all crack in
+      seconds — land that even a "complex-looking" seasonal password with a symbol falls to word+rules. The 16-char random
+      administrator password does NOT crack. So press <b>Pass-the-hash</b>: for NTLM/SMB the hash itself authenticates — you
+      log in as administrator without ever knowing the password. Two lands: (1) password strength decides crack time (this is
+      why length/randomness matter — Day 1's lesson, now from the attacker's side); (2) pass-the-hash means a strong password
+      can't save an account once its hash leaks — and that stolen credential is the fuel for the next slide, lateral movement.</aside>
+    </section>
+
+    <!-- ================= ACT 2 · LATERAL MOVEMENT (marquee) ================= -->
+    <section>
+      <p class="kicker">Act 2 · move · lateral movement</p>
+      <h2>Spread: one box at a time, all the way to the domain</h2>
+      <iframe class="wframe" style="height:422px"
+              src="widgets/lateral.html?v=1"
+              title="Lateral movement across the network to domain admin" scrolling="no"></iframe>
+      <aside class="notes">Stage 4 — the payoff of the loop. You own web01 (Day 2's foothold) and carry the loot from the last
+      two slides: alice's reused password and administrator's NTLM hash. Click the glowing machines to move: <b>dev-pc</b>
+      via alice's reused password (RDP), which drops <em>new</em> loot (svc_sql creds); then <b>db01</b> via those creds
+      (MSSQL); <b>fileserver</b> and finally the <b>DC</b> via pass-the-hash. Watch the compromise spread node to node until
+      you're <span class="dngr">Domain Admin</span>. Try clicking a box you can reach but lack the credential for — it refuses,
+      reinforcing that movement needs <em>reachability + a credential</em>. The one big land: no single magic exploit — it's a
+      <b>chain</b> of reused passwords and stolen hashes hopping box to box. That's why segmentation, unique passwords, and
+      not reusing local admin accounts matter (Day 5's defences). Real tools: PsExec, Evil-WinRM, CrackMapExec, RDP/SSH.</aside>
+    </section>
+
+    <!-- ================= ACT 2 · PERSISTENCE ================= -->
+    <section>
+      <p class="kicker">Act 2 · stay in · persistence</p>
+      <h2>Persistence: make sure you can always come back</h2>
+      <div class="k2 c5" style="margin-top:.6em">
+        <div class="card"><h3>New account</h3><p>Create a quiet admin user of your own.</p><span class="ex"><b>Survives:</b> the hole being patched</span></div>
+        <div class="card"><h3>Scheduled job</h3><p>A cron/task re-opens your shell every few minutes.</p><span class="ex"><b>Survives:</b> reboots, process kills</span></div>
+        <div class="card"><h3>Boot service</h3><p>Install a service that starts your implant at boot.</p><span class="ex"><b>Survives:</b> reboots</span></div>
+        <div class="card"><h3>SSH key</h3><p>Drop your public key in <span class="mono">~/.ssh/authorized_keys</span>.</p><span class="ex"><b>Survives:</b> password resets &amp; MFA</span></div>
+        <div class="card"><h3>Web shell</h3><p>Hide a one-line shell in the web app's files.</p><span class="ex"><b>Survives:</b> lost creds — reachable from anywhere</span></div>
+      </div>
+      <div class="callout hot" style="margin-top:1em">The foothold was expensive to win — <strong>persistence makes coming back cheap</strong>,
+      even after a reboot, a patch, or a password reset. Note the SSH key and web shell: they <em>outlast the very fixes</em> a defender would apply first.</div>
+      <aside class="notes">Stage 5 — locking in. Once inside, attackers plant multiple independent ways back so a single cleanup
+      doesn't evict them. Don't drill each; land the pattern and the nasty part: several of these <em>survive the obvious
+      response</em> — resetting the password doesn't remove an SSH key or a web shell; patching the entry hole doesn't remove
+      a new admin account. That's why real incident response assumes persistence and hunts for these specific artifacts (new
+      accounts, odd scheduled tasks, unexpected authorized_keys, files in web roots) rather than just closing the original
+      door. This maps to MITRE ATT&CK's Persistence tactic — name it, move on. Seeds Day 5's "assume breach" mindset.</aside>
+    </section>
+
+    <!-- ================= ACT 2 · GOAL / EXFILTRATION ================= -->
+    <section>
+      <p class="kicker">Act 2 · cash out · impact</p>
+      <h2>The goal: take the data out — and make it hurt</h2>
+      <div class="k2 c3" style="margin-top:.6em">
+        <div class="card"><h3>1 · Collect the crown jewels</h3><p>The customer database, source code, secrets, backups — whatever the domain protects. You now have the access to read all of it.</p></div>
+        <div class="card" style="border-top-color:var(--bad)"><h3>2 · Exfiltrate quietly</h3><p>Ship it out <strong>disguised as normal traffic</strong> — encrypted HTTPS to a cloud drive, or trickled through DNS queries — so it blends in and slips data-loss filters.</p></div>
+        <div class="card" style="border-top-color:var(--bad)"><h3>3 · Monetise</h3><p>Sell the data, or detonate <strong>ransomware</strong>: encrypt everything <em>and</em> threaten to leak what you stole — double extortion.</p></div>
+      </div>
+      <div class="callout hot" style="margin-top:1em">Exfiltration is the one loud-ish step — moving gigabytes out looks different from normal.
+      <strong>It's also the defender's best late catch</strong>, which is exactly where the next slide picks up.</div>
+      <aside class="notes">The "why" behind the whole day. Keep it brief — this is impact, not a new technique. Three beats:
+      (1) with domain control they can reach the actual valuables; (2) smart exfil hides in plain sight — encrypted and shaped
+      like ordinary web or DNS traffic to beat data-loss prevention (this is why "it's encrypted" cuts both ways — TLS also
+      hides the attacker's theft); (3) the payday — data sale or ransomware with double extortion (encrypt + leak). Land the
+      bridge: exfil is bulky and anomalous, so even an attacker who was quiet all day gets loud here — setting up "you left
+      tracks." Don't dwell; the emotional weight (this is a real business-ending event) is enough.</aside>
+    </section>
+
+    <!-- ================= ACT 2 · YOU LEFT TRACKS ================= -->
+    <section>
+      <p class="kicker">The other side · you left tracks</p>
+      <h2>Every move inside wrote a line in someone's log</h2>
+      <iframe class="wframe" style="height:530px"
+              src="widgets/traces.html?v=1"
+              title="What the defender's SIEM saw" scrolling="no"></iframe>
+      <aside class="notes">The bridge to Day 5, mirroring Day 2's closer. Replay each inside-loop move and watch the defender's
+      SIEM. The reveal: the two <em>quiet</em> moves — local enumeration and offline hash cracking — left NOTHING; they never
+      touched the network. But every move that crossed the wire or used a credential lit an alert: the internal port scan
+      (IDS), the ARP spoof (arpwatch sees the gateway's MAC change), the privilege escalation (EDR), the pass-the-hash login
+      to the DC (identity analytics — anomalous auth), and the exfil (DLP). Land it: an attacker inside is <em>loud</em> the
+      instant they act on the network — which is the defender's whole opportunity. Ties back to Day 2's passive/active
+      asymmetry, and forward to Friday, when they sit at this exact console and reconstruct the entire week from these alerts.
+      Ask the room: which single alert would you want to catch first?</aside>
+    </section>
+
+    <!-- ================= RECAP ================= -->
+    <section>
+      <p class="kicker">Day 3 · what you built</p>
+      <h2>You learned the network — then weaponised it</h2>
+      <div class="recap">
+        <div class="pair"><span class="hd">Act 1 · you learned</span><span></span><span class="hd">Act 2 · you weaponised it</span></div>
+        <div class="pair"><div class="a1"><b>ARP</b><small>who's at which MAC on the wire</small></div><div class="ar">›</div><div class="a2"><b>ARP-spoof MITM</b><small>sit in the middle, sniff cleartext creds</small></div></div>
+        <div class="pair"><div class="a1"><b>Ports &amp; services · TCP</b><small>doors, and the handshake</small></div><div class="ar">›</div><div class="a2"><b>Scan &amp; pick targets</b><small>stealth SYN scan → what to attack next</small></div></div>
+        <div class="pair"><div class="a1"><b>HTTP vs HTTPS / TLS</b><small>a packet is readable headers</small></div><div class="ar">›</div><div class="a2"><b>Sniff the login</b><small>plaintext password on the wire</small></div></div>
+        <div class="pair"><div class="a1"><b>Hashes</b><small>passwords stored one-way</small></div><div class="ar">›</div><div class="a2"><b>Crack &amp; pass-the-hash</b><small>reuse the hash to move laterally</small></div></div>
+        <div class="pair"><div class="a1"><b>One low-priv shell</b><small>where Day 2 left you</small></div><div class="ar">›</div><div class="a2"><b>Domain admin</b><small>orient → escalate → loot → move → repeat</small></div></div>
+      </div>
+      <div class="callout hot" style="margin-top:.85em"><strong>The whole day in one line:</strong> understand the mechanism, and it becomes a way through.
+      Tomorrow — <em>Day 4, Breaking the App</em> — you stop attacking the network and go after the application itself.</div>
+      <aside class="notes">Close the loop. Every attack today was a protocol you'd just learned, turned around — that pairing IS
+      the lesson: defenders and attackers study the exact same mechanisms. Recap the arc verbally: from one shell to the whole
+      domain, powered by ARP, ports, TCP, HTTP/TLS, and hashes. Then point forward: Day 4 leaves the network layer and attacks
+      the application (injection, auth flaws, the web). And remind them of the closing beat from the last slide — everything
+      loud they did is waiting for them on Friday, from the defender's chair. Good moment to take questions on the full chain.</aside>
     </section>
 
   </div>
