@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="_shared.css?v=1">
+<style>
+  body { padding: 6px; }
+  .def { font-size: 12.5px; line-height: 1.4; color: #29474F; background: rgba(0,86,124,.06);
+    border-left: 4px solid #00567C; border-radius: 0 8px 8px 0; padding: 9px 13px; margin-bottom: 11px; }
+  .def b { color: #00567C; }
+  .cols { display: grid; grid-template-columns: 292px 1fr; gap: 14px; align-items: start; }
+
+  /* ---- type list ---- */
+  .types { display: flex; flex-direction: column; gap: 6px; }
+  .type { text-align: left; border: 1px solid #D3E1E1; background: #fff; border-radius: 9px;
+    padding: 8px 11px; cursor: pointer; transition: all 120ms; }
+  .type:hover { border-color: #1F8F89; background: #F6FbFb; }
+  .type.on { border-color: #1F8F89; background: rgba(31,143,137,.09); box-shadow: inset 3px 0 0 #1F8F89; }
+  .type .tn { font-weight: 800; font-size: 13px; color: #00567C; }
+  .type.on .tn { color: #146d68; }
+  .type .td { font-size: 10.8px; color: #7A9198; margin-top: 1px; line-height: 1.3; }
+  .chan { display: inline-block; font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 8.5px;
+    font-weight: 700; letter-spacing: .05em; padding: 1px 6px; border-radius: 999px; margin-left: 6px; vertical-align: middle; }
+  .chan.email { background: rgba(0,86,124,.12); color: #00567C; }
+  .chan.sms { background: rgba(31,143,137,.14); color: #146d68; }
+  .chan.call { background: rgba(51,211,203,.2); color: #0E7C86; }
+
+  /* ---- example viewer ---- */
+  .viewer { border: 1px solid #E0E7E8; border-radius: 12px; background: #F7FAFA; padding: 13px 14px 14px; }
+  .vh { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+  .vh .vn { font-weight: 800; font-size: 15px; color: #12333D; }
+  .vh .rch { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 9px; font-weight: 700;
+    letter-spacing: .06em; padding: 2px 8px; border-radius: 999px; }
+  .rch.bulk { background: #EEF3F3; color: #7A9198; }
+  .rch.targeted { background: rgba(214,69,69,.13); color: #C1403f; }
+
+  .stage { display: grid; grid-template-columns: 1fr 218px; gap: 14px; align-items: start; }
+  .mock { min-height: 150px; }
+  .rf { color: #C1403f; font-weight: 700; }
+
+  /* email mock */
+  .m-email { background: #fff; border: 1px solid #E0E7E8; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(18,51,61,.06); }
+  .me-head { padding: 10px 12px; border-bottom: 1px solid #EEF3F3; }
+  .me-subj { font-weight: 800; font-size: 13.5px; color: #12333D; margin-bottom: 5px; line-height: 1.2; }
+  .me-from { font-size: 11.5px; color: #46707A; }
+  .me-from .addr { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 10.5px; color: #7A9198; }
+  .me-body { padding: 11px 12px 13px; font-size: 12.5px; line-height: 1.5; color: #29474F; }
+  .me-cta { display: inline-block; margin-top: 9px; background: #1F8F89; color: #fff; padding: 7px 15px;
+    border-radius: 7px; font-weight: 800; font-size: 12px; }
+
+  /* sms mock */
+  .m-sms { background: #ECF1F3; border: 1px solid #E0E7E8; border-radius: 14px; padding: 12px; }
+  .sms-top { text-align: center; font-size: 10.5px; color: #8AA1A8; font-weight: 700; margin-bottom: 9px; }
+  .sms-bubble { max-width: 82%; background: #fff; border: 1px solid #E0E7E8; border-radius: 4px 15px 15px 15px;
+    padding: 9px 12px; font-size: 12.5px; line-height: 1.45; color: #12333D; box-shadow: 0 1px 2px rgba(18,51,61,.06); }
+  .sms-bubble .lnk { color: #2f6bd6; text-decoration: underline; }
+
+  /* call mock */
+  .m-call { background: linear-gradient(160deg,#0a2b34,#06232B); border-radius: 16px; padding: 18px 16px 15px;
+    text-align: center; color: #EAF7F5; }
+  .call-caller { font-size: 17px; font-weight: 800; }
+  .call-num { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 11px; color: #7FB8BE; margin-top: 3px; }
+  .call-status { font-size: 10.5px; color: #7FE3DC; letter-spacing: .1em; text-transform: uppercase; margin: 9px 0 12px; }
+  .call-script { background: rgba(255,255,255,.07); border-radius: 12px; padding: 10px 12px; font-size: 12.5px;
+    line-height: 1.5; color: #CFE6E7; text-align: left; font-style: italic; }
+
+  /* red flags */
+  .flags h4 { margin: 0 0 7px; font-size: 10.5px; font-weight: 800; letter-spacing: .12em;
+    text-transform: uppercase; color: #C1403f; }
+  .flags ul { margin: 0; padding: 0; list-style: none; }
+  .flags li { position: relative; padding-left: 20px; font-size: 11.8px; color: #42606A; line-height: 1.35; margin-bottom: 8px; }
+  .flags li::before { content: "\2691"; position: absolute; left: 0; top: -1px; color: #D64545; font-size: 13px; }
+</style>
+</head><body>
+  <div class="def"><b>Phishing:</b> a fraudulent message that impersonates someone you trust to make you click a link,
+  log in, or pay. Same con — different channels and different targeting. Pick one to see a real-looking example and its tells.</div>
+  <div class="cols">
+    <div class="types" id="types"></div>
+    <div class="viewer" id="viewer"></div>
+  </div>
+
+<script>
+(function () {
+  "use strict";
+  var TYPES = [
+    { id:"email", name:"Email phishing", chan:"Email", reach:"Bulk",
+      td:"Mass email to thousands — a few will bite.",
+      mock:{ kind:"email", from:"Al Rajhi Bank", addr:'security@<span class="rf">alrajhi-secure.com</span>',
+        subj:"⚠ Your account has been locked", greet:"Dear Customer,",
+        body:"We detected unusual activity on your account. Confirm your identity within 24 hours or it will be permanently suspended.", cta:"Verify account" },
+      flags:["Look-alike domain — alrajhi-secure.com is not the real bank","Generic “Dear Customer” — they don't know your name","Urgency + threat: 24 hours or else","Wants you to click and log in"] },
+    { id:"spear", name:"Spear phishing", chan:"Email", reach:"Targeted",
+      td:"Aimed at one person, personalised from OSINT.",
+      mock:{ kind:"email", from:"Noura — Falcon Talent", addr:"n.saad@falcon-talent.co",
+        subj:"Fadhel — Software Engineer role (your React work)", greet:"Hi Fadhel,",
+        body:"We came across your GitHub (obaidiDev) and your React projects. We'd love to fast-track you — just confirm a couple of details to schedule your interview.", cta:"Review offer" },
+      flags:["Personalised from OSINT — your name, handle, skills","A plausible pretext aimed at you specifically","Very few generic tells — the dangerous kind","One small, reasonable-feeling ask"] },
+    { id:"whaling", name:"Whaling", chan:"Email", reach:"Targeted",
+      td:"Spear phishing aimed at a “big fish” exec.",
+      mock:{ kind:"email", from:"Board Chair", addr:'chair@<span class="rf">board-office.net</span>',
+        subj:"Confidential — time-sensitive", greet:"CEO,",
+        body:"I'm in a closed meeting. We're finalising an acquisition — please wire SAR 480,000 to the attached account today. Keep this between us for now." },
+      flags:["Targets a “big fish” — the CEO","Authority + secrecy: “keep this between us”","Large money movement, demanded today","No way to verify — you can't just call back"] },
+    { id:"smishing", name:"Smishing", chan:"SMS", reach:"Bulk",
+      td:"Phishing delivered by text message.",
+      mock:{ kind:"sms", top:"Text message · Aramex",
+        body:'Your parcel is held at customs. Pay the 2.99 SAR release fee: <span class="lnk">bit.ly/aramex-pay</span>' },
+      flags:["Text channel feels casual — we're less guarded","Shortened link hides the real destination","A tiny fee — low enough not to question","“Parcel held” urgency"] },
+    { id:"vishing", name:"Vishing", chan:"Call", reach:"Targeted",
+      td:"Phishing by phone call — a live human con.",
+      mock:{ kind:"call", caller:"Bank Security", num:"+966 11 200 0000  (spoofed)",
+        script:"“We've blocked a fraudulent transfer on your card. To cancel it, please read me the 6-digit code we just texted you.”" },
+      flags:["Live voice — real-time pressure, no time to think","Asks for your OTP — a real bank never will","Caller ID spoofed to look official","Manufactured emergency: “fraud on your card”"] },
+    { id:"clone", name:"Clone phishing", chan:"Email", reach:"Bulk",
+      td:"A copy of a real email, link swapped for malware.",
+      mock:{ kind:"email", from:"DHL Express", addr:"noreply@dhl.com",
+        subj:"Re: Your DHL shipment — updated tracking", greet:"Hello,",
+        body:"Resending with the corrected tracking link — our previous email had a broken URL. Please use the new link below.", cta:"Track shipment" },
+      flags:["A copy of a real email you actually received","The link/attachment was swapped for a malicious one","“Resending / updated” excuse to re-click","Even the sender address can look genuine"] },
+    { id:"bec", name:"BEC / CEO fraud", chan:"Email", reach:"Targeted",
+      td:"No malware — a spoofed exec asks for money/data.",
+      mock:{ kind:"email", from:"Khalid Al-Amri (CEO)", addr:'k.alamri@<span class="rf">company-ceo.com</span>',
+        subj:"Quick task", greet:"Hi,",
+        body:"Are you at your desk? I need you to update our supplier's bank details before today's payment run, then confirm once it's done." },
+      flags:["No link, no malware — just a request","Impersonates the CEO (look-alike address)","Moves money / changes payment details","“Are you at your desk?” isolates you, fast"] },
+  ];
+
+  function esc(s){ return s; } // mock strings are trusted, may contain <span class="rf">
+
+  function mockHTML(m) {
+    if (m.kind === "email") {
+      return '<div class="m-email"><div class="me-head">' +
+        '<div class="me-subj">' + m.subj + '</div>' +
+        '<div class="me-from">' + m.from + ' <span class="addr">&lt;' + m.addr + '&gt;</span></div></div>' +
+        '<div class="me-body">' + m.greet + '<br>' + m.body +
+        (m.cta ? '<br><span class="me-cta">' + m.cta + '</span>' : '') + '</div></div>';
+    }
+    if (m.kind === "sms") {
+      return '<div class="m-sms"><div class="sms-top">' + m.top + '</div>' +
+        '<div class="sms-bubble">' + m.body + '</div></div>';
+    }
+    return '<div class="m-call"><div class="call-caller">' + m.caller + '</div>' +
+      '<div class="call-num">' + m.num + '</div>' +
+      '<div class="call-status">● Incoming call…</div>' +
+      '<div class="call-script">' + m.script + '</div></div>';
+  }
+
+  function render(t) {
+    Array.prototype.forEach.call(document.querySelectorAll(".type"), function (b) {
+      b.classList.toggle("on", b.getAttribute("data-id") === t.id); });
+    var rch = t.reach.toLowerCase();
+    document.getElementById("viewer").innerHTML =
+      '<div class="vh"><span class="vn">' + t.name + '</span>' +
+      '<span class="chan ' + t.chan.toLowerCase() + '">' + t.chan.toUpperCase() + '</span>' +
+      '<span class="rch ' + rch + '">' + t.reach.toUpperCase() + '</span></div>' +
+      '<div class="stage"><div class="mock">' + mockHTML(t.mock) + '</div>' +
+      '<div class="flags"><h4>Red flags</h4><ul>' +
+        t.flags.map(function (f) { return '<li>' + f + '</li>'; }).join('') +
+      '</ul></div></div>';
+  }
+
+  var list = document.getElementById("types");
+  TYPES.forEach(function (t) {
+    var b = document.createElement("button");
+    b.className = "type"; b.setAttribute("data-id", t.id);
+    b.innerHTML = '<span class="tn">' + t.name +
+      '<span class="chan ' + t.chan.toLowerCase() + '">' + t.chan.toUpperCase() + '</span></span>' +
+      '<span class="td">' + t.td + '</span>';
+    b.addEventListener("click", function () { render(t); });
+    list.appendChild(b);
+  });
+
+  var pre = new URLSearchParams(location.search).get("type");
+  render(TYPES.filter(function (t) { return t.id === pre; })[0] || TYPES[0]);
+})();
+</script>
+</body></html>
