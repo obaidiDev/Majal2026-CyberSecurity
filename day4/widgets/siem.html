@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding: 6px; }
+  .lab { display: grid; grid-template-columns: 340px 1fr; gap: 15px; align-items: start; }
+  .colhd { font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #8AA1A8; margin: 0 0 9px; }
+
+  .acts { display: flex; flex-direction: column; gap: 6px; }
+  .act { text-align: left; border: 1px solid #D3E1E1; background: #fff; border-radius: 9px; padding: 8px 11px; cursor: pointer; transition: all 120ms; }
+  .act:hover { border-color: #D64545; background: #FDF4F4; }
+  .act.done { opacity: .5; }
+  .act.done.loud  { border-color: #D64545; background: rgba(214,69,69,.06); opacity: 1; }
+  .act.done.quiet { border-color: #1F8F89; background: rgba(31,143,137,.07); opacity: 1; }
+  .act .an { display: block; font-weight: 800; font-size: 13px; color: #12333D; }
+  .act .as { display: block; font-family: "JetBrains Mono", Menlo, monospace; font-size: 10.5px; color: #8AA1A8; margin-top: 1px; }
+  .act .tag { float: right; font-family: "JetBrains Mono", monospace; font-size: 8.5px; font-weight: 700; letter-spacing: .05em;
+    padding: 2px 6px; border-radius: 999px; margin-top: 1px; }
+  .tag.l { background: rgba(214,69,69,.14); color: #C1403f; } .tag.q { background: rgba(31,143,137,.14); color: #146d68; }
+  .runbar { display: flex; gap: 7px; margin-top: 10px; }
+  .runbar button { font-family: inherit; font-size: 12px; font-weight: 700; border-radius: 999px; padding: 8px 14px; cursor: pointer;
+    border: 1px solid #CDD8DA; background: #fff; color: #12333D; }
+  .runbar .all { background: #00567C; color: #fff; border-color: #00567C; }
+
+  .console { background: #06232B; border: 1px solid #0C3A46; border-radius: 12px; overflow: hidden; }
+  .con-head { display: flex; align-items: center; gap: 9px; background: #0A2E38; padding: 9px 14px; border-bottom: 1px solid #0C3A46; }
+  .con-head .t { font-family: "JetBrains Mono", monospace; font-size: 12px; font-weight: 700; color: #7FE3DC; letter-spacing: .04em; }
+  .con-head .counts { margin-left: auto; font-family: "JetBrains Mono", monospace; font-size: 11.5px; }
+  .con-head .counts .cri { color: #FF7A7A; } .con-head .counts .inv { color: #46C08A; }
+  .log { height: 372px; overflow-y: auto; padding: 12px 14px; font-family: "JetBrains Mono", monospace; font-size: 12.5px; line-height: 1.5; color: #BFE0E2; }
+  .log::-webkit-scrollbar { width: 8px; } .log::-webkit-scrollbar-thumb { background: #1F5563; border-radius: 4px; }
+  .log .empty { color: #6B8A90; }
+  .row { padding: 6px 0; border-bottom: 1px solid rgba(31,85,99,.35); }
+  .row .sev { font-weight: 700; } .row .src { color: #7C9BA2; }
+  .row.crit .sev { color: #FF7A7A; } .row.warn .sev { color: #F2C14E; } .row.none .sev { color: #46C08A; }
+  .row .msg { color: #DCEBEE; } .row.none .msg { color: #8FB0B6; }
+
+  .foot { grid-column: 1 / -1; margin-top: 11px; font-size: 12.5px; line-height: 1.45; color: #42606A; border-top: 1px dashed #CDD8DA; padding-top: 9px; min-height: 20px; }
+  .foot b { color: #12333D; } .foot .l { color: #C1403f; font-weight: 700; } .foot .q { color: #146d68; font-weight: 700; }
+</style>
+</head><body>
+<div class="lab">
+  <div>
+    <p class="colhd">Your moves today · click to replay</p>
+    <div class="acts" id="acts"></div>
+    <div class="runbar"><button class="all" id="runall">▶ Replay all</button><button id="reset">Reset</button></div>
+  </div>
+  <div>
+    <p class="colhd">The defender's console · what they saw</p>
+    <div class="console">
+      <div class="con-head"><span class="t">◈ SIEM — web alerts</span>
+        <span class="counts"><span class="cri" id="ccrit">0 alerts</span> · <span class="inv" id="cinv">0 silent</span></span></div>
+      <div class="log" id="log"><span class="empty">Replay a move on the left. Watch which ones scream — and the one that slips through.</span></div>
+    </div>
+  </div>
+  <div class="foot" id="foot"></div>
+</div>
+<script>
+(function () {
+  "use strict";
+  var $ = function (s){ return document.querySelector(s); };
+  var MOVES = [
+    { id:"enum", an:"Brute-forced hidden paths", as:"ffuf → /admin, /backup.zip", kind:"loud",
+      sev:"warn", src:"WAF", msg:"404 flood — 3,000 requests to non-existent paths from one IP in 30s." },
+    { id:"sqli", an:"Fired SQL injection at login", as:"' OR '1'='1' --", kind:"loud",
+      sev:"crit", src:"WAF", msg:"SQL metacharacters in 'username' — signature match, blocked & logged." },
+    { id:"cmdi", an:"Injected an OS command", as:"8.8.8.8 ; whoami", kind:"loud",
+      sev:"crit", src:"EDR", msg:"web process (www-data) spawned /bin/sh — reverse shell blocked, host isolated." },
+    { id:"xss", an:"Stored an XSS payload", as:"&lt;script&gt; in a review", kind:"loud",
+      sev:"warn", src:"App log", msg:"&lt;script&gt; tag written to reviews table — input monitor flagged it." },
+    { id:"stuff", an:"Credential-stuffed the login", as:"10k leaked pairs", kind:"loud",
+      sev:"warn", src:"Identity", msg:"10,000 failed logins across 400 accounts in 5 min — rate-limit tripped." },
+    { id:"hijack", an:"Reused the stolen cookie", as:"session=VICTIM-9f3a2c", kind:"loud",
+      sev:"crit", src:"Identity", msg:"one session token used from Riyadh and Rotterdam 2 min apart — impossible travel." },
+    { id:"idor", an:"Walked the invoice ids", as:"?id=1042 → 1043 → 1044 …", kind:"quiet",
+      sev:"none", src:"—", msg:"nothing. Every request is a valid, authenticated GET returning 200. It looks exactly like normal browsing." }
+  ];
+  var done = {}, crit = 0, inv = 0, running = false;
+  var actsEl = $("#acts");
+  MOVES.forEach(function (m) {
+    var b = document.createElement("button");
+    b.className = "act"; b.setAttribute("data-id", m.id);
+    b.innerHTML = '<span class="tag ' + (m.kind==="quiet"?"q":"l") + '">' + (m.kind==="quiet"?"SILENT":"LOUD") + '</span>' +
+      '<span class="an">' + m.an + '</span><span class="as">' + m.as + '</span>';
+    b.addEventListener("click", function () { fire(m); });
+    m.el = b; actsEl.appendChild(b);
+  });
+  function fire(m) {
+    if (done[m.id]) return;
+    done[m.id] = true;
+    m.el.classList.add("done", m.kind);
+    if ($("#log").querySelector(".empty")) $("#log").innerHTML = "";
+    var row = document.createElement("div");
+    row.className = "row " + m.sev;
+    var sevtxt = m.sev==="crit" ? "CRITICAL" : m.sev==="warn" ? "WARNING " : "no alert";
+    row.innerHTML = '<span class="sev">[' + sevtxt + ']</span> <span class="src">' + m.src + '</span> — <span class="msg">' + m.msg + '</span>';
+    $("#log").appendChild(row); $("#log").scrollTop = $("#log").scrollHeight;
+    if (m.sev === "none") { inv++; } else { crit++; }
+    $("#ccrit").textContent = crit + (crit===1?" alert":" alerts");
+    $("#cinv").textContent = inv + " silent";
+    updateFoot();
+  }
+  function updateFoot() {
+    var anyLoud = MOVES.some(function(m){ return done[m.id] && m.kind==="loud"; });
+    var anyQuiet = MOVES.some(function(m){ return done[m.id] && m.kind==="quiet"; });
+    if (!anyLoud && !anyQuiet) { $("#foot").innerHTML = ""; return; }
+    $("#foot").innerHTML = "<b>The lesson flips from Day 2:</b> web attacks are <span class='l'>loud</span> — the instant you inject, a WAF or EDR fires. " +
+      "The exception is <span class='q'>broken access control</span>: every IDOR request is a valid, logged-in GET, so it hides in normal traffic. " +
+      "That's why it's the <b>most-missed</b> bug — on Friday you'll hunt the anomaly, not the alert.";
+  }
+  $("#reset").addEventListener("click", function () {
+    done = {}; crit = 0; inv = 0; running = false;
+    MOVES.forEach(function(m){ m.el.classList.remove("done","loud","quiet"); });
+    $("#log").innerHTML = '<span class="empty">Replay a move on the left. Watch which ones scream — and the one that slips through.</span>';
+    $("#ccrit").textContent = "0 alerts"; $("#cinv").textContent = "0 silent"; $("#foot").innerHTML = "";
+  });
+  $("#runall").addEventListener("click", function () {
+    if (running) return; running = true; var i = 0;
+    (function step(){ if (i>=MOVES.length){ running=false; return; } fire(MOVES[i]); i++; setTimeout(step, 560); })();
+  });
+  if (new URLSearchParams(location.search).get("all") === "1") { MOVES.forEach(fire); }
+})();
+</script>
+</body></html>

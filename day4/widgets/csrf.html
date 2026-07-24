@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding: 6px 8px; }
+  .wrap { max-width: 1040px; margin: 0 auto; }
+  .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+  .mode { display: inline-flex; border: 1px solid #CDD8DA; border-radius: 8px; overflow: hidden; }
+  .mode button { border: 0; border-radius: 0; padding: 7px 13px; font-size: 12.5px; }
+  .mode button.on { background: #00567C; color: #fff; }
+  .mode button:not(.on) { background: #fff; color: #5C7880; }
+  .lede { font-size: 12.5px; color: #5C7880; line-height: 1.4; margin: 0 0 9px; }
+  .lede b { color: #00567C; } .lede em { color: #1F8F89; font-style: normal; font-weight: 700; }
+
+  .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+  .tab { border: 1px solid #E0E7E8; border-radius: 10px; overflow: hidden; background: #fff; }
+  .tbar { display: flex; align-items: center; gap: 7px; padding: 7px 10px; font-family: "JetBrains Mono", monospace; font-size: 11.5px; }
+  .tbar .dot { width: 9px; height: 9px; border-radius: 50%; }
+  .tab.bank .tbar { background: #eaf3f6; color: #00567C; border-bottom: 1px solid #cfe0e6; }
+  .tab.bank .tbar .dot { background: #1F8F89; }
+  .tab.evil .tbar { background: #2a1414; color: #ff9a9a; border-bottom: 1px solid #4a2020; }
+  .tab.evil .tbar .dot { background: #D64545; }
+  .tb { padding: 12px 13px; min-height: 150px; }
+
+  /* bank */
+  .bank .brand { font-size: 15px; font-weight: 800; color: #00567C; } .bank .brand span { color: #1F8F89; }
+  .bank .acct { font-size: 11px; color: #8AA1A8; font-family: "JetBrains Mono", monospace; margin-top: 1px; }
+  .bank .bal { margin-top: 10px; font-size: 12px; color: #5C7880; }
+  .bank .bal .n { display: block; font-size: 30px; font-weight: 800; color: #12333D; font-family: "JetBrains Mono", monospace; margin-top: 2px; transition: color .3s; }
+  .bank .bal .n.drop { color: #D64545; }
+  .bank .cookie { margin-top: 10px; font-family: "JetBrains Mono", monospace; font-size: 10.5px; color: #1F8F89;
+    background: rgba(31,143,137,.08); border: 1px solid rgba(31,143,137,.3); border-radius: 5px; padding: 5px 8px; }
+  .bank .log { margin-top: 9px; font-family: "JetBrains Mono", monospace; font-size: 10.5px; color: #8AA1A8; line-height: 1.5; }
+  .bank .log .hit { color: #D64545; font-weight: 700; }
+
+  /* evil */
+  .evil .tb { background: #fbeff6; }
+  .evil .promo { text-align: center; }
+  .evil .promo .gift { font-size: 40px; }
+  .evil .promo h4 { margin: 5px 0 2px; color: #b8256b; font-size: 16px; }
+  .evil .promo p { margin: 0 0 10px; font-size: 11.5px; color: #a06; }
+  .evil .promo button { font-size: 14px; font-weight: 800; padding: 10px 18px; background: #e0308a; color: #fff; border: 0; border-radius: 8px; cursor: pointer; }
+  .evil .promo button:hover { background: #c81f78; }
+  .evil .hidden { margin-top: 11px; background: #1a0d14; border-radius: 7px; padding: 8px 10px; font-family: "JetBrains Mono", monospace;
+    font-size: 10px; color: #d98cb3; line-height: 1.5; }
+  .evil .hidden .k { color: #7a5566; } .evil .hidden b { color: #ff9a9a; }
+
+  /* the fired request */
+  .fire { margin-top: 11px; background: #04303F; border-radius: 9px; padding: 10px 12px; font-family: "JetBrains Mono", monospace;
+    font-size: 12px; color: #9fc9cf; }
+  .fire .fh { font-size: 10px; text-transform: uppercase; letter-spacing: .07em; color: #5f97a3; margin-bottom: 6px; }
+  .fire .ln { line-height: 1.7; }
+  .fire .ln .m { color: #33D3CB; font-weight: 700; } .fire .ln .p { color: #ffd84a; }
+  .fire .auto { color: #ff8a8a; font-weight: 700; }
+  .fire .tok { color: #7fe3dc; }
+  .fire .verdict { margin-top: 8px; border-top: 1px solid rgba(159,201,207,.18); padding-top: 7px; font-family: var(--sans, sans-serif); font-size: 12.5px; }
+  .fire .verdict.bad { color: #ff8a8a; } .fire .verdict.good { color: #7fe0b0; }
+  .fire .verdict b { color: #fff; }
+  .fempty { color: #4d6b74; font-style: italic; }
+</style>
+</head><body>
+<div class="wrap">
+  <div class="head">
+    <div class="mode">
+      <button id="mVuln" class="on">Bank trusts the cookie alone</button>
+      <button id="mSafe">Bank requires a CSRF token</button>
+    </div>
+    <div style="font-size:11px;color:#8AA1A8;letter-spacing:.04em">two tabs open at once · you are the victim</div>
+  </div>
+  <p class="lede">You're logged into your bank in one tab. In another, you open a random fun site. The catch: your browser
+    <b>automatically attaches your bank cookie to <em>any</em> request sent to the bank</b> — even one fired by a different site.</p>
+
+  <div class="tabs">
+    <div class="tab bank">
+      <div class="tbar"><span class="dot"></span>🔒 mybank.com/account &nbsp;·&nbsp; logged in as You</div>
+      <div class="tb">
+        <div class="brand">My<span>Bank</span></div>
+        <div class="acct">account #4042 · You (Fadhel)</div>
+        <div class="bal">Balance <span class="n" id="bal">10,000 ﷼</span></div>
+        <div class="cookie">🍪 session=a3f9c1 &nbsp;— you logged in here, so the cookie lives in your browser</div>
+        <div class="log" id="banklog">No transfers yet.</div>
+      </div>
+    </div>
+
+    <div class="tab evil">
+      <div class="tbar"><span class="dot"></span>🎁 free-prizes-4u.com</div>
+      <div class="tb">
+        <div class="promo">
+          <div class="gift">🎁</div>
+          <h4>You won a FREE gift!</h4>
+          <p>Just click the button to claim your prize 🥳</p>
+          <button id="claim">Claim my free gift ▶</button>
+        </div>
+        <div class="hidden">
+          <span class="k">&lt;!-- what this button actually does, hidden in the page --&gt;</span><br>
+          &lt;form action="<b>https://mybank.com/transfer</b>" method="POST"&gt;<br>
+          &nbsp;&nbsp;&lt;input name="to" value="<b>attacker-99</b>"&gt;<br>
+          &nbsp;&nbsp;&lt;input name="amount" value="<b>5000</b>"&gt;<br>
+          &lt;/form&gt;
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fire" id="fire"><div class="fh">the request the button fires → mybank.com</div><div class="fempty">Click &ldquo;Claim my free gift&rdquo; and watch what leaves your browser.</div></div>
+</div>
+
+<script>
+var vuln = true, balance = 10000;
+var balEl = document.getElementById("bal"), banklog = document.getElementById("banklog"), fire = document.getElementById("fire");
+
+function render(fired) {
+  balEl.textContent = balance.toLocaleString("en-US") + " ﷼";
+  if (!fired) return;
+  var tokenLine = vuln
+    ? '<span class="k" style="color:#5f7681">(the bank never asked for a secret token)</span>'
+    : '<span class="tok">csrf_token: ???</span> <span class="auto">✗ evil.com can\'t read it (same-origin policy)</span>';
+  fire.innerHTML =
+    '<div class="fh">the request the button fires → mybank.com</div>' +
+    '<div class="ln"><span class="m">POST</span> <span class="p">mybank.com/transfer</span>  to=attacker-99 &amp; amount=5000<br>' +
+    'Cookie: <span class="auto">session=a3f9c1 ✓ auto-attached by YOUR browser</span><br>' +
+    tokenLine + '</div>';
+  if (vuln) {
+    balance -= 5000;
+    balEl.textContent = balance.toLocaleString("en-US") + " ﷼"; balEl.classList.add("drop");
+    banklog.innerHTML = '<span class="hit">− 5,000 ﷼ → attacker-99</span> (request looked valid: your cookie was attached)';
+    fire.innerHTML += '<div class="verdict bad">✗ <b>Transfer executed.</b> The bank saw a valid session cookie and obeyed. You never visited the bank tab — the <b>other site</b> spent your money. That\'s CSRF.</div>';
+  } else {
+    balEl.classList.remove("drop");
+    banklog.innerHTML = 'No transfers. Forged request rejected.';
+    fire.innerHTML += '<div class="verdict good">✓ <b>Rejected.</b> The bank\'s real form carries a secret token unique to your session. evil.com can\'t read it (the browser blocks cross-site reads), so the forged request is missing it — and gets thrown out.</div>';
+  }
+}
+document.getElementById("claim").addEventListener("click", function(){ balance = 10000; balEl.classList.remove("drop"); render(true); });
+document.getElementById("mVuln").addEventListener("click", function(){ vuln=true; this.classList.add("on"); document.getElementById("mSafe").classList.remove("on"); balance=10000; balEl.classList.remove("drop"); banklog.textContent="No transfers yet."; fire.innerHTML='<div class="fh">the request the button fires → mybank.com</div><div class="fempty">Click the button and watch what leaves your browser.</div>'; render(false); });
+document.getElementById("mSafe").addEventListener("click", function(){ vuln=false; this.classList.add("on"); document.getElementById("mVuln").classList.remove("on"); balance=10000; balEl.classList.remove("drop"); banklog.textContent="No transfers yet."; fire.innerHTML='<div class="fh">the request the button fires → mybank.com</div><div class="fempty">Click the button and watch what leaves your browser.</div>'; render(false); });
+
+render(false);
+(function(){ var st = new URLSearchParams(location.search).get("state");
+  if (st === "steal") render(true);
+  else if (st === "safe") { vuln=false; document.getElementById("mSafe").classList.add("on"); document.getElementById("mVuln").classList.remove("on"); render(true); }
+})();
+</script>
+</body></html>

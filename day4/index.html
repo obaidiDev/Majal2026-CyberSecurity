@@ -185,7 +185,7 @@
       <div class="k2 c3 map" style="margin-top:.6em">
         <div class="card"><h3>Injection <span class="tag">A03</span></h3>
           <p>Your input is glued into a command — SQL, a shell, an LDAP query — and runs <b>as code</b>.</p>
-          <span class="ex"><b>You'll drive:</b> SQL injection — log in as admin with no password.</span></div>
+          <span class="ex"><b>You'll drive:</b> SQL injection <em>and</em> OS command injection.</span></div>
         <div class="card"><h3>Cross-site scripting <span class="tag">XSS</span></h3>
           <p>Your input is written back into a page and runs <b>as script in someone else's browser</b>.</p>
           <span class="ex"><b>You'll drive:</b> steal a logged-in victim's session cookie.</span></div>
@@ -199,12 +199,15 @@
           <p>Debug pages, default creds, verbose errors, an open admin panel left facing the internet.</p>
           <span class="ex">The recon skills from Day 2 find these first.</span></div>
       </div>
-      <div class="callout hot" style="margin-top:.6em">Different names, <strong>one root cause</strong>: the app treats
-      attacker-controlled input as trusted. Fix the trust boundary and most of this list closes at once.</div>
+      <div class="callout hot" style="margin-top:.5em;font-size:.72em">Different names, <strong>one root cause</strong>: the app
+      treats attacker-controlled input as trusted. <span style="color:var(--muted)">Two more you'll meet by name, same family:
+      <strong>SSRF</strong> — make the <em>server</em> fetch a URL you chose; <strong>DOM XSS</strong> — XSS built entirely by the
+      page's own JavaScript, never touching the server.</span></div>
       <aside class="notes">The map before the deep-dives — a taxonomy, so it's text, not a fake interactive. These map to
       the OWASP Top 10 (mention the framework, don't drill the whole list). Don't lecture all five; land the pattern that
-      unifies them — untrusted input treated as trusted — and flag which three they'll actually drive (injection, XSS,
-      IDOR). The last two tie back to Day 2 (stuffing, recon) so the week connects.</aside>
+      unifies them — untrusted input treated as trusted — and flag which they'll actually drive (injection ×2, XSS, CSRF,
+      IDOR). SSRF and DOM-XSS get a one-line name-check so they're not strangers later; don't deep-dive them today. The last
+      two cards tie back to Day 2 (stuffing, recon) so the week connects.</aside>
     </section>
 
     <!-- ================= SQL INJECTION (STAR) ================= -->
@@ -224,6 +227,24 @@
       the mechanism is identical.</aside>
     </section>
 
+    <!-- ================= COMMAND INJECTION + TRAVERSAL ================= -->
+    <section>
+      <p class="kicker">Injection · straight to the operating system</p>
+      <h2>Command injection: from a text box to a shell on their server</h2>
+      <iframe class="wframe" style="height:566px"
+              src="widgets/cmdi.html?v=1"
+              title="Command injection and path traversal" scrolling="auto"></iframe>
+      <aside class="notes">The attack map promised injection means "SQL, <em>a shell</em>, an LDAP query" — here's the shell one,
+      the highest-impact web bug because it ends in RCE. Tab 1, command injection: the ping tool glues your input into a shell
+      line, so <span class="mono">8.8.8.8; whoami</span> runs a second command — you're now <em>www-data</em> on their box; the
+      reverse-shell preset hands you a live terminal (this is literally Day 2's "first shell", reached through the app). Watch
+      the assembled shell line and the injected part in red. Fix: don't call a shell — pass input as a single argument
+      (execFile), so <span class="mono">;</span> is just a bad hostname. Tab 2, path traversal: the file downloader reads
+      /var/www/reports/&lt;you&gt;, and <span class="mono">../../../../etc/passwd</span> climbs out of the folder to any file on
+      disk — watch the resolved path. Fix: strip the path, keep the filename. Same root cause as always: input treated as
+      instructions (a command, a path) instead of data.</aside>
+    </section>
+
     <!-- ================= XSS ================= -->
     <section>
       <p class="kicker">Injection · into the browser this time</p>
@@ -238,6 +259,23 @@
       land in the attacker console. Stored (saved for every viewer) vs reflected (in a crafted link) in one line. Then flip
       "encode output on render": the same script now shows up as visible &lt;script&gt; text — inert. Land: the fix is to
       treat input as data to DISPLAY, never as HTML to execute.</aside>
+    </section>
+
+    <!-- ================= CSRF ================= -->
+    <section>
+      <p class="kicker">Riding your session · the confused deputy</p>
+      <h2>CSRF: another site spends your login for you</h2>
+      <iframe class="wframe" style="height:566px"
+              src="widgets/csrf.html?v=1"
+              title="Cross-site request forgery" scrolling="auto"></iframe>
+      <aside class="notes">This is why the session-cookie slide mattered. The browser <em>automatically attaches your cookie to
+      any request aimed at that site</em> — even a request fired by a different, malicious page. Drive it: victim is logged into
+      the bank in one tab; on evil.com they click an innocent "claim your gift" button that secretly POSTs a transfer to the
+      bank. The browser helpfully attaches the bank cookie, the bank sees a valid session and obeys — money gone, victim never
+      touched the bank tab. Point at the highlighted "auto-attached by YOUR browser" line; that's the whole bug. Note the spine
+      bends slightly here: it's not "input as code", it's the app trusting that a cookied request was <em>intended</em> by the
+      user — a confused deputy. Fix: a CSRF token the real form carries and evil.com can't read (same-origin policy), so the
+      forgery is missing it and bounces. Mention SameSite cookies as the modern default defence.</aside>
     </section>
 
     <!-- ================= IDOR / BROKEN ACCESS CONTROL ================= -->
@@ -286,13 +324,67 @@
         <div class="card" style="border-top-color:var(--good)"><h3>Encode on output</h3><p>When you write user input into a page, escape it — display it, don't execute it.</p><span class="ex"><b>Kills:</b> XSS</span></div>
         <div class="card" style="border-top-color:var(--good)"><h3>Authorise every request</h3><p>Check <b>ownership and role</b> on every object, every time — server-side.</p><span class="ex"><b>Kills:</b> IDOR, broken access</span></div>
       </div>
-      <div class="callout" style="margin-top:.9em"><strong>One sentence for the week:</strong> decide trust on the server,
-      keep <em>data</em> and <em>code</em> separate, and check <em>authorisation</em> on every action. Friday you'll sit in
-      the defender's chair and watch these turn today's attacks into blocked log lines.</div>
+      <div class="callout" style="margin-top:.7em"><strong>One sentence for the week:</strong> decide trust on the server,
+      keep <em>data</em> and <em>code</em> separate, and check <em>authorisation</em> on every action.</div>
+      <div class="callout hot" style="margin-top:.5em;font-size:.72em"><strong>And a WAF isn't a fifth habit.</strong> A web
+      application firewall pattern-matches known payloads at the door — useful defence-in-depth, but a <em>net, not a fix</em>:
+      encodings and novel tricks slip past it. It buys time; the four habits close the hole.</div>
       <aside class="notes">The payoff and the bridge to Day 5. Don't present these as new — each one is the direct inverse of
       an attack they just drove, so name the attack for each fix. The meta-lesson: you don't memorise a hundred vulns, you
       internalise four habits, all versions of "the app must decide trust itself, on the server." This is the seed of the
       defender day. End on the one-sentence summary.</aside>
+    </section>
+
+    <!-- ================= YOU LEFT TRACKS (SIEM) ================= -->
+    <section>
+      <p class="kicker">The other side · you left tracks</p>
+      <h2>Every attack you ran wrote a line in someone's log</h2>
+      <iframe class="wframe" style="height:540px"
+              src="widgets/siem.html?v=1"
+              title="What the defender's SIEM saw" scrolling="no"></iframe>
+      <aside class="notes">The bridge to Day 5, and the counterpart to Day 2's traces slide — but the lesson flips. On Day 2,
+      passive recon was invisible. Today there is no passive: every web attack <em>touches</em> the server, so almost everything
+      screams — a WAF catches the SQLi signature, EDR catches the shell your command injection spawned, Identity catches the
+      impossible-travel on the hijacked cookie. Replay them and watch the alerts stack up. Then land the ONE exception: walking
+      the invoice ids (IDOR) fires <em>nothing</em> — every request is a valid, authenticated 200, indistinguishable from normal
+      use. That's why broken access control is the most-exploited and most-missed bug, and it's exactly the needle they'll hunt
+      on Friday: not the loud alert, but the anomaly hiding in legitimate traffic.</aside>
+    </section>
+
+    <!-- ================= PRACTICE LEGALLY ================= -->
+    <section>
+      <p class="kicker">Before you touch anything real · rules of engagement</p>
+      <h2>Do this only where you're allowed — and there are plenty of places</h2>
+      <div class="k2 c2" style="margin-top:.5em">
+        <div class="card" style="border-top-color:var(--bad)">
+          <h3>The line you do not cross</h3>
+          <p>Everything you drove today against a system you don't own, <b>without written permission</b>, is a crime — under
+          Saudi Arabia's <b>Anti-Cyber Crime Law</b> that means fines and prison, whether or not you caused damage. A simulation
+          is practice; a live site is someone's property. <b>Curiosity is not authorisation.</b></p>
+          <span class="ex"><b>Rule:</b> no scope in writing → you don't touch it.</span>
+        </div>
+        <div class="card" style="border-top-color:var(--good)">
+          <h3>Where it's not only legal but encouraged</h3>
+          <p>Deliberately-vulnerable apps built <b>for you to attack</b>, on your own machine or their sandbox:</p>
+          <span class="ex" style="line-height:1.7">
+            <b>OWASP Juice Shop</b> — a whole vulnerable shop, runs locally.<br>
+            <b>PortSwigger Web Security Academy</b> — free, guided labs.<br>
+            <b>DVWA</b> · <b>bWAPP</b> · <b>HackTheBox</b> / <b>TryHackMe</b> — sanctioned targets.<br>
+            <b>Bug-bounty programs</b> — real sites that <em>invite</em> testing, within scope.
+          </span>
+        </div>
+      </div>
+      <div class="callout hot" style="margin-top:.7em"><strong>The real toolkit</strong> (for authorised work): <b>Burp Suite</b>
+      &amp; OWASP <b>ZAP</b> — the intercepting proxy behind today's "edit the request"; <b>ffuf</b> / <b>gobuster</b> — the
+      content-discovery behind the status-code probe; <b>sqlmap</b> — automates the SQL injection you drove by hand. Same moves,
+      real tools, legal targets.</div>
+      <aside class="notes">The ethics slide Day 4 was missing — and it's mandatory before a room of students who now know how
+      to do real damage. Lead with the boundary, hard: unauthorised = criminal under the Saudi Anti-Cyber Crime Law, damage or
+      not; "I was just curious / just looking" is not a defence. Then pivot fast to the empowering half so it doesn't read as
+      pure warning — there is a huge legal playground. Have them install Juice Shop or open a PortSwigger lab and actually redo
+      today's attacks for real (they're online). Name the real tools so the widgets connect to industry reality: Burp = the
+      trust-boundary intercept, ffuf = the status-code probe, sqlmap = the SQLi widget automated. This is also the defender's
+      mindset seeping in before Friday.</aside>
     </section>
 
     <!-- ================= RECAP ================= -->
@@ -306,18 +398,35 @@
           <div class="d">HTTP forgets you, so a cookie carries your identity. Steal it or <b>guess it</b> and you are that user.</div></div>
         <div class="r"><div class="n">Trust boundary<span class="lever">never trust the client</span></div>
           <div class="d">You rewrote price, quantity and role in the request. <b>Only the server's checks count.</b></div></div>
-        <div class="r"><div class="n">SQL injection<span class="lever">input became code</span></div>
-          <div class="d">Typed <span class="mono">' OR '1'='1</span> into a login box and <b>rewrote the query</b> — in as admin, then dumped the table.</div></div>
+        <div class="r"><div class="n">Injection<span class="lever">input became code</span></div>
+          <div class="d"><span class="mono">' OR '1'='1</span> <b>rewrote a SQL query</b>; <span class="mono">; whoami</span> ran a <b>shell command</b>. Same disease, two targets.</div></div>
         <div class="r"><div class="n">XSS<span class="lever">input became script</span></div>
           <div class="d">A comment ran as <b>code in the victim's browser</b> and stole their session cookie.</div></div>
+        <div class="r"><div class="n">CSRF<span class="lever">your session, borrowed</span></div>
+          <div class="d">Another site fired a request that <b>rode your cookie</b> — the bank obeyed a transfer you never made.</div></div>
         <div class="r"><div class="n">IDOR<span class="lever">what, not who</span></div>
-          <div class="d">Changed one number in the URL and read <b>another customer's data</b>.</div></div>
+          <div class="d">Changed one number in the URL and read <b>another customer's data</b> — the one move that left <b>no alert</b>.</div></div>
       </div>
       <div class="callout hot" style="margin-top:.5em">Every single one: <strong>the app trusted input it never should have.</strong>
       Keep data and code apart, decide trust on the server — and Friday, watch it from the defender's chair.</div>
-      <aside class="notes">Close the loop. Walk the five rows fast; for each, restate the one spine sentence — untrusted input
+      <aside class="notes">Close the loop. Walk the rows fast; for each, restate the one spine sentence — untrusted input
       treated as trusted. This is the mental hook they keep. Point to Friday: they'll reconstruct today's attacks from the
-      defender's alerts. Thank the room.</aside>
+      defender's alerts.</aside>
+    </section>
+
+    <!-- ================= THANK YOU ================= -->
+    <section>
+      <p class="kicker">Day 4 · Breaking the App</p>
+      <h1>You can read an app<br>like an attacker now.</h1>
+      <p class="sub" style="margin-top:1.2em;max-width:26em">You started at &ldquo;what happens when I load a page&rdquo; and
+      finished by rewriting queries, stealing sessions, and running commands on someone else's server. One idea carried all of
+      it: <em>the app trusted input it never should have.</em> Tomorrow you take the other chair — and hunt yourself.</p>
+      <div class="callout" style="margin-top:1.1em;max-width:34em"><strong>Next · Day 5, The Defender's Chair:</strong> the alerts
+      you lit up this week become the case file. You'll reconstruct four days of attacks from the logs — including the quiet one
+      that left no alert at all.</div>
+      <aside class="notes">Bookend to the title slide, matching the Day 1/2 house style. Land the arc in one breath: they went
+      from zero web knowledge to driving the real OWASP attacks, unified by one sentence. Then hand off to Day 5 — the defender's
+      chair — and specifically tease the IDOR needle from the SIEM slide as the hard part of Friday's hunt. Thank the room.</aside>
     </section>
 
   </div>
