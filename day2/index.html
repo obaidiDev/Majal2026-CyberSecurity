@@ -33,6 +33,13 @@
       letter-spacing: .04em; display: block; margin-top: .15em; }
     .vec .vd { font-size: .72em; color: var(--muted); line-height: 1.4; }
     .vec .vd b { color: var(--ink); font-weight: 700; }
+    /* criminal-economy supply-chain flow */
+    .flow { display: flex; align-items: stretch; gap: 0; margin: .5em 0 .2em; }
+    .flow .step { flex: 1; background: var(--panel); border: 1px solid var(--line);
+      border-top: 3px solid var(--bad); border-radius: 2px; padding: .8em .7em; }
+    .flow .step h4 { margin: 0 0 .3em; font-size: .74em; color: var(--petrol); }
+    .flow .step p { margin: 0; font-size: .56em; color: var(--muted); line-height: 1.4; }
+    .flow .arr { align-self: center; color: var(--bad); font-weight: 800; font-size: 1.1em; padding: 0 .3em; }
   </style>
 </head>
 <body>
@@ -210,6 +217,45 @@
       it's logins and unpatched boxes. The next slide lets them drive three of these and watch defences block each one.</aside>
     </section>
 
+    <!-- ================= OTHER WAYS IN ================= -->
+    <section>
+      <p class="kicker">Foothold · beyond the obvious</p>
+      <h2>Other ways in — the ones that skip your defences</h2>
+      <div class="k2 c5" style="margin-top:.7em">
+        <div class="card"><h3>USB drop</h3><p>A &ldquo;lost&rdquo; USB in the car park. Curiosity plugs it in.</p><span class="ex"><b>Skips:</b> email filters</span></div>
+        <div class="card"><h3>Evil-twin Wi-Fi</h3><p>A fake &ldquo;Airport_WiFi&rdquo;. Join it and they're in the middle.</p><span class="ex"><b>Skips:</b> the network edge</span></div>
+        <div class="card"><h3>MFA fatigue</h3><p>Spam approve-prompts at 3am until they tap &ldquo;Approve&rdquo;.</p><span class="ex"><b>Skips:</b> MFA itself</span></div>
+        <div class="card"><h3>SIM swap</h3><p>Hijack the phone number, steal the SMS codes.</p><span class="ex"><b>Skips:</b> SMS 2FA</span></div>
+        <div class="card"><h3>Tailgating</h3><p>Follow a badge-holder through the door.</p><span class="ex"><b>Skips:</b> every digital control</span></div>
+      </div>
+      <div class="callout hot" style="margin-top:1.1em">Each one <strong>sidesteps a control you'd trust</strong> — so defence-in-depth
+      assumes any single layer will fail. Notice too: <em>MFA is not magic</em> — fatigue and SIM-swap both beat it.</div>
+      <aside class="notes">Breadth beyond the remote/digital vectors. The point isn't to drill each — it's the pattern: every one
+      bypasses a specific control the target trusts (filters, perimeter, MFA, SMS 2FA, all-of-digital). Two takeaways:
+      defence-in-depth (assume a layer fails), and MFA is not a silver bullet (fatigue + SIM-swap defeat it).</aside>
+    </section>
+
+    <!-- ================= CRIMINAL ECONOMY ================= -->
+    <section>
+      <p class="kicker">Foothold · the supply chain</p>
+      <h2>You don't have to hack it — you can buy it</h2>
+      <div class="flow" style="margin-top:.8em">
+        <div class="step"><h4>1 · Data breach</h4><p>A company is breached; millions of emails + passwords leak.</p></div>
+        <span class="arr">›</span>
+        <div class="step"><h4>2 · Combo-lists</h4><p>Bundled into huge lists, sold cheap on forums.</p></div>
+        <span class="arr">›</span>
+        <div class="step"><h4>3 · Access broker</h4><p>Tests them at scale, sells working logins &amp; footholds.</p></div>
+        <span class="arr">›</span>
+        <div class="step"><h4>4 · Ransomware crew</h4><p>Buys the ready-made foothold and encrypts the company.</p></div>
+      </div>
+      <div class="callout hot" style="margin-top:1.1em">A leaked password becomes a <strong>product</strong>.
+      <em>Initial-access brokers</em> sell a ready-made way in for a few hundred dollars — which is why reuse is catastrophic:
+      your old password is already someone's inventory.</div>
+      <aside class="notes">Where the "stolen/reused/bought passwords" from the initial-access slide actually come from. The
+      attacker often buys the foothold rather than earning it — an entire economy sits between a breach and a ransomware
+      hit. Land the personal hook: this is exactly why the reused password in the footprint cascade is so dangerous.</aside>
+    </section>
+
     <!-- ================= LAND THE FIRST SHELL ================= -->
     <section>
       <p class="kicker">Foothold · initial access</p>
@@ -224,6 +270,20 @@
       the CVE path. Turn everything on → every door here dies. Two things to land: (1) initial access is mostly logins
       and known holes, not movie hacking; (2) each specific control closes a specific door — the seed of Day 5's defence.
       Stop at the shell: moving and escalating is Day 3.</aside>
+    </section>
+
+    <!-- ================= YOU LEFT TRACKS ================= -->
+    <section>
+      <p class="kicker">The other side · you left tracks</p>
+      <h2>Everything you touched wrote a line in someone's log</h2>
+      <iframe class="wframe" style="height:566px"
+              src="widgets/traces.html?v=1"
+              title="What the defender saw" scrolling="auto"></iframe>
+      <aside class="notes">The bridge to Day 5. Replay each move from today and watch the defender's SIEM. The reveal:
+      the two <em>passive</em> recon moves (dorking, OSINT) left NOTHING — the target never knew. But every <em>active</em>
+      step — port scan, phishing send, stolen-cred login (impossible travel), CVE exploit (EDR) — lit up an alert. Ties
+      back to passive-vs-active from the recon slide, and forward to Friday, when they'll sit on the defender's side and
+      reconstruct today's whole attack from exactly these alerts. Land it: attackers are loud the instant they touch you.</aside>
     </section>
 
   </div>
