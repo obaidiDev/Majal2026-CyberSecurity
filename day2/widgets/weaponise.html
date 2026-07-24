@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="_shared.css?v=1">
+<style>
+  body { padding: 6px; }
+  .tabs { display: flex; gap: 7px; margin-bottom: 11px; flex-wrap: wrap; }
+  .tab { font-family: inherit; font-size: 13.5px; font-weight: 700; border-radius: 999px;
+    padding: 8px 15px; cursor: pointer; border: 1px solid #CDD8DA; background: #fff; color: #12333D; }
+  .tab.on { background: #00567C; border-color: #00567C; color: #fff; }
+  .tab:hover:not(.on) { background: #EEF3F3; }
+  .panel { display: none; }
+  .panel.on { display: block; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+  .cap { margin-top: 10px; font-size: 13px; line-height: 1.45; color: #42606A; min-height: 24px; }
+  .cap b { color: #12333D; } .cap .r { color: #C1403f; font-weight: 700; } .cap .g { color: #146d68; font-weight: 700; }
+
+  /* fake browser / login */
+  .browser { border: 1px solid #D3E1E1; border-radius: 12px; overflow: hidden; box-shadow: 0 3px 10px rgba(0,86,124,.1); }
+  .urlbar { display: flex; align-items: center; gap: 7px; background: #ECF1F3; padding: 8px 12px;
+    font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 12.5px; color: #46707A; border-bottom: 1px solid #E0E7E8; }
+  .urlbar .lock { color: #46707A; } .urlbar .fake { color: #C1403f; font-weight: 700; }
+  .loginpage { background: #fff; padding: 22px 24px 26px; text-align: center; }
+  .brand { font-weight: 800; font-size: 17px; color: #00567C; margin-bottom: 14px; letter-spacing: .01em; }
+  .lp-title { text-align: left; font-size: 20px; font-weight: 700; color: #12333D; margin-bottom: 14px; }
+  .loginpage input { display: block; width: 100%; font-family: inherit; font-size: 14.5px; color: #12333D;
+    border: 0; border-bottom: 2px solid #D3E1E1; padding: 9px 2px; margin-bottom: 16px; background: transparent; }
+  .loginpage input:focus { outline: none; border-color: #00567C; }
+  .lp-sign { float: right; background: #00567C; color: #fff; border: 0; border-radius: 4px;
+    font-family: inherit; font-weight: 700; font-size: 14px; padding: 9px 22px; cursor: pointer; }
+  .lp-note { clear: both; text-align: left; font-size: 12.5px; color: #146d68; padding-top: 14px; min-height: 18px; }
+
+  .attacker { background: #06232B; border-radius: 12px; padding: 14px 15px; color: #BFE0E2;
+    font-family: "JetBrains Mono", Menlo, Consolas, monospace; }
+  .ah { font-size: 12px; font-weight: 700; color: #FF7A7A; letter-spacing: .05em; margin-bottom: 11px; }
+  .acon { font-size: 14px; line-height: 1.9; min-height: 150px; }
+  .acon .lbl { color: #7C9BA2; } .acon .val { color: #EAF7F5; } .acon .dim { color: #6B8A90; }
+  .acon .grab { color: #FF7A7A; font-weight: 700; }
+  .cursor { animation: blink 1s step-end infinite; color: #33D3CB; } @keyframes blink { 50% { opacity: 0; } }
+
+  /* attachment */
+  .doc { border: 1px solid #D3E1E1; border-radius: 10px; overflow: hidden; background: #fff; box-shadow: 0 3px 10px rgba(0,86,124,.1); }
+  .doc-bar { background: #2B579A; color: #fff; font-size: 12.5px; font-weight: 700; padding: 8px 12px; }
+  .doc-warn { background: #FDF3D6; border-bottom: 1px solid #EBD8A0; padding: 9px 12px; font-size: 12.5px; color: #6a5600; display: flex; align-items: center; gap: 10px; }
+  .doc-warn.done { background: #E7F4EC; border-color: #BEE3CC; color: #146d68; }
+  .doc-warn button { font-family: inherit; font-size: 12px; font-weight: 800; background: #E0A100; color: #fff; border: 0; border-radius: 4px; padding: 6px 12px; cursor: pointer; }
+  .doc-body { padding: 14px; filter: blur(3px); opacity: .5; font-size: 12.5px; color: #42606A; line-height: 1.6; transition: filter .3s, opacity .3s; }
+  .doc-body.clear { filter: none; opacity: 1; }
+  .term2 { background: #06232B; border-radius: 10px; padding: 13px 14px; color: #BFE0E2; margin-top: 0;
+    font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.6; min-height: 178px; white-space: pre-wrap; }
+  .term2 .ok2 { color: #46C08A; } .term2 .bad2 { color: #FF7A7A; } .term2 .cmd2 { color: #33D3CB; } .term2 .dim { color: #6B8A90; }
+  .def2 { grid-column: 1 / -1; margin-top: 12px; }
+  .def2 .tog { font-family: inherit; font-size: 12.5px; font-weight: 700; border: 1px solid #CDD8DA;
+    background: #fff; color: #6a808a; border-radius: 999px; padding: 8px 14px; cursor: pointer; }
+  .def2 .tog::before { content: "\2610  "; }
+  .def2 .tog.on { background: rgba(31,143,137,.13); border-color: #1F8F89; color: #146d68; }
+  .def2 .tog.on::before { content: "\2611  "; }
+
+  /* link */
+  .msg { background: #F1F5F5; border: 1px solid #E0E7E8; border-radius: 4px 15px 15px 15px; padding: 14px 16px;
+    font-size: 14.5px; color: #12333D; line-height: 1.6; max-width: 560px; }
+  .badlink { color: #2f6bd6; text-decoration: underline; cursor: pointer; font-weight: 600; }
+  .msg .hint { font-size: 12px; color: #8AA1A8; margin-top: 8px; }
+  .statusbar2 { margin-top: 14px; background: #12333D; color: #DCEBEE; border-radius: 6px; padding: 9px 13px;
+    font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 13.5px; }
+  .statusbar2 .homo { color: #FF7A7A; font-weight: 700; }
+  .expander { margin-top: 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .expander input { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 13px; color: #12333D;
+    border: 1px solid #D3E1E1; border-radius: 7px; padding: 8px 11px; width: 230px; }
+  .expander button { font-family: inherit; font-size: 12.5px; font-weight: 700; background: #1F8F89; color: #fff;
+    border: 0; border-radius: 999px; padding: 8px 15px; cursor: pointer; }
+  .expander .res { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 13px; color: #C1403f; font-weight: 700; }
+
+  /* qr */
+  .qrwrap { display: grid; grid-template-columns: 300px 1fr; gap: 20px; align-items: center; }
+  .poster { background: linear-gradient(160deg,#0a6e9c,#00567C); border-radius: 14px; padding: 20px; text-align: center; color: #fff; }
+  .poster-txt { font-weight: 800; font-size: 19px; letter-spacing: .04em; margin-bottom: 14px; }
+  .poster-txt small { display: block; font-weight: 600; font-size: 12px; opacity: .85; margin-top: 3px; }
+  .poster img { width: 190px; height: 190px; border-radius: 8px; background: #fff; padding: 8px; display: block; margin: 0 auto; }
+  .qr-actions { display: flex; gap: 9px; margin-bottom: 14px; flex-wrap: wrap; }
+  .qr-actions button { font-family: inherit; font-size: 13px; font-weight: 700; border: 1px solid #CDD8DA;
+    background: #fff; color: #12333D; border-radius: 999px; padding: 9px 16px; cursor: pointer; }
+  .qr-actions button.primary { background: #00567C; color: #fff; border-color: #00567C; }
+  .qr-out { background: #F7FAFA; border: 1px solid #E0E7E8; border-radius: 10px; padding: 14px 16px;
+    font-size: 14px; line-height: 1.5; color: #42606A; min-height: 96px; }
+  .qr-out .url { font-family: "JetBrains Mono", Menlo, Consolas, monospace; color: #C1403f; font-weight: 700; font-size: 14px; }
+</style>
+</head><body>
+  <div class="tabs" id="tabs">
+    <button class="tab on" data-p="cred">Credential harvester</button>
+    <button class="tab" data-p="att">Malicious attachment</button>
+    <button class="tab" data-p="link">Malicious link</button>
+    <button class="tab" data-p="qr">Malicious QR</button>
+  </div>
+
+  <!-- CREDENTIAL HARVESTER -->
+  <div class="panel on" data-p="cred">
+    <div class="two">
+      <div class="browser">
+        <div class="urlbar"><span class="lock">&#128274;</span> login.microsoftonline.com<span class="fake">.secure-auth.net</span></div>
+        <div class="loginpage">
+          <div class="brand">&#9632; MailCloud 365</div>
+          <div class="lp-title">Sign in</div>
+          <input id="cu" placeholder="Email or phone" autocomplete="off">
+          <input id="cp" type="password" placeholder="Password" autocomplete="off">
+          <button class="lp-sign" id="csign">Sign in</button>
+          <div class="lp-note" id="lpnote"></div>
+        </div>
+      </div>
+      <div class="attacker">
+        <div class="ah">&#128065; ATTACKER'S LIVE CAPTURE</div>
+        <div class="acon" id="acon"><span class="dim">waiting for the victim to type&hellip;</span></div>
+      </div>
+    </div>
+    <div class="cap">A <b>look-alike login page</b>. The real domain is <span class="r">secure-auth.net</span> &mdash;
+    &ldquo;microsoftonline.com&rdquo; is just a subdomain to fool you. Type on the left; the attacker sees every keystroke on the right.</div>
+  </div>
+
+  <!-- MALICIOUS ATTACHMENT -->
+  <div class="panel" data-p="att">
+    <div class="two">
+      <div class="doc">
+        <div class="doc-bar">&#128196; Invoice_Q3.docx &mdash; Protected View</div>
+        <div class="doc-warn" id="docwarn"><span>&#9888; This document is protected. Enable content to view it.</span><button id="enable">Enable Content</button></div>
+        <div class="doc-body" id="docbody">INVOICE &mdash; Q3 2026<br>Bill to: Finance Dept<br>Amount due: SAR 84,200<br>Terms: Net 30<br>Reference: INV-2026-0917<br><br>&#9608;&#9608;&#9608;&#9608;&#9608;&#9608; &#9608;&#9608;&#9608;&#9608; &#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;</div>
+      </div>
+      <div class="term2" id="term2"><span class="dim">The document looks empty until you &ldquo;Enable Content&rdquo;.
+That button runs the macro hidden inside.</span></div>
+      <div class="def2"><button class="tog" id="macrotog">Macros blocked by policy</button></div>
+    </div>
+    <div class="cap" id="attcap">One click on <b>&ldquo;Enable Content&rdquo;</b> runs code hidden in the file. Try the defence toggle, then click again.</div>
+  </div>
+
+  <!-- MALICIOUS LINK -->
+  <div class="panel" data-p="link">
+    <div class="msg">
+      Hi &mdash; here's the shared quarterly report:<br>
+      <a class="badlink" id="badlink">https://drive.google.com/file/secure-report</a>
+      <div class="hint">Hover or tap the link to see where it <em>really</em> goes &darr;</div>
+    </div>
+    <div class="statusbar2" id="sb2"><span style="color:#6B8A90">real destination appears here&hellip;</span></div>
+    <div class="expander">
+      <span style="font-size:13px;color:#46707A">Short links hide it too:</span>
+      <input id="shorturl" value="bit.ly/hr-bonus-2026" spellcheck="false">
+      <button id="expand">Expand &rarr;</button>
+      <span class="res" id="expres"></span>
+    </div>
+    <div class="cap"><b>What you see is not where you go.</b> The visible text and a short URL both hide the real destination &mdash; always reveal it before you click.</div>
+  </div>
+
+  <!-- MALICIOUS QR -->
+  <div class="panel" data-p="qr">
+    <div class="qrwrap">
+      <div class="poster">
+        <div class="poster-txt">&#127359; PAY FOR PARKING<small>Scan the code to pay</small></div>
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMYAAADGAQMAAACzVW0eAAAABlBMVEUGIyv///+C0gErAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAFWSURBVFiF7ZbNjcUgDIRHogBKonVKcgFIsxqb8PJWm73ahyAUJXwcHP+MDT4tvIT/+cAAoJGxV6e+MWqQQZ1N+l4YjdQhShBgNBury2TZbmilCCdNka9LLP6gEKEbCwwAf+QBEwlUJTbO/lU/lkhi7Uyc8mUsFCCGJsOHQ8U8ZIYVSCzDgiKvNFRW3jyaSEyvnoYRbVl95UFLJqQi7H6N2l19rh4eTSdTVneiS/NkflffYA1C307cfHqtoAAxRRid58rCCKstn4AaTGT1jjN3tC2d0BUlclAdQ39wom0FCP3Yr6ibnTywXGIxBcjSLS1XlVg64YxBeOuxQn1TF6YSczH27NMzRgDWIFc3O8oXPmYFYnt6cmnZMV9VyPCGFoXrV2KjBIH3fz+ISQq1CGWya0zoXyXiZ+0jgVVIRPsMUN7corbTCaJKcFOX7/pBGnlaeAmfffADK0+viLI5npIAAAAASUVORK5CYII=" alt="QR code">
+      </div>
+      <div>
+        <div class="qr-actions">
+          <button id="eyescan">Read it with your eyes</button>
+          <button id="phonescan" class="primary">Scan with a phone</button>
+        </div>
+        <div class="qr-out" id="qrout"><span style="color:#6B8A90">A QR code is just a link you can't read. What does this one hide?</span></div>
+      </div>
+    </div>
+    <div class="cap">You <b>can't</b> read a QR with your eyes &mdash; you trust it blindly. This poster's code doesn't go to the city.</div>
+  </div>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (s, r) { return (r||document).querySelector(s); };
+  // tabs
+  var tabs = document.querySelectorAll(".tab"), panels = document.querySelectorAll(".panel");
+  tabs.forEach(function (t) { t.addEventListener("click", function () {
+    var p = t.getAttribute("data-p");
+    tabs.forEach(function (x) { x.classList.toggle("on", x === t); });
+    panels.forEach(function (x) { x.classList.toggle("on", x.getAttribute("data-p") === p); });
+  }); });
+
+  // --- credential harvester: mirror keystrokes ---
+  var cu = $("#cu"), cp = $("#cp"), acon = $("#acon"), captured = false;
+  function mirror() {
+    var u = cu.value, p = cp.value;
+    if (!u && !p) { acon.innerHTML = '<span class="dim">waiting for the victim to type&hellip;</span>'; return; }
+    acon.innerHTML =
+      '<div><span class="lbl">email&nbsp;&nbsp;&nbsp;&nbsp;</span> <span class="val">' + esc(u) + '</span><span class="cursor">' + (document.activeElement===cu?'█':'') + '</span></div>' +
+      '<div><span class="lbl">password</span> <span class="val">' + esc(p) + '</span><span class="cursor">' + (document.activeElement===cp?'█':'') + '</span></div>' +
+      (captured ? '<div style="margin-top:12px" class="grab">&#10003; CREDENTIALS CAPTURED &rarr; sent to attacker</div>' : '');
+  }
+  cu.addEventListener("input", mirror); cp.addEventListener("input", mirror);
+  cu.addEventListener("focus", mirror); cp.addEventListener("focus", mirror);
+  cu.addEventListener("blur", mirror); cp.addEventListener("blur", mirror);
+  $("#csign").addEventListener("click", function () {
+    if (!cu.value && !cp.value) return;
+    captured = true; mirror();
+    $("#lpnote").textContent = "Signing you in… (then quietly redirects you to the real site, so nothing feels wrong).";
+  });
+  function esc(s){ return String(s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}); }
+
+  // --- malicious attachment ---
+  var blocked = false;
+  $("#macrotog").addEventListener("click", function () {
+    blocked = !blocked; this.classList.toggle("on", blocked);
+  });
+  $("#enable").addEventListener("click", function () {
+    var term = $("#term2");
+    if (blocked) {
+      term.innerHTML = '<span class="ok2">&#128737; Macros are disabled by your organization.</span>\nThe “Enable Content” button did nothing. No code ran.';
+      $("#attcap").innerHTML = '<span class="g">Blocked.</span> Disabling macros by policy defeats this whole class of attack.';
+      return;
+    }
+    $("#docwarn").className = "doc-warn done"; $("#docwarn").innerHTML = "<span>&#10003; Document loaded.</span>";
+    $("#docbody").classList.add("clear");
+    var lines = [
+      ['cmd2','> AutoOpen() macro fired on document open'],
+      ['dim','  decoding hidden PowerShell…'],
+      ['cmd2','> powershell -enc SQBFAFgAKABJAFcAUg... '],
+      ['dim','  downloading stage-2 payload from 185.220.101.7…'],
+      ['ok2','  [+] payload executed'],
+      ['bad2','  [!] reverse shell established — attacker now has your session']
+    ];
+    term.innerHTML = ""; var i = 0;
+    (function step(){ if (i>=lines.length) { $("#attcap").innerHTML = '<span class="r">Compromised.</span> The invoice was real-looking bait; the damage was the macro behind “Enable Content”.'; return; }
+      var d=document.createElement("div"); d.className=lines[i][0]; d.textContent=lines[i][1]; term.appendChild(d); i++; setTimeout(step, 380); })();
+  });
+
+  // --- malicious link ---
+  var revealed = false;
+  function revealLink(){ revealed = true;
+    $("#sb2").innerHTML = 'goes to → http://<span class="homo">g00gle-drive.ru</span>/login  <span style="color:#FF7A7A">(not google.com)</span>'; }
+  $("#badlink").addEventListener("mouseenter", revealLink);
+  $("#badlink").addEventListener("click", function(e){ e.preventDefault(); revealLink(); });
+  $("#expand").addEventListener("click", function(){
+    $("#expres").textContent = "→ http://payroll-verify.ru/login";
+  });
+
+  // --- malicious QR ---
+  $("#eyescan").addEventListener("click", function(){
+    $("#qrout").innerHTML = "You can't. A QR is machine-only — there's no way to tell a safe code from a malicious one by looking. You're trusting it <b>blind</b>.";
+  });
+  $("#phonescan").addEventListener("click", function(){
+    $("#qrout").innerHTML = "Decoded: <span class=\"url\">http://secure-parking-pay.ru/verify</span><br>" +
+      "<span style=\"color:#C1403f;font-weight:700\">&#9888; Not the city&rsquo;s parking site — a phishing domain.</span> You&rsquo;d have typed your card details straight in.";
+  });
+
+  // screenshot / presenter hooks: ?p=<panel>&demo=1
+  var qs = new URLSearchParams(location.search);
+  var pp = qs.get("p");
+  if (pp) {
+    tabs.forEach(function (x) { x.classList.toggle("on", x.getAttribute("data-p") === pp); });
+    panels.forEach(function (x) { x.classList.toggle("on", x.getAttribute("data-p") === pp); });
+  }
+  if (qs.get("demo") === "1") {
+    if (!pp || pp === "cred") { cu.value = "layla@company.com"; cp.value = "Summer2026!"; captured = true; mirror(); }
+    if (pp === "att")  { $("#enable").click(); }
+    if (pp === "link") { revealLink(); $("#expand").click(); }
+    if (pp === "qr")   { $("#phonescan").click(); }
+  }
+})();
+</script>
+</body></html>
