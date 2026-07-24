@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding: 6px 8px; }
+  .wrap { max-width: 1040px; margin: 0 auto; }
+  .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+  .mode { display: inline-flex; border: 1px solid #CDD8DA; border-radius: 8px; overflow: hidden; }
+  .mode button { border: 0; border-radius: 0; padding: 7px 14px; font-size: 12.5px; }
+  .mode button.on { background: #00567C; color: #fff; }
+  .mode button:not(.on) { background: #fff; color: #5C7880; }
+  .lede { font-size: 12.5px; color: #5C7880; line-height: 1.4; margin: 0 0 8px; }
+  .lede b { color: #00567C; }
+
+  .cols { display: grid; grid-template-columns: 1fr 1.15fr; gap: 12px; align-items: start; }
+
+  /* login form */
+  .form { border: 1px solid #E0E7E8; border-radius: 10px; background: #fff; padding: 12px 13px; }
+  .form label { display: block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    color: #5C7880; margin: 0 0 4px; }
+  .form input { width: 100%; font-family: "JetBrains Mono", Menlo, monospace; font-size: 13px; color: #12333D;
+    background: #F6F8F8; border: 1px solid #CDD8DA; border-radius: 6px; padding: 8px 9px; margin-bottom: 10px; outline: none; }
+  .form input:focus { border-color: #00567C; background: #fff; }
+  .btnrow { display: flex; gap: 7px; align-items: center; }
+  .presets { margin-top: 11px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .presets button { font-size: 11px; padding: 6px 10px; }
+  .presets .phint { width: 100%; font-size: 10.5px; color: #8AA1A8; margin: 2px 0 0; letter-spacing: .04em;
+    text-transform: uppercase; font-weight: 700; }
+
+  /* query panel */
+  .qpanel { background: #04303F; border-radius: 10px; padding: 12px 13px; color: #9fc9cf;
+    font-family: "JetBrains Mono", Menlo, monospace; }
+  .qpanel .qh { font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: #5f97a3; margin-bottom: 8px; }
+  .q { font-size: 13.5px; line-height: 1.65; word-break: break-word; white-space: pre-wrap; }
+  .q .kw { color: #ffd84a; font-weight: 700; }
+  .q .lit { color: #7fe3dc; }
+  .q .inj { background: #D64545; color: #fff; border-radius: 3px; padding: 0 2px; font-weight: 700; }
+  .q .cmt { color: #5f7681; font-style: italic; }
+  .q .bind { color: #ffd84a; font-weight: 700; }
+  .params { margin-top: 10px; font-size: 12px; color: #7fa8b0; border-top: 1px solid rgba(159,201,207,.18); padding-top: 8px; }
+  .params .pv { color: #cfe6e3; }
+
+  /* result banner */
+  .banner { margin-top: 10px; border-radius: 8px; padding: 9px 12px; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; gap: 8px; }
+  .banner.ok { background: rgba(214,69,69,.12); color: #D64545; border: 1px solid rgba(214,69,69,.4); }
+  .banner.deny { background: rgba(31,143,137,.12); color: #1F8F89; border: 1px solid rgba(31,143,137,.4); }
+  .banner .big { font-size: 16px; }
+
+  /* db table */
+  .db { margin-top: 12px; }
+  .db .dbh { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #5C7880; font-weight: 700; margin-bottom: 5px; }
+  table { width: 100%; border-collapse: collapse; font-family: "JetBrains Mono", Menlo, monospace; font-size: 12px; }
+  th { text-align: left; color: #5C7880; font-weight: 700; font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase;
+    padding: 4px 8px; border-bottom: 1px solid #E0E7E8; }
+  td { padding: 5px 8px; border-bottom: 1px solid #EEF3F3; color: #42606A; }
+  tr.hit td { background: rgba(214,69,69,.09); color: #12333D; }
+  tr.hit td:first-child { box-shadow: inset 3px 0 0 #D64545; }
+  .ret { display: inline-block; font-size: 9.5px; font-weight: 800; letter-spacing: .06em; color: #D64545; margin-left: 6px; }
+  .leak { color: #D64545 !important; font-weight: 700; }
+</style>
+</head><body>
+<div class="wrap">
+  <div class="head">
+    <div class="mode">
+      <button id="mVuln" class="on">Server: string-built query</button>
+      <button id="mSafe">Server: parameterised query</button>
+    </div>
+    <div style="font-size:11px;color:#8AA1A8;letter-spacing:.04em">toy DB · 4 rows · real query engine</div>
+  </div>
+  <p class="lede">Behind this login the server <b>builds a SQL query from what you type</b>:
+    <span class="mono">SELECT * FROM users WHERE username='…' AND password='…'</span>. Type into the box and watch the query change.</p>
+
+  <div class="cols">
+    <div>
+      <div class="form">
+        <label>Username</label>
+        <input id="u" spellcheck="false" autocomplete="off" value="fadhel">
+        <label>Password</label>
+        <input id="p" spellcheck="false" autocomplete="off" value="hunter2">
+        <div class="btnrow"><button class="primary" id="go">Log in</button>
+          <span id="hint" style="font-size:11px;color:#8AA1A8"></span></div>
+        <div class="presets">
+          <span class="phint">try these ↓</span>
+          <button data-u="fadhel" data-p="hunter2">Normal login</button>
+          <button data-u="admin'--" data-p="anything">Log in as admin</button>
+          <button data-u="' OR '1'='1' --" data-p="x">Return the whole table</button>
+        </div>
+      </div>
+      <div id="banner" class="banner deny"><span class="big">🔒</span><span id="bmsg">Enter credentials and log in.</span></div>
+    </div>
+
+    <div class="qpanel">
+      <div class="qh">The query the server runs</div>
+      <div class="q" id="query"></div>
+      <div class="params" id="params" style="display:none"></div>
+    </div>
+  </div>
+
+  <div class="db">
+    <div class="dbh">Database · <b>users</b> table — rows the query matches are highlighted</div>
+    <table>
+      <thead><tr><th>id</th><th>username</th><th>password</th><th>role</th><th>password_hash</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+/* ---- toy database -------------------------------------------------------- */
+var DB = [
+  { id:1, username:"admin",  password:"S3cr3t!2024", role:"admin", password_hash:"9f86d0818884" },
+  { id:2, username:"fadhel", password:"hunter2",     role:"user",  password_hash:"f52fbd32b2b3" },
+  { id:3, username:"sara",   password:"qwerty",      role:"user",  password_hash:"65e84be33532" },
+  { id:4, username:"omar",   password:"letmein",     role:"user",  password_hash:"1a1dc91c907d" }
+];
+var COLS = ["id","username","password","role","password_hash"];
+
+/* ---- a small, honest SQL WHERE evaluator --------------------------------
+   Supports: string literals '…', numbers, column names, '=' comparisons,
+   AND / OR (AND binds tighter), and '--' line comments. That is exactly the
+   surface a classic injection abuses — nothing faked. -------------------- */
+function stripComment(sql) {
+  var i = sql.indexOf("--");
+  return i === -1 ? { code: sql, comment: "" } : { code: sql.slice(0, i), comment: sql.slice(i) };
+}
+function tokenize(s) {
+  var t = [], i = 0;
+  while (i < s.length) {
+    var c = s[i];
+    if (/\s/.test(c)) { i++; continue; }
+    if (c === "'") { var j = i + 1, v = ""; while (j < s.length && s[j] !== "'") v += s[j++]; i = j + 1; t.push({ k:"str", v:v }); continue; }
+    if (c === "=") { t.push({ k:"eq" }); i++; continue; }
+    if (c === "(") { t.push({ k:"lp" }); i++; continue; }
+    if (c === ")") { t.push({ k:"rp" }); i++; continue; }
+    var m = /^[A-Za-z0-9_.]+/.exec(s.slice(i));
+    if (m) { var w = m[0]; i += w.length;
+      var up = w.toUpperCase();
+      if (up === "AND" || up === "OR") t.push({ k:"op", v:up });
+      else if (/^[0-9]+$/.test(w)) t.push({ k:"num", v:w });
+      else t.push({ k:"id", v:w });
+      continue; }
+    i++; // skip anything unrecognised
+  }
+  return t;
+}
+/* recursive-descent: orExpr := andExpr (OR andExpr)* ; andExpr := cmp (AND cmp)* ;
+   cmp := value ('=' value)? ; value := str|num|id  (paren-wrapped supported) */
+function parse(tokens) {
+  var pos = 0;
+  function peek() { return tokens[pos]; }
+  function eat() { return tokens[pos++]; }
+  function value() {
+    var tk = peek();
+    if (!tk) return { type:"const", v:"" };
+    if (tk.k === "lp") { eat(); var e = orExpr(); if (peek() && peek().k === "rp") eat(); return { type:"group", e:e }; }
+    eat();
+    if (tk.k === "str") return { type:"lit", v: tk.v };
+    if (tk.k === "num") return { type:"num", v: tk.v };
+    if (tk.k === "id")  return { type:"col", v: tk.v };
+    return { type:"const", v:"" };
+  }
+  function cmp() {
+    var left = value();
+    if (peek() && peek().k === "eq") { eat(); var right = value(); return { type:"eq", left:left, right:right }; }
+    return { type:"truthy", left:left };
+  }
+  function andExpr() { var n = cmp(); while (peek() && peek().k === "op" && peek().v === "AND") { eat(); n = { type:"and", l:n, r:cmp() }; } return n; }
+  function orExpr()  { var n = andExpr(); while (peek() && peek().k === "op" && peek().v === "OR") { eat(); n = { type:"or", l:n, r:andExpr() }; } return n; }
+  return orExpr();
+}
+function operand(node, row) {
+  if (node.type === "lit") return node.v;
+  if (node.type === "num") return node.v;
+  if (node.type === "col") return row[node.v] !== undefined ? String(row[node.v]) : "";
+  if (node.type === "group") return evalNode(node.e, row);
+  return "";
+}
+function evalNode(node, row) {
+  if (!node) return false;
+  if (node.type === "or")  return !!evalNode(node.l, row) || !!evalNode(node.r, row);
+  if (node.type === "and") return !!evalNode(node.l, row) && !!evalNode(node.r, row);
+  if (node.type === "group") return !!evalNode(node.e, row);
+  if (node.type === "eq")  return String(operand(node.left, row)) === String(operand(node.right, row));
+  if (node.type === "truthy") { var v = operand(node.left, row); return node.left.type === "num" ? Number(v) !== 0 : v !== ""; }
+  return false;
+}
+
+/* ---- highlight the query with the injected span marked ------------------- */
+function esc(s){ return String(s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];}); }
+var KW = /\b(SELECT|FROM|WHERE|AND|OR|UNION|ALL)\b/g;
+function kwize(s){ return esc(s).replace(KW, '<span class="kw">$1</span>'); }
+
+var vuln = true;
+var U = document.getElementById("u"), P = document.getElementById("p");
+var qEl = document.getElementById("query"), pEl = document.getElementById("params");
+var rowsEl = document.getElementById("rows"), banner = document.getElementById("banner"), bmsg = document.getElementById("bmsg");
+var hint = document.getElementById("hint");
+
+function buildVulnQuery(u, p) {
+  // the raw text is glued straight into the string — this IS the bug
+  return "SELECT * FROM users\nWHERE username = '" + u + "' AND password = '" + p + "'";
+}
+function render() {
+  var u = U.value, p = P.value;
+  if (vuln) {
+    pEl.style.display = "none";
+    var whereRaw = "username = '" + u + "' AND password = '" + p + "'";
+    var full = "username = '@U@' AND password = '@P@'";
+    var sc = stripComment("SELECT * FROM users WHERE " + whereRaw);
+    // build highlighted HTML: mark the user-controlled spans red, comment grey
+    var head = '<span class="kw">SELECT</span> * <span class="kw">FROM</span> users\n<span class="kw">WHERE</span> username = \'';
+    var injU = '<span class="inj">' + esc(u) + '</span>';
+    var mid = "' <span class=\"kw\">AND</span> password = '";
+    var injP = '<span class="inj">' + esc(p) + '</span>';
+    var tail = "'";
+    // pull comment out of whichever field carries it
+    var cmtHtml = "";
+    var ci = whereRaw.indexOf("--");
+    // if the comment starts inside the username value, everything after is commented
+    var uHasCmt = u.indexOf("--") !== -1;
+    if (uHasCmt) {
+      var parts = u.split("--"); var before = parts[0]; var after = "--" + parts.slice(1).join("--");
+      injU = '<span class="inj">' + esc(before) + '</span><span class="cmt">' + esc(after) + "' AND password = '" + esc(p) + "'</span>";
+      mid = ""; injP = ""; tail = "";
+    }
+    qEl.innerHTML = head + injU + mid + injP + tail;
+    // evaluate over the real engine
+    var whereForEval = "username = '" + u + "' AND password = '" + p + "'";
+    var s = stripComment(whereForEval);
+    var ast = parse(tokenize(s.code));
+    runResult(ast, u, p, false);
+  } else {
+    pEl.style.display = "block";
+    qEl.innerHTML = '<span class="kw">SELECT</span> * <span class="kw">FROM</span> users\n<span class="kw">WHERE</span> username = <span class="bind">?</span> <span class="kw">AND</span> password = <span class="bind">?</span>';
+    pEl.innerHTML = 'bound parameters (sent as <b>data</b>, never parsed as SQL):<br>' +
+      '&nbsp;&nbsp;①&nbsp; <span class="pv">' + esc(JSON.stringify(u)) + '</span><br>' +
+      '&nbsp;&nbsp;②&nbsp; <span class="pv">' + esc(JSON.stringify(p)) + '</span>';
+    // parameterised: the WHOLE string must literally equal a stored value
+    runResultParam(u, p);
+  }
+}
+
+function paintRows(hitIds, leakCols) {
+  rowsEl.innerHTML = "";
+  DB.forEach(function (r) {
+    var hit = hitIds.indexOf(r.id) !== -1;
+    var tr = document.createElement("tr"); if (hit) tr.className = "hit";
+    COLS.forEach(function (c) {
+      var td = document.createElement("td");
+      var val = r[c];
+      if ((c === "password" || c === "password_hash") && hit) td.className = "leak";
+      td.textContent = val;
+      if (c === "id" && hit) { var s = document.createElement("span"); s.className = "ret"; s.textContent = "◄ RETURNED"; td.appendChild(s); }
+      tr.appendChild(td);
+    });
+    rowsEl.appendChild(tr);
+  });
+}
+
+function runResult(ast, u, p, isParam) {
+  var hits = DB.filter(function (r) { return evalNode(ast, r); });
+  paintRows(hits.map(function (r){ return r.id; }));
+  decideBanner(hits, u, p);
+}
+function runResultParam(u, p) {
+  // bound value: exact literal match on the entire field
+  var hits = DB.filter(function (r) { return r.username === u && r.password === p; });
+  paintRows(hits.map(function (r){ return r.id; }));
+  decideBanner(hits, u, p, true);
+}
+function decideBanner(hits, u, p, isParam) {
+  if (hits.length === 0) {
+    banner.className = "banner deny";
+    banner.innerHTML = '<span class="big">🔒</span><span>Login failed — no matching row.' +
+      (isParam && (u.indexOf("'") !== -1 || u.indexOf("--") !== -1) ? ' Your injection sat in the box as harmless <b>text</b>.' : '') + '</span>';
+  } else {
+    var admin = hits.some(function (r){ return r.role === "admin"; });
+    var many = hits.length > 1;
+    banner.className = "banner ok";
+    var who = admin ? "ADMIN" : hits[0].username;
+    var msg = many
+      ? '<span class="big">🗃️</span><span>Query returned <b>all ' + hits.length + ' rows</b> — every password hash is now yours. Logged in as <b>' + who + '</b>.</span>'
+      : '<span class="big">🔓</span><span>Authenticated as <b>' + who + '</b>' + (isParam ? '' : (u.indexOf("'") !== -1 ? ' — <b>no password required</b>' : '')) + '.</span>';
+    banner.innerHTML = msg;
+  }
+}
+
+/* ---- wiring -------------------------------------------------------------- */
+U.addEventListener("input", render);
+P.addEventListener("input", render);
+document.getElementById("go").addEventListener("click", render);
+Array.prototype.forEach.call(document.querySelectorAll(".presets button"), function (b) {
+  b.addEventListener("click", function () { U.value = b.getAttribute("data-u"); P.value = b.getAttribute("data-p"); render(); });
+});
+document.getElementById("mVuln").addEventListener("click", function () {
+  vuln = true; this.classList.add("on"); document.getElementById("mSafe").classList.remove("on");
+  hint.textContent = "input glued into the query string"; render();
+});
+document.getElementById("mSafe").addEventListener("click", function () {
+  vuln = false; this.classList.add("on"); document.getElementById("mVuln").classList.remove("on");
+  hint.textContent = "input bound as data — injection inert"; render();
+});
+
+/* optional ?state= hook for headless screenshots */
+(function () {
+  var q = new URLSearchParams(location.search);
+  var st = q.get("state");
+  if (st === "bypass") { U.value = "admin'--"; P.value = "anything"; }
+  else if (st === "dump") { U.value = "' OR '1'='1' --"; P.value = "x"; }
+  else if (st === "safe") { U.value = "' OR '1'='1' --"; P.value = "x"; vuln = false;
+    document.getElementById("mSafe").classList.add("on"); document.getElementById("mVuln").classList.remove("on"); }
+  render();
+})();
+</script>
+</body></html>

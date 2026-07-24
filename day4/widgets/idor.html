@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding: 6px 8px; }
+  .wrap { max-width: 1040px; margin: 0 auto; }
+  .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+  .who { font-size: 12px; color: #5C7880; } .who b { color: #00567C; }
+  .who .badge { font-family: "JetBrains Mono", monospace; background: rgba(31,143,137,.14); color: #1F8F89;
+    border: 1px solid rgba(31,143,137,.4); border-radius: 5px; padding: 2px 7px; font-size: 11px; margin-left: 4px; }
+  .mode { display: inline-flex; border: 1px solid #CDD8DA; border-radius: 8px; overflow: hidden; }
+  .mode button { border: 0; border-radius: 0; padding: 6px 12px; font-size: 12px; }
+  .mode button.on { background: #00567C; color: #fff; }
+  .mode button:not(.on) { background: #fff; color: #5C7880; }
+
+  .addr { display: flex; align-items: center; gap: 8px; background: #04303F; border-radius: 9px; padding: 9px 12px;
+    font-family: "JetBrains Mono", Menlo, monospace; font-size: 14px; color: #9fc9cf; }
+  .addr .m { color: #33D3CB; font-weight: 700; } .addr .p { color: #ffd84a; }
+  .addr .step { display: inline-flex; align-items: center; gap: 0; margin-left: 2px; }
+  .addr .step button { font-family: inherit; font-size: 14px; font-weight: 800; width: 26px; height: 26px; padding: 0;
+    background: #0c4658; color: #fff; border: 1px solid #1c5f74; border-radius: 6px; }
+  .addr .step button:hover { background: #1F8F89; border-color: #1F8F89; }
+  .addr .idbox { color: #fff; font-weight: 800; background: #D64545; border-radius: 5px; padding: 2px 9px; margin: 0 5px; }
+
+  .cols { display: grid; grid-template-columns: 1.3fr 1fr; gap: 12px; margin-top: 11px; align-items: start; }
+
+  .invoice { border: 1px solid #E0E7E8; border-radius: 10px; background: #fff; padding: 13px 15px; min-height: 168px; }
+  .invoice .top { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #EEF3F3; padding-bottom: 7px; margin-bottom: 8px; }
+  .invoice .top .inv { font-size: 12px; color: #8AA1A8; font-family: "JetBrains Mono", monospace; }
+  .invoice .top .cust { font-size: 16px; font-weight: 800; color: #12333D; }
+  .invoice .top .cust .sub { display: block; font-size: 11px; font-weight: 600; color: #8AA1A8; }
+  .invoice .li { display: flex; justify-content: space-between; font-size: 13px; color: #42606A; padding: 3px 0; }
+  .invoice .li .amt { font-family: "JetBrains Mono", monospace; }
+  .invoice .tot { display: flex; justify-content: space-between; border-top: 1px solid #E0E7E8; margin-top: 7px; padding-top: 7px;
+    font-weight: 800; color: #00567C; font-size: 14px; }
+  .invoice .pii { margin-top: 9px; font-size: 11.5px; color: #8AA1A8; font-family: "JetBrains Mono", monospace; line-height: 1.5; }
+  .invoice.denied { display: flex; align-items: center; justify-content: center; text-align: center; color: #1F8F89; }
+  .invoice.denied .big { font-size: 34px; }
+
+  .status { border-radius: 8px; padding: 11px 13px; font-size: 12.5px; line-height: 1.5; }
+  .status.mine { background: rgba(31,143,137,.1); border: 1px solid rgba(31,143,137,.4); }
+  .status.theirs { background: rgba(214,69,69,.1); border: 1px solid rgba(214,69,69,.4); }
+  .status .h { display: block; font-weight: 800; font-size: 13px; margin-bottom: 4px; }
+  .status.mine .h { color: #1F8F89; } .status.theirs .h { color: #D64545; }
+  .status b { color: #00567C; } .status .q { font-family: "JetBrains Mono", monospace; font-size: .92em; }
+</style>
+</head><body>
+<div class="wrap">
+  <div class="head">
+    <div class="who">Logged in as <b>Fadhel</b> <span class="badge">customer #1042</span> — you authenticated correctly.</div>
+    <div class="mode">
+      <button id="mVuln" class="on">Server checks the id only</button>
+      <button id="mSafe">Server checks ownership</button>
+    </div>
+  </div>
+
+  <div class="addr">
+    <span class="m">GET</span> <span class="p">/invoice?id=</span>
+    <span class="step"><button id="dec">−</button><span class="idbox" id="idbox">1042</span><button id="inc">+</button></span>
+    <span style="margin-left:6px;color:#4d6b74;font-size:12px">← change the number in the address bar</span>
+  </div>
+
+  <div class="cols">
+    <div class="invoice" id="invoice"></div>
+    <div class="status" id="status"></div>
+  </div>
+</div>
+
+<script>
+var INVOICES = {
+  1041: { cust:"Omar Al-Harbi", email:"omar@email.com", card:"•••• 4417", items:[["Standing desk","1,450 ﷼"],["Desk lamp","120 ﷼"]], total:"1,570 ﷼" },
+  1042: { cust:"Fadhel (you)", email:"fadhel@email.com", card:"•••• 9002", items:[["Wireless headphones","899 ﷼"]], total:"899 ﷼" },
+  1043: { cust:"Sara Al-Otaibi", email:"sara@email.com", card:"•••• 7781", items:[["Laptop stand","240 ﷼"],["USB-C hub","185 ﷼"]], total:"425 ﷼" },
+  1044: { cust:"Khalid Nasser", email:"khalid@email.com", card:"•••• 3350", items:[["Mechanical keyboard","540 ﷼"]], total:"540 ﷼" },
+  1045: { cust:"Noura Faisal", email:"noura@email.com", card:"•••• 1129", items:[["4K monitor","2,100 ﷼"]], total:"2,100 ﷼" }
+};
+var MINE = 1042, IDS = Object.keys(INVOICES).map(Number);
+var LO = Math.min.apply(null, IDS), HI = Math.max.apply(null, IDS);
+var id = MINE, vuln = true;
+var invoiceEl = document.getElementById("invoice"), statusEl = document.getElementById("status"), idbox = document.getElementById("idbox");
+
+function render() {
+  idbox.textContent = id;
+  var inv = INVOICES[id], mine = (id === MINE);
+  if (!vuln && !mine) {
+    invoiceEl.className = "invoice denied";
+    invoiceEl.innerHTML = '<div><div class="big">⛔</div><b>403 Forbidden</b><br><span style="color:#5C7880;font-size:12px">Invoice #' + id + ' does not belong to you.</span></div>';
+    statusEl.className = "status mine";
+    statusEl.innerHTML = '<span class="h">✓ Access control working</span>The server now asks <b>"does invoice #' + id + ' belong to the logged-in user?"</b> — and refuses when it doesn\'t. Same URL, different answer.';
+    return;
+  }
+  invoiceEl.className = "invoice";
+  invoiceEl.innerHTML =
+    '<div class="top"><div class="cust">' + inv.cust + '<span class="sub">Invoice #' + id + '</span></div>' +
+      '<div class="inv">' + (mine ? "YOUR ORDER" : "") + '</div></div>' +
+    inv.items.map(function(it){ return '<div class="li"><span>' + it[0] + '</span><span class="amt">' + it[1] + '</span></div>'; }).join("") +
+    '<div class="tot"><span>Total</span><span>' + inv.total + '</span></div>' +
+    '<div class="pii">' + inv.email + '  ·  card ' + inv.card + '</div>';
+  if (mine) {
+    statusEl.className = "status mine";
+    statusEl.innerHTML = '<span class="h">This one really is yours</span>You asked for <span class="q">id=1042</span> and it\'s your account. Now try the <b>+</b> and <b>−</b> buttons…';
+  } else {
+    statusEl.className = "status theirs";
+    statusEl.innerHTML = '<span class="h">⚠ That\'s not your invoice</span>You changed the URL to <span class="q">id=' + id + '</span> and you\'re reading <b>' + inv.cust.replace(" ","&nbsp;") + '\'s</b> order — name, email, part of their card. The server checked <b>what</b> you asked for, never <b>who</b> you are.';
+  }
+}
+function clamp(){ if (id < LO) id = LO; if (id > HI) id = HI; }
+document.getElementById("inc").addEventListener("click", function(){ id++; clamp(); render(); });
+document.getElementById("dec").addEventListener("click", function(){ id--; clamp(); render(); });
+document.getElementById("mVuln").addEventListener("click", function(){ vuln=true; this.classList.add("on"); document.getElementById("mSafe").classList.remove("on"); render(); });
+document.getElementById("mSafe").addEventListener("click", function(){ vuln=false; this.classList.add("on"); document.getElementById("mVuln").classList.remove("on"); render(); });
+
+render();
+/* ?state hook */
+(function(){ var st = new URLSearchParams(location.search).get("state");
+  if (st === "theirs") { id = 1043; render(); }
+  else if (st === "safe") { id = 1043; vuln=false; document.getElementById("mSafe").classList.add("on"); document.getElementById("mVuln").classList.remove("on"); render(); }
+})();
+</script>
+</body></html>

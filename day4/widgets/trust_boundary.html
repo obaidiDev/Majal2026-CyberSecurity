@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding: 6px 8px; }
+  .wrap { max-width: 1040px; margin: 0 auto; }
+  .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+  .mode { display: inline-flex; border: 1px solid #CDD8DA; border-radius: 8px; overflow: hidden; }
+  .mode button { border: 0; border-radius: 0; padding: 7px 13px; font-size: 12.5px; }
+  .mode button.on { background: #00567C; color: #fff; }
+  .mode button:not(.on) { background: #fff; color: #5C7880; }
+  .lede { font-size: 12.5px; color: #5C7880; line-height: 1.4; margin: 0 0 10px; }
+  .lede b { color: #00567C; } .lede em { color: #1F8F89; font-style: normal; font-weight: 700; }
+
+  .cols { display: grid; grid-template-columns: 1fr 46px 1fr; gap: 6px; align-items: stretch; }
+
+  .panel { border: 1px solid #E0E7E8; border-radius: 10px; background: #fff; padding: 12px 13px; }
+  .ptitle { font-size: 11px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: #00567C; margin-bottom: 9px; }
+  .ptitle .em { color: #D64545; }
+
+  /* editable request body */
+  .req { background: #04303F; border-radius: 8px; padding: 10px 12px; font-family: "JetBrains Mono", Menlo, monospace;
+    font-size: 13px; color: #9fc9cf; line-height: 1.9; }
+  .req .k { color: #5f97a3; }
+  .req .line { display: flex; align-items: center; gap: 6px; }
+  .req input { font-family: inherit; font-size: 13px; font-weight: 700; color: #ffd84a; background: rgba(255,216,74,.08);
+    border: 1px solid rgba(255,216,74,.35); border-radius: 5px; padding: 2px 7px; width: 128px; outline: none; }
+  .req input:focus { border-color: #ffd84a; background: rgba(255,216,74,.16); }
+  .req .rl { color: #7fe3dc; }
+  .req .note { color: #4d6b74; font-size: 11px; font-style: italic; }
+
+  .presets { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .presets button { font-size: 11px; padding: 6px 9px; }
+  .presets .ph { width: 100%; font-size: 10px; color: #8AA1A8; letter-spacing: .05em; text-transform: uppercase;
+    font-weight: 700; margin-bottom: 1px; }
+
+  .send { display: flex; align-items: center; justify-content: center; }
+  .send button { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 12px; padding: 14px 8px; height: 100%; }
+  .send button.primary { background: #1F8F89; }
+
+  /* server side */
+  .truth { font-size: 11.5px; color: #5C7880; line-height: 1.6; font-family: "JetBrains Mono", monospace; }
+  .truth .row { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px dashed #EEF3F3; }
+  .truth .row b { color: #00567C; }
+  .verdict { margin-top: 10px; border-radius: 8px; padding: 10px 12px; font-size: 12.5px; line-height: 1.45; }
+  .verdict.bad { background: rgba(214,69,69,.1); border: 1px solid rgba(214,69,69,.4); color: #12333D; }
+  .verdict.good { background: rgba(31,143,137,.1); border: 1px solid rgba(31,143,137,.4); color: #12333D; }
+  .verdict .h { display: block; font-weight: 800; font-size: 13px; margin-bottom: 3px; }
+  .verdict.bad .h { color: #D64545; } .verdict.good .h { color: #1F8F89; }
+  .verdict b { color: #00567C; }
+
+  .foot { margin-top: 10px; font-size: 12.5px; }
+</style>
+</head><body>
+<div class="wrap">
+  <div class="head">
+    <div class="mode">
+      <button id="mVuln" class="on">Server trusts the request</button>
+      <button id="mSafe">Server re-validates</button>
+    </div>
+    <div style="font-size:11px;color:#8AA1A8;letter-spacing:.04em">checkout · you intercepted the request</div>
+  </div>
+  <p class="lede">The page showed you <b>headphones · 899 ﷼ · max qty 10 · role: user</b>. But every one of those checks lived in
+    <em>your</em> browser. You caught the request on its way out — <b>now edit it</b> and send your own version.</p>
+
+  <div class="cols">
+    <div class="panel">
+      <div class="ptitle">① The request you're sending <span class="em">— editable</span></div>
+      <div class="req">
+        <div class="line"><span class="k">POST</span> <span class="rl">/checkout</span></div>
+        <div class="line"><span class="k">item</span> = <span class="rl">"headphones"</span></div>
+        <div class="line"><span class="k">price</span> = <input id="price" value="899"></div>
+        <div class="line"><span class="k">qty</span>&nbsp;&nbsp; = <input id="qty" value="1"></div>
+        <div class="line"><span class="k">role</span>&nbsp; = <input id="role" value="user"></div>
+        <div class="note">↑ these are just text — you can type anything</div>
+      </div>
+      <div class="presets">
+        <span class="ph">try tampering ↓</span>
+        <button data-price="899" data-qty="1" data-role="user">Honest</button>
+        <button data-price="0.01" data-qty="1" data-role="user">Set price to 0.01</button>
+        <button data-price="899" data-qty="-1" data-role="user">Negative quantity</button>
+        <button data-price="899" data-qty="1" data-role="admin">Make me admin</button>
+      </div>
+    </div>
+
+    <div class="send"><button class="primary" id="go">SEND&nbsp;▶</button></div>
+
+    <div class="panel">
+      <div class="ptitle">② What the server does with it</div>
+      <div class="truth" id="truth"></div>
+      <div class="verdict good" id="verdict"><span class="h">Waiting…</span>Press SEND to submit your request.</div>
+    </div>
+  </div>
+
+  <div class="callout foot" style="border-left:4px solid #00567C;background:#eef3f3;padding:.6em 1em;border-radius:0 6px 6px 0" id="foot">
+    A check that runs in the browser is a <b>suggestion</b>. Only a check the <em>server</em> repeats is a control.
+  </div>
+</div>
+
+<script>
+var REAL_PRICE = 899, SESSION_ROLE = "user";
+var vuln = true;
+var price = document.getElementById("price"), qty = document.getElementById("qty"), role = document.getElementById("role");
+var truth = document.getElementById("truth"), verdict = document.getElementById("verdict");
+
+function fmt(n){ return (Math.round(n*100)/100).toLocaleString("en-US") + " ﷼"; }
+
+function submit() {
+  var p = parseFloat(price.value), q = parseInt(qty.value, 10), r = (role.value || "").trim();
+  if (isNaN(p)) p = 0; if (isNaN(q)) q = 0;
+  if (vuln) {
+    // server trusts the client-supplied values verbatim
+    truth.innerHTML =
+      '<div class="row"><span>charge = price × qty</span><b>' + fmt(p) + ' × ' + q + '</b></div>' +
+      '<div class="row"><span>role granted</span><b>' + (r || "user") + '</b></div>';
+    var charged = p * q;
+    var msgs = [];
+    if (p < REAL_PRICE) msgs.push('You bought 899 ﷼ headphones for <b>' + fmt(p) + '</b> — you set your own price.');
+    if (q < 0) msgs.push('Negative quantity → the store <b>credits you ' + fmt(Math.abs(charged)) + '</b> instead of charging you.');
+    if (r !== SESSION_ROLE) msgs.push('You sent <b>role=' + r + '</b> and the server made you <b>' + r + '</b>.');
+    if (msgs.length === 0) msgs.push('Honest order: charged <b>' + fmt(charged) + '</b>. (Now go tamper with it.)');
+    verdict.className = "verdict " + (msgs.length && (p<REAL_PRICE||q<0||r!==SESSION_ROLE) ? "bad" : "good");
+    verdict.innerHTML = '<span class="h">' + ((p<REAL_PRICE||q<0||r!==SESSION_ROLE) ? "✗ Server obeyed your tampered values" : "✓ Order accepted") + '</span>' + msgs.join(" ");
+  } else {
+    // server ignores client values, recomputes from its own truth
+    truth.innerHTML =
+      '<div class="row"><span>price (server DB, not your input)</span><b>' + fmt(REAL_PRICE) + '</b></div>' +
+      '<div class="row"><span>qty (must be ≥ 1)</span><b>' + (q >= 1 ? q : "rejected") + '</b></div>' +
+      '<div class="row"><span>role (from your session)</span><b>' + SESSION_ROLE + '</b></div>';
+    var tampered = (p !== REAL_PRICE) || (q < 1) || (r !== SESSION_ROLE);
+    if (q < 1) {
+      verdict.className = "verdict good";
+      verdict.innerHTML = '<span class="h">✓ Rejected — invalid quantity</span>Quantity must be ≥ 1. The server refuses the order outright.';
+    } else {
+      verdict.className = "verdict good";
+      verdict.innerHTML = '<span class="h">✓ Server used its own truth</span>' +
+        'Your <b>price</b> and <b>role</b> were ignored — charged the real <b>' + fmt(REAL_PRICE * q) + '</b>, role stays <b>' + SESSION_ROLE + '</b>. ' +
+        (tampered ? 'Your tampering changed <b>nothing</b>.' : 'Honest order goes through normally.');
+    }
+  }
+}
+
+function setMode(v) {
+  vuln = v;
+  document.getElementById("mVuln").classList.toggle("on", v);
+  document.getElementById("mSafe").classList.toggle("on", !v);
+  submit();
+}
+document.getElementById("go").addEventListener("click", submit);
+[price, qty, role].forEach(function(el){ el.addEventListener("input", function(){ /* live preview after first send */ if (verdict.dataset.sent) submit(); }); });
+document.getElementById("go").addEventListener("click", function(){ verdict.dataset.sent = "1"; });
+document.getElementById("mVuln").addEventListener("click", function(){ setMode(true); });
+document.getElementById("mSafe").addEventListener("click", function(){ setMode(false); });
+Array.prototype.forEach.call(document.querySelectorAll(".presets button"), function(b){
+  b.addEventListener("click", function(){ price.value=b.getAttribute("data-price"); qty.value=b.getAttribute("data-qty"); role.value=b.getAttribute("data-role"); verdict.dataset.sent="1"; submit(); });
+});
+
+/* ?state hook */
+(function(){ var st = new URLSearchParams(location.search).get("state");
+  if (st === "cheap") { price.value="0.01"; verdict.dataset.sent="1"; submit(); }
+  else if (st === "admin") { role.value="admin"; verdict.dataset.sent="1"; submit(); }
+  else if (st === "safe") { price.value="0.01"; role.value="admin"; setMode(false); }
+})();
+</script>
+</body></html>

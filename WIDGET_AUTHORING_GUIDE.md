@@ -41,6 +41,36 @@ you drive it, a relationship you feel by moving a slider (avalanche effect;
 Diffie–Hellman both sides meeting; RSA one-way-ness; why encryption ≠
 authenticity). Litmus test: *if a single sentence conveys it, a sentence should.*
 
+### 0.2 Background knowledge IS content — teach the prerequisites first
+
+The filter in §0.1 rejects *fake interactives* that restate the obvious. It does
+**not** license skipping foundations. **Prerequisite knowledge is first-class
+content.** Before an attack (or any advanced concept) can land, the learner needs
+the substrate it abuses — how the web request/response cycle works before SQL
+injection; what a session cookie is before cookie theft; the three-tier
+architecture before "never trust the client." A demo that assumes a mental model
+the learner doesn't have teaches nothing; it just looks impressive to people who
+already knew.
+
+So, before the payload content, **establish the substrate deliberately**:
+
+- **Give foundations real slides.** An on-ramp that builds the mental model is not
+  filler — it is what makes everything after it click. (Day 1 added a "foundations
+  on-ramp before CIA"; Day 4 adds "how the web actually works" before app attacks.)
+- **Match the tool to the job.** A foundation can be a sharp `.card`/`.callout`
+  explanation (a taxonomy, a definition, an anatomy) **or** a mental-model
+  interactive where driving it *builds* the model (send a request → watch it cross
+  the tiers → response returns). Both are legitimate; pick by whether motion adds
+  understanding. This is not in tension with §0.1: a foundation interactive earns
+  its place when manipulation *constructs* the model, not when it restates a truism.
+- **Don't over-teach.** Establish exactly enough substrate for the attacks to make
+  sense — not a full DB course before SQLi, not every HTTP header before tampering.
+  Fold the smallest primers (what a query is, what a cookie is) inline into the
+  slide that needs them; give a full slide only to the load-bearing model.
+
+Litmus: *would the next slide be a magic trick to someone who doesn't already know
+this?* If yes, teach it first.
+
 ---
 
 ## 1. Non-negotiable constraints (offline / air-gapped)

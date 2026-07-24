@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding: 6px 8px; }
+  .wrap { max-width: 1040px; margin: 0 auto; }
+
+  /* address bar */
+  .addr { display: flex; gap: 8px; align-items: center; background: #fff; border: 1px solid #CDD8DA;
+    border-radius: 10px; padding: 8px 10px; }
+  .method { font-family: "JetBrains Mono", Menlo, monospace; font-weight: 800; font-size: 13px; color: #fff;
+    background: #1F8F89; border-radius: 6px; padding: 6px 10px; letter-spacing: .04em; }
+  .url { flex: 1; font-family: "JetBrains Mono", Menlo, monospace; font-size: 13.5px; color: #12333D; }
+  .url .path { color: #00567C; font-weight: 700; }
+  .url .q { color: #D64545; font-weight: 700; }
+  .presets { display: flex; gap: 6px; }
+  .presets button { font-size: 11px; padding: 6px 10px; }
+
+  /* three tiers stage */
+  .stage { position: relative; height: 250px; margin-top: 12px; }
+  .tier { position: absolute; top: 24px; width: 26%; height: 202px; background: #fff; border: 1px solid #E0E7E8;
+    border-top: 3px solid #00567C; border-radius: 10px; padding: 10px 12px; }
+  .tier.t1 { left: 0; } .tier.t2 { left: 37%; } .tier.t3 { left: 74%; }
+  .tier .tname { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #00567C; }
+  .tier .ticon { font-size: 26px; margin: 2px 0 4px; }
+  .tier .tsub { font-size: 11px; color: #8AA1A8; line-height: 1.35; }
+  .tier.hot { border-top-color: #F2D200; box-shadow: 0 0 0 3px rgba(242,210,0,.25); }
+  .tier .badge { position: absolute; top: -11px; left: 50%; transform: translateX(-50%); font-family: "JetBrains Mono", monospace;
+    font-size: 9.5px; font-weight: 800; letter-spacing: .06em; background: #12333D; color: #fff; padding: 2px 7px; border-radius: 5px;
+    white-space: nowrap; opacity: 0; transition: opacity .2s; }
+  .tier .badge.show { opacity: 1; }
+
+  /* rendered-page mini preview inside browser tier */
+  .render { margin-top: 6px; border: 1px solid #E0E7E8; border-radius: 6px; padding: 6px 7px; background: #F6F8F8;
+    font-size: 10.5px; color: #42606A; line-height: 1.4; min-height: 74px; }
+  .render .b { color: #00567C; font-weight: 700; }
+  .render.empty { color: #B9C6C9; font-style: italic; display: flex; align-items: center; justify-content: center; }
+  /* db table mini */
+  .dbmini { margin-top: 6px; font-family: "JetBrains Mono", monospace; font-size: 10px; color: #5C7880; line-height: 1.5; }
+  .dbmini .row { padding: 1px 4px; border-radius: 3px; }
+  .dbmini .row.lit { background: rgba(242,210,0,.28); color: #12333D; font-weight: 700; }
+
+  /* wires + packet */
+  .wire { position: absolute; top: 122px; height: 3px; background: repeating-linear-gradient(90deg,#CDD8DA 0 6px,transparent 6px 12px); }
+  .wire.w12 { left: 26%; width: 11%; } .wire.w23 { left: 63%; width: 11%; }
+  .packet { position: absolute; top: 108px; width: 132px; padding: 6px 8px; border-radius: 7px; font-family: "JetBrains Mono", monospace;
+    font-size: 10px; line-height: 1.35; color: #fff; box-shadow: 0 3px 10px rgba(18,51,61,.25);
+    transition: left .7s cubic-bezier(.5,0,.3,1), opacity .3s; opacity: 0; z-index: 5; }
+  .packet.req { background: #1F8F89; } .packet.res { background: #00567C; }
+  .packet .pt { font-weight: 800; letter-spacing: .04em; opacity: .85; font-size: 9px; text-transform: uppercase; }
+
+  /* anatomy of the request */
+  .anat { margin-top: 12px; background: #04303F; border-radius: 10px; padding: 11px 13px; color: #9fc9cf;
+    font-family: "JetBrains Mono", Menlo, monospace; font-size: 12.5px; line-height: 1.7; }
+  .anat .lbl { color: #5f97a3; } .anat .m { color: #33D3CB; font-weight: 700; }
+  .anat .pth { color: #ffd84a; } .anat .qs { color: #ff9a9a; } .anat .ck { color: #7fe3dc; }
+  .anat .tag { display: inline-block; font-size: 9px; color: #04303F; background: #5f97a3; border-radius: 3px;
+    padding: 0 4px; margin-left: 6px; vertical-align: middle; letter-spacing: .04em; }
+
+  .ctl { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+  .cap { flex: 1; font-size: 13px; color: #42606A; line-height: 1.4; }
+  .cap b { color: #00567C; } .cap em { color: #1F8F89; font-style: normal; font-weight: 700; }
+  .dots { display: flex; gap: 5px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #CDD8DA; }
+  .dot.on { background: #00567C; }
+</style>
+</head><body>
+<div class="wrap">
+  <div class="addr">
+    <span class="method" id="method">GET</span>
+    <span class="url" id="url"></span>
+    <span class="presets">
+      <button class="primary" id="send">Send request ▶</button>
+      <button id="pAcc" class="on">Load account</button>
+      <button id="pSearch">Search products</button>
+    </span>
+  </div>
+
+  <div class="stage">
+    <div class="wire w12"></div><div class="wire w23"></div>
+
+    <div class="tier t1" id="tier1">
+      <div class="badge" id="b1">YOUR machine — you control this</div>
+      <div class="tname">Browser · client</div>
+      <div class="ticon">💻</div>
+      <div class="tsub">Composes the request &amp; renders the reply.</div>
+      <div class="render empty" id="render">(the page will render here)</div>
+    </div>
+
+    <div class="tier t2" id="tier2">
+      <div class="badge" id="b2">THEIR machine — out of your reach</div>
+      <div class="tname">App server</div>
+      <div class="ticon">⚙️</div>
+      <div class="tsub">Runs the code that decides what to do.</div>
+    </div>
+
+    <div class="tier t3" id="tier3">
+      <div class="badge" id="b3">THEIR machine — out of your reach</div>
+      <div class="tname">Database</div>
+      <div class="ticon">🗄️</div>
+      <div class="dbmini" id="dbmini"></div>
+    </div>
+
+    <div class="packet req" id="pkt"><div class="pt" id="pktT">request</div><div id="pktB"></div></div>
+  </div>
+
+  <div class="anat" id="anat"></div>
+
+  <div class="ctl">
+    <div class="cap" id="cap">Press <b>Send request</b> — watch it cross the three tiers and come back.</div>
+    <div class="dots"><span class="dot" id="d0"></span><span class="dot" id="d1"></span><span class="dot" id="d2"></span><span class="dot" id="d3"></span><span class="dot" id="d4"></span></div>
+  </div>
+</div>
+
+<script>
+var REQS = {
+  acc: {
+    method: "GET", pathHtml: '<span class="path">/account</span><span class="q">?id=42</span>',
+    anat: '<span class="m">GET</span> <span class="pth">/account</span><span class="qs">?id=42</span> <span class="lbl">HTTP/1.1</span><span class="tag">method · path · query</span>\n' +
+          '<span class="lbl">Host:</span> shop.example.com\n' +
+          '<span class="lbl">Cookie:</span> <span class="ck">session=a3f9…</span><span class="tag">proves who you are</span>',
+    pkt: 'GET /account?id=42\nCookie: session=a3f9…',
+    db: [["id","name","balance"],["42","Fadhel","1,204 ﷼"],["43","Sara","880 ﷼"]], dbHit: 1,
+    render: 'Welcome back, <span class="b">Fadhel</span><br>Account #42<br>Balance: <span class="b">1,204 ﷼</span>'
+  },
+  search: {
+    method: "GET", pathHtml: '<span class="path">/search</span><span class="q">?q=shoes</span>',
+    anat: '<span class="m">GET</span> <span class="pth">/search</span><span class="qs">?q=shoes</span> <span class="lbl">HTTP/1.1</span><span class="tag">method · path · query</span>\n' +
+          '<span class="lbl">Host:</span> shop.example.com\n' +
+          '<span class="lbl">Cookie:</span> <span class="ck">session=a3f9…</span><span class="tag">proves who you are</span>',
+    pkt: 'GET /search?q=shoes\nCookie: session=a3f9…',
+    db: [["id","item","price"],["7","Runner shoes","199 ﷼"],["9","Sandals","89 ﷼"]], dbHit: 1,
+    render: 'Results for <span class="b">"shoes"</span><br>• Runner shoes — 199 ﷼<br>• Sandals — 89 ﷼'
+  }
+};
+var cur = "acc";
+
+var elMethod = document.getElementById("method"), elUrl = document.getElementById("url"), elAnat = document.getElementById("anat");
+var pkt = document.getElementById("pkt"), pktT = document.getElementById("pktT"), pktB = document.getElementById("pktB");
+var cap = document.getElementById("cap"), render = document.getElementById("render"), dbmini = document.getElementById("dbmini");
+var tiers = [null, document.getElementById("tier1"), document.getElementById("tier2"), document.getElementById("tier3")];
+var badges = [null, document.getElementById("b1"), document.getElementById("b2"), document.getElementById("b3")];
+
+function loadReq(k) {
+  cur = k; var r = REQS[k];
+  elMethod.textContent = r.method; elUrl.innerHTML = r.pathHtml; elAnat.innerHTML = r.anat;
+  // db table
+  dbmini.innerHTML = r.db.map(function (row, i) {
+    return '<div class="row' + (i === 0 ? ' hdr' : '') + '">' + row.join("  ·  ") + '</div>';
+  }).join("");
+  reset();
+}
+function reset() {
+  [1,2,3].forEach(function (i){ tiers[i].classList.remove("hot"); badges[i].classList.remove("show"); });
+  pkt.style.opacity = 0; pkt.style.left = "8%";
+  render.className = "render empty"; render.innerHTML = "(the page will render here)";
+  Array.prototype.forEach.call(document.querySelectorAll(".dbmini .row"), function (x){ x.classList.remove("lit"); });
+  setDot(-1);
+  cap.innerHTML = 'Press <b>Send request</b> — watch it cross the three tiers and come back.';
+}
+function setDot(n) { for (var i=0;i<5;i++) document.getElementById("d"+i).classList.toggle("on", i<=n); }
+
+var STEPS = [
+  function(r){ // 0 — compose
+    badges[1].classList.add("show"); tiers[1].classList.add("hot");
+    pkt.className = "packet req"; pktT.textContent = "request"; pktB.textContent = r.pkt; pkt.style.opacity = 1; pkt.style.left = "8%";
+    setDot(0);
+    cap.innerHTML = 'Your browser <b>composes an HTTP request</b> — it is just <em>text you assembled</em>: a method, a path, query params, headers, your session cookie.'; },
+  function(r){ // 1 — travel to server
+    tiers[1].classList.remove("hot"); tiers[2].classList.add("hot"); badges[1].classList.remove("show"); badges[2].classList.add("show");
+    pkt.className = "packet req"; pktT.textContent = "request"; pktB.textContent = r.pkt; pkt.style.opacity = 1; pkt.style.left = "45%"; setDot(1);
+    cap.innerHTML = 'The request travels to the <b>app server</b> — <em>their</em> machine. Everything from here on is out of your hands.'; },
+  function(r){ // 2 — query db
+    tiers[1].classList.remove("hot"); tiers[2].classList.remove("hot"); tiers[3].classList.add("hot");
+    badges[1].classList.remove("show"); badges[2].classList.remove("show"); badges[3].classList.add("show");
+    pkt.className = "packet req"; pktT.textContent = "query"; pktB.textContent = "SELECT … WHERE id=42"; pkt.style.opacity = 1; pkt.style.left = "82%"; setDot(2);
+    var rows = document.querySelectorAll(".dbmini .row"); if (rows[r.dbHit]) rows[r.dbHit].classList.add("lit");
+    cap.innerHTML = 'Server runs code and <b>asks the database</b> for the matching row. The DB just answers what it is asked.'; },
+  function(r){ // 3 — response back
+    tiers[3].classList.remove("hot"); tiers[1].classList.add("hot"); badges[3].classList.remove("show"); badges[1].classList.add("show");
+    pkt.className = "packet res"; pktT.textContent = "response"; pktB.textContent = "200 OK\n<html>…</html>"; pkt.style.opacity = 1; pkt.style.left = "8%"; setDot(3);
+    cap.innerHTML = 'The server builds a <b>response</b> — an HTML page — and sends it all the way back to your browser.'; },
+  function(r){ // 4 — render
+    pkt.style.opacity = 0; badges[1].classList.remove("show"); tiers[1].classList.remove("hot"); setDot(4);
+    render.className = "render"; render.innerHTML = r.render;
+    cap.innerHTML = 'Your browser <b>renders</b> the reply into the page you see. <em>The whole loop is text in, text out</em> — which is exactly what an attacker will bend.'; }
+];
+function play() {
+  reset(); var r = REQS[cur]; STEPS[0](r);
+  [1,2,3,4].forEach(function(i){ setTimeout(function(){ STEPS[i](r); }, 1100 * i); });
+}
+function jump(n) { // static frame for headless capture: apply steps 0..n
+  reset(); var r = REQS[cur]; for (var i=0;i<=n;i++) STEPS[i](r);
+}
+
+document.getElementById("send").addEventListener("click", play);
+document.getElementById("pAcc").addEventListener("click", function(){ this.classList.add("on"); document.getElementById("pSearch").classList.remove("on"); loadReq("acc"); });
+document.getElementById("pSearch").addEventListener("click", function(){ this.classList.add("on"); document.getElementById("pAcc").classList.remove("on"); loadReq("search"); });
+
+loadReq("acc");
+/* ?frame=N hook: static step for headless capture; ?state=play animates */
+(function(){ var qp = new URLSearchParams(location.search);
+  if (qp.get("state") === "play") play();
+  var f = qp.get("frame"); if (f !== null) jump(Math.max(0, Math.min(4, parseInt(f,10)||0)));
+})();
+</script>
+</body></html>

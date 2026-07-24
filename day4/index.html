@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Majal — Cyber Day 4: Breaking the App</title>
+  <link rel="stylesheet" href="../shared/dist/reset.css">
+  <link rel="stylesheet" href="../shared/dist/reveal.css">
+  <link rel="stylesheet" href="../shared/css/course.css?v=5">
+  <style>
+    /* Day-4 concept slides — native cards/grids */
+    .k2 { display: grid; gap: 14px; margin-top: .3em; }
+    .k2.c2 { grid-template-columns: 1fr 1fr; }
+    .k2.c3 { grid-template-columns: repeat(3,1fr); }
+    .k2.c4 { grid-template-columns: repeat(4,1fr); }
+    .k2 .card h3 { margin: 0 0 .3em; font-size: .82em; color: var(--petrol); letter-spacing: -.01em; }
+    .k2 .card h3 .tag { font-family: var(--mono); font-size: .58em; font-weight: 700; color: var(--muted);
+      letter-spacing: .05em; text-transform: uppercase; margin-left: .4em; }
+    .k2 .card p { margin: 0; font-size: .64em; color: var(--muted); line-height: 1.42; }
+    .k2 .card .ex { display: block; margin-top: .55em; font-size: .6em; color: var(--slate);
+      border-top: 1px dashed var(--line); padding-top: .45em; }
+    .k2 .card .ex b { color: var(--petrol); font-weight: 700; }
+    /* app-attack map: numbered OWASP-style rows (compact — 5 cards in 2 rows) */
+    .k2.map { gap: 11px; margin-top: .4em !important; }
+    .k2.map .card { border-top-color: var(--bad); padding: .7em .85em; }
+    .k2.map .card h3 { color: var(--ink); }
+    .k2.map .card h3 .tag { color: var(--bad); }
+    .k2.map .card p { font-size: .6em; line-height: 1.36; }
+    .k2.map .card .ex { font-size: .56em; margin-top: .45em; padding-top: .4em; }
+    /* fix table: broken vs fixed side-by-side */
+    .fixgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-top: .5em;
+      border: 1px solid var(--line); border-radius: 3px; overflow: hidden; }
+    .fixgrid .col { padding: .2em 0; }
+    .fixgrid .col.bad { background: rgba(214,69,69,.05); }
+    .fixgrid .col.good { background: rgba(31,143,137,.06); }
+    .fixgrid .col h4 { margin: 0; padding: .5em .8em; font-size: .7em; letter-spacing: .04em;
+      text-transform: uppercase; font-family: var(--mono); }
+    .fixgrid .col.bad h4 { color: var(--bad); border-bottom: 1px solid rgba(214,69,69,.25); }
+    .fixgrid .col.good h4 { color: var(--good); border-bottom: 1px solid rgba(31,143,137,.25); }
+    .fixgrid .row { font-size: .6em; color: var(--slate); line-height: 1.4; padding: .5em .9em;
+      border-bottom: 1px solid var(--line); }
+    .fixgrid .row:last-child { border-bottom: 0; }
+    .fixgrid .row b { color: var(--petrol); }
+    .fixgrid .col.bad .row .mono, .fixgrid .col.good .row .mono { font-size: .95em; }
+    /* recap "what you broke" rows */
+    .broke { margin-top: .4em; }
+    .broke .r { display: grid; grid-template-columns: 230px 1fr; gap: 16px; align-items: baseline;
+      padding: .42em 0; border-bottom: 1px solid var(--line); }
+    .broke .r:last-child { border-bottom: 0; }
+    .broke .r .n { font-weight: 800; color: var(--petrol); font-size: .82em; }
+    .broke .r .n .lever { font-family: var(--mono); font-size: .56em; color: var(--bad); font-weight: 700;
+      letter-spacing: .04em; display: block; margin-top: .15em; }
+    .broke .r .d { font-size: .72em; color: var(--muted); line-height: 1.4; }
+    .broke .r .d b { color: var(--ink); font-weight: 700; }
+  </style>
+</head>
+<body>
+<div class="reveal">
+  <div class="slides">
+
+    <!-- ================= TITLE ================= -->
+    <section>
+      <p class="kicker">Day 4 · Breaking the App</p>
+      <h1>The one door you're<br>invited to knock on.</h1>
+      <p class="sub" style="margin-top:1.2em;max-width:26em">A locked network keeps you out. A web app is different — it is
+      <em>built</em> to take input from strangers and act on it. Today the target isn't a person or a wire; it's the
+      <em>application's own logic</em>. Almost every attack you'll drive comes down to one flaw: <em>the app trusted input it never should have.</em></p>
+      <aside class="notes">Reframe the target. Days 2–3 were people and networks; today it's the software itself.
+      The whole day has ONE spine: an app takes untrusted input and mistakes it for trusted instructions. Every vuln
+      (injection, XSS, IDOR) is a broken trust boundary. Keep coming back to that sentence. Self-contained: don't lean
+      on Day 3 being taught.</aside>
+    </section>
+
+    <!-- ================= ON-RAMP: HOW THE WEB WORKS ================= -->
+    <section>
+      <p class="kicker">Foundations · how the web works</p>
+      <h2>Before you break it: what actually happens when you load a page</h2>
+      <iframe class="wframe" style="height:566px"
+              src="widgets/web_request.html?v=1"
+              title="Request / response across the three tiers" scrolling="auto"></iframe>
+      <aside class="notes">The load-bearing foundation — everything today abuses this model, so build it deliberately.
+      Drive one request end to end: the browser (client) sends an HTTP request → the app server runs code → it asks the
+      database → a response comes back and the browser renders it. Point at the anatomy of the request: method (GET/POST),
+      path, ?query params, headers, and the session cookie. Land the two facts the rest of the day needs: (1) three tiers —
+      browser, server, database; (2) the request is just text the client composes — which means the client can compose
+      ANY text. That is the seam we pry open next.</aside>
+    </section>
+
+    <!-- ================= THE TRUST BOUNDARY ================= -->
+    <section>
+      <p class="kicker">The core idea · never trust the client</p>
+      <h2>Everything on the client side is yours to rewrite</h2>
+      <iframe class="wframe" style="height:566px"
+              src="widgets/trust_boundary.html?v=1"
+              title="Tamper the request before it reaches the server" scrolling="auto"></iframe>
+      <aside class="notes">The single most important idea of the day. Where does code run? HTML/JS/the form all run in the
+      BROWSER — fully visible and editable by the attacker. Only the server side is out of their hands. So any check done
+      in the browser (a disabled button, a hidden price field, "max qty 10" in JavaScript) is a suggestion, not a control.
+      Drive it: intercept the checkout request and edit price=899→0.01, qty=1→-1, role=user→admin; the server trusts it and
+      obeys. Then flip "server re-validates" and the tampered request bounces. Land: validation that isn't on the server
+      isn't validation. This is the lens for injection, XSS and IDOR next.</aside>
+    </section>
+
+    <!-- ================= THE APP-ATTACK MAP ================= -->
+    <section>
+      <p class="kicker">The landscape · where apps break</p>
+      <h2>The same flaw, wearing five different masks</h2>
+      <div class="k2 c3 map" style="margin-top:.6em">
+        <div class="card"><h3>Injection <span class="tag">A03</span></h3>
+          <p>Your input is glued into a command — SQL, a shell, an LDAP query — and runs <b>as code</b>.</p>
+          <span class="ex"><b>You'll drive:</b> SQL injection — log in as admin with no password.</span></div>
+        <div class="card"><h3>Cross-site scripting <span class="tag">XSS</span></h3>
+          <p>Your input is written back into a page and runs <b>as script in someone else's browser</b>.</p>
+          <span class="ex"><b>You'll drive:</b> steal a logged-in victim's session cookie.</span></div>
+        <div class="card"><h3>Broken access control <span class="tag">A01</span></h3>
+          <p>The app checks <b>what</b> you asked for, never <b>who</b> you are. Change the id, get their data.</p>
+          <span class="ex"><b>You'll drive:</b> read another customer's invoice (IDOR).</span></div>
+        <div class="card"><h3>Broken authentication <span class="tag">A07</span></h3>
+          <p>Weak passwords, no rate-limit, guessable sessions — the front door barely latched.</p>
+          <span class="ex">Credential stuffing with the breach dumps from Day 2.</span></div>
+        <div class="card"><h3>Security misconfig <span class="tag">A05</span></h3>
+          <p>Debug pages, default creds, verbose errors, an open admin panel left facing the internet.</p>
+          <span class="ex">The recon skills from Day 2 find these first.</span></div>
+      </div>
+      <div class="callout hot" style="margin-top:.6em">Different names, <strong>one root cause</strong>: the app treats
+      attacker-controlled input as trusted. Fix the trust boundary and most of this list closes at once.</div>
+      <aside class="notes">The map before the deep-dives — a taxonomy, so it's text, not a fake interactive. These map to
+      the OWASP Top 10 (mention the framework, don't drill the whole list). Don't lecture all five; land the pattern that
+      unifies them — untrusted input treated as trusted — and flag which three they'll actually drive (injection, XSS,
+      IDOR). The last two tie back to Day 2 (stuffing, recon) so the week connects.</aside>
+    </section>
+
+    <!-- ================= SQL INJECTION (STAR) ================= -->
+    <section>
+      <p class="kicker">Injection · the classic</p>
+      <h2>SQL injection: type into a login box, rewrite the query</h2>
+      <iframe class="wframe" style="height:566px"
+              src="widgets/sqli.html?v=1"
+              title="SQL injection sandbox over a real toy database" scrolling="auto"></iframe>
+      <aside class="notes">The centrepiece. One-line primer first: behind the login is a query the server BUILDS from your
+      input — SELECT * FROM users WHERE user='…' AND pass='…'. If it glues your text straight in, your text can BE part of
+      the query. Drive the beats: (1) type admin' OR '1'='1' -- and watch the WHERE clause turn always-true, the -- comment
+      out the password check, and the row return → logged in as admin, no password. (2) UNION SELECT to dump every user's
+      hash from the table. Watch the query string rewrite live as they type — that's the reveal you can't just tell them.
+      Then flip "parameterised query": the same input is now sent as a bound VALUE, printed as literal text inside the
+      cell — injection dies. Land: concatenation is the bug; parameterisation is the fix; real DBs are millions of rows but
+      the mechanism is identical.</aside>
+    </section>
+
+    <!-- ================= XSS ================= -->
+    <section>
+      <p class="kicker">Injection · into the browser this time</p>
+      <h2>XSS: your comment becomes everyone else's code</h2>
+      <iframe class="wframe" style="height:566px"
+              src="widgets/xss.html?v=1"
+              title="Stored XSS: inject a script, steal a session cookie" scrolling="auto"></iframe>
+      <aside class="notes">Same disease, different tier: SQLi injects into the database; XSS injects into the PAGE. One-line
+      primer: a session cookie is the token that proves you're logged in — steal it and you ARE that user, no password.
+      Drive it: post a normal comment (renders as text), then post &lt;script&gt;steal(document.cookie)&lt;/script&gt;. Because
+      the app writes your comment into the page without encoding it, the victim's browser RUNS it — watch the victim's cookie
+      land in the attacker console. Stored (saved for every viewer) vs reflected (in a crafted link) in one line. Then flip
+      "encode output on render": the same script now shows up as visible &lt;script&gt; text — inert. Land: the fix is to
+      treat input as data to DISPLAY, never as HTML to execute.</aside>
+    </section>
+
+    <!-- ================= IDOR / BROKEN ACCESS CONTROL ================= -->
+    <section>
+      <p class="kicker">Broken access control · the lazy check</p>
+      <h2>IDOR: the app checks what you asked for, not who you are</h2>
+      <iframe class="wframe" style="height:400px"
+              src="widgets/idor.html?v=1"
+              title="Change the id in the URL, read another user's data" scrolling="no"></iframe>
+      <div class="callout" style="margin-top:.5em"><strong>You're logged in as a real user</strong> — the app authenticated
+      you. It just never checks that invoice <span class="mono">#1042</span> is <em>yours</em>. Add one to the id and you're
+      reading someone else's. No exploit, no payload — just a number you changed in the address bar.</div>
+      <aside class="notes">Deliberately light — the mechanism is simple, so it's a small driven demo plus a sentence, not a
+      heavy sandbox (per the guide's filter). You are AUTHENTICATED (you logged in) but not AUTHORISED per-object: the server
+      fetches invoice #id and returns it without asking "does this id belong to the caller?". Drive the id up and down and
+      watch other people's data appear. This is the #1 web vuln by prevalence (OWASP A01). The fix is one line: check
+      ownership on every object, every request — server-side. Ties straight into the defender slide next.</aside>
+    </section>
+
+    <!-- ================= BROKEN AUTHENTICATION ================= -->
+    <section>
+      <p class="kicker">Broken authentication · the front door</p>
+      <h2>Sometimes you don't break the app — you just walk in</h2>
+      <div class="k2 c4" style="margin-top:.7em">
+        <div class="card"><h3>Credential stuffing</h3><p>Replay the breach dumps from Day 2 — reused passwords still work.</p><span class="ex"><b>Beaten by:</b> unique passwords + MFA</span></div>
+        <div class="card"><h3>No rate limit</h3><p>Guess a password millions of times; nothing slows you down.</p><span class="ex"><b>Beaten by:</b> lockout + throttling</span></div>
+        <div class="card"><h3>Weak session tokens</h3><p>Predictable or never-expiring cookies you can guess or reuse.</p><span class="ex"><b>Beaten by:</b> random, short-lived tokens</span></div>
+        <div class="card"><h3>Password reset abuse</h3><p>Guessable reset tokens or leaky "forgot password" flows.</p><span class="ex"><b>Beaten by:</b> signed, expiring links</span></div>
+      </div>
+      <div class="callout hot" style="margin-top:1em">Authentication is <strong>who you are</strong>; authorisation (the
+      last slide) is <strong>what you're allowed</strong>. Apps break both — and the login page is where Day 2's stolen
+      passwords cash out.</div>
+      <aside class="notes">A concept slide — these are mostly common-sense-once-stated, so it's cards, not a sandbox.
+      The point is breadth + the bridge back to Day 2: the whole credential economy from the foothold day ends HERE, at a
+      login form with no rate-limit. Draw the auth vs authz distinction explicitly — it's a classic exam/interview line and
+      sets up why IDOR (authz) is separate from stuffing (authn). Keep it fast.</aside>
+    </section>
+
+    <!-- ================= THE DEFENDER'S FIX ================= -->
+    <section>
+      <p class="kicker">The other side · how every one of these dies</p>
+      <h2>The whole day collapses to four defensive habits</h2>
+      <div class="k2 c4" style="margin-top:.6em">
+        <div class="card" style="border-top-color:var(--good)"><h3>Never trust input</h3><p>Validate on the <b>server</b>, allow-list what's valid. Client checks are UX, not security.</p><span class="ex"><b>Kills:</b> tampering, bad data</span></div>
+        <div class="card" style="border-top-color:var(--good)"><h3>Parameterise queries</h3><p>Send input as bound <b>data</b>, never glued into a command string.</p><span class="ex"><b>Kills:</b> SQL injection</span></div>
+        <div class="card" style="border-top-color:var(--good)"><h3>Encode on output</h3><p>When you write user input into a page, escape it — display it, don't execute it.</p><span class="ex"><b>Kills:</b> XSS</span></div>
+        <div class="card" style="border-top-color:var(--good)"><h3>Authorise every request</h3><p>Check <b>ownership and role</b> on every object, every time — server-side.</p><span class="ex"><b>Kills:</b> IDOR, broken access</span></div>
+      </div>
+      <div class="callout" style="margin-top:.9em"><strong>One sentence for the week:</strong> decide trust on the server,
+      keep <em>data</em> and <em>code</em> separate, and check <em>authorisation</em> on every action. Friday you'll sit in
+      the defender's chair and watch these turn today's attacks into blocked log lines.</div>
+      <aside class="notes">The payoff and the bridge to Day 5. Don't present these as new — each one is the direct inverse of
+      an attack they just drove, so name the attack for each fix. The meta-lesson: you don't memorise a hundred vulns, you
+      internalise four habits, all versions of "the app must decide trust itself, on the server." This is the seed of the
+      defender day. End on the one-sentence summary.</aside>
+    </section>
+
+    <!-- ================= RECAP ================= -->
+    <section>
+      <p class="kicker">Recap · what you broke today</p>
+      <h2>Five attacks, one root cause</h2>
+      <div class="broke">
+        <div class="r"><div class="n">The web model<span class="lever">foundation</span></div>
+          <div class="d">Browser → server → database. A request is just <b>text the client composes</b> — so the client can compose anything.</div></div>
+        <div class="r"><div class="n">Trust boundary<span class="lever">never trust the client</span></div>
+          <div class="d">You rewrote price, quantity and role in the request. <b>Only the server's checks count.</b></div></div>
+        <div class="r"><div class="n">SQL injection<span class="lever">input became code</span></div>
+          <div class="d">Typed <span class="mono">' OR '1'='1</span> into a login box and <b>rewrote the query</b> — in as admin, then dumped the table.</div></div>
+        <div class="r"><div class="n">XSS<span class="lever">input became script</span></div>
+          <div class="d">A comment ran as <b>code in the victim's browser</b> and stole their session cookie.</div></div>
+        <div class="r"><div class="n">IDOR<span class="lever">what, not who</span></div>
+          <div class="d">Changed one number in the URL and read <b>another customer's data</b>.</div></div>
+      </div>
+      <div class="callout hot" style="margin-top:.8em">Every single one: <strong>the app trusted input it never should have.</strong>
+      Keep data and code apart, decide trust on the server — and Friday, watch it from the defender's chair.</div>
+      <aside class="notes">Close the loop. Walk the five rows fast; for each, restate the one spine sentence — untrusted input
+      treated as trusted. This is the mental hook they keep. Point to Friday: they'll reconstruct today's attacks from the
+      defender's alerts. Thank the room.</aside>
+    </section>
+
+  </div>
+</div>
+
+<!-- scripts: reveal, notes, then engine -->
+<script src="../shared/dist/reveal.js"></script>
+<script src="../shared/plugin/notes/notes.js"></script>
+<script src="js/state.js?v=1"></script>
+</body>
+</html>
