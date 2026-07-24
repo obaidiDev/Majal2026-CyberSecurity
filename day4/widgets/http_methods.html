@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding: 6px 8px; }
+  .wrap { max-width: 1040px; margin: 0 auto; }
+  .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 7px; }
+  .mode { display: inline-flex; border: 1px solid #CDD8DA; border-radius: 8px; overflow: hidden; }
+  .mode button { border: 0; border-radius: 0; padding: 7px 13px; font-size: 12.5px; }
+  .mode button.on { background: #00567C; color: #fff; }
+  .mode button:not(.on) { background: #fff; color: #5C7880; }
+  .lede { font-size: 12.5px; color: #5C7880; line-height: 1.4; margin: 0 0 9px; }
+  .lede b { color: #00567C; } .lede em { color: #1F8F89; font-style: normal; font-weight: 700; }
+
+  .cols { display: grid; grid-template-columns: 1fr 1.05fr; gap: 12px; align-items: start; }
+  .panel { border: 1px solid #E0E7E8; border-radius: 10px; background: #fff; padding: 11px 12px; }
+  .ptitle { font-size: 11px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: #00567C; margin-bottom: 8px; }
+
+  /* method pills */
+  .verbs { display: flex; flex-wrap: wrap; gap: 5px; }
+  .verbs button { font-family: "JetBrains Mono", monospace; font-size: 11.5px; font-weight: 800; padding: 6px 10px;
+    border-radius: 6px; border: 1px solid #CDD8DA; background: #fff; color: #5C7880; letter-spacing: .03em; }
+  .verbs button.on { color: #fff; }
+  .verbs button.on[data-m="GET"]    { background: #1F8F89; border-color: #1F8F89; }
+  .verbs button.on[data-m="POST"]   { background: #00567C; border-color: #00567C; }
+  .verbs button.on[data-m="PUT"]    { background: #0d6f8c; border-color: #0d6f8c; }
+  .verbs button.on[data-m="PATCH"]  { background: #b08900; border-color: #b08900; }
+  .verbs button.on[data-m="DELETE"] { background: #D64545; border-color: #D64545; }
+  .vmeta { margin-top: 7px; font-size: 11px; color: #8AA1A8; line-height: 1.45; min-height: 30px; }
+  .vmeta b { color: #00567C; }
+
+  .urlline { margin-top: 9px; background: #04303F; border-radius: 8px; padding: 9px 11px;
+    font-family: "JetBrains Mono", monospace; font-size: 13px; color: #9fc9cf; display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+  .urlline .mth { font-weight: 800; color: #33D3CB; }
+  .urlline .pth { color: #ffd84a; }
+  .urlline .idsel { display: inline-flex; align-items: center; gap: 0; }
+  .urlline .idsel button { font-family: inherit; font-size: 12px; font-weight: 800; width: 22px; height: 22px; padding: 0;
+    background: #0c4658; color: #fff; border: 1px solid #1c5f74; border-radius: 5px; }
+  .urlline .idsel button:hover { background: #1F8F89; border-color: #1F8F89; }
+  .urlline .idv { color: #fff; font-weight: 800; background: #D64545; border-radius: 4px; padding: 1px 7px; margin: 0 4px; }
+  .urlline .idv.off { background: #0c4658; color: #4d6b74; }
+  .urlline .none { color: #4d6b74; font-style: italic; font-size: 11.5px; }
+
+  .bodybox { margin-top: 8px; }
+  .bodybox label { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: #8AA1A8; font-weight: 700; }
+  .bodybox input { width: 100%; font-family: "JetBrains Mono", monospace; font-size: 12px; color: #12333D;
+    background: #F6F8F8; border: 1px solid #CDD8DA; border-radius: 6px; padding: 7px 8px; margin-top: 3px; outline: none; }
+  .sendrow { margin-top: 10px; display: flex; align-items: center; gap: 8px; }
+
+  /* response */
+  .resp { background: #04303F; border-radius: 8px; padding: 10px 12px; font-family: "JetBrains Mono", monospace;
+    font-size: 12px; color: #9fc9cf; min-height: 112px; }
+  .resp .code { font-size: 17px; font-weight: 800; letter-spacing: .02em; margin-bottom: 6px; }
+  .resp .code.c2 { color: #5fe0a0; } .resp .code.c4 { color: #ff8a8a; } .resp .code.c3 { color: #ffd84a; }
+  .resp .jb { color: #7fe3dc; line-height: 1.55; white-space: pre-wrap; word-break: break-word; }
+  .resp .k { color: #5f97a3; }
+  .resp .empty { color: #4d6b74; font-style: italic; }
+
+  /* live resource */
+  .rsrc { margin-top: 10px; }
+  .rsrc .rh { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: #5C7880; font-weight: 700; margin-bottom: 5px; }
+  .rrow { display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; padding: 5px 7px; border-radius: 5px;
+    border-bottom: 1px solid #EEF3F3; transition: background .35s; }
+  .rrow .rid { font-family: "JetBrains Mono", monospace; font-size: 10.5px; color: #8AA1A8; }
+  .rrow .rwho { font-weight: 800; color: #00567C; font-size: 11.5px; min-width: 46px; }
+  .rrow .rtx { color: #42606A; }
+  .rrow.mine { background: rgba(31,143,137,.07); }
+  .rrow.flash { background: rgba(242,210,0,.45); }
+  .rrow.gone { background: rgba(214,69,69,.16); text-decoration: line-through; color: #B9C6C9; }
+  .empty2 { font-size: 12px; color: #B9C6C9; font-style: italic; padding: 6px 2px; }
+</style>
+</head><body>
+<div class="wrap">
+  <div class="head">
+    <div class="mode">
+      <button id="mVuln" class="on">API accepts any method</button>
+      <button id="mSafe">API checks ownership</button>
+    </div>
+    <div style="font-size:11px;color:#8AA1A8;letter-spacing:.04em">shop.example.com · reviews API · you are <b>You</b></div>
+  </div>
+  <p class="lede">A request isn't only "fetch a page" — the <b>method</b> is the <em>verb</em>: what you're asking the app to
+    <b>do</b>. The website only shows you a delete button on your <em>own</em> review… but the API is a separate door.</p>
+
+  <div class="cols">
+    <div class="panel">
+      <div class="ptitle">① Compose the request</div>
+      <div class="verbs" id="verbs">
+        <button data-m="GET" class="on">GET</button>
+        <button data-m="POST">POST</button>
+        <button data-m="PUT">PUT</button>
+        <button data-m="PATCH">PATCH</button>
+        <button data-m="DELETE">DELETE</button>
+      </div>
+      <div class="vmeta" id="vmeta"></div>
+      <div class="urlline">
+        <span class="mth" id="uM">GET</span><span class="pth">/api/reviews</span>
+        <span class="idsel" id="idsel"><button id="dec">−</button><span class="idv" id="idv">—</span><button id="inc">+</button></span>
+        <span class="none" id="noid">← whole collection (no id)</span>
+      </div>
+      <div class="bodybox" id="bodybox" style="display:none">
+        <label>Request body</label>
+        <input id="body" spellcheck="false" value="Amazing, five stars!">
+      </div>
+      <div class="sendrow"><button class="primary" id="send">Send request ▶</button>
+        <button id="reset">Reset data</button></div>
+    </div>
+
+    <div class="panel">
+      <div class="ptitle">② The server's response</div>
+      <div class="resp" id="resp"><div class="empty">no request sent yet…</div></div>
+      <div class="rsrc">
+        <div class="rh">Reviews actually stored on the server</div>
+        <div id="rows"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var SEED = [
+  { id:1, who:"Layla", text:"Battery lasts all day 👍" },
+  { id:2, who:"You",   text:"Great sound, worth it!" },
+  { id:3, who:"Omar",  text:"Cable is a bit short." }
+];
+var reviews = SEED.map(function(r){ return {id:r.id, who:r.who, text:r.text}; });
+var nextId = 4, method = "GET", targetId = null, guard = false;
+
+var META = {
+  GET:    { t:"<b>Read</b> — never changes anything. Safe &amp; repeatable.", body:false },
+  POST:   { t:"<b>Create</b> a new item. Sending it twice creates <b>two</b>.", body:true },
+  PUT:    { t:"<b>Replace</b> the whole item with what you send.", body:true },
+  PATCH:  { t:"<b>Edit part</b> of an existing item.", body:true },
+  DELETE: { t:"<b>Destroy</b> the item. No body needed — just an id.", body:false }
+};
+
+var vmeta = document.getElementById("vmeta"), uM = document.getElementById("uM");
+var idv = document.getElementById("idv"), noid = document.getElementById("noid"), idsel = document.getElementById("idsel");
+var bodybox = document.getElementById("bodybox"), bodyIn = document.getElementById("body");
+var resp = document.getElementById("resp"), rowsEl = document.getElementById("rows");
+
+function esc(s){ return String(s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];}); }
+
+function syncUI() {
+  uM.textContent = method;
+  vmeta.innerHTML = META[method].t;
+  bodybox.style.display = META[method].body ? "block" : "none";
+  // POST targets the collection; the others need an id (except GET which can do both)
+  if (method === "POST") targetId = null;
+  else if (targetId === null && method !== "GET") targetId = 1;
+  idv.textContent = targetId === null ? "—" : targetId;
+  idv.className = "idv" + (targetId === null ? " off" : "");
+  idsel.style.display = method === "POST" ? "none" : "inline-flex";
+  noid.style.display = (targetId === null) ? "inline" : "none";
+  noid.textContent = method === "POST" ? "← POST creates a new one" : "← whole collection (no id)";
+}
+function paint(flashId, goneId) {
+  rowsEl.innerHTML = "";
+  if (!reviews.length) { rowsEl.innerHTML = '<div class="empty2">(no reviews left)</div>'; }
+  reviews.forEach(function (r) {
+    var d = document.createElement("div");
+    d.className = "rrow" + (r.who === "You" ? " mine" : "") + (r.id === flashId ? " flash" : "");
+    d.innerHTML = '<span class="rid">#' + r.id + '</span><span class="rwho">' + esc(r.who) + '</span><span class="rtx">' + esc(r.text) + '</span>';
+    rowsEl.appendChild(d);
+  });
+  if (goneId) {
+    var g = document.createElement("div"); g.className = "rrow gone";
+    g.innerHTML = '<span class="rid">#' + goneId.id + '</span><span class="rwho">' + esc(goneId.who) + '</span><span class="rtx">' + esc(goneId.text) + '</span>';
+    rowsEl.appendChild(g);
+    setTimeout(function(){ if (g.parentNode) g.parentNode.removeChild(g); }, 2200);
+  }
+  if (flashId) setTimeout(function(){ paint(null); }, 700);
+}
+function find(id){ for (var i=0;i<reviews.length;i++) if (reviews[i].id===id) return i; return -1; }
+function show(code, reason, bodyHtml) {
+  var cls = code < 300 ? "c2" : (code < 400 ? "c3" : "c4");
+  resp.innerHTML = '<div class="code ' + cls + '">' + code + ' ' + reason + '</div><div class="jb">' + bodyHtml + '</div>';
+}
+function j(o){ return esc(JSON.stringify(o, null, 1)).replace(/"(\w+)":/g, '<span class="k">"$1"</span>:'); }
+
+function send() {
+  var i = targetId === null ? -1 : find(targetId);
+  var item = i === -1 ? null : reviews[i];
+
+  if (method === "GET") {
+    if (targetId === null) return show(200, "OK", j(reviews));
+    if (!item) return show(404, "Not Found", j({ error: "no review with id " + targetId }));
+    return show(200, "OK", j(item));
+  }
+  if (method === "POST") {
+    var nr = { id: nextId++, who: "You", text: bodyIn.value || "(empty)" };
+    reviews.push(nr); paint(nr.id);
+    return show(201, "Created", j(nr));
+  }
+  if (!item) return show(404, "Not Found", j({ error: "no review with id " + targetId }));
+
+  // ownership matters for anything that modifies someone else's item
+  if (guard && item.who !== "You") {
+    return show(403, "Forbidden", j({ error: "review " + targetId + " does not belong to you" }));
+  }
+  if (method === "PUT" || method === "PATCH") {
+    item.text = bodyIn.value || "(empty)";
+    if (method === "PUT") item.who = "You";      // replace = you own it now
+    paint(item.id);
+    return show(200, "OK", j(item));
+  }
+  if (method === "DELETE") {
+    var gone = { id:item.id, who:item.who, text:item.text };
+    reviews.splice(i, 1); paint(null, gone);
+    return show(204, "No Content", '<span class="k">(empty body — it\'s gone)</span>');
+  }
+}
+
+Array.prototype.forEach.call(document.querySelectorAll("#verbs button"), function (b) {
+  b.addEventListener("click", function () {
+    Array.prototype.forEach.call(document.querySelectorAll("#verbs button"), function(x){ x.classList.remove("on"); });
+    b.classList.add("on"); method = b.getAttribute("data-m"); syncUI();
+  });
+});
+document.getElementById("inc").addEventListener("click", function(){ targetId = targetId === null ? 1 : targetId + 1; if (targetId > 9) targetId = 9; syncUI(); });
+document.getElementById("dec").addEventListener("click", function(){ if (targetId === null) return; targetId--; if (targetId < 1) targetId = (method === "GET" ? null : 1); syncUI(); });
+document.getElementById("send").addEventListener("click", send);
+document.getElementById("reset").addEventListener("click", function () {
+  reviews = SEED.map(function(r){ return {id:r.id, who:r.who, text:r.text}; }); nextId = 4;
+  paint(null); resp.innerHTML = '<div class="empty">no request sent yet…</div>';
+});
+document.getElementById("mVuln").addEventListener("click", function(){ guard=false; this.classList.add("on"); document.getElementById("mSafe").classList.remove("on"); });
+document.getElementById("mSafe").addEventListener("click", function(){ guard=true; this.classList.add("on"); document.getElementById("mVuln").classList.remove("on"); });
+
+syncUI(); paint(null);
+/* ?state hook */
+(function(){ var st = new URLSearchParams(location.search).get("state");
+  if (st === "del") { method="DELETE"; targetId=1;
+    Array.prototype.forEach.call(document.querySelectorAll("#verbs button"), function(x){ x.classList.toggle("on", x.getAttribute("data-m")==="DELETE"); });
+    syncUI(); send(); }
+  else if (st === "safe") { guard=true; document.getElementById("mSafe").classList.add("on"); document.getElementById("mVuln").classList.remove("on");
+    method="DELETE"; targetId=1;
+    Array.prototype.forEach.call(document.querySelectorAll("#verbs button"), function(x){ x.classList.toggle("on", x.getAttribute("data-m")==="DELETE"); });
+    syncUI(); send(); }
+  else if (st === "post") { method="POST"; targetId=null;
+    Array.prototype.forEach.call(document.querySelectorAll("#verbs button"), function(x){ x.classList.toggle("on", x.getAttribute("data-m")==="POST"); });
+    syncUI(); send(); }
+})();
+</script>
+</body></html>

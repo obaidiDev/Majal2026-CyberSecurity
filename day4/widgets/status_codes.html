@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding: 6px 8px; }
+  .wrap { max-width: 1040px; margin: 0 auto; }
+  .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 7px; }
+  .mode { display: inline-flex; border: 1px solid #CDD8DA; border-radius: 8px; overflow: hidden; }
+  .mode button { border: 0; border-radius: 0; padding: 7px 13px; font-size: 12.5px; }
+  .mode button.on { background: #00567C; color: #fff; }
+  .mode button:not(.on) { background: #fff; color: #5C7880; }
+  .lede { font-size: 12.5px; color: #5C7880; line-height: 1.4; margin: 0 0 8px; }
+  .lede b { color: #00567C; } .lede em { color: #1F8F89; font-style: normal; font-weight: 700; }
+
+  /* class legend strip */
+  .legend { display: grid; grid-template-columns: repeat(4,1fr); gap: 7px; margin-bottom: 9px; }
+  .lg { border: 1px solid #E0E7E8; border-left: 4px solid #CDD8DA; border-radius: 5px; padding: 5px 8px; background: #fff; }
+  .lg .c { font-family: "JetBrains Mono", monospace; font-size: 12px; font-weight: 800; }
+  .lg .d { font-size: 10.5px; color: #8AA1A8; line-height: 1.3; }
+  .lg.c2 { border-left-color: #1F8F89; } .lg.c2 .c { color: #1F8F89; }
+  .lg.c3 { border-left-color: #F2D200; } .lg.c3 .c { color: #b08900; }
+  .lg.c4 { border-left-color: #D64545; } .lg.c4 .c { color: #D64545; }
+  .lg.c5 { border-left-color: #00567C; } .lg.c5 .c { color: #00567C; }
+
+  .cols { display: grid; grid-template-columns: 1.15fr 1fr; gap: 12px; align-items: start; }
+  .panel { border: 1px solid #E0E7E8; border-radius: 10px; background: #fff; padding: 11px 12px; }
+  .ptitle { font-size: 11px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: #00567C; margin-bottom: 8px; }
+  .ptitle.atk { color: #D64545; }
+
+  /* probe rows */
+  .probe { display: flex; align-items: center; gap: 9px; font-family: "JetBrains Mono", monospace; font-size: 12.5px;
+    padding: 5px 7px; border-radius: 5px; border-bottom: 1px solid #EEF3F3; opacity: .32; transition: opacity .25s, background .25s; }
+  .probe.done { opacity: 1; }
+  .probe.hot { background: rgba(242,210,0,.22); }
+  .probe .pp { flex: 1; color: #42606A; }
+  .probe .cd { font-weight: 800; min-width: 96px; text-align: right; color: #B9C6C9; }
+  .probe.done .cd.c2 { color: #1F8F89; } .probe.done .cd.c3 { color: #b08900; }
+  .probe.done .cd.c4 { color: #D64545; } .probe.done .cd.c5 { color: #00567C; }
+  .ctl { margin-top: 9px; display: flex; gap: 7px; align-items: center; }
+  .ctl .note { font-size: 11px; color: #8AA1A8; }
+
+  /* intel panel */
+  .intel { min-height: 214px; }
+  .ic { border-left: 3px solid #D64545; background: rgba(214,69,69,.06); border-radius: 0 6px 6px 0;
+    padding: 6px 9px; margin-bottom: 6px; font-size: 11.5px; line-height: 1.4; color: #42606A;
+    animation: pop .3s ease; }
+  .ic b { color: #12333D; } .ic .t { display: block; font-weight: 800; color: #D64545; font-size: 11px;
+    text-transform: uppercase; letter-spacing: .04em; margin-bottom: 2px; }
+  .ic.good { border-left-color: #1F8F89; background: rgba(31,143,137,.07); } .ic.good .t { color: #1F8F89; }
+  @keyframes pop { from { opacity:0; transform: translateY(-4px); } to { opacity:1; transform:none; } }
+  .iempty { font-size: 12px; color: #B9C6C9; font-style: italic; padding: 8px 2px; }
+  .trace { font-family: "JetBrains Mono", monospace; font-size: 10px; color: #8AA1A8; background: #F6F8F8;
+    border-radius: 4px; padding: 4px 6px; margin-top: 4px; line-height: 1.4; }
+</style>
+</head><body>
+<div class="wrap">
+  <div class="head">
+    <div class="mode">
+      <button id="mVuln" class="on">Server answers honestly</button>
+      <button id="mSafe">Server hardened</button>
+    </div>
+    <div style="font-size:11px;color:#8AA1A8;letter-spacing:.04em">content discovery · you haven't logged in</div>
+  </div>
+  <p class="lede">Every response carries a <b>status code</b> — the server's one-word verdict. Probe paths you were never
+    given links to, and the codes alone tell you <em>what exists</em>, even where you can't get in.</p>
+
+  <div class="legend">
+    <div class="lg c2"><div class="c">2xx</div><div class="d">Success — here it is</div></div>
+    <div class="lg c3"><div class="c">3xx</div><div class="d">Redirect — look elsewhere</div></div>
+    <div class="lg c4"><div class="c">4xx</div><div class="d"><b>Your</b> fault — bad/denied</div></div>
+    <div class="lg c5"><div class="c">5xx</div><div class="d"><b>Server's</b> fault — it crashed</div></div>
+  </div>
+
+  <div class="cols">
+    <div class="panel">
+      <div class="ptitle atk">① Probe the site</div>
+      <div id="probes"></div>
+      <div class="ctl"><button class="primary" id="run">Probe all paths ▶</button>
+        <span class="note" id="note">8 guesses — no links, just names attackers always try</span></div>
+    </div>
+    <div class="panel">
+      <div class="ptitle">② What the codes just told you</div>
+      <div class="intel" id="intel"><div class="iempty">nothing learned yet — run the probe.</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* each path: honest response vs hardened response */
+var PATHS = [
+  { p:"/",            ok:[200,"OK"],                    hard:[200,"OK"] },
+  { p:"/login",       ok:[200,"OK"],                    hard:[200,"OK"] },
+  { p:"/qwerty123",   ok:[404,"Not Found"],             hard:[404,"Not Found"] },
+  { p:"/old-shop",    ok:[301,"Moved Permanently"],     hard:[301,"Moved Permanently"] },
+  { p:"/admin",       ok:[403,"Forbidden"],             hard:[404,"Not Found"],
+    intel:{ t:"403 = it EXISTS", d:"You were <b>refused</b>, not told it's missing. A refusal proves there is an admin panel here — now it's worth attacking." } },
+  { p:"/api/users",   ok:[401,"Unauthorized"],          hard:[404,"Not Found"],
+    intel:{ t:"401 vs 403", d:"<b>401</b> = &ldquo;who are you?&rdquo; (log in and I might). <b>403</b> = &ldquo;I know you, and no.&rdquo; Either way: the endpoint is real." } },
+  { p:"/backup.zip",  ok:[200,"OK"],                    hard:[404,"Not Found"],
+    intel:{ t:"200 — jackpot", d:"A database backup sitting in the web root, served to anyone who guesses the name.", bad:true } },
+  { p:"/api/debug",   ok:[500,"Internal Server Error"], hard:[500,"Internal Server Error"],
+    intel:{ t:"500 leaks internals", d:"It crashed <b>and told you why</b> — framework, version, file paths. That names the exact exploit to look up.",
+      trace:"DjangoError at /api/debug\n  File \"/srv/app/views.py\", line 88\n  Django 3.2.4 · PostgreSQL 13.2" } }
+];
+
+var hardened = false, running = false;
+var probesEl = document.getElementById("probes"), intelEl = document.getElementById("intel");
+
+function build() {
+  probesEl.innerHTML = "";
+  PATHS.forEach(function (x, i) {
+    var d = document.createElement("div"); d.className = "probe"; d.id = "pr" + i;
+    d.innerHTML = '<span class="pp">GET ' + x.p + '</span><span class="cd" id="cd' + i + '">· · ·</span>';
+    probesEl.appendChild(d);
+  });
+  intelEl.innerHTML = '<div class="iempty">nothing learned yet — run the probe.</div>';
+}
+function resp(x){ return hardened ? x.hard : x.ok; }
+function cls(c){ return c < 300 ? "c2" : c < 400 ? "c3" : c < 500 ? "c4" : "c5"; }
+
+function reveal(i, instant) {
+  var x = PATHS[i], r = resp(x), row = document.getElementById("pr" + i), cd = document.getElementById("cd" + i);
+  row.classList.add("done");
+  if (!instant) { row.classList.add("hot"); setTimeout(function(){ row.classList.remove("hot"); }, 400); }
+  cd.className = "cd " + cls(r[0]); cd.textContent = r[0] + " " + r[1];
+  // intel only fires when the honest answer is revealing
+  if (x.intel && !(hardened && r[0] === 404)) {
+    if (intelEl.querySelector(".iempty")) intelEl.innerHTML = "";
+    var c = document.createElement("div"); c.className = "ic";
+    if (instant) c.style.animation = "none";
+    c.innerHTML = '<span class="t">' + x.p + ' → ' + r[0] + ' · ' + x.intel.t + '</span>' + x.intel.d +
+      (x.intel.trace ? '<div class="trace">' + x.intel.trace.replace(/\n/g,"<br>") + '</div>' : "");
+    intelEl.appendChild(c);
+  }
+}
+function finish(instant) {
+  running = false;
+  if (hardened) {
+    if (intelEl.querySelector(".iempty") || !intelEl.children.length) intelEl.innerHTML = "";
+    var c = document.createElement("div"); c.className = "ic good";
+    if (instant) c.style.animation = "none";
+    c.innerHTML = '<span class="t">the map went dark</span>Everything you\'re not allowed to see now answers <b>404</b> — identical to paths that never existed. ' +
+      'You can no longer tell <b>hidden</b> from <b>absent</b>, so there is nothing to aim at.' +
+      '<div class="trace">Still leaking: /api/debug → 500. Turn off debug output in production.</div>';
+    intelEl.appendChild(c);
+  }
+}
+function run() {
+  if (running) return; running = true;
+  build();
+  PATHS.forEach(function (x, i) { setTimeout(function(){ reveal(i); if (i === PATHS.length-1) finish(); }, 260 * (i+1)); });
+}
+function jump() { /* instant, for screenshots */ build(); PATHS.forEach(function(x,i){ reveal(i, true); }); finish(true); }
+
+document.getElementById("run").addEventListener("click", run);
+document.getElementById("mVuln").addEventListener("click", function(){ hardened=false; this.classList.add("on"); document.getElementById("mSafe").classList.remove("on"); build(); });
+document.getElementById("mSafe").addEventListener("click", function(){ hardened=true; this.classList.add("on"); document.getElementById("mVuln").classList.remove("on"); build(); });
+
+build();
+/* ?state hook */
+(function(){ var st = new URLSearchParams(location.search).get("state");
+  if (st === "done") jump();
+  else if (st === "safe") { hardened=true; document.getElementById("mSafe").classList.add("on"); document.getElementById("mVuln").classList.remove("on"); jump(); }
+})();
+</script>
+</body></html>

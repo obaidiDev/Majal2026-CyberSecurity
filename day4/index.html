@@ -13,6 +13,10 @@
     .k2.c2 { grid-template-columns: 1fr 1fr; }
     .k2.c3 { grid-template-columns: repeat(3,1fr); }
     .k2.c4 { grid-template-columns: repeat(4,1fr); }
+    .k2.c5 { grid-template-columns: repeat(5,1fr); }
+    .k2.c5 .card { padding: .75em .8em; }
+    .k2.c5 .card p { font-size: .6em; }
+    .k2.c5 .card .ex { font-size: .58em; }
     .k2 .card h3 { margin: 0 0 .3em; font-size: .82em; color: var(--petrol); letter-spacing: -.01em; }
     .k2 .card h3 .tag { font-family: var(--mono); font-size: .58em; font-weight: 700; color: var(--muted);
       letter-spacing: .05em; text-transform: uppercase; margin-left: .4em; }
@@ -45,12 +49,12 @@
     /* recap "what you broke" rows */
     .broke { margin-top: .4em; }
     .broke .r { display: grid; grid-template-columns: 230px 1fr; gap: 16px; align-items: baseline;
-      padding: .42em 0; border-bottom: 1px solid var(--line); }
+      padding: .28em 0; border-bottom: 1px solid var(--line); }
     .broke .r:last-child { border-bottom: 0; }
     .broke .r .n { font-weight: 800; color: var(--petrol); font-size: .82em; }
     .broke .r .n .lever { font-family: var(--mono); font-size: .56em; color: var(--bad); font-weight: 700;
       letter-spacing: .04em; display: block; margin-top: .15em; }
-    .broke .r .d { font-size: .72em; color: var(--muted); line-height: 1.4; }
+    .broke .r .d { font-size: .68em; color: var(--muted); line-height: 1.38; }
     .broke .r .d b { color: var(--ink); font-weight: 700; }
   </style>
 </head>
@@ -84,6 +88,79 @@
       path, ?query params, headers, and the session cookie. Land the two facts the rest of the day needs: (1) three tiers —
       browser, server, database; (2) the request is just text the client composes — which means the client can compose
       ANY text. That is the seam we pry open next.</aside>
+    </section>
+
+    <!-- ================= FOUNDATIONS: HTTP METHODS ================= -->
+    <section>
+      <p class="kicker">Foundations · the verbs</p>
+      <h2>A request has a verb: what you're asking the app to do</h2>
+      <iframe class="wframe" style="height:500px"
+              src="widgets/http_methods.html?v=1"
+              title="HTTP methods against a live reviews API" scrolling="auto"></iframe>
+      <aside class="notes">Methods are not trivia — they're the vocabulary of every API attack. Walk the five: GET reads and
+      changes nothing (safe); POST creates (send it twice, you get two — that's the double-charge bug); PUT replaces the whole
+      item; PATCH edits part of it; DELETE destroys it. Drive them live and watch the stored reviews actually change, and watch
+      the status codes come back (200, 201 Created, 204 No Content, 404) — that pre-teaches the next slide. THE BEAT TO LAND:
+      the website only draws a delete button on your OWN review, but the API is a separate door — send DELETE at Layla's review
+      #1 and it just works. The button was never the security. Then flip "API checks ownership" → 403. Say the line: the UI is
+      not the app; the API is the app.</aside>
+    </section>
+
+    <!-- ================= FOUNDATIONS: STATUS CODES ================= -->
+    <section>
+      <p class="kicker">Foundations · what comes back</p>
+      <h2>Status codes: the server tells you more than it means to</h2>
+      <iframe class="wframe" style="height:520px"
+              src="widgets/status_codes.html?v=1"
+              title="Status codes and content discovery" scrolling="auto"></iframe>
+      <aside class="notes">First the four families: 2xx worked, 3xx go elsewhere, 4xx YOUR fault, 5xx the SERVER's fault. Then
+      run the probe — these are paths nobody linked to, just names attackers always guess. The reveal is that the codes alone
+      draw a map: /admin answering <em>403</em> instead of 404 proves the admin panel EXISTS (a refusal is a confirmation);
+      /api/users answering 401 says "log in and I might" — also a confirmation. Draw the 401-vs-403 line explicitly: 401 = who
+      are you, 403 = I know you and no. That is authentication vs authorisation, and it comes back on the broken-auth slide.
+      /backup.zip returning 200 is the jackpot. /api/debug returning 500 leaks framework and version — which names the exploit
+      to look up. Then flip "hardened": everything you can't see answers 404, identical to things that never existed, and the
+      map goes dark. Note the widget stays honest — the 500 still leaks, so debug output must be off in production.</aside>
+    </section>
+
+    <!-- ================= FOUNDATIONS: WHERE INPUT ENTERS ================= -->
+    <section>
+      <p class="kicker">Foundations · the input surface</p>
+      <h2>Five places your input enters — and you control all five</h2>
+      <div class="k2 c5" style="margin-top:.6em">
+        <div class="card"><h3>Path <span class="tag">url</span></h3><p>Which resource you're asking for.</p><span class="ex"><span class="mono">/invoice/<b>1042</b></span></span></div>
+        <div class="card"><h3>Query <span class="tag">?a=b</span></h3><p>Parameters after the <span class="mono">?</span> — visible in the bar.</p><span class="ex"><span class="mono">?id=<b>42</b>&amp;sort=date</span></span></div>
+        <div class="card"><h3>Body <span class="tag">post/patch</span></h3><p>The payload — form fields or JSON.</p><span class="ex"><span class="mono">{"price":<b>0.01</b>}</span></span></div>
+        <div class="card"><h3>Headers <span class="tag">metadata</span></h3><p>Who you claim to be, what you accept.</p><span class="ex"><span class="mono">User-Agent, Referer</span></span></div>
+        <div class="card"><h3>Cookies <span class="tag">identity</span></h3><p>Your session — <em>next slide</em>.</p><span class="ex"><span class="mono">session=<b>a3f9…</b></span></span></div>
+      </div>
+      <div class="callout hot" style="margin-top:.8em"><strong>Every one is just text your machine typed.</strong> Not only the
+      form fields — headers and cookies too. Anything that arrives at the server is a <em>claim</em>, never a fact.</div>
+      <div class="callout" style="margin-top:.5em;font-size:.72em"><strong>And no, HTTPS doesn't save you.</strong> The padlock
+      encrypts the pipe so nobody <em>in the middle</em> reads or edits it. It says nothing about the app at the other end —
+      you're the legitimate sender, and your injection travels perfectly encrypted.</div>
+      <aside class="notes">The bridge into the trust boundary. A taxonomy, so it's cards — but it's load-bearing: learners
+      assume "input" means form fields. Show them the whole surface. Every attack later plugs into one of these five: SQLi via
+      body/query, XSS via body, IDOR via path/query, session hijack via cookie. The HTTPS myth-buster matters — students
+      routinely think the padlock means "safe site". Say it plainly: TLS protects data IN TRANSIT from a third party; it does
+      nothing about what the application does with the data once it arrives. An HTTPS site can be trivially injectable.</aside>
+    </section>
+
+    <!-- ================= FOUNDATIONS: SESSIONS & COOKIES ================= -->
+    <section>
+      <p class="kicker">Foundations · how it knows who you are</p>
+      <h2>HTTP forgets you — the cookie is the only thing that remembers</h2>
+      <iframe class="wframe" style="height:530px"
+              src="widgets/session_cookie.html?v=1"
+              title="Session cookies, hijacking and predictable ids" scrolling="auto"></iframe>
+      <aside class="notes">The concept that makes cookie theft matter. HTTP is STATELESS — the server has no memory between
+      requests. So at login it issues a session cookie and writes it in a table; every later request just presents that cookie.
+      Drive three beats: (1) delete the cookie → 401, you're a stranger again one second after logging in; (2) your cookie →
+      your account; (3) paste the stolen cookie → you ARE Noura, and you never knew her password. That's session hijacking, and
+      note the stolen value is exactly what the XSS payload will steal two slides from now — same string, deliberately. Then
+      flip to "predictable session ids": the ids just count up, so press + and walk into the next account with no theft at all.
+      That is the "weak session tokens" bullet from the broken-auth slide, made real. Land: the cookie IS your identity —
+      protect it (HttpOnly, Secure, random, short-lived) or anyone holding it is you.</aside>
     </section>
 
     <!-- ================= THE TRUST BOUNDARY ================= -->
@@ -221,10 +298,12 @@
     <!-- ================= RECAP ================= -->
     <section>
       <p class="kicker">Recap · what you broke today</p>
-      <h2>Five attacks, one root cause</h2>
+      <h2>One root cause, wearing every mask</h2>
       <div class="broke">
         <div class="r"><div class="n">The web model<span class="lever">foundation</span></div>
-          <div class="d">Browser → server → database. A request is just <b>text the client composes</b> — so the client can compose anything.</div></div>
+          <div class="d">Browser → server → database. Verbs (<b>GET/POST/PATCH/DELETE</b>), status codes, and five input channels — all of it <b>text the client composes</b>.</div></div>
+        <div class="r"><div class="n">Sessions<span class="lever">the cookie is you</span></div>
+          <div class="d">HTTP forgets you, so a cookie carries your identity. Steal it or <b>guess it</b> and you are that user.</div></div>
         <div class="r"><div class="n">Trust boundary<span class="lever">never trust the client</span></div>
           <div class="d">You rewrote price, quantity and role in the request. <b>Only the server's checks count.</b></div></div>
         <div class="r"><div class="n">SQL injection<span class="lever">input became code</span></div>
@@ -234,7 +313,7 @@
         <div class="r"><div class="n">IDOR<span class="lever">what, not who</span></div>
           <div class="d">Changed one number in the URL and read <b>another customer's data</b>.</div></div>
       </div>
-      <div class="callout hot" style="margin-top:.8em">Every single one: <strong>the app trusted input it never should have.</strong>
+      <div class="callout hot" style="margin-top:.5em">Every single one: <strong>the app trusted input it never should have.</strong>
       Keep data and code apart, decide trust on the server — and Friday, watch it from the defender's chair.</div>
       <aside class="notes">Close the loop. Walk the five rows fast; for each, restate the one spine sentence — untrusted input
       treated as trusted. This is the mental hook they keep. Point to Friday: they'll reconstruct today's attacks from the

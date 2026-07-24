@@ -54,9 +54,15 @@ already knew.
 
 So, before the payload content, **establish the substrate deliberately**:
 
-- **Give foundations real slides.** An on-ramp that builds the mental model is not
-  filler — it is what makes everything after it click. (Day 1 added a "foundations
-  on-ramp before CIA"; Day 4 adds "how the web actually works" before app attacks.)
+- **Give foundations a BLOCK of slides, not a token on-ramp.** One slide rarely
+  carries a 6-hour day. Go into real detail and err toward *more* substrate than
+  feels necessary. Day 4's foundations run five slides before the first attack:
+  the request/response cycle, HTTP verbs (GET/POST/PUT/PATCH/DELETE), status-code
+  families (incl. 401-vs-403 = authn-vs-authz), the five input channels
+  (path/query/body/headers/cookies), and statelessness + session cookies.
+- **Method: list what the payload silently assumes, then teach each piece.**
+  Write down the mental model the attack demands, and give every load-bearing
+  piece its own deliberate treatment before you get there.
 - **Match the tool to the job.** A foundation can be a sharp `.card`/`.callout`
   explanation (a taxonomy, a definition, an anatomy) **or** a mental-model
   interactive where driving it *builds* the model (send a request → watch it cross

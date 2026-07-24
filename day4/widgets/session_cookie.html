@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding: 6px 8px; }
+  .wrap { max-width: 1040px; margin: 0 auto; }
+  .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 7px; }
+  .mode { display: inline-flex; border: 1px solid #CDD8DA; border-radius: 8px; overflow: hidden; }
+  .mode button { border: 0; border-radius: 0; padding: 7px 13px; font-size: 12.5px; }
+  .mode button.on { background: #00567C; color: #fff; }
+  .mode button:not(.on) { background: #fff; color: #5C7880; }
+  .lede { font-size: 12.5px; color: #5C7880; line-height: 1.4; margin: 0 0 9px; }
+  .lede b { color: #00567C; } .lede em { color: #1F8F89; font-style: normal; font-weight: 700; }
+
+  .cols { display: grid; grid-template-columns: 1fr 1.05fr; gap: 12px; align-items: start; }
+  .panel { border: 1px solid #E0E7E8; border-radius: 10px; background: #fff; padding: 11px 12px; }
+  .ptitle { font-size: 11px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: #00567C; margin-bottom: 8px; }
+
+  .ckrow { background: #04303F; border-radius: 8px; padding: 10px 12px; font-family: "JetBrains Mono", monospace;
+    font-size: 12.5px; color: #9fc9cf; }
+  .ckrow .k { color: #5f97a3; display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 5px; }
+  .ckrow .line { display: flex; align-items: center; gap: 6px; }
+  .ckrow input { flex: 1; font-family: inherit; font-size: 12.5px; font-weight: 700; color: #ffd84a;
+    background: rgba(255,216,74,.08); border: 1px solid rgba(255,216,74,.35); border-radius: 5px; padding: 5px 8px; outline: none; }
+  .ckrow input:focus { border-color: #ffd84a; background: rgba(255,216,74,.16); }
+  .ckrow .step button { font-family: inherit; font-size: 12px; font-weight: 800; width: 24px; height: 26px; padding: 0;
+    background: #0c4658; color: #fff; border: 1px solid #1c5f74; border-radius: 5px; }
+  .ckrow .step button:hover { background: #1F8F89; border-color: #1F8F89; }
+  .ckrow .hint { color: #4d6b74; font-size: 10.5px; font-style: italic; margin-top: 6px; }
+
+  .presets { margin-top: 9px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .presets button { font-size: 11px; padding: 6px 9px; }
+  .presets .ph { width: 100%; font-size: 10px; color: #8AA1A8; letter-spacing: .05em; text-transform: uppercase; font-weight: 700; margin-bottom: 1px; }
+  .sendrow { margin-top: 10px; }
+
+  /* session store */
+  .store { font-family: "JetBrains Mono", monospace; font-size: 11.5px; }
+  .store .sh { display: flex; justify-content: space-between; font-size: 9.5px; text-transform: uppercase; letter-spacing: .06em;
+    color: #8AA1A8; font-weight: 700; padding-bottom: 4px; border-bottom: 1px solid #E0E7E8; }
+  .store .sr { display: flex; justify-content: space-between; padding: 5px 6px; border-bottom: 1px solid #EEF3F3;
+    color: #42606A; border-radius: 4px; transition: background .3s; }
+  .store .sr b { color: #00567C; font-weight: 800; }
+  .store .sr.hit { background: rgba(242,210,0,.3); color: #12333D; }
+  .store .sr.me { background: rgba(31,143,137,.08); }
+
+  /* rendered response */
+  .page { margin-top: 10px; border: 1px solid #CDD8DA; border-radius: 8px; overflow: hidden; }
+  .page .bar { background: #EEF3F3; padding: 5px 9px; font-family: "JetBrains Mono", monospace; font-size: 10.5px;
+    color: #5C7880; border-bottom: 1px solid #CDD8DA; }
+  .page .bd { padding: 11px 12px; min-height: 84px; }
+  .page .code { font-family: "JetBrains Mono", monospace; font-weight: 800; font-size: 13px; margin-bottom: 5px; }
+  .page .code.ok { color: #1F8F89; } .page .code.no { color: #D64545; }
+  .page .who { font-size: 15px; font-weight: 800; color: #12333D; }
+  .page .det { font-size: 11.5px; color: #8AA1A8; font-family: "JetBrains Mono", monospace; margin-top: 3px; line-height: 1.5; }
+  .page .warn { margin-top: 7px; font-size: 11.5px; line-height: 1.4; color: #12333D;
+    background: rgba(214,69,69,.1); border-left: 3px solid #D64545; border-radius: 0 5px 5px 0; padding: 6px 8px; }
+  .page .warn b { color: #D64545; }
+  .page .warn.good { background: rgba(31,143,137,.1); border-left-color: #1F8F89; }
+  .page .warn.good b { color: #1F8F89; }
+</style>
+</head><body>
+<div class="wrap">
+  <div class="head">
+    <div class="mode">
+      <button id="mRand" class="on">Random session ids</button>
+      <button id="mPred">Predictable session ids</button>
+    </div>
+    <div style="font-size:11px;color:#8AA1A8;letter-spacing:.04em">HTTP is stateless — the cookie is the only memory</div>
+  </div>
+  <p class="lede">The server forgets you between requests. So at login it hands you a <b>session cookie</b> and writes it in a
+    table. Every later request just says <em>&ldquo;here's my cookie&rdquo;</em> — whoever holds it <b>is</b> that user.</p>
+
+  <div class="cols">
+    <div class="panel">
+      <div class="ptitle">① Your browser sends this cookie</div>
+      <div class="ckrow">
+        <span class="k">Cookie: session=</span>
+        <div class="line">
+          <input id="ck" spellcheck="false" value="a3f9c1e7b2">
+          <span class="step" id="step"><button id="dec">−</button><button id="inc">+</button></span>
+        </div>
+        <div class="hint" id="hint">a long random value — you could never guess someone else's</div>
+      </div>
+      <div class="presets">
+        <span class="ph">try ↓</span>
+        <button id="pMine">My cookie</button>
+        <button id="pNone">Delete the cookie</button>
+        <button id="pStolen">Paste the stolen one</button>
+      </div>
+      <div class="sendrow"><button class="primary" id="send">Send request ▶</button></div>
+      <div class="page">
+        <div class="bar">GET /account</div>
+        <div class="bd" id="out"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ptitle">② The server's session table</div>
+      <div class="store" id="store"></div>
+      <div style="margin-top:9px;font-size:11px;color:#8AA1A8;line-height:1.45">
+        The server looks up whatever cookie arrives. It has <b style="color:#00567C">no other way</b> of knowing who you are.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var RAND = [
+  { ck:"a3f9c1e7b2", user:"You (Fadhel)", email:"fadhel@email.com", bal:"1,204 ﷼", me:true },
+  { ck:"7d1b8e4a09", user:"Sara Al-Otaibi", email:"sara@email.com", bal:"9,860 ﷼" },
+  { ck:"f20c6b93da", user:"Omar Al-Harbi", email:"omar@email.com", bal:"430 ﷼" },
+  { ck:"VICTIM-9f3a2c", user:"Noura Faisal", email:"noura@email.com", bal:"22,500 ﷼", victim:true }
+];
+var PRED = [
+  { ck:"SESS-1001", user:"Khalid Nasser", email:"khalid@email.com", bal:"760 ﷼" },
+  { ck:"SESS-1002", user:"You (Fadhel)", email:"fadhel@email.com", bal:"1,204 ﷼", me:true },
+  { ck:"SESS-1003", user:"Sara Al-Otaibi", email:"sara@email.com", bal:"9,860 ﷼" },
+  { ck:"SESS-1004", user:"Noura Faisal", email:"noura@email.com", bal:"22,500 ﷼" }
+];
+var predictable = false;
+function store(){ return predictable ? PRED : RAND; }
+function mine(){ return store().filter(function(s){ return s.me; })[0]; }
+
+var ck = document.getElementById("ck"), out = document.getElementById("out"), storeEl = document.getElementById("store");
+var hint = document.getElementById("hint"), step = document.getElementById("step");
+
+function esc(s){ return String(s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];}); }
+
+function paintStore(hitCk) {
+  var rows = '<div class="sh"><span>session cookie</span><span>belongs to</span></div>';
+  store().forEach(function (s) {
+    var c = "sr" + (s.ck === hitCk ? " hit" : (s.me ? " me" : ""));
+    rows += '<div class="' + c + '"><span>' + esc(s.ck) + '</span><span><b>' + esc(s.user) + '</b></span></div>';
+  });
+  storeEl.innerHTML = rows;
+}
+function send() {
+  var v = ck.value.trim();
+  var hit = null;
+  store().forEach(function (s) { if (s.ck === v) hit = s; });
+  paintStore(hit ? hit.ck : null);
+  if (!v) {
+    out.innerHTML = '<div class="code no">401 Unauthorized</div><div class="det">No cookie — the server has no idea who you are.</div>' +
+      '<div class="warn good"><b>This is the point:</b> without the cookie you are a total stranger again, even one second after logging in.</div>';
+    return;
+  }
+  if (!hit) {
+    out.innerHTML = '<div class="code no">401 Unauthorized</div><div class="det">session=' + esc(v) + ' is not in the table.</div>' +
+      '<div class="warn good"><b>Rejected.</b> A random guess is worthless when ids are long and random.</div>';
+    return;
+  }
+  var warn = "";
+  if (!hit.me) {
+    warn = predictable
+      ? '<div class="warn"><b>You guessed it.</b> The ids just count upwards — you reached this account by pressing <b>+</b>. No hacking, no theft.</div>'
+      : '<div class="warn"><b>Session hijacking.</b> You never knew the password. You held the cookie, so the server served you their account.</div>';
+  } else {
+    warn = '<div class="warn good">Your own session — the normal, intended case. Now try someone else\'s cookie.</div>';
+  }
+  out.innerHTML = '<div class="code ok">200 OK</div><div class="who">Welcome back, ' + esc(hit.user) + '</div>' +
+    '<div class="det">' + esc(hit.email) + '<br>Balance: ' + esc(hit.bal) + '</div>' + warn;
+}
+function setMode(p) {
+  predictable = p;
+  document.getElementById("mRand").classList.toggle("on", !p);
+  document.getElementById("mPred").classList.toggle("on", p);
+  step.style.display = p ? "inline-flex" : "none";
+  hint.textContent = p ? "the id is just a counter — add 1 and you are someone else"
+                       : "a long random value — you could never guess someone else's";
+  ck.value = mine().ck; paintStore(null);
+  out.innerHTML = '<div class="det" style="color:#B9C6C9;font-style:italic">press Send request…</div>';
+}
+function bump(d) {
+  var m = /^SESS-(\d+)$/.exec(ck.value.trim());
+  if (m) { ck.value = "SESS-" + (parseInt(m[1],10) + d); send(); }
+}
+document.getElementById("send").addEventListener("click", send);
+document.getElementById("inc").addEventListener("click", function(){ bump(1); });
+document.getElementById("dec").addEventListener("click", function(){ bump(-1); });
+document.getElementById("pMine").addEventListener("click", function(){ ck.value = mine().ck; send(); });
+document.getElementById("pNone").addEventListener("click", function(){ ck.value = ""; send(); });
+document.getElementById("pStolen").addEventListener("click", function(){
+  ck.value = predictable ? "SESS-1004" : "VICTIM-9f3a2c"; send(); });
+document.getElementById("mRand").addEventListener("click", function(){ setMode(false); });
+document.getElementById("mPred").addEventListener("click", function(){ setMode(true); });
+
+setMode(false);
+/* ?state hook */
+(function(){ var st = new URLSearchParams(location.search).get("state");
+  if (st === "hijack") { ck.value = "VICTIM-9f3a2c"; send(); }
+  else if (st === "pred") { setMode(true); ck.value = "SESS-1004"; send(); }
+  else if (st === "none") { ck.value = ""; send(); }
+})();
+</script>
+</body></html>
