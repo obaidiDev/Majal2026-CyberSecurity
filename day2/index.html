@@ -12,6 +12,7 @@
     .k2 { display: grid; gap: 14px; margin-top: .3em; }
     .k2.c2 { grid-template-columns: 1fr 1fr; }
     .k2.c3 { grid-template-columns: repeat(3,1fr); }
+    .k2.c4 { grid-template-columns: repeat(4,1fr); }
     .k2.c5 { grid-template-columns: repeat(5,1fr); }
     .k2 .card h3 { margin: 0 0 .3em; font-size: .82em; color: var(--petrol); letter-spacing: -.01em; }
     .k2 .card h3 .tag { font-family: var(--mono); font-size: .58em; font-weight: 700; color: var(--muted);
@@ -119,6 +120,40 @@
       for name/phone. The payoff is the <em>cascade</em> banner (email + reused handle): one breach becomes total
       account takeover — the danger is the LINKS between leaks, not any single one. Close on the empowering half:
       every card has a "shrink it" fix. This is the defender's mindset sneaking into the attacker's week.</aside>
+    </section>
+
+    <!-- ================= WEAPONISE — PAYLOAD TYPES ================= -->
+    <section>
+      <p class="kicker">Weaponise · build the payload</p>
+      <h2>Weaponise: turn intel into something that acts</h2>
+      <div class="k2 c4" style="margin-top:.7em">
+        <div class="card">
+          <h3>Credential harvester</h3>
+          <p>A fake login page. They &ldquo;sign in&rdquo; — you get the password.</p>
+          <span class="ex">The #1 phishing payload.</span>
+        </div>
+        <div class="card">
+          <h3>Malicious attachment</h3>
+          <p>A doc, installer, or ISO that runs code the moment it's opened.</p>
+          <span class="ex">Macro doc · fake setup · .lnk</span>
+        </div>
+        <div class="card">
+          <h3>Malicious link</h3>
+          <p>One click to an exploit page — or to the harvester above.</p>
+          <span class="ex">Often hidden behind a short URL.</span>
+        </div>
+        <div class="card">
+          <h3>Malicious QR <span class="tag">quishing</span></h3>
+          <p>A QR hides the URL, so no one checks where it really goes.</p>
+          <span class="ex">Posters, fake parking meters, emails.</span>
+        </div>
+      </div>
+      <div class="callout hot" style="margin-top:1.1em">The best weapon is <strong>believable</strong> and
+      <strong>evasive</strong> — it looks normal and slips filters. That's exactly what you'll tune in the lure, next.</div>
+      <aside class="notes">The missing kill-chain stage: weaponise = packaging intel into a payload the target will trust
+      and run. Four families — a credential harvester (fake login, the most common), a malicious attachment (runs code),
+      a malicious link, and a malicious QR (quishing). Don't dwell; the point is what the lure CARRIES. It sets up the
+      believable-vs-evasive tension they'll drive in the phishing lab two slides on.</aside>
     </section>
 
     <!-- ================= SOCIAL ENGINEERING — LEVERS ================= -->
