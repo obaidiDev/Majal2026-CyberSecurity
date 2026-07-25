@@ -94,6 +94,13 @@
     She saw <span class="mono" id="evehas">g=5, p=23, A=8, B=19</span> — everything. To get the key she must
     find a secret from a public value: solve <span class="mono" id="evedl">5ˣ mod 23 = 8</span> for x.
     That's the <b>discrete-log problem</b>: easy to compute one way, brutal to reverse.
+    <div style="margin-top:9px;padding-top:8px;border-top:1px dashed #CDD8DA;color:#42606A">
+      But notice <b>what kind of attacker Eve is here</b>: she only <em>listens</em> — a <b>passive</b> eavesdropper,
+      and against her this is airtight. An <b>active</b> attacker who can also <em>change</em> messages does far better:
+      she runs the exchange twice, posing as Bob to Alice and as Alice to Bob, and reads everything in clear.
+      That's a <b>man-in-the-middle</b>, and Diffie–Hellman alone cannot stop it — which is exactly why the real
+      internet bolts an identity check on top. (Day 3.)
+    </div>
     <div class="why">
       <button id="whybtn">Why can't she just try every x? ▾</button>
       <div class="whybody" id="whybody"></div>

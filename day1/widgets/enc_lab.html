@@ -69,6 +69,9 @@
   .outcome { margin-top:12px; border-left:3px solid #00567C; background:#EDF3F6; border-radius:0 8px 8px 0;
     padding:10px 13px; font-size:13.5px; line-height:1.45; color:#274b54; min-height:44px; }
   .outcome b { color:#00567C; } .outcome .g { color:#1a7a4f; font-weight:700; } .outcome .r { color:#c0392b; font-weight:700; }
+  .insight { padding:9px 12px; border-left:3px solid #1F8F89; background:#F1F8F7;
+    border-radius:0 8px 8px 0; font-size:12.5px; line-height:1.45; color:#274b54; }
+  .insight b { color:#00567C; } .insight em { color:#1F8F89; font-style:normal; font-weight:700; }
 </style>
 </head><body>
 <div class="w">
@@ -108,6 +111,16 @@
   </div>
 
   <div class="outcome" id="outcome"></div>
+
+  <div class="insight" style="margin-top:10px">
+    Two different jobs, two different keys. <b>Encrypt</b> with the recipient's <em>public</em> key buys
+    <b>confidentiality</b>. <b>Sign</b> with your own <em>private</em> key buys <b>integrity</b> (nobody changed it)
+    and <b>authenticity</b> (it really came from you). Neither substitutes for the other.
+    <br><br>
+    A signature buys a third thing the other two can't: because only Alice holds her private key,
+    she <b>cannot later deny</b> having sent it. That's <b>non-repudiation</b> — and it's why signatures,
+    not passwords, sit under contracts, software updates and bank transfers.
+  </div>
 </div>
 
 <script>

@@ -105,8 +105,10 @@
     <div class="peek" id="peek"></div>
     <div class="insight">
       XOR is its own inverse: <b>(message ⊕ key) ⊕ key = message</b> — one shared key does both jobs.
-      The catch: change one letter of Bob's key and it's garbage, so both sides must <b>already share the
-      exact key</b>. How do they agree on it safely? → next slide.
+      XOR is on screen so you can <em>see</em> it; the real algorithm is <b>AES</b> — far more mixing, same shape.
+      <br>
+      The catch: both sides must <b>already share the exact key</b> — but the wire is all they have, and Eve is on it.
+      That's the <b>key-distribution problem</b>. → next slide.
     </div>
   </div>
 </div>

@@ -276,7 +276,10 @@
     document.getElementById("ptag").innerHTML="Attack vector — one path in";
     document.getElementById("pcount").innerHTML="Phishing &rarr; login &rarr; pivot";
     document.getElementById("pnote").className="pnote";
-    document.getElementById("pnote").innerHTML="The surface is everything exposed; the vector is the single path chosen.";
+    document.getElementById("pnote").innerHTML=
+      "The surface is everything exposed; the vector is the single path chosen.<br>"+
+      "Two levers shorten it: <b>least privilege</b> (that laptop account should never reach the database) and "+
+      "<b>segmentation</b> (walls inside the network, so one foothold isn't the whole network).";
   }
 
   // ---- run animation ----

@@ -100,9 +100,13 @@
   </div>
 
   <div class="insight">
-    Everyone can lock (<b>c = mᵉ mod n</b>), but the public key can't undo itself — only <b>d</b> reverses it,
-    and no secret ever crossed the wire. Here <b>d</b> is easy to find because <b>n = 5 × 11</b>. Real keys use
-    an <b>n</b> hundreds of digits long: no computer can factor it, so no one can recover <b>d</b>.
+    This is <b>RSA</b> (toy numbers). Everyone can lock (<b>c = mᵉ mod n</b>), but the public key can't undo itself — only
+    <b>d</b> reverses it, and no secret crossed the wire. <b>d</b> is easy to find here because <b>n = 5 × 11</b>; real keys
+    use an <b>n</b> hundreds of digits long, which no computer can factor.
+    <div style="margin-top:6px;padding-top:6px;border-top:1px dashed #CDD8DA;color:#42606A">
+      ⚠️ Still unanswered: that key only <b>claims</b> to be Bob's. If it's the attacker's, she encrypts straight to them.
+      <b>Certificates</b> — Day 3.
+    </div>
     <div class="why">
       <button id="whybtn">Show how d is found ▾</button>
       <div class="whybody" id="whybody">

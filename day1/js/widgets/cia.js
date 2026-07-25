@@ -66,7 +66,8 @@ MAJAL.widget("caesarbreak", function (root) {
   var cipher = caesar("MEET THE SOURCE AT MIDNIGHT", SECRET_SHIFT);
 
   mount.appendChild(MAJAL.el("p", { class: "hint", html:
-    "You intercepted this ciphertext. You do <b>not</b> know the key. Try all 25 — one of them is English." }));
+    "You intercepted this ciphertext. You do <b>not</b> know the key. Try all 25 — one of them is English. " +
+    "Trying every possible key until one works is a <b>brute-force attack</b>." }));
   mount.appendChild(MAJAL.el("div", { class: "cz-out", text: cipher, style: "margin-bottom:12px" }));
 
   var list = MAJAL.el("div", { class: "brute-list" });
@@ -98,9 +99,10 @@ MAJAL.widget("caesarbreak", function (root) {
     "Click the line that reads as English. &nbsp;<span class='hint'>The whole keyspace fits on one screen — that's the problem.</span>" });
   mount.appendChild(verdict);
   mount.appendChild(MAJAL.el("div", { class: "callout hot", style: "margin-top:9px;font-size:.66em", html:
-    "Real encryption keeps the <em>method</em> public and makes the <em>keyspace</em> astronomical. " +
-    "AES-256 has <b>2<sup>256</sup></b> keys — more than there are atoms in the observable universe. " +
-    "Trying them all is not slow; it is physically impossible." }));
+    "Real encryption keeps the <em>method</em> public and makes the <em>keyspace</em> astronomical — " +
+    "security must rest on the <b>key alone</b>, never on hiding the algorithm (<em>Kerckhoffs's principle</em>). " +
+    "<b>AES-256</b>, the symmetric cipher the whole internet runs on, has <b>2²⁵⁶</b> keys — " +
+    "more than there are atoms in the observable universe. Brute force isn't slow here; it is physically impossible." }));
 });
 
 /* Diffie-Hellman moved to an interactive iframe widget (widgets/enc_dh.html):
@@ -144,8 +146,13 @@ MAJAL.widget("avalanche", function (root) {
     MAJAL.el("span", { class: "hp", html: "<b>One-way</b> — you can't get the input back" }),
     MAJAL.el("span", { class: "hp", html: "<b>Deterministic</b> — same input, same hash, forever" }),
     MAJAL.el("span", { class: "hp", html: "<b>Fixed size</b> — a book or a byte, always 64 hex chars" }),
-    MAJAL.el("span", { class: "hp", html: "<b>Avalanche</b> — one bit in flips half the bits out" })
+    MAJAL.el("span", { class: "hp", html: "<b>Avalanche</b> — one bit in flips half the bits out" }),
+    MAJAL.el("span", { class: "hp", html: "<b>Collision-resistant</b> — two inputs can't share a hash" })
   ]));
+  mount.appendChild(MAJAL.el("p", { class: "hint", html:
+    "Hashing is <b>not</b> encryption: there is no key and no way back — that's the point. " +
+    "And these properties can <em>expire</em>: <b>MD5</b> and <b>SHA-1</b> were standard until people learned to " +
+    "manufacture collisions, so today you use <b>SHA-256</b>." }));
   render();
 });
 
@@ -240,6 +247,11 @@ MAJAL.widget("salt", function (root) {
   mount.appendChild(MAJAL.el("p", { class: "hint", html:
     "Servers never store your password — only its hash (integrity again: they verify without knowing). " +
     "The <b>salt</b> is what stops one leaked database from cracking millions of accounts at once." }));
+  mount.appendChild(MAJAL.el("div", { class: "callout hot", style: "margin-top:9px;font-size:.66em", html:
+    "One catch: SHA-256 is <b>fast</b> — billions of guesses per second on a rented GPU — and speed is the attacker's friend here. " +
+    "So real password storage uses a <em>deliberately slow</em> hash: <b>bcrypt</b>, <b>scrypt</b> or <b>Argon2</b>. " +
+    "They salt for you and add a tunable <b>work factor</b>: one login costs you a fraction of a second, and cracking a stolen " +
+    "database costs the attacker centuries." }));
   render();
 });
 
@@ -357,8 +369,13 @@ MAJAL.widget("ddos", function (root) {
   ]));
   mount.appendChild(MAJAL.el("p", { class: "hint", html:
     "This is <em>availability</em>: the data isn't stolen or altered — legitimate users simply <b>can't reach it</b>. " +
-    "A DDoS wastes a finite resource. Ransomware attacks the same property by locking the files. " +
+    "The attack wastes a finite resource. Ransomware attacks the same property by locking the files. " +
     "Turn up the attack, then try the defences." }));
+  mount.appendChild(MAJAL.el("div", { class: "callout hot", style: "margin-top:8px;font-size:.6em", html:
+    "<b>DoS</b> = one machine flooding you; block that address and it's over. The extra <b>D</b> is the problem: a " +
+    "<b>DDoS</b> is <em>distributed</em> across a <b>botnet</b> — thousands of hijacked routers, cameras and PCs, each " +
+    "sending plausible traffic from a different address. No single plug to pull — which is why the defences are " +
+    "filtering and capacity, not blocking." }));
 });
 
 /* ======================================================================= *
@@ -371,7 +388,8 @@ MAJAL.widget("synth", function (root) {
     { t: "Ransomware encrypts every file on the server. Nothing is stolen — you just can't open anything.", a: ["A"] },
     { t: "Using a web bug, an attacker changes their own bank balance from 8,200 to 82,000.", a: ["I"] },
     { t: "A flood of junk traffic knocks the public website offline for six hours.", a: ["A"] },
-    { t: "Malware steals the customer database AND corrupts the records it leaves behind.", a: ["C", "I"] }
+    { t: "Malware steals the customer database AND corrupts the records it leaves behind.", a: ["C", "I"] },
+    { t: "A ransomware gang copies the data out first, then encrypts everything: “pay us, or we publish it.”", a: ["C", "A"] }
   ];
   var LABELS = { C: "Confidentiality", I: "Integrity", A: "Availability" };
   var done = 0;

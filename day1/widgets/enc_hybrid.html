@@ -24,7 +24,7 @@
   .pubchip .mono { font-family:"JetBrains Mono",monospace; }
 
   .scene { display:grid; grid-template-columns:1fr 0.92fr 1fr; gap:11px; align-items:start; }
-  .col { border-radius:10px; padding:10px 12px; border:1px solid #E0E7E8; background:#fff; min-height:186px; }
+  .col { border-radius:10px; padding:9px 12px; border:1px solid #E0E7E8; background:#fff; min-height:170px; }
   .col.alice { border-top:4px solid #1F8F89; }
   .col.bob   { border-top:4px solid #00567C; }
   .col.mid   { border-top:4px solid #9DB4BA; background:#F8FAFA; }
@@ -58,8 +58,8 @@
   .eve.now { box-shadow:0 0 0 3px rgba(214,69,69,.16); }
   .eve b { color:#D64545; }
 
-  .tls { margin-top:11px; font-size:13px; line-height:1.45; color:#274b54;
-    background:#EDF3F6; border-left:3px solid #00567C; border-radius:0 8px 8px 0; padding:10px 13px; }
+  .tls { margin-top:9px; font-size:12.2px; line-height:1.38; color:#274b54;
+    background:#EDF3F6; border-left:3px solid #00567C; border-radius:0 8px 8px 0; padding:8px 12px; }
   .tls.hidden { display:none; }
   .tls b { color:#00567C; }
 </style>
@@ -109,8 +109,12 @@
   <div class="tls hidden" id="tls">
     <b>That's a TLS handshake in miniature.</b> When you open an <b>https://</b> site, your browser and the server
     use public-key crypto <b>once</b> to deliver a session key, then switch to fast symmetric encryption for the
-    whole page. The 🔒 padlock is exactly this envelope — asymmetric to move the key, symmetric to move the data.
-    <span style="color:#5C7880">(Real keys are 256-bit; our K is a small number only because our toy RSA fits numbers under 55.)</span>
+    whole page. The 🔒 padlock is exactly this envelope.
+    <span style="color:#5C7880">(Real keys are 256-bit; ours is tiny so our toy RSA can hold it.)</span>
+    <div style="margin-top:6px;padding-top:6px;border-top:1px dashed #CDD8DA;color:#42606A;font-weight:400">
+      But that's <b>half</b> of what HTTPS sells you: all of this assumed the public key really is the server's. Swap in the
+      attacker's and you get a flawless encrypted connection <b>to the attacker</b>. Secrecy ≠ identity — <b>certificates</b>, Day 3.
+    </div>
   </div>
 </div>
 
