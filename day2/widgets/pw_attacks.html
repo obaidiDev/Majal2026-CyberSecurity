@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="_shared.css?v=1">
+<style>
+  body { padding: 6px; }
+  .toolbar { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; flex-wrap: wrap; }
+  .mode { font-family: inherit; font-size: 13px; font-weight: 700; border-radius: 999px;
+    padding: 8px 14px; cursor: pointer; border: 1px solid #CDD8DA; background: #fff; color: #12333D; }
+  .mode.sel { background: #D64545; border-color: #D64545; color: #fff; }
+  .mode:hover:not(.sel) { background: #FBEDED; border-color: #E7B4b4; }
+  .run { margin-left: auto; font-family: inherit; font-size: 13px; font-weight: 800; border-radius: 999px;
+    padding: 8px 18px; cursor: pointer; border: 1px solid #B23333; background: #D64545; color: #fff; }
+  .run:hover { background: #C1403f; } .run:disabled { opacity: .5; cursor: default; }
+
+  .defbar { display: flex; align-items: center; gap: 7px; margin-bottom: 9px; flex-wrap: wrap; }
+  .defbar .lbl { font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+    color: #8AA1A8; margin-right: 3px; }
+  .def { font-family: inherit; font-size: 12.5px; font-weight: 700; border: 1px solid #CDD8DA;
+    background: #fff; color: #6a808a; border-radius: 999px; padding: 7px 13px; cursor: pointer; }
+  .def::before { content: "\2610  "; }
+  .def.on { background: rgba(31,143,137,.13); border-color: #1F8F89; color: #146d68; }
+  .def.on::before { content: "\2611  "; }
+
+  canvas#grid { width: 100%; height: 268px; display: block; border: 1px solid #E0E7E8;
+    border-radius: 10px; background: #fff; }
+
+  .readout { margin-top: 9px; background: #06232B; border-radius: 9px; padding: 9px 13px;
+    font-family: "JetBrains Mono", Menlo, Consolas, monospace; color: #BFE0E2; }
+  .readout .line { display: flex; align-items: baseline; gap: 10px; font-size: 12.5px; }
+  .readout .k { color: #7C9BA2; }
+  .readout .guess { color: #33D3CB; font-weight: 700; letter-spacing: .06em; }
+  .readout .cnt { margin-left: auto; color: #8FB0B6; font-size: 11.5px; }
+  .readout .track { height: 5px; background: rgba(31,85,99,.55); border-radius: 3px; margin-top: 7px; overflow: hidden; }
+  .readout .fill { height: 100%; width: 0; background: linear-gradient(90deg,#D64545,#FF7A7A); border-radius: 3px; }
+
+  .stats { display: flex; gap: 8px; margin-top: 9px; }
+  .stat { flex: 1; background: #F7FAFA; border: 1px solid #E0E7E8; border-radius: 9px; padding: 7px 11px; }
+  .stat .sv { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 17px; font-weight: 700; color: #12333D; }
+  .stat .sk { font-size: 10.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: #8AA1A8; margin-top: 1px; }
+  .stat.bad .sv { color: #C1403f; } .stat.good .sv { color: #146d68; }
+
+  .cap { margin-top: 9px; font-size: 12.8px; line-height: 1.45; color: #42606A; min-height: 38px; }
+  .cap b { color: #12333D; } .cap .r { color: #C1403f; font-weight: 700; } .cap .g { color: #146d68; font-weight: 700; }
+</style>
+</head><body>
+  <div class="toolbar">
+    <button class="mode sel" data-m="brute">Brute force</button>
+    <button class="mode" data-m="dict">Dictionary</button>
+    <button class="mode" data-m="stuff">Credential stuffing</button>
+    <button class="mode" data-m="spray">Password spraying</button>
+    <button class="run" id="run">&#9654; Run attack</button>
+  </div>
+  <div class="defbar">
+    <span class="lbl">Their defences</span>
+    <button class="def" data-d="lockout">Lockout after 5 fails</button>
+    <button class="def" data-d="mfa">MFA</button>
+    <button class="def" data-d="unique">Unique password per site</button>
+  </div>
+
+  <canvas id="grid"></canvas>
+
+  <div class="readout">
+    <div class="line"><span class="k" id="rk">idle</span><span class="guess" id="rg">—</span><span class="cnt" id="rc"></span></div>
+    <div class="track"><div class="fill" id="rf"></div></div>
+  </div>
+
+  <div class="stats">
+    <div class="stat bad"><div class="sv" id="s1">0</div><div class="sk">accounts cracked</div></div>
+    <div class="stat"><div class="sv" id="s2">0</div><div class="sk">login attempts</div></div>
+    <div class="stat good"><div class="sv" id="s3">0</div><div class="sk">accounts locked out</div></div>
+    <div class="stat good"><div class="sv" id="s4">0</div><div class="sk">stopped by MFA</div></div>
+  </div>
+
+  <div class="cap" id="cap"></div>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (s) { return document.querySelector(s); };
+
+  // ---------- the company's 24 accounts (real strings, toy scale) ----------
+  // reused  = this password also appears in a public breach dump
+  // common  = this person picked the season-and-year password everybody picks
+  var NAMES = ["a.hassan","l.nasser","m.saleh","r.khalid","s.omar","f.younis",
+               "n.aziz","d.farah","y.rashid","h.jamal","k.idris","w.samir",
+               "t.mansour","z.hadi","b.nour","q.talib","e.sadiq","p.kamal",
+               "g.wafa","c.basil","v.hana","x.murad","o.laila","u.faris"];
+  var ACCOUNTS = NAMES.map(function (n, i) {
+    return { name: n, i: i, pw: "correct-horse-" + i, reused: false, common: false,
+             state: "idle", fails: 0, shown: "" };
+  });
+  // one genuinely short password — the only thing brute force can reach
+  ACCOUNTS[6].pw = "t9k";                 // n.aziz  — 3 chars
+  // the dictionary target
+  ACCOUNTS[1].pw = "Summer2026!";
+  // people who reused a password that is sitting in a breach dump
+  [3, 8, 14, 19].forEach(function (i) { ACCOUNTS[i].reused = true; ACCOUNTS[i].pw = BREACHED(i); });
+  function BREACHED(i) { return ({3:"Falcon!2024", 8:"Liverpool99", 14:"Zahra@1998", 19:"Mustang#77"})[i]; }
+  // people who picked the sprayable password
+  [1, 11, 17, 22].forEach(function (i) { ACCOUNTS[i].common = true; ACCOUNTS[i].pw = "Summer2026!"; });
+
+  var ALPHA = "abcdefghijklmnopqrstuvwxyz0123456789";     // 36 chars
+  var WORDLIST = ["123456","password","qwerty","letmein","welcome","dragon","monkey","football",
+                  "iloveyou","admin","abc123","sunshine","princess","master","shadow","superman",
+                  "trustno1","baseball","passw0rd","hello123","freedom","whatever","qazwsx",
+                  "Summer2026!","winter2025","liverpool"];
+  var STUFFLIST = [ {u:"r.khalid", p:"Falcon!2024"}, {u:"y.rashid", p:"Liverpool99"},
+                    {u:"b.nour",   p:"Zahra@1998"},  {u:"c.basil",  p:"Mustang#77"},
+                    {u:"a.hassan", p:"hunter2000"},  {u:"s.omar",   p:"Chelsea!11"} ];
+
+  var MODES = {
+    brute: { label: "Brute force", target: 6,
+      desc: "Try <b>every possible combination</b> against one account. Beaten by length, not by cleverness — each extra character multiplies the space by 36." },
+    dict:  { label: "Dictionary", target: 1,
+      desc: "Try a <b>list of likely passwords</b> — leaked lists, common words, seasons. Thousands of guesses instead of billions." },
+    stuff: { label: "Credential stuffing",
+      desc: "Take <b>real email:password pairs from a breach</b> and try each one <b>once</b>, on a different site. You aren't guessing — you already know the password." },
+    spray: { label: "Password spraying",
+      desc: "Take <b>one</b> very likely password and try it against <b>every</b> account, once each. Somebody always picked it." }
+  };
+
+  var mode = "brute", defs = { lockout:false, mfa:false, unique:false }, running = false;
+  var stats = { cracked:0, attempts:0, locked:0, mfa:0 };
+
+  // ---------- canvas ----------
+  var cv = $("#grid"), ctx = cv.getContext("2d");
+  var W = 1040, H = 268, COLS = 6, ROWS = 4, pulse = -1, pulseT = 0;
+
+  function fit() {
+    var cssW = cv.clientWidth || W, dpr = window.devicePixelRatio || 1;
+    cv.width = Math.round(cssW * dpr); cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); W = cssW; draw();
+  }
+  window.addEventListener("resize", fit);
+
+  function rrect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+
+  function geom() {
+    var pad = 9, gap = 9, top = 28;
+    var tw = (W - pad * 2 - gap * (COLS - 1)) / COLS;
+    var th = (H - top - pad - gap * (ROWS - 1)) / ROWS;
+    return { pad: pad, gap: gap, top: top, tw: tw, th: th };
+  }
+
+  function draw() {
+    var g = geom();
+    ctx.clearRect(0, 0, W, H);
+
+    ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = "#8AA1A8"; ctx.font = "800 10.5px 'Avenir Next', 'Segoe UI', system-ui, sans-serif";
+    ctx.fillText("FALCON TALENT · 24 STAFF ACCOUNTS", g.pad, 17);
+
+    ACCOUNTS.forEach(function (a, i) {
+      var c = i % COLS, r = Math.floor(i / COLS);
+      var x = g.pad + c * (g.tw + g.gap), y = g.top + r * (g.th + g.gap);
+
+      var fill = "#FBFCFC", border = "#E5EBEC", nameCol = "#5C7880", accent = null, tagTxt = null, tagCol = null;
+      if (a.state === "cracked") { fill = "rgba(214,69,69,.10)"; border = "#D64545"; nameCol = "#B23333"; accent = "#D64545"; tagTxt = a.shown; tagCol = "#C1403f"; }
+      else if (a.state === "locked") { fill = "rgba(31,143,137,.10)"; border = "#1F8F89"; nameCol = "#146d68"; accent = "#1F8F89"; tagTxt = "LOCKED OUT"; tagCol = "#146d68"; }
+      else if (a.state === "mfa") { fill = "rgba(242,210,0,.13)"; border = "#E0C200"; nameCol = "#8A7400"; accent = "#F2D200"; tagTxt = "MFA BLOCKED"; tagCol = "#8A7400"; }
+      else if (a.state === "tried") { fill = "#F2F6F6"; border = "#CDD8DA"; tagTxt = "tried · held"; tagCol = "#8AA1A8"; }
+
+      ctx.fillStyle = fill; rrect(x, y, g.tw, g.th, 8); ctx.fill();
+      ctx.strokeStyle = border; ctx.lineWidth = 1.4; rrect(x, y, g.tw, g.th, 8); ctx.stroke();
+      if (accent) { ctx.fillStyle = accent; rrect(x, y, 3.5, g.th, 2); ctx.fill(); }
+
+      ctx.fillStyle = nameCol; ctx.font = "700 11.5px 'JetBrains Mono', Menlo, Consolas, monospace";
+      ctx.fillText(a.name, x + 11, y + 20);
+      if (tagTxt) {
+        ctx.fillStyle = tagCol; ctx.font = "700 10.5px 'JetBrains Mono', Menlo, Consolas, monospace";
+        ctx.fillText(tagTxt, x + 11, y + 37);
+      }
+
+      // live pulse ring on the account being hit right now
+      if (pulse === i) {
+        ctx.save();
+        ctx.strokeStyle = "rgba(214,69,69," + (0.85 - pulseT * 0.75) + ")";
+        ctx.lineWidth = 2 + pulseT * 2;
+        rrect(x - 2 - pulseT * 3, y - 2 - pulseT * 3, g.tw + 4 + pulseT * 6, g.th + 4 + pulseT * 6, 10); ctx.stroke();
+        ctx.restore();
+      }
+    });
+  }
+
+  function setPulse(i) {
+    pulse = i; pulseT = 0;
+    var f = 0, FR = 14;
+    (function anim() {
+      if (pulse !== i) return;
+      pulseT = f / FR; draw();
+      if (f++ < FR) setTimeout(anim, 24);
+      else { pulse = -1; draw(); }
+    })();
+  }
+
+  // ---------- helpers ----------
+  function idxToWord(n, len) {
+    var s = "";
+    for (var k = 0; k < len; k++) { s = ALPHA[n % 36] + s; n = Math.floor(n / 36); }
+    return s;
+  }
+  function setStats() {
+    $("#s1").textContent = stats.cracked;
+    $("#s2").textContent = stats.attempts.toLocaleString("en-US");
+    $("#s3").textContent = stats.locked;
+    $("#s4").textContent = stats.mfa;
+  }
+  function reset() {
+    ACCOUNTS.forEach(function (a) { a.state = "idle"; a.fails = 0; a.shown = ""; });
+    stats = { cracked:0, attempts:0, locked:0, mfa:0 }; setStats();
+    $("#rf").style.width = "0%"; $("#rg").textContent = "—"; $("#rc").textContent = "";
+    $("#rk").textContent = "idle"; draw();
+  }
+
+  // ---------- attacks ----------
+  function runAttack() {
+    if (running) return;
+    running = true; $("#run").disabled = true; reset();
+    $("#cap").innerHTML = "";
+    if (mode === "brute") return runBrute();
+    if (mode === "dict")  return runDict();
+    return runSweep();
+  }
+
+  // Brute force: really enumerate the 36^3 space against one account.
+  function runBrute() {
+    var a = ACCOUNTS[MODES.brute.target];
+    var SPACE = 36 * 36 * 36;                       // 46,656
+    var answer = -1;
+    for (var n = 0; n < SPACE; n++) { if (idxToWord(n, 3) === a.pw) { answer = n; break; } }
+    var limit = defs.lockout ? 5 : (answer >= 0 ? answer + 1 : SPACE);
+    var stopReason = defs.lockout ? "locked" : (answer >= 0 ? "found" : "exhausted");
+
+    $("#rk").textContent = "guessing " + a.name + " ·";
+    setPulse(a.i);
+    var f = 0, FRAMES = 78;
+    (function step() {
+      var p = Math.min(1, f / FRAMES);
+      var upto = Math.max(1, Math.floor(p * limit));
+      stats.attempts = upto; a.fails = upto;
+      $("#rg").textContent = idxToWord(Math.max(0, upto - 1), 3);
+      $("#rc").textContent = upto.toLocaleString("en-US") + " / " + SPACE.toLocaleString("en-US") + " combinations";
+      $("#rf").style.width = (upto / SPACE * 100) + "%";
+      setStats();
+      if (f++ < FRAMES) { setTimeout(step, 26); return; }
+      // resolve
+      stats.attempts = limit; setStats();
+      if (stopReason === "locked") {
+        a.state = "locked"; stats.locked = 1; setStats(); draw();
+        finish('<span class="g">Locked out after 5 wrong guesses.</span> Brute force is <b>loud</b> — thousands of failures against one account. A lockout policy ends it almost immediately.');
+      } else {
+        a.state = "cracked"; a.shown = a.pw; stats.cracked = 1;
+        if (defs.mfa) { a.state = "mfa"; a.shown = ""; stats.cracked = 0; stats.mfa = 1; }
+        setStats(); draw();
+        finish(defs.mfa
+          ? '<span class="g">Password found — and useless.</span> MFA asked for a second factor the attacker doesn\'t have.'
+          : 'Cracked <b>' + a.name + '</b> = <b>' + a.pw + '</b> in ' + limit.toLocaleString("en-US") + ' guesses, because it is only 3 characters. ' +
+            '<b>Real scale:</b> add 5 more characters and the space grows to 2.8 <em>trillion</em> — the same machine would grind for years. <span class="r">Length beats brute force; nothing else has to.</span>');
+      }
+    })();
+  }
+
+  // Dictionary: walk a real wordlist.
+  function runDict() {
+    var a = ACCOUNTS[MODES.dict.target];
+    var answer = WORDLIST.indexOf(a.pw);
+    var limit = defs.lockout ? 5 : answer + 1;
+    $("#rk").textContent = "wordlist vs " + a.name + " ·";
+    setPulse(a.i);
+    var i = 0;
+    (function step() {
+      if (i >= limit) {
+        if (defs.lockout) {
+          a.state = "locked"; stats.locked = 1; setStats(); draw();
+          finish('<span class="g">Locked out after 5 tries.</span> Like brute force, a dictionary attack hammers <b>one</b> account — which is exactly what lockout is built to catch.');
+        } else {
+          a.state = "cracked"; a.shown = a.pw; stats.cracked = 1;
+          if (defs.mfa) { a.state = "mfa"; a.shown = ""; stats.cracked = 0; stats.mfa = 1; }
+          setStats(); draw();
+          finish(defs.mfa
+            ? '<span class="g">Password found — and useless.</span> The second factor stopped the login.'
+            : 'Found <b>' + a.pw + '</b> on guess ' + limit + ' — not by trying everything, but by trying <b>what people actually choose</b>. ' +
+              '<span class="r">Real lists run to hundreds of millions of leaked passwords.</span>');
+        }
+        return;
+      }
+      stats.attempts = i + 1; a.fails = i + 1;
+      $("#rg").textContent = WORDLIST[i];
+      $("#rc").textContent = (i + 1) + " / " + WORDLIST.length + " words";
+      $("#rf").style.width = ((i + 1) / WORDLIST.length * 100) + "%";
+      setStats();
+      i++; setTimeout(step, 95);
+    })();
+  }
+
+  // Stuffing + spraying: one attempt per account, sweeping the grid.
+  function runSweep() {
+    var isStuff = (mode === "stuff");
+    var queue = isStuff
+      ? STUFFLIST.map(function (s) { return { i: NAMES.indexOf(s.u), pw: s.p }; })
+      : ACCOUNTS.map(function (a) { return { i: a.i, pw: "Summer2026!" }; });
+
+    $("#rk").textContent = isStuff ? "breached pairs ·" : "spraying Summer2026! ·";
+    var k = 0;
+    (function step() {
+      if (k >= queue.length) return sweepDone(isStuff);
+      var q = queue[k], a = ACCOUNTS[q.i];
+      setPulse(q.i);
+      stats.attempts++; a.fails = 1;
+      $("#rg").textContent = a.name + " : " + q.pw;
+      $("#rc").textContent = (k + 1) + " / " + queue.length + " accounts · 1 attempt each";
+      $("#rf").style.width = ((k + 1) / queue.length * 100) + "%";
+
+      var correct = (a.pw === q.pw);
+      if (isStuff && defs.unique) correct = false;      // reused password no longer works here
+      if (correct) {
+        if (defs.mfa) { a.state = "mfa"; stats.mfa++; }
+        else { a.state = "cracked"; a.shown = q.pw; stats.cracked++; }
+      } else { a.state = "tried"; }
+      setStats(); draw();
+      k++; setTimeout(step, isStuff ? 230 : 105);
+    })();
+  }
+
+  function sweepDone(isStuff) {
+    draw();
+    var msg;
+    if (isStuff) {
+      if (defs.unique) msg = '<span class="g">Zero hits.</span> Every breached password was real — but none of them work <b>here</b>, because nobody reused one. ' +
+        '<b>A unique password per site is the only thing that stops credential stuffing.</b>';
+      else if (defs.mfa) msg = '<span class="g">Right passwords, no logins.</span> ' + stats.mfa + ' accounts had the breached password — MFA stopped every one.';
+      else msg = 'Walked in on <b>' + stats.cracked + ' accounts</b> using passwords stolen from <em>someone else\'s</em> breach. ' +
+        '<span class="r">Notice: lockout never fired.</span> One attempt per account never looks like an attack.';
+    } else {
+      if (defs.mfa) msg = '<span class="g">' + stats.mfa + ' correct passwords, zero logins.</span> Spraying finds the weak password; MFA makes finding it worthless.';
+      else msg = 'One password, 24 accounts, <b>' + stats.cracked + ' hits</b> — and only <b>one</b> attempt against each, so nobody ever saw a burst of failures. ' +
+        '<span class="r">Lockout never triggers, and unique-per-site doesn\'t help: these people each picked the same obvious password.</span> ' +
+        'This is how real intrusions start.';
+    }
+    finish(msg);
+  }
+
+  function finish(html) {
+    running = false; $("#run").disabled = false; $("#cap").innerHTML = html;
+  }
+
+  // ---------- wiring ----------
+  function setMode(m) {
+    mode = m;
+    Array.prototype.forEach.call(document.querySelectorAll(".mode"), function (b) {
+      b.classList.toggle("sel", b.getAttribute("data-m") === m);
+    });
+    reset();
+    $("#cap").innerHTML = "<b>" + MODES[m].label + ".</b> " + MODES[m].desc;
+  }
+  Array.prototype.forEach.call(document.querySelectorAll(".mode"), function (b) {
+    b.addEventListener("click", function () { if (!running) setMode(b.getAttribute("data-m")); });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll(".def"), function (b) {
+    b.addEventListener("click", function () {
+      if (running) return;
+      var k = b.getAttribute("data-d"); defs[k] = !defs[k]; b.classList.toggle("on", defs[k]); reset();
+    });
+  });
+  $("#run").addEventListener("click", runAttack);
+
+  // hooks: ?mode=spray&def=lockout,mfa&go=1
+  var qs = new URLSearchParams(location.search);
+  (qs.get("def") || "").split(",").forEach(function (k) {
+    if (k in defs) { defs[k] = true; var el = document.querySelector('.def[data-d="' + k + '"]'); if (el) el.classList.add("on"); }
+  });
+  setMode(qs.get("mode") && MODES[qs.get("mode")] ? qs.get("mode") : "brute");
+  fit();
+  if (qs.get("go") === "1") runAttack();
+})();
+</script>
+</body></html>

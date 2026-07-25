@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="_shared.css?v=1">
+<style>
+  body { padding: 6px; }
+  .bar { display: flex; align-items: center; gap: 7px; margin-bottom: 7px; flex-wrap: wrap; }
+  .bar .lbl { font-size: 10.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+    color: #8AA1A8; margin-right: 2px; }
+  .send { font-family: inherit; font-size: 12.5px; font-weight: 700; border-radius: 999px;
+    padding: 7px 13px; cursor: pointer; border: 1px solid #CDD8DA; background: #fff; color: #12333D; }
+  .send.sel { background: #D64545; border-color: #D64545; color: #fff; }
+  .send:hover:not(.sel) { background: #FBEDED; border-color: #E7B4b4; }
+  .def { font-family: inherit; font-size: 12px; font-weight: 700; border: 1px solid #CDD8DA;
+    background: #fff; color: #6a808a; border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+  .def::before { content: "\2610  "; }
+  .def.on { background: rgba(31,143,137,.13); border-color: #1F8F89; color: #146d68; }
+  .def.on::before { content: "\2611  "; }
+  .pol { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 11.5px; font-weight: 700;
+    border: 1px solid #CDD8DA; background: #fff; color: #12333D; border-radius: 8px; padding: 6px 9px; cursor: pointer; }
+  .run { margin-left: auto; font-family: inherit; font-size: 13px; font-weight: 800; border-radius: 999px;
+    padding: 8px 17px; cursor: pointer; border: 1px solid #B23333; background: #D64545; color: #fff; }
+  .run:hover { background: #C1403f; } .run:disabled { opacity: .5; cursor: default; }
+
+  canvas#j { width: 100%; height: 200px; display: block; border: 1px solid #E0E7E8;
+    border-radius: 10px; background: #fff; margin-top: 3px; }
+
+  .two { display: grid; grid-template-columns: 1.18fr 1fr; gap: 12px; margin-top: 9px; align-items: start; }
+  .hdrs { background: #06232B; border-radius: 10px; padding: 11px 13px; height: 202px; overflow-y: auto;
+    font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 11.6px; line-height: 1.75; color: #BFE0E2; }
+  .hdrs::-webkit-scrollbar { width: 7px; } .hdrs::-webkit-scrollbar-thumb { background: #1F5563; border-radius: 4px; }
+  .hdrs .k { color: #7C9BA2; }
+  .hdrs .v { color: #EAF7F5; }
+  .hdrs .dn { color: #F2D200; font-weight: 700; }
+  .hdrs .dom { color: #33D3CB; font-weight: 700; }
+  .hdrs .bad { color: #FF7A7A; font-weight: 700; }
+  .hdrs .note { color: #6B8A90; font-size: 10.8px; }
+
+  .right { display: flex; flex-direction: column; gap: 9px; }
+  .verdict { border-radius: 9px; padding: 9px 12px; font-size: 13.5px; font-weight: 800; }
+  .verdict.inbox { background: rgba(214,69,69,.11); color: #B23333; border: 1px solid rgba(214,69,69,.4); }
+  .verdict.spam { background: rgba(242,210,0,.13); color: #8A7400; border: 1px solid rgba(242,210,0,.45); }
+  .verdict.reject { background: rgba(31,143,137,.12); color: #146d68; border: 1px solid rgba(31,143,137,.4); }
+  .verdict.idle { background: #EEF3F3; color: #8AA1A8; border: 1px solid #E0E7E8; }
+
+  .inbox { background: #fff; border: 1px solid #E0E7E8; border-radius: 10px; padding: 10px 12px; }
+  .inbox .ih { font-size: 10.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+    color: #8AA1A8; margin-bottom: 7px; }
+  .inbox .row { display: flex; align-items: baseline; gap: 8px; }
+  .inbox .nm { font-weight: 800; font-size: 13.5px; color: #12333D; }
+  .inbox .sub { font-size: 12.5px; color: #5C7880; margin-top: 3px; }
+  .inbox .addr { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 11px; color: #94A7AD; margin-top: 3px; }
+  .inbox .gone { color: #8AA1A8; font-size: 12.5px; font-style: italic; }
+
+  .why { background: #F7FAFA; border: 1px solid #E0E7E8; border-radius: 9px; padding: 8px 11px;
+    font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 11px; line-height: 1.55; color: #5C7880; min-height: 30px; }
+  .why b { font-weight: 700; }
+  .why .pass { color: #146d68; font-weight: 700; }
+  .why .fail { color: #C1403f; font-weight: 700; }
+  .why .none { color: #8A7400; font-weight: 700; }
+
+  .cap { margin-top: 8px; font-size: 12.7px; line-height: 1.45; color: #42606A; min-height: 36px; }
+  .cap b { color: #12333D; } .cap .r { color: #C1403f; font-weight: 700; } .cap .g { color: #146d68; font-weight: 700; }
+</style>
+</head><body>
+  <div class="bar">
+    <span class="lbl">You send as</span>
+    <button class="send sel" data-s="spoof">Spoof falcontalent.com</button>
+    <button class="send" data-s="lookalike">Look-alike domain you own</button>
+    <button class="send" data-s="webmail">Free webmail + fake name</button>
+    <button class="run" id="run">&#9654; Send</button>
+  </div>
+  <div class="bar">
+    <span class="lbl">falcontalent.com publishes</span>
+    <button class="def on" data-d="spf">SPF</button>
+    <button class="def on" data-d="dkim">DKIM</button>
+    <button class="def on" data-d="dmarc">DMARC</button>
+    <button class="pol" id="pol">p=none</button>
+    <span style="font-size:11.5px;color:#8AA1A8">← click to change the policy</span>
+  </div>
+
+  <canvas id="j"></canvas>
+
+  <div class="two">
+    <div class="hdrs" id="hdrs"></div>
+    <div class="right">
+      <div class="verdict idle" id="verdict">Press ▶ Send to watch the gateway check it.</div>
+      <div class="why" id="why"></div>
+      <div class="inbox">
+        <div class="ih">What the recipient actually sees</div>
+        <div id="ibox"><span class="gone">— nothing delivered yet —</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="cap" id="cap"></div>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (s) { return document.querySelector(s); };
+
+  var POLICIES = ["p=none", "p=quarantine", "p=reject"];
+  var polIdx = 0;
+  var defs = { spf: true, dkim: true, dmarc: true };
+  var mode = "spoof", running = false;
+
+  // Each way of sending, and what each check honestly returns.
+  var SENDERS = {
+    spoof: {
+      label: "Spoofing the real domain",
+      mta: "attacker MTA", mtaIP: "185.220.101.7",
+      envelope: "bounce@falcontalent.com",
+      headerFrom: "hr@falcontalent.com",
+      display: "Falcon Talent — HR",
+      lookalike: false,
+      // results computed in checks()
+      lesson: "You claimed to <b>be</b> falcontalent.com from a server that isn't theirs. " +
+              "SPF asks &ldquo;is this IP allowed to send for that domain?&rdquo; — no. DKIM asks &ldquo;is this signed with their key?&rdquo; — you don't have it. " +
+              "<span class='g'>This is the one attack email authentication actually stops</span> — but only if the domain publishes DMARC with a policy that bites."
+    },
+    lookalike: {
+      label: "Look-alike domain you own",
+      mta: "your MTA", mtaIP: "203.0.113.44",
+      envelope: "hr@falcon-ta1ent.com",
+      headerFrom: "hr@falcon-ta1ent.com",
+      display: "Falcon Talent — HR",
+      lookalike: true,
+      lesson: "You registered <b>falcon-ta1ent.com</b> (a &ldquo;1&rdquo; for the &ldquo;l&rdquo;) and set up SPF, DKIM and DMARC on it <b>properly</b>. " +
+              "Every check passes — because they are all true. <span class='r'>Authentication proved the mail really came from falcon-ta1ent.com. " +
+              "It never claimed that falcon-ta1ent.com is Falcon Talent.</span>"
+    },
+    webmail: {
+      label: "Free webmail + display-name spoof",
+      mta: "Gmail SMTP", mtaIP: "209.85.220.41",
+      envelope: "falcontalent.hr@gmail.com",
+      headerFrom: "falcontalent.hr@gmail.com",
+      display: "Falcon Talent — HR",
+      lookalike: true,
+      lesson: "Gmail really did send it, so SPF, DKIM and DMARC all pass honestly. " +
+              "The only lie is the <b>display name</b> — and <span class='r'>no protocol checks the display name.</span> " +
+              "On a phone, the address is often hidden entirely and the name is all anyone sees."
+    }
+  };
+
+  // Honest evaluation of the three checks for the current mode.
+  function checks() {
+    var s = SENDERS[mode];
+    var r = {};
+    if (s.lookalike) {
+      // the attacker owns this domain and configured it correctly
+      r.spf   = { v: "pass", why: "sending IP is listed in that domain's own SPF record" };
+      r.dkim  = { v: "pass", why: "signed with that domain's own key" };
+      r.dmarc = { v: "pass", why: "the visible From matches the authenticated domain" };
+      r.deliver = "inbox";
+      return r;
+    }
+    // exact-domain spoof against falcontalent.com
+    r.spf  = defs.spf  ? { v: "fail", why: "185.220.101.7 is not in falcontalent.com's SPF record" }
+                       : { v: "none", why: "falcontalent.com publishes no SPF record — nothing to check" };
+    r.dkim = defs.dkim ? { v: "fail", why: "no valid signature from falcontalent.com" }
+                       : { v: "none", why: "falcontalent.com does not sign its mail" };
+    if (!defs.dmarc) {
+      r.dmarc = { v: "none", why: "no DMARC record — nobody decides what to do about the failures" };
+      r.deliver = "inbox";
+    } else {
+      r.dmarc = { v: "fail", why: "the visible From says falcontalent.com, but nothing authenticated it" };
+      r.deliver = polIdx === 0 ? "inbox" : polIdx === 1 ? "spam" : "reject";
+    }
+    return r;
+  }
+
+  // ---------- canvas ----------
+  var cv = $("#j"), ctx = cv.getContext("2d");
+  var W = 1040, H = 200;
+  var GATES = ["SPF", "DKIM", "DMARC"];
+  var anim = { pos: -1, stamps: [null, null, null], dest: null, bounced: false };
+
+  function fit() {
+    var cssW = cv.clientWidth || W, dpr = window.devicePixelRatio || 1;
+    cv.width = Math.round(cssW * dpr); cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); W = cssW; draw();
+  }
+  window.addEventListener("resize", fit);
+
+  function rrect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+
+  function layout() {
+    var sx = 8, sw = 178;
+    var mx = W - 8 - 214, mw = 214;
+    var gw = 104, span = mx - (sx + sw) - 30;
+    var g0 = sx + sw + 22;
+    var step = (span - gw) / 2;
+    return { sx: sx, sw: sw, mx: mx, mw: mw, gw: gw,
+             gx: [g0, g0 + step, g0 + step * 2], wireY: 112 };
+  }
+
+  function envelope(x, y, col) {
+    ctx.save();
+    ctx.shadowColor = "rgba(18,51,61,.22)"; ctx.shadowBlur = 7; ctx.shadowOffsetY = 2;
+    ctx.fillStyle = "#fff"; rrect(x - 19, y - 13, 38, 26, 3); ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle = col; ctx.lineWidth = 1.6; rrect(x - 19, y - 13, 38, 26, 3); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x - 19, y - 13); ctx.lineTo(x, y + 3); ctx.lineTo(x + 19, y - 13); ctx.stroke();
+  }
+
+  function draw() {
+    var L = layout();
+    ctx.clearRect(0, 0, W, H);
+    ctx.textBaseline = "alphabetic";
+
+    // wire
+    ctx.strokeStyle = "#E5EBEC"; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(L.sx + L.sw, L.wireY); ctx.lineTo(L.mx, L.wireY); ctx.stroke();
+
+    // sender box
+    var s = SENDERS[mode];
+    ctx.fillStyle = "#FBFCFC"; rrect(L.sx, 62, L.sw, 100, 10); ctx.fill();
+    ctx.strokeStyle = "#E0E7E8"; ctx.lineWidth = 1; rrect(L.sx, 62, L.sw, 100, 10); ctx.stroke();
+    ctx.fillStyle = "#D64545"; rrect(L.sx, 62, L.sw, 4, 2); ctx.fill();
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#C1403f"; ctx.font = "800 13px 'Avenir Next', 'Segoe UI', system-ui, sans-serif";
+    ctx.fillText(s.mta, L.sx + 13, 90);
+    ctx.fillStyle = "#5C7880"; ctx.font = "11.5px 'JetBrains Mono', Menlo, Consolas, monospace";
+    ctx.fillText(s.mtaIP, L.sx + 13, 110);
+    ctx.fillStyle = "#8AA1A8"; ctx.font = "10.5px 'Avenir Next', 'Segoe UI', system-ui, sans-serif";
+    ctx.fillText("sends the message", L.sx + 13, 132);
+
+    // gateway label
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#00567C"; ctx.font = "800 11px 'Avenir Next', 'Segoe UI', system-ui, sans-serif";
+    ctx.fillText("RECEIVING MAIL GATEWAY — three questions", (L.gx[0] + L.gx[2] + L.gw) / 2, 28);
+
+    // gates
+    GATES.forEach(function (g, i) {
+      var x = L.gx[i], st = anim.stamps[i];
+      var col = st === "pass" ? "#1F8F89" : st === "fail" ? "#D64545" : st === "none" ? "#B9A400" : "#CDD8DA";
+      var bg  = st === "pass" ? "rgba(31,143,137,.09)" : st === "fail" ? "rgba(214,69,69,.09)"
+              : st === "none" ? "rgba(242,210,0,.12)" : "#FBFCFC";
+      ctx.fillStyle = bg; rrect(x, 48, L.gw, 128, 9); ctx.fill();
+      ctx.strokeStyle = col; ctx.lineWidth = st ? 1.8 : 1.2;
+      ctx.setLineDash(st ? [] : [4, 3]); rrect(x, 48, L.gw, 128, 9); ctx.stroke(); ctx.setLineDash([]);
+
+      ctx.fillStyle = st ? col : "#8AA1A8";
+      ctx.font = "800 14px 'Avenir Next', 'Segoe UI', system-ui, sans-serif";
+      ctx.fillText(g, x + L.gw / 2, 74);
+      ctx.fillStyle = "#8AA1A8"; ctx.font = "9.5px 'Avenir Next', 'Segoe UI', system-ui, sans-serif";
+      var subs = ["did this IP\nmay send?", "is it signed\nby the domain?", "does it match\nthe From you see?"];
+      subs[i].split("\n").forEach(function (ln, k) { ctx.fillText(ln, x + L.gw / 2, 92 + k * 12); });
+
+      if (st) {
+        ctx.fillStyle = col; rrect(x + 14, 138, L.gw - 28, 24, 12); ctx.fill();
+        ctx.fillStyle = "#fff"; ctx.font = "800 11.5px 'JetBrains Mono', Menlo, Consolas, monospace";
+        ctx.fillText(st === "pass" ? "PASS" : st === "fail" ? "FAIL" : "NONE", x + L.gw / 2, 154);
+      }
+    });
+
+    // mailbox
+    var dest = anim.dest;
+    var dcol = dest === "inbox" ? "#D64545" : dest === "spam" ? "#B9A400" : dest === "reject" ? "#1F8F89" : "#CDD8DA";
+    ctx.fillStyle = dest ? (dest === "inbox" ? "rgba(214,69,69,.09)" : dest === "spam" ? "rgba(242,210,0,.12)" : "rgba(31,143,137,.09)") : "#FBFCFC";
+    rrect(L.mx, 62, L.mw, 100, 10); ctx.fill();
+    ctx.strokeStyle = dest ? dcol : "#E0E7E8"; ctx.lineWidth = dest ? 1.8 : 1;
+    rrect(L.mx, 62, L.mw, 100, 10); ctx.stroke();
+    ctx.textAlign = "center";
+    ctx.fillStyle = dest ? dcol : "#8AA1A8"; ctx.font = "800 14px 'Avenir Next', 'Segoe UI', system-ui, sans-serif";
+    ctx.fillText(dest === "inbox" ? "INBOX" : dest === "spam" ? "SPAM FOLDER" : dest === "reject" ? "REJECTED" : "recipient",
+                 L.mx + L.mw / 2, 100);
+    ctx.fillStyle = "#8AA1A8"; ctx.font = "11px 'Avenir Next', 'Segoe UI', system-ui, sans-serif";
+    ctx.fillText(dest === "inbox" ? "the victim reads it" : dest === "spam" ? "quarantined — few will look"
+               : dest === "reject" ? "bounced at the door" : "layla@falcontalent.com",
+                 L.mx + L.mw / 2, 122);
+
+    // travelling envelope
+    if (anim.pos >= 0) {
+      var startX = L.sx + L.sw, endX = L.mx;
+      var x = startX + (endX - startX) * anim.pos;
+      envelope(x, L.wireY, anim.bounced ? "#D64545" : "#00567C");
+    }
+  }
+
+  // ---------- run ----------
+  function send() {
+    if (running) return;
+    running = true; $("#run").disabled = true;
+    anim = { pos: 0, stamps: [null, null, null], dest: null, bounced: false };
+    $("#verdict").className = "verdict idle"; $("#verdict").textContent = "sending…";
+    $("#ibox").innerHTML = '<span class="gone">— in transit —</span>';
+    $("#cap").innerHTML = "";
+    var r = checks(), res = [r.spf, r.dkim, r.dmarc];
+    var L = layout();
+    // fraction of the wire at which each gate sits
+    var stops = L.gx.map(function (x) { return (x + L.gw / 2 - (L.sx + L.sw)) / (L.mx - (L.sx + L.sw)); });
+
+    var gate = 0, f = 0, FR = 16;
+    (function step() {
+      var from = gate === 0 ? 0 : stops[gate - 1];
+      var to = gate < 3 ? stops[gate] : 1;
+      anim.pos = from + (to - from) * (f / FR);
+      draw();
+      if (f++ < FR) { setTimeout(step, 22); return; }
+      f = 0;
+      if (gate < 3) {
+        anim.stamps[gate] = res[gate].v;
+        draw();
+        gate++;
+        setTimeout(step, 380);
+      } else {
+        anim.dest = r.deliver;
+        anim.pos = -1;                 // the outcome box carries it from here
+        draw(); finish(r);
+      }
+    })();
+  }
+
+  function finish(r) {
+    running = false; $("#run").disabled = false;
+    var s = SENDERS[mode];
+    var v = $("#verdict");
+    if (r.deliver === "inbox") { v.className = "verdict inbox"; v.innerHTML = "✉ DELIVERED TO THE INBOX"; }
+    else if (r.deliver === "spam") { v.className = "verdict spam"; v.innerHTML = "⚠ QUARANTINED — sent to spam"; }
+    else { v.className = "verdict reject"; v.innerHTML = "✕ REJECTED — never delivered"; }
+
+    if (r.deliver === "reject") {
+      $("#ibox").innerHTML = '<span class="gone">Nothing arrived. The gateway refused it at the door.</span>';
+    } else {
+      $("#ibox").innerHTML =
+        '<div class="row"><span class="nm">' + esc(s.display) + '</span></div>' +
+        '<div class="sub">Software Engineer offer — please confirm your details</div>' +
+        '<div class="addr">&lt;' + esc(s.headerFrom) + '&gt;</div>' +
+        (r.deliver === "spam" ? '<div class="addr" style="color:#8A7400">in the spam folder</div>' : '');
+    }
+    $("#cap").innerHTML = "<b>" + s.label + ".</b> " + s.lesson;
+    renderHeaders(r);
+  }
+
+  function renderHeaders(r) {
+    var s = SENDERS[mode];
+    var cls = function (res) { return res && res.v === "pass" ? "dom" : res && res.v === "fail" ? "bad" : "v"; };
+    $("#hdrs").innerHTML =
+      '<div><span class="k">Return-Path:</span> <span class="' + (r ? cls(r.spf) : "v") + '">&lt;' + esc(s.envelope) + '&gt;</span></div>' +
+      '<div class="note">  ↳ the <b>envelope sender</b>, never shown to the human. <b>SPF</b> checks this.</div>' +
+      '<div><span class="k">DKIM-Signature:</span> <span class="' + (r ? cls(r.dkim) : "v") + '">d=' + esc(s.envelope.split("@")[1]) + '; b=MEUCIQ…</span></div>' +
+      '<div class="note">  ↳ a <b>signature</b> from that domain\'s key. <b>DKIM</b> checks this.</div>' +
+      '<div><span class="k">From:</span> <span class="dn">"' + esc(s.display) + '"</span> <span class="' + (r ? cls(r.dmarc) : "v") + '">&lt;' + esc(s.headerFrom) + '&gt;</span></div>' +
+      '<div class="note">  ↳ the <b>only line the human sees</b>.</div>' +
+      '<div class="note">  ↳ yellow = <b>display name</b>: free text, anyone can type anything.</div>' +
+      '<div class="note">  ↳ <b>DMARC</b> = this visible domain must <em>match</em> what SPF or DKIM proved.</div>';
+
+    $("#why").innerHTML = r
+      ? '<div><b>spf=</b><span class="' + r.spf.v + '">' + r.spf.v + '</span> — ' + r.spf.why + '</div>' +
+        '<div><b>dkim=</b><span class="' + r.dkim.v + '">' + r.dkim.v + '</span> — ' + r.dkim.why + '</div>' +
+        '<div><b>dmarc=</b><span class="' + r.dmarc.v + '">' + r.dmarc.v + '</span> — ' + r.dmarc.why + '</div>'
+      : '<span style="color:#8AA1A8">The gateway\'s three answers appear here.</span>';
+  }
+  function esc(x) { return String(x).replace(/[&<>"]/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+  // ---------- wiring ----------
+  function setMode(m) {
+    mode = m;
+    Array.prototype.forEach.call(document.querySelectorAll(".send"), function (b) {
+      b.classList.toggle("sel", b.getAttribute("data-s") === m);
+    });
+    anim = { pos: -1, stamps: [null, null, null], dest: null, bounced: false };
+    $("#verdict").className = "verdict idle";
+    $("#verdict").textContent = "Press ▶ Send to watch the gateway check it.";
+    $("#ibox").innerHTML = '<span class="gone">— nothing delivered yet —</span>';
+    $("#cap").innerHTML = "";
+    renderHeaders(null); draw();
+  }
+  Array.prototype.forEach.call(document.querySelectorAll(".send"), function (b) {
+    b.addEventListener("click", function () { if (!running) setMode(b.getAttribute("data-s")); });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll(".def"), function (b) {
+    b.addEventListener("click", function () {
+      if (running) return;
+      var k = b.getAttribute("data-d"); defs[k] = !defs[k]; b.classList.toggle("on", defs[k]); setMode(mode);
+    });
+  });
+  $("#pol").addEventListener("click", function () {
+    if (running) return;
+    polIdx = (polIdx + 1) % 3; this.textContent = POLICIES[polIdx]; setMode(mode);
+  });
+  $("#run").addEventListener("click", send);
+
+  // hooks: ?send=lookalike&pol=2&go=1
+  var qs = new URLSearchParams(location.search);
+  if (qs.get("pol")) { polIdx = Math.max(0, Math.min(2, parseInt(qs.get("pol"), 10) || 0)); $("#pol").textContent = POLICIES[polIdx]; }
+  setMode(qs.get("send") && SENDERS[qs.get("send")] ? qs.get("send") : "spoof");
+  fit();
+  if (qs.get("go") === "1") send();
+})();
+</script>
+</body></html>

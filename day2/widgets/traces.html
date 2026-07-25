@@ -33,7 +33,7 @@
     font-weight: 700; color: #7FE3DC; letter-spacing: .04em; }
   .con-head .counts { margin-left: auto; font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 11.5px; }
   .con-head .counts .cri { color: #FF7A7A; } .con-head .counts .inv { color: #46C08A; }
-  .log { height: 400px; overflow-y: auto; padding: 12px 14px; font-family: "JetBrains Mono", Menlo, Consolas, monospace;
+  .log { height: 326px; overflow-y: auto; padding: 12px 14px; font-family: "JetBrains Mono", Menlo, Consolas, monospace;
     font-size: 13px; line-height: 1.5; color: #BFE0E2; }
   .log::-webkit-scrollbar { width: 8px; } .log::-webkit-scrollbar-thumb { background: #1F5563; border-radius: 4px; }
   .log .empty { color: #6B8A90; }
@@ -41,6 +41,15 @@
   .row .sev { font-weight: 700; } .row .src { color: #7C9BA2; }
   .row.crit .sev { color: #FF7A7A; } .row.warn .sev { color: #F2C14E; } .row.none .sev { color: #46C08A; }
   .row .msg { color: #DCEBEE; } .row.none .msg { color: #8FB0B6; }
+  .row .why { margin: 4px 0 0 8px; padding-left: 9px; border-left: 2px solid rgba(127,227,220,.35);
+    font-size: 11.4px; line-height: 1.4; color: #7FB8BE; font-family: "Avenir Next", "Segoe UI", system-ui, sans-serif; }
+
+  .legend { margin-top: 9px; background: #F7FAFA; border: 1px solid #E0E7E8; border-radius: 9px; padding: 8px 11px; }
+  .legend p { margin: 0 0 6px; font-size: 11.6px; line-height: 1.4; color: #5C7880; }
+  .legend p b { color: #00567C; }
+  .srcs { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 12px; }
+  .srcs span { font-size: 11.2px; color: #7A9198; }
+  .srcs span b { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 10.5px; color: #12333D; }
 
   .foot { grid-column: 1 / -1; margin-top: 12px; font-size: 13px; line-height: 1.45; color: #42606A;
     border-top: 1px dashed #CDD8DA; padding-top: 10px; }
@@ -59,6 +68,15 @@
       <div class="con-head"><span class="t">◈ SIEM — live alerts</span>
         <span class="counts"><span class="cri" id="ccrit">0 alerts</span> · <span class="inv" id="cinv">0 invisible</span></span></div>
       <div class="log" id="log"><span class="empty">Replay a move on the left. Watch which ones the defender sees — and which leave nothing at all.</span></div>
+    </div>
+    <div class="legend">
+      <p><b>SIEM</b> — the box that collects logs from everything below and raises the alerts. Each alert is tagged with the sensor that noticed:</p>
+      <div class="srcs">
+        <span><b>IDS</b> watches network traffic</span>
+        <span><b>Email GW</b> filters incoming mail</span>
+        <span><b>Identity</b> watches logins</span>
+        <span><b>EDR</b> watches what runs on each machine</span>
+      </div>
     </div>
   </div>
   <div class="foot" id="foot"></div>
@@ -79,9 +97,11 @@
     { id:"phish", an:"Sent the phishing email", as:"lure → 40 staff", kind:"active",
       sev:"warn", src:"Email GW", msg:"look-alike domain from outside, mass-sent to 40 mailboxes — quarantined 12." },
     { id:"login", an:"Logged in with the stolen password", as:"admin : Summer2024!", kind:"active",
-      sev:"crit", src:"Identity", msg:"impossible travel — 'admin' signed in from Riyadh and Rotterdam 4 min apart." },
+      sev:"crit", src:"Identity", msg:"impossible travel — 'admin' signed in from Riyadh and Rotterdam 4 min apart.",
+      why:"“Impossible travel” = the same account appears in two places no human could travel between in that time. The password was right; the geography wasn't." },
     { id:"cve", an:"Ran the CVE exploit", as:"CVE-2023-1337 → shell", kind:"active",
-      sev:"crit", src:"EDR", msg:"exploit + reverse shell on vpn-gw01 — payload flagged, process isolated." }
+      sev:"crit", src:"EDR", msg:"exploit + reverse shell on vpn-gw01 — payload flagged, process isolated.",
+      why:"EDR doesn't check the password — it watches behaviour on the machine, and a web server spawning a shell is not normal." }
   ];
   var done = {}, crit = 0, inv = 0, running = false;
   var actsEl = $("#acts");
@@ -102,7 +122,8 @@
     var row = document.createElement("div");
     row.className = "row " + m.sev;
     var sevtxt = m.sev==="crit" ? "CRITICAL" : m.sev==="warn" ? "WARNING " : "no alert";
-    row.innerHTML = '<span class="sev">[' + sevtxt + ']</span> <span class="src">' + m.src + '</span> — <span class="msg">' + m.msg + '</span>';
+    row.innerHTML = '<span class="sev">[' + sevtxt + ']</span> <span class="src">' + m.src + '</span> — <span class="msg">' + m.msg + '</span>' +
+      (m.why ? '<div class="why">' + m.why + '</div>' : '');
     $("#log").appendChild(row); $("#log").scrollTop = $("#log").scrollHeight;
     if (m.sev === "none") { inv++; } else { crit++; }
     $("#ccrit").textContent = crit + (crit===1?" alert":" alerts");

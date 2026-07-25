@@ -33,6 +33,33 @@
       letter-spacing: .04em; display: block; margin-top: .15em; }
     .vec .vd { font-size: .72em; color: var(--muted); line-height: 1.4; }
     .vec .vd b { color: var(--ink); font-weight: 700; }
+    /* kill-chain stage chips (the "two maps" slide) */
+    .chain { display: flex; gap: 6px; margin: .5em 0 .2em; flex-wrap: wrap; }
+    .chain .st { flex: 1; min-width: 0; background: var(--panel); border: 1px solid var(--line);
+      border-top: 3px solid var(--line); border-radius: 3px; padding: .5em .4em; text-align: center; }
+    .chain .st.now { border-top-color: var(--teal); background: rgba(31,143,137,.07); }
+    .chain .st b { display: block; font-size: .58em; color: var(--muted); font-weight: 800; line-height: 1.2; }
+    .chain .st.now b { color: var(--petrol); }
+    .chain .st small { display: block; font-family: var(--mono); font-size: .44em; color: var(--muted);
+      letter-spacing: .06em; margin-top: .25em; }
+    /* rules-of-engagement traffic light */
+    .roe .card { border-top-width: 4px; }
+    .roe .card.ok  { border-top-color: var(--good); }
+    .roe .card.ask { border-top-color: var(--yellow); }
+    .roe .card.no  { border-top-color: var(--bad); }
+    .roe .card h3 { font-size: .78em; }
+    .roe .card.ok h3  { color: var(--good); }
+    .roe .card.ask h3 { color: #8a7400; }
+    .roe .card.no h3  { color: var(--bad); }
+    .roe .card ul { margin: .1em 0 0; padding-left: 1.1em; }
+    .roe .card li { font-size: .6em; color: var(--muted); line-height: 1.4; margin: .18em 0; }
+    /* defence pairing rows */
+    .fix { display: grid; grid-template-columns: 1fr 1fr; gap: 0 22px; }
+    .fix .r { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: baseline;
+      padding: .3em 0; border-bottom: 1px solid var(--line); }
+    .fix .a { font-size: .62em; color: var(--bad); font-weight: 700; }
+    .fix .c { font-size: .62em; color: var(--slate); }
+    .fix .c b { color: var(--good); font-weight: 800; }
     /* criminal-economy supply-chain flow */
     .flow { display: flex; align-items: stretch; gap: 0; margin: .5em 0 .2em; }
     .flow .step { flex: 1; background: var(--panel); border: 1px solid var(--line);
@@ -74,6 +101,79 @@
       (Stage photos: CC0 / public-domain via Openverse, petrol-duotoned.)</aside>
     </section>
 
+    <!-- ================= THE TWO MAPS (KILL CHAIN + ATT&CK) ================= -->
+    <section>
+      <p class="kicker">The map everyone uses</p>
+      <h2>Two ways the industry names what you're about to do</h2>
+      <div class="k2 c2" style="margin-top:.6em">
+        <div class="card">
+          <h3>The Cyber Kill Chain <span class="tag">Lockheed Martin</span></h3>
+          <p>A <strong>story</strong> in seven stages, in order. Useful because it says <em>where</em> in an intrusion you are —
+          and every stage you break stops the whole chain.</p>
+        </div>
+        <div class="card" style="border-top-color:var(--bad)">
+          <h3>MITRE ATT&amp;CK <span class="tag">the catalogue</span></h3>
+          <p>Not a story — a <strong>catalogue of real observed behaviour</strong>: 14 tactics (the attacker's goal) and
+          hundreds of numbered techniques (how they did it). Defenders write detections against these numbers.</p>
+        </div>
+      </div>
+      <div class="chain">
+        <div class="st now"><b>Recon</b><small>TA0043</small></div>
+        <div class="st now"><b>Weaponise</b><small>today</small></div>
+        <div class="st now"><b>Deliver</b><small>today</small></div>
+        <div class="st now"><b>Exploit</b><small>TA0001</small></div>
+        <div class="st"><b>Install</b><small>day 3</small></div>
+        <div class="st"><b>C2</b><small>day 3</small></div>
+        <div class="st"><b>Actions</b><small>day 3</small></div>
+      </div>
+      <div class="callout hot" style="margin-top:.7em"><strong>Today is the first four stages</strong> — in ATT&amp;CK terms,
+      <em>Reconnaissance</em> and <em>Initial Access</em>. When you read any real breach report this week, these are the words it will use.</div>
+      <aside class="notes">Name the models out loud — students should leave able to say "Cyber Kill Chain" and "MITRE ATT&amp;CK".
+      The distinction to land: the kill chain is a narrative (good for explaining), ATT&amp;CK is a catalogue with IDs (what defenders
+      actually build detections against). Don't drill the 14 tactics — just show that today occupies exactly two of them, and that
+      the faded stages are Day 3. Mention that ATT&amp;CK is built from what real groups were observed doing, not from theory.</aside>
+    </section>
+
+    <!-- ================= RULES OF ENGAGEMENT ================= -->
+    <section>
+      <p class="kicker">Before you touch anything</p>
+      <h2>Rules of engagement — the line you don't cross</h2>
+      <div class="k2 c3 roe" style="margin-top:.6em">
+        <div class="card ok">
+          <h3>Always fine</h3>
+          <ul>
+            <li>Reading what someone <b>published</b>: Google, WHOIS, DNS, certificate logs</li>
+            <li>Searching a scan database like Shodan</li>
+            <li>Checking <b>your own</b> email on Have I Been Pwned</li>
+          </ul>
+        </div>
+        <div class="card ask">
+          <h3>Only with written permission</h3>
+          <ul>
+            <li>Port-scanning a host you don't own</li>
+            <li>Trying a login — even one</li>
+            <li>Sending a phishing test to real people</li>
+          </ul>
+        </div>
+        <div class="card no">
+          <h3>Never</h3>
+          <ul>
+            <li>Using credentials that aren't yours, even if they're public</li>
+            <li>Opening data that leaked but isn't yours</li>
+            <li>Profiling a classmate who didn't ask you to</li>
+          </ul>
+        </div>
+      </div>
+      <div class="callout hot" style="margin-top:.9em"><strong>Finding is legal. Accessing is not.</strong>
+      Today you OSINT <em>yourself</em> and public company data; every attack you run is against our sandbox.
+      To practise for real, use ranges built for it — <em>TryHackMe, Hack The Box, VulnHub</em> — or a bug-bounty programme's written scope.</div>
+      <aside class="notes">Do not skip this — the next two slides send them to run real searches on real people and real companies.
+      Land the one-line rule: <strong>finding is legal, accessing is not</strong>. The middle column is the one that surprises people —
+      a single unauthorised login attempt is already the offence in most jurisdictions; intent doesn't matter. The third column is
+      about other humans: the self-OSINT exercise is powerful precisely because it's consensual — turning it on a classmate is not.
+      Point at the legal practice ranges so the answer to "where can I try this?" is concrete.</aside>
+    </section>
+
     <!-- ================= RECON & OSINT — DEFINED ================= -->
     <section>
       <p class="kicker">Recon · gathering intel</p>
@@ -113,6 +213,24 @@
       yourself, matters. Ethics: finding public pages is legal; opening data that isn't yours is not.</aside>
     </section>
 
+    <!-- ================= INFRASTRUCTURE RECON ================= -->
+    <section>
+      <p class="kicker">Recon · the target's machines</p>
+      <h2>From one domain name to their whole attack surface</h2>
+      <iframe class="wframe" style="height:566px"
+              src="widgets/infra_recon.html?v=1"
+              title="Passive infrastructure recon" scrolling="auto"></iframe>
+      <aside class="notes">Dorking found their <em>documents</em>; this finds their <em>machines</em> — and all of it is still passive.
+      Run the sources left to right and let the map build. What each one is: <strong>WHOIS</strong> = the public registration record.
+      <strong>DNS</strong> = the public phonebook (the MX record hands you their mail provider, so your fake login page knows which
+      brand to copy). <strong>crt.sh</strong> = certificate transparency: every HTTPS certificate ever issued is written to a public
+      append-only log, so every hostname they ever secured is searchable — this is where "jira-internal" falls out, and nobody ever
+      meant to publish it. <strong>Shodan</strong> = someone else already port-scanned the whole internet and sells the database;
+      reading it is passive for you (make this nuance explicit — the scan happened, but not by you, so the target sees nothing).
+      <strong>GitHub</strong> = a committed key lives in the history forever, and every commit carries a real employee's name and email.
+      Land the ending: zero packets sent, and the map already names the exact box and CVE they'll attack in the console later.</aside>
+    </section>
+
     <!-- ================= SELF-OSINT / DIGITAL FOOTPRINT ================= -->
     <section>
       <p class="kicker">Recon · turn it on yourself</p>
@@ -129,12 +247,30 @@
       every card has a "shrink it" fix. This is the defender's mindset sneaking into the attacker's week.</aside>
     </section>
 
+    <!-- ================= EMAIL IDENTITY (SPF/DKIM/DMARC) ================= -->
+    <section>
+      <p class="kicker">Deliver · the foundation</p>
+      <h2>How email proves who sent it — and what it can't</h2>
+      <iframe class="wframe" style="height:566px"
+              src="widgets/email_identity.html?v=1"
+              title="Email identity: SPF, DKIM, DMARC" scrolling="auto"></iframe>
+      <aside class="notes">Before they build a lure, they need to know why the con is even possible. Three names on one message:
+      the <strong>envelope sender</strong> (SPF checks it, the human never sees it), the <strong>DKIM signature</strong> (proves a
+      domain's key signed the mail), and the <strong>From header</strong> — the only line a human reads. <strong>DMARC</strong> is the
+      rule that ties them together: the visible domain must match what SPF or DKIM actually authenticated.
+      Run all three modes. (1) Spoofing the real domain fails every check — set the policy to <em>p=reject</em> and it never arrives.
+      That is the one attack this machinery stops. Then the payoff: (2) a <strong>look-alike domain the attacker owns</strong> passes
+      all three, honestly, and lands in the inbox — authentication proved the mail came from falcon-ta1ent.com, it never claimed that
+      domain is Falcon Talent. (3) Free webmail passes too; the only lie is the display name, which no protocol checks at all.
+      Land it: SPF/DKIM/DMARC stop <em>impersonation of a domain</em>, not <em>deception of a person</em>.</aside>
+    </section>
+
     <!-- ================= WEAPONISE — PAYLOAD TYPES ================= -->
     <section>
       <p class="kicker">Weaponise · build the payload</p>
       <h2>Weaponise: the payload the lure carries</h2>
       <iframe class="wframe" style="height:566px"
-              src="widgets/weaponise.html?v=1"
+              src="widgets/weaponise.html?v=2"
               title="Payload types — interactive examples" scrolling="auto"></iframe>
       <aside class="notes">The missing kill-chain stage: weaponise = the payload the lure carries. Drive each tab live:
       (1) Credential harvester — type in the fake login, watch every keystroke mirror to the attacker's console;
@@ -171,7 +307,7 @@
       <p class="kicker">Deliver · phishing</p>
       <h2>Phishing: one con, many delivery channels</h2>
       <iframe class="wframe" style="height:566px"
-              src="widgets/phishing_types.html?v=2"
+              src="widgets/phishing_types.html?v=3"
               title="Types of phishing with examples" scrolling="auto"></iframe>
       <aside class="notes">Definition first: phishing is a fraudulent message impersonating someone you trust to make you
       click, log in, or pay. Then the taxonomy — click each type to see a real-looking example with its red flags called out.
@@ -192,6 +328,25 @@
       jumps, red-flag score barely moves. That's the lesson — the detail that makes a lure land came from the recon
       they'll do earlier in the day. Hover the button to expose the real link (masked-link tell).
       Land it: this is why <em>spear</em>-phishing beats spray-and-pray, and why your public footprint is the ammunition.</aside>
+    </section>
+
+    <!-- ================= AiTM — THE PHISH THAT BEATS MFA ================= -->
+    <section>
+      <p class="kicker">Deliver · when MFA isn't enough</p>
+      <h2>The phish that beats MFA — and what stops it</h2>
+      <iframe class="wframe" style="height:566px"
+              src="widgets/aitm.html?v=1"
+              title="Adversary-in-the-middle phishing" scrolling="auto"></iframe>
+      <aside class="notes">The modern correction to "just turn on MFA". The attacker's page isn't a copy — it's a
+      <strong>live proxy</strong> sitting between the victim and the real site, passing every message through.
+      Run <em>SMS code</em> and then <em>App push</em>: the code is real, current, and typed by the real user, so relaying it works;
+      push is <em>worse</em>, because she genuinely started this login so the prompt looks exactly right. She isn't careless.
+      Then point at the pocket: the prize isn't the password, it's the <strong>session cookie</strong> the real site issues after
+      MFA succeeds — replay that and you're in, no MFA asked, and it keeps working even after she changes her password.
+      (That's why incident response <em>revokes sessions</em>, not just resets passwords.)
+      Now switch to <strong>Passkey</strong> and run it again: the browser signs a challenge bound to the site's real address, the
+      victim was on falcon-ta1ent.com, so the signature is worthless. The pocket is empty. Land it: phishing-resistant MFA
+      (passkeys / FIDO2) is the only option here that fails <em>closed</em> — the human can still be fooled, the maths cannot.</aside>
     </section>
 
     <!-- ================= INITIAL-ACCESS LANDSCAPE ================= -->
@@ -221,18 +376,27 @@
     <section>
       <p class="kicker">Foothold · beyond the obvious</p>
       <h2>Other ways in — the ones that skip your defences</h2>
-      <div class="k2 c5" style="margin-top:.7em">
+      <div class="k2 c4" style="margin-top:.6em">
         <div class="card"><h3>USB drop</h3><p>A &ldquo;lost&rdquo; USB in the car park. Curiosity plugs it in.</p><span class="ex"><b>Skips:</b> email filters</span></div>
         <div class="card"><h3>Evil-twin Wi-Fi</h3><p>A fake &ldquo;Airport_WiFi&rdquo;. Join it and they're in the middle.</p><span class="ex"><b>Skips:</b> the network edge</span></div>
         <div class="card"><h3>MFA fatigue</h3><p>Spam approve-prompts at 3am until they tap &ldquo;Approve&rdquo;.</p><span class="ex"><b>Skips:</b> MFA itself</span></div>
         <div class="card"><h3>SIM swap</h3><p>Hijack the phone number, steal the SMS codes.</p><span class="ex"><b>Skips:</b> SMS 2FA</span></div>
-        <div class="card"><h3>Tailgating</h3><p>Follow a badge-holder through the door.</p><span class="ex"><b>Skips:</b> every digital control</span></div>
       </div>
-      <div class="callout hot" style="margin-top:1.1em">Each one <strong>sidesteps a control you'd trust</strong> — so defence-in-depth
-      assumes any single layer will fail. Notice too: <em>MFA is not magic</em> — fatigue and SIM-swap both beat it.</div>
+      <div class="k2 c4" style="margin-top:.5em">
+        <div class="card"><h3>Tailgating</h3><p>Follow a badge-holder through the door.</p><span class="ex"><b>Skips:</b> every digital control</span></div>
+        <div class="card"><h3>Watering hole</h3><p>Poison a site you know they already visit, and wait.</p><span class="ex"><b>Skips:</b> &ldquo;don't click strange links&rdquo;</span></div>
+        <div class="card"><h3>Drive-by</h3><p>A hacked page or ad that fires on load — no click needed.</p><span class="ex"><b>Skips:</b> the victim entirely</span></div>
+        <div class="card"><h3>Supplier access</h3><p>Breach their IT provider and use the access it already has.</p><span class="ex"><b>Skips:</b> the whole perimeter</span></div>
+      </div>
+      <div class="callout hot" style="margin-top:.65em">Each one <strong>sidesteps a control you'd trust</strong> — so defence-in-depth
+      assumes any layer will fail. And the last two need <em>no mistake by the victim at all</em>.</div>
       <aside class="notes">Breadth beyond the remote/digital vectors. The point isn't to drill each — it's the pattern: every one
-      bypasses a specific control the target trusts (filters, perimeter, MFA, SMS 2FA, all-of-digital). Two takeaways:
-      defence-in-depth (assume a layer fails), and MFA is not a silver bullet (fatigue + SIM-swap defeat it).</aside>
+      bypasses a specific control the target trusts (filters, perimeter, MFA, SMS 2FA, all-of-digital). The second row matters
+      because it breaks the comfortable story that victims are careless: a <strong>watering hole</strong> poisons a site they already
+      trust and visit daily, a <strong>drive-by</strong> fires on page load with no click, and a <strong>trusted-relationship</strong>
+      breach comes in through a supplier's legitimate access — the victim did nothing wrong in any of the three. (Supply-chain
+      compromise is the same idea aimed at software rather than a service provider — mention, don't deep-dive.)
+      Takeaways: defence-in-depth, and MFA is not a silver bullet.</aside>
     </section>
 
     <!-- ================= CRIMINAL ECONOMY ================= -->
@@ -256,12 +420,51 @@
       hit. Land the personal hook: this is exactly why the reused password in the footprint cascade is so dangerous.</aside>
     </section>
 
+    <!-- ================= PASSWORD ATTACKS ================= -->
+    <section>
+      <p class="kicker">Foothold · the foundation</p>
+      <h2>How passwords actually get attacked — all four ways</h2>
+      <iframe class="wframe" style="height:566px"
+              src="widgets/pw_attacks.html?v=1"
+              title="Password attacks: brute force, dictionary, stuffing, spraying" scrolling="auto"></iframe>
+      <aside class="notes">People say "they cracked the password" as if it were one thing. It's four, and they behave completely
+      differently. Run each with defences off first. <strong>Brute force</strong> really enumerates the space — watch the odometer
+      spin through 25,895 real combinations to reach a 3-character password, then say the scale out loud: 8 characters is 2.8
+      trillion. Length beats it; nothing else has to. <strong>Dictionary</strong> doesn't try everything, it tries what people
+      actually pick. Both hammer <em>one</em> account — so turn on <strong>lockout</strong> and watch both die instantly.
+      Now the important half. Leave lockout ON and run <strong>credential stuffing</strong> (real breached pairs, one attempt each)
+      and <strong>spraying</strong> (one popular password against everyone, one attempt each). Lockout never fires — one attempt per
+      account never looks like an attack. That is the punchline: the control everyone reaches for does nothing against the two
+      attacks that actually scale. Then show what does: unique-per-site kills stuffing outright; MFA kills all four; and note that
+      unique passwords do <em>not</em> stop spraying, because those people each independently chose the same obvious password.
+      This is where the <code>hydra</code> command in the next console comes from.</aside>
+    </section>
+
+    <!-- ================= WHAT A SHELL IS ================= -->
+    <section>
+      <p class="kicker">Foothold · the foundation</p>
+      <h2>A &ldquo;shell&rdquo; is a command line on someone else's machine</h2>
+      <iframe class="wframe" style="height:566px"
+              src="widgets/shell_anatomy.html?v=1"
+              title="Bind, reverse and web shells" scrolling="auto"></iframe>
+      <aside class="notes">The word the whole day builds to, defined at last. A <strong>shell</strong> is just a command
+      interpreter — you type, the machine runs it, it answers. Getting one over the network means you can type on <em>their</em>
+      computer. Once it opens, actually type into it: <code>whoami</code>, <code>id</code>, <code>ls</code>, then <code>sudo -l</code>
+      — the last one leaves a crumb Day 3 picks up.
+      Drive the three shapes. <strong>Bind</strong>: the target listens, you dial in — and the firewall drops it, because inbound
+      is filtered. <strong>Reverse</strong>: flip the direction, the target dials <em>you</em> on 443, and it walks straight out,
+      because outbound is trusted and it looks like ordinary HTTPS. That single asymmetry is why practically every real intrusion
+      uses a reverse shell. <strong>Web shell</strong>: a script in the web root, so commands ride a port that was already open.
+      Toggle the firewall rule off and watch the bind shell suddenly work — the control, not the attack, was the deciding factor.
+      Now the terminal in the next slide will read as something they understand rather than movie noise.</aside>
+    </section>
+
     <!-- ================= LAND THE FIRST SHELL ================= -->
     <section>
       <p class="kicker">Foothold · initial access</p>
       <h2>Land the first shell — they log in, they don't &ldquo;hack&rdquo;</h2>
       <iframe class="wframe" style="height:566px"
-              src="widgets/first_shell.html?v=1"
+              src="widgets/first_shell.html?v=2"
               title="Land the first shell console" scrolling="auto"></iframe>
       <aside class="notes">The payoff of the whole day. Target and loot carry over: the exposed services came from
       recon, the reused password came from the breach cascade in the footprint slide. Run each method with all defences
@@ -277,13 +480,72 @@
       <p class="kicker">The other side · you left tracks</p>
       <h2>Everything you touched wrote a line in someone's log</h2>
       <iframe class="wframe" style="height:566px"
-              src="widgets/traces.html?v=1"
+              src="widgets/traces.html?v=2"
               title="What the defender saw" scrolling="auto"></iframe>
       <aside class="notes">The bridge to Day 5. Replay each move from today and watch the defender's SIEM. The reveal:
       the two <em>passive</em> recon moves (dorking, OSINT) left NOTHING — the target never knew. But every <em>active</em>
       step — port scan, phishing send, stolen-cred login (impossible travel), CVE exploit (EDR) — lit up an alert. Ties
       back to passive-vs-active from the recon slide, and forward to Friday, when they'll sit on the defender's side and
       reconstruct today's whole attack from exactly these alerts. Land it: attackers are loud the instant they touch you.</aside>
+    </section>
+
+    <!-- ================= DEFENCE — CLOSING EACH DOOR ================= -->
+    <section>
+      <p class="kicker">The other side · what actually works</p>
+      <h2>Every door you opened today — and the control that closes it</h2>
+      <div class="fix" style="margin-top:.5em">
+        <div>
+          <div class="r"><span class="a">Data leaking into public sources</span><span class="c">Audit your own DNS, certificates and repos. <b>Scan for secrets</b> before you commit.</span></div>
+          <div class="r"><span class="a">Someone spoofing your domain</span><span class="c">Publish SPF + DKIM, then <b>DMARC at p=reject</b>. Nothing else stops it.</span></div>
+          <div class="r"><span class="a">A look-alike domain</span><span class="c">You can't block it — build the <b>call-back habit</b> and a one-click report button.</span></div>
+          <div class="r"><span class="a">Malicious attachment</span><span class="c"><b>Block macros by policy.</b> The whole class of attack dies.</span></div>
+          <div class="r"><span class="a">Credential stuffing</span><span class="c">A <b>unique password per site</b> — which means a password manager.</span></div>
+        </div>
+        <div>
+          <div class="r"><span class="a">Password spraying</span><span class="c"><b>Ban common passwords</b> and alert on one password tried across many accounts.</span></div>
+          <div class="r"><span class="a">Brute force &amp; dictionary</span><span class="c"><b>Length</b> beats both; lockout ends them.</span></div>
+          <div class="r"><span class="a">AiTM / stolen session</span><span class="c"><b>Passkeys.</b> And revoke <em>sessions</em>, not just passwords.</span></div>
+          <div class="r"><span class="a">Exposed service, unpatched app</span><span class="c"><b>Patch</b>, close the port, or put it behind the VPN.</span></div>
+          <div class="r"><span class="a">You already clicked</span><span class="c">Say so <b>immediately</b>. Speed of reporting decides how bad it gets.</span></div>
+        </div>
+      </div>
+      <div class="callout hot" style="margin-top:.8em">Notice the shape: <strong>no single control covers the row above or below it.</strong>
+      That's why defence is layered — and why the fastest win in the whole list is a culture where people report their own mistakes without fear.</div>
+      <aside class="notes">The defensive bookend — they've spent the day attacking, so give them the other half.
+      Don't read the table; pick three. (1) DMARC p=reject is the only thing that stops exact-domain spoofing, and most domains never
+      move past p=none. (2) Passkeys are the only entry that answers the AiTM slide — and "revoke sessions, not just passwords" is the
+      detail almost everyone gets wrong. (3) The last row is the human one: the cost of a click is set by how fast it's reported, and
+      punishing people for clicking is what buys the attacker their dwell time. Land the closing line: every row needs a different
+      control, which is exactly what defence-in-depth means.</aside>
+    </section>
+
+    <!-- ================= RECAP ================= -->
+    <section>
+      <p class="kicker">Day 2 · what you just did</p>
+      <h2>You started with a name. You finished with a shell.</h2>
+      <div class="k2 c4" style="margin-top:.7em">
+        <div class="card"><h3>You gathered <span class="tag">recon</span></h3>
+          <p>Dorks, WHOIS, DNS, certificate logs, Shodan, public code — and your own footprint.</p>
+          <span class="ex"><b>Nothing you did was visible to the target.</b></span></div>
+        <div class="card"><h3>You built <span class="tag">weaponise</span></h3>
+          <p>A harvester, a macro, a masked link, a QR — and a lure tuned with what recon gave you.</p>
+          <span class="ex"><b>Personalisation costs the fewest red flags.</b></span></div>
+        <div class="card"><h3>You delivered <span class="tag">deliver</span></h3>
+          <p>Email, SMS, voice, QR — and a live proxy that walked straight through MFA.</p>
+          <span class="ex"><b>Authentication ≠ trustworthiness.</b></span></div>
+        <div class="card" style="border-top-color:var(--bad)"><h3>You got in <span class="tag">foothold</span></h3>
+          <p>A reused password, a default login, an unpatched app — no movie hacking anywhere.</p>
+          <span class="ex"><b>You landed as www-data, not root.</b></span></div>
+      </div>
+      <div class="callout hot" style="margin-top:1em"><strong>The through-line:</strong> the attacker's advantage was never a tool —
+      it was <em>information you published</em> and <em>a password you reused</em>. And the moment you stopped reading and started
+      touching, you started writing lines in someone's log.</div>
+      <div class="callout" style="margin-top:.6em"><strong>Tomorrow:</strong> you're inside on one machine as a low-privilege user.
+      Day 3 is the network — how to see it, move across it, and turn <em>www-data</em> into the whole domain.</div>
+      <aside class="notes">Bookend the day in one screen. Walk the four cards left to right — it's the kill chain they met on slide 2,
+      now filled in with things they actually did. Land the through-line hard: no exploit-of-the-week, no genius; public information
+      plus a reused password. Then hand over to Day 3 with the concrete state they're in — one box, low privilege, loud on the
+      network — which is exactly where tomorrow starts.</aside>
     </section>
 
   </div>

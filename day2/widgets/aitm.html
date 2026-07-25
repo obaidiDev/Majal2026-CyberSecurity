@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="_shared.css?v=1">
+<style>
+  body { padding: 6px; }
+  .bar { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; flex-wrap: wrap; }
+  .bar .lbl { font-size: 10.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+    color: #8AA1A8; margin-right: 2px; }
+  .m { font-family: inherit; font-size: 12.5px; font-weight: 700; border-radius: 999px;
+    padding: 7px 13px; cursor: pointer; border: 1px solid #CDD8DA; background: #fff; color: #12333D; }
+  .m.sel { background: #00567C; border-color: #00567C; color: #fff; }
+  .m.sel[data-m="passkey"] { background: #1F8F89; border-color: #1F8F89; }
+  .m:hover:not(.sel) { background: #EEF3F3; }
+  .play { margin-left: auto; font-family: inherit; font-size: 13px; font-weight: 800; border-radius: 999px;
+    padding: 8px 18px; cursor: pointer; border: 1px solid #B23333; background: #D64545; color: #fff; }
+  .play:hover { background: #C1403f; } .play:disabled { opacity: .5; cursor: default; }
+
+  canvas#seq { width: 100%; height: 306px; display: block; border: 1px solid #E0E7E8;
+    border-radius: 10px; background: #fff; }
+
+  .two { display: grid; grid-template-columns: 300px 1fr; gap: 12px; margin-top: 9px; align-items: start; }
+  .loot { background: #06232B; border-radius: 10px; padding: 10px 12px; min-height: 92px; }
+  .loot h4 { margin: 0 0 7px; font-family: "JetBrains Mono", Menlo, Consolas, monospace;
+    font-size: 10.5px; font-weight: 700; letter-spacing: .09em; color: #FF7A7A; }
+  .loot .item { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 11.5px;
+    color: #EAF7F5; line-height: 1.7; }
+  .loot .item .k { color: #7C9BA2; }
+  .loot .none { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 11.5px; color: #46C08A; line-height: 1.6; }
+  .loot .dim { color: #6B8A90; font-size: 11.5px; font-family: "JetBrains Mono", Menlo, Consolas, monospace; }
+
+  .cap { background: #F7FAFA; border: 1px solid #E0E7E8; border-radius: 10px; padding: 10px 13px;
+    min-height: 92px; font-size: 12.7px; line-height: 1.5; color: #42606A; }
+  .cap b { color: #12333D; } .cap .r { color: #C1403f; font-weight: 700; } .cap .g { color: #146d68; font-weight: 700; }
+</style>
+</head><body>
+  <div class="bar">
+    <span class="lbl">The victim's login is protected by</span>
+    <button class="m sel" data-m="pwd">Password only</button>
+    <button class="m" data-m="sms">SMS code</button>
+    <button class="m" data-m="push">App push</button>
+    <button class="m" data-m="passkey">Passkey</button>
+    <button class="play" id="play">&#9654; Run the phish</button>
+  </div>
+
+  <canvas id="seq"></canvas>
+
+  <div class="two">
+    <div class="loot" id="loot"></div>
+    <div class="cap" id="cap"></div>
+  </div>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (s) { return document.querySelector(s); };
+
+  var V = 0, P = 1, R = 2;                       // lanes: victim, proxy, real service
+  var LANES = [
+    { t: "THE VICTIM", s: "layla@falcontalent.com", col: "#00567C" },
+    { t: "ATTACKER'S PROXY", s: "falcon-ta1ent.com", col: "#D64545" },
+    { t: "THE REAL SERVICE", s: "login.microsoft.com", col: "#1F8F89" }
+  ];
+
+  // Each method's real sequence. loot = what lands in the attacker's pocket at that step.
+  var COMMON = [
+    { f: V, t: P, txt: "clicks the link — sees a pixel-perfect copy of the login page" },
+    { f: V, t: P, txt: "types the password", loot: { k: "password", v: "Summer2026!" } },
+    { f: P, t: R, txt: "proxy forwards it — the real site sees an ordinary login" }
+  ];
+  var FINISH = [
+    { f: R, t: P, txt: "✓ authenticated — issues a session cookie", loot: { k: "session cookie", v: "ESTSAUTH=0.AXoA9…" }, ok: true },
+    { f: P, t: V, txt: "silently redirects you to the real site — nothing felt wrong" },
+    { f: P, t: R, txt: "replays the stolen cookie — already logged in, never asked for MFA", crit: true }
+  ];
+
+  var FLOWS = {
+    pwd: { label: "Password only",
+      steps: COMMON.concat(FINISH),
+      verdict: "in",
+      cap: "With no second factor the proxy barely has to work. But notice what it kept at the end: not just the password — a <b>session cookie</b>." },
+    sms: { label: "SMS code",
+      steps: COMMON.concat([
+        { f: R, t: P, txt: "“enter the 6-digit code we just texted you”" },
+        { f: P, t: V, txt: "the same prompt, passed straight through" },
+        { f: V, t: P, txt: "types the real code from the real SMS", loot: { k: "otp", v: "418 902" } },
+        { f: P, t: R, txt: "relayed in under a second — the code is still valid" }
+      ]).concat(FINISH),
+      verdict: "in",
+      cap: "The code was <b>real</b>, <b>current</b>, and typed by the <b>real user</b> — so relaying it works. The attacker never has to guess or phish the code separately; they just stand in the middle and pass it along." },
+    push: { label: "App push",
+      steps: COMMON.concat([
+        { f: R, t: P, txt: "sends an approve/deny push to her phone" },
+        { f: P, t: V, txt: "she is already expecting it — she just logged in" },
+        { f: V, t: P, txt: "taps Approve", loot: { k: "push", v: "approved by the victim" } },
+        { f: P, t: R, txt: "the real site sees an approved login" }
+      ]).concat(FINISH),
+      verdict: "in",
+      cap: "Push is <b>worse</b> here than SMS: because she genuinely started this login, the prompt looks exactly right. She isn't being careless — she is approving the login she just made." },
+    passkey: { label: "Passkey",
+      steps: COMMON.slice(0, 1).concat([
+        { f: R, t: P, txt: "sends a challenge to sign" },
+        { f: P, t: V, txt: "forwards the challenge" },
+        { f: V, t: P, txt: "browser signs it — but binds the signature to falcon-ta1ent.com", key: true },
+        { f: P, t: R, txt: "relays the signature", },
+        { f: R, t: P, txt: "✕ rejected — signed for the wrong site. Login refused.", fail: true }
+      ]),
+      verdict: "blocked",
+      cap: "The passkey never types anything a proxy can copy. It signs a challenge that is <b>cryptographically bound to the website's real address</b> — and the victim was on <em>falcon-ta1ent.com</em>. The signature is worthless anywhere else. <span class='g'>The human can still be fooled; the maths cannot.</span>" }
+  };
+
+  var mode = "pwd", shown = 0, running = false;
+
+  // ---------- canvas ----------
+  var cv = $("#seq"), ctx = cv.getContext("2d");
+  var W = 1060, H = 306;
+
+  function fit() {
+    var cssW = cv.clientWidth || W, dpr = window.devicePixelRatio || 1;
+    cv.width = Math.round(cssW * dpr); cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); W = cssW; draw();
+  }
+  window.addEventListener("resize", fit);
+
+  function rrect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+
+  function laneX(i) { return [W * 0.155, W * 0.5, W * 0.845][i]; }
+
+  function draw() {
+    var steps = FLOWS[mode].steps;
+    ctx.clearRect(0, 0, W, H);
+    ctx.textBaseline = "alphabetic";
+
+    var top = 52, spacing = Math.min(27, (H - top - 16) / Math.max(1, steps.length));
+
+    // lifelines
+    LANES.forEach(function (L, i) {
+      var x = laneX(i);
+      ctx.strokeStyle = "#E5EBEC"; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(x, 46); ctx.lineTo(x, H - 8); ctx.stroke(); ctx.setLineDash([]);
+
+      var bw = Math.min(230, W * 0.28), bh = 34;
+      ctx.fillStyle = "#FBFCFC"; rrect(x - bw / 2, 6, bw, bh, 8); ctx.fill();
+      ctx.strokeStyle = L.col; ctx.lineWidth = 1.5; rrect(x - bw / 2, 6, bw, bh, 8); ctx.stroke();
+      ctx.textAlign = "center";
+      ctx.fillStyle = L.col; ctx.font = "800 11px 'Avenir Next', 'Segoe UI', system-ui, sans-serif";
+      ctx.fillText(L.t, x, 21);
+      ctx.fillStyle = "#8AA1A8"; ctx.font = "10px 'JetBrains Mono', Menlo, Consolas, monospace";
+      ctx.fillText(L.s, x, 34);
+    });
+
+    // messages
+    steps.slice(0, shown).forEach(function (s, i) {
+      var y = top + i * spacing + 14;
+      var x1 = laneX(s.f), x2 = laneX(s.t);
+      var col = s.fail ? "#D64545" : s.crit ? "#D64545" : s.key ? "#1F8F89" : s.ok ? "#C77A20" : LANES[s.f].col;
+
+      ctx.strokeStyle = col; ctx.lineWidth = s.crit || s.fail ? 2 : 1.4;
+      if (s.fail) ctx.setLineDash([5, 3]);
+      ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y); ctx.stroke(); ctx.setLineDash([]);
+
+      // arrowhead
+      var dir = x2 > x1 ? 1 : -1;
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      ctx.moveTo(x2, y); ctx.lineTo(x2 - dir * 8, y - 4.5); ctx.lineTo(x2 - dir * 8, y + 4.5);
+      ctx.closePath(); ctx.fill();
+
+      // label
+      ctx.textAlign = "center";
+      ctx.fillStyle = s.crit || s.fail ? "#B23333" : s.key ? "#146d68" : "#42606A";
+      ctx.font = (s.crit || s.fail || s.key ? "700 " : "") + "10.6px 'Avenir Next', 'Segoe UI', system-ui, sans-serif";
+      ctx.fillText(s.txt, (x1 + x2) / 2, y - 7);
+
+      // loot marker
+      if (s.loot) {
+        ctx.fillStyle = "#C77A20";
+        ctx.beginPath(); ctx.arc(laneX(P), y, 4.5, 0, Math.PI * 2); ctx.fill();
+      }
+    });
+  }
+
+  // ---------- play ----------
+  function play() {
+    if (running) return;
+    running = true; $("#play").disabled = true; shown = 0; renderLoot(); draw();
+    var steps = FLOWS[mode].steps;
+    (function nx() {
+      if (shown >= steps.length) { running = false; $("#play").disabled = false; finish(); return; }
+      shown++; draw(); renderLoot();
+      setTimeout(nx, 620);
+    })();
+  }
+
+  function renderLoot() {
+    var steps = FLOWS[mode].steps.slice(0, shown);
+    var got = steps.filter(function (s) { return s.loot; });
+    var el = $("#loot");
+    if (FLOWS[mode].verdict === "blocked" && shown >= FLOWS[mode].steps.length) {
+      el.innerHTML = '<h4>◈ THE ATTACKER\'S POCKET</h4><div class="none">empty.<br>No password typed, no code to relay,<br>no cookie issued. Nothing to replay.</div>';
+      return;
+    }
+    if (!got.length) { el.innerHTML = '<h4>◈ THE ATTACKER\'S POCKET</h4><div class="dim">nothing yet…</div>'; return; }
+    el.innerHTML = '<h4>◈ THE ATTACKER\'S POCKET</h4>' + got.map(function (s) {
+      return '<div class="item"><span class="k">' + s.loot.k + ':</span> ' + s.loot.v + '</div>';
+    }).join("");
+  }
+
+  function finish() {
+    var f = FLOWS[mode];
+    var extra = f.verdict === "in"
+      ? "<div style='margin-top:7px'><span class='r'>The attacker is logged in as her</span> — and the cookie keeps working even if she changes her password later. Killing the <b>session</b> is what actually locks them out.</div>"
+      : "<div style='margin-top:7px'><span class='g'>Attack failed at the protocol level</span> — not because she was careful, but because a passkey cannot be handed to the wrong website.</div>";
+    $("#cap").innerHTML = "<b>" + f.label + ".</b> " + f.cap + extra;
+    renderLoot();
+  }
+
+  // ---------- wiring ----------
+  function setMode(m) {
+    mode = m; shown = 0; running = false;
+    Array.prototype.forEach.call(document.querySelectorAll(".m"), function (b) {
+      b.classList.toggle("sel", b.getAttribute("data-m") === m);
+    });
+    $("#cap").innerHTML = "<b>" + FLOWS[m].label + ".</b> Press <b>▶ Run the phish</b> and watch every message pass <em>through</em> the attacker.";
+    renderLoot(); draw();
+  }
+  Array.prototype.forEach.call(document.querySelectorAll(".m"), function (b) {
+    b.addEventListener("click", function () { if (!running) setMode(b.getAttribute("data-m")); });
+  });
+  $("#play").addEventListener("click", play);
+
+  // hooks: ?m=passkey&go=1
+  var qs = new URLSearchParams(location.search);
+  setMode(qs.get("m") && FLOWS[qs.get("m")] ? qs.get("m") : "pwd");
+  fit();
+  if (qs.get("go") === "1") { shown = FLOWS[mode].steps.length; draw(); finish(); }
+})();
+</script>
+</body></html>

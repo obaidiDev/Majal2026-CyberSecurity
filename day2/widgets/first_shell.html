@@ -72,7 +72,7 @@
       <div class="host">10.0.0.7 &nbsp;vpn-gw01</div>
       <div class="svc"><span class="port">22</span> SSH &nbsp;OpenSSH 8.2</div>
       <div class="svc"><span class="port">8080</span> WebApp v1.4 <span class="cve">CVE-2023-1337</span></div>
-      <div class="svc"><span class="port">3389</span> Admin panel &nbsp;(login)</div>
+      <div class="svc"><span class="port">3389</span> RDP &nbsp;remote desktop</div>
     </div>
     <div class="panel loot">
       <p class="colhd">Loot · from the breach dump</p>
@@ -186,7 +186,12 @@
     if (res.shell) {
       setBadge("shell", "● SHELL OPENED · " + res.user);
       tk.className = "takeaway shell";
-      tk.innerHTML = "<b>First foothold.</b> No movie hack — just a login or an unpatched box. This is where an attacker actually gets in. What you do next — move, escalate — is <b>Day 3</b>.";
+      var lowPriv = res.user.indexOf("www-data") === 0;
+      tk.innerHTML = "<b>First foothold.</b> No movie hack — just a login or an unpatched box. This is where an attacker actually gets in. " +
+        (lowPriv
+          ? "But look <em>who</em> you are: <b>www-data</b>, the web server's own account — not root. You are inside and can barely do anything. "
+          : "You landed as <b>admin</b> on this one box — which is not the same as owning the network. ") +
+        "Turning this into real control is <b>Day 3</b>.";
     } else {
       setBadge("blocked", "✕ BLOCKED");
       tk.className = "takeaway blocked";

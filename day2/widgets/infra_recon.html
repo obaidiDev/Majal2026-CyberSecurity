@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="_shared.css?v=1">
+<style>
+  body { padding: 6px; }
+  .bar { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; flex-wrap: wrap; }
+  .dom { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 13px; font-weight: 700;
+    color: #00567C; background: #EAF0F1; border: 1px solid #D3E1E1; border-radius: 8px; padding: 7px 12px; }
+  .tool { font-family: inherit; font-size: 12.5px; font-weight: 700; border-radius: 999px;
+    padding: 7px 13px; cursor: pointer; border: 1px solid #CDD8DA; background: #fff; color: #12333D; }
+  .tool:hover:not(.done) { background: #EEF3F3; border-color: #8AA1A8; }
+  .tool.done { color: #fff; }
+  .tool.done::before { content: "\2713  "; }
+  .tool[data-t="whois"].done  { background: #00567C; border-color: #00567C; }
+  .tool[data-t="dns"].done    { background: #1F8F89; border-color: #1F8F89; }
+  .tool[data-t="crt"].done    { background: #7A5AA8; border-color: #7A5AA8; }
+  .tool[data-t="shodan"].done { background: #C1403f; border-color: #C1403f; }
+  .tool[data-t="git"].done    { background: #C77A20; border-color: #C77A20; }
+  .all { margin-left: auto; font-family: inherit; font-size: 12.5px; font-weight: 800; border-radius: 999px;
+    padding: 8px 16px; cursor: pointer; border: 1px solid #00567C; background: #00567C; color: #fff; }
+  .rst { font-family: inherit; font-size: 12.5px; font-weight: 700; border-radius: 999px;
+    padding: 8px 14px; cursor: pointer; border: 1px solid #CDD8DA; background: #fff; color: #5C7880; }
+
+  canvas#map { width: 100%; height: 262px; display: block; border: 1px solid #E0E7E8;
+    border-radius: 10px; background: #fff; }
+
+  .con { margin-top: 9px; background: #06232B; border-radius: 10px; padding: 10px 13px; height: 148px;
+    overflow-y: auto; font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 12px;
+    line-height: 1.62; color: #BFE0E2; white-space: pre-wrap; }
+  .con::-webkit-scrollbar { width: 7px; } .con::-webkit-scrollbar-thumb { background: #1F5563; border-radius: 4px; }
+  .con .c { color: #33D3CB; } .con .o { color: #8FB0B6; } .con .h { color: #FF7A7A; font-weight: 700; }
+  .con .g { color: #46C08A; } .con .dim { color: #6B8A90; }
+
+  .cap { margin-top: 8px; font-size: 12.7px; line-height: 1.45; color: #42606A; min-height: 34px; }
+  .cap b { color: #12333D; } .cap .r { color: #C1403f; font-weight: 700; } .cap .g { color: #146d68; font-weight: 700; }
+</style>
+</head><body>
+  <div class="bar">
+    <span class="dom">falcontalent.com</span>
+    <button class="tool" data-t="whois">WHOIS</button>
+    <button class="tool" data-t="dns">DNS records</button>
+    <button class="tool" data-t="crt">crt.sh</button>
+    <button class="tool" data-t="shodan">Shodan</button>
+    <button class="tool" data-t="git">GitHub</button>
+    <button class="all" id="all">&#9654; Run all</button>
+    <button class="rst" id="rst">Reset</button>
+  </div>
+
+  <canvas id="map"></canvas>
+  <div class="con" id="con"></div>
+  <div class="cap" id="cap"></div>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (s) { return document.querySelector(s); };
+
+  var COL = { whois: "#00567C", dns: "#1F8F89", crt: "#7A5AA8", shodan: "#C1403f", git: "#C77A20" };
+
+  // Every finding below comes from a source that is PUBLIC — no packet is ever sent to the target.
+  var TOOLS = {
+    whois: {
+      name: "WHOIS",
+      what: "The public domain registration record. Who registered it, when, through whom, and often a contact address.",
+      lines: ["$ whois falcontalent.com",
+              "Registrar: GoDaddy.com, LLC",
+              "Creation Date: 2011-04-02T09:14:22Z",
+              "Registrant Org: Falcon Talent Recruitment LLC",
+              "Registrant Country: SA",
+              "Abuse Contact: abuse@falcontalent.com"],
+      finds: [ { t: "Falcon Talent Recruitment LLC", s: "registered 2011 · Riyadh, SA", hot: 0 },
+               { t: "abuse@falcontalent.com", s: "a real, confirmed mailbox", hot: 0 } ],
+      cap: "<b>WHOIS</b> is the domain's public registration record. It confirms the company is real, how long it has existed, and hands you a live email address — all before you touch anything."
+    },
+    dns: {
+      name: "DNS records",
+      what: "The public directory that turns names into addresses — and quietly announces which services the company buys.",
+      lines: ["$ dig falcontalent.com ANY +short",
+              "A     203.0.113.10",
+              "MX    falcontalent-com.mail.protection.outlook.com  (pri 0)",
+              "TXT   \"v=spf1 include:spf.protection.outlook.com -all\""],
+      finds: [ { t: "www → 203.0.113.10", s: "their public web server", hot: 0 },
+               { t: "MX → Microsoft 365", s: "you now know the mail stack", hot: 1 } ],
+      cap: "<b>DNS</b> is a public phonebook. The MX record tells you they run <b>Microsoft 365</b> — so now your phishing login page knows exactly which brand to imitate."
+    },
+    crt: {
+      name: "crt.sh — certificate transparency",
+      what: "Every HTTPS certificate ever issued is written to a public, append-only log. Search it by domain and the hidden names fall out.",
+      lines: ["$ curl 'https://crt.sh/?q=%25.falcontalent.com&output=json'",
+              "[+] 41 certificates found — 4 unique hostnames:",
+              "    vpn.falcontalent.com",
+              "    dev.falcontalent.com",
+              "    staging-hr.falcontalent.com",
+              "    jira-internal.falcontalent.com"],
+      finds: [ { t: "vpn.falcontalent.com", s: "remote access, internet-facing", hot: 2 },
+               { t: "staging-hr.falcontalent.com", s: "test system — rarely patched", hot: 2 },
+               { t: "jira-internal.falcontalent.com", s: "named \"internal\", still public", hot: 2 },
+               { t: "dev.falcontalent.com", s: "developer environment", hot: 1 } ],
+      cap: "<b>Certificate transparency</b> is the gift nobody plans for: every TLS certificate is logged publicly, so <em>every</em> hostname they ever secured is searchable — including the ones they thought were private. <span class='r'>Nobody meant to publish \"jira-internal\".</span>"
+    },
+    shodan: {
+      name: "Shodan",
+      what: "A search engine of the whole internet's open ports and service banners, scanned continuously and offered as a database.",
+      lines: ["$ shodan search hostname:falcontalent.com",
+              "203.0.113.10   443/tcp  nginx 1.18.0",
+              "203.0.113.22   22/tcp   OpenSSH 8.2p1 Ubuntu",
+              "203.0.113.22   3389/tcp Remote Desktop (RDP) — exposed",
+              "203.0.113.31   8080/tcp WebApp 1.4  [!] CVE-2023-1337"],
+      finds: [ { t: "203.0.113.22:3389 RDP", s: "remote desktop, open to the world", hot: 2 },
+               { t: "203.0.113.31:8080 WebApp v1.4", s: "CVE-2023-1337 · unpatched", hot: 2 },
+               { t: "203.0.113.22:22 OpenSSH 8.2", s: "a login you can try", hot: 1 },
+               { t: "203.0.113.10:443 nginx 1.18", s: "the public website", hot: 0 } ],
+      cap: "<b>Shodan</b> already scanned the internet, so you don't have to. <span class='g'>Reading its database is passive for you</span> — the target sees nothing — yet it names the open RDP port and the exact unpatched app you'll attack later today."
+    },
+    git: {
+      name: "GitHub",
+      what: "Public code repositories, gists and commit history — written by employees who forgot what was in the file.",
+      lines: ["$ github search \"falcontalent\" in:file",
+              "falcontalent/web-deploy — config.yml",
+              "  aws_access_key_id: AKIA4XQ2...3PXQ   [!] live key",
+              "falcontalent/web-deploy — commit log",
+              "  14 employee name+email pairs in author fields",
+              "gist: \"vpn setup notes\" — internal IP ranges 10.0.0.0/24"],
+      finds: [ { t: "AWS key AKIA4XQ2…3PXQ", s: "committed to a public repo", hot: 2 },
+               { t: "14 employee emails", s: "harvested from commit authors", hot: 2 },
+               { t: "internal range 10.0.0.0/24", s: "from a public gist", hot: 1 },
+               { t: "jira-internal referenced", s: "confirms the hostname", hot: 0 } ],
+      cap: "<b>Public code</b> leaks more than code. A key committed once lives in the history forever, and every commit is signed with a real employee's name and email — <span class='r'>your phishing target list, written by the targets.</span>"
+    }
+  };
+  var ORDER = ["whois", "dns", "crt", "shodan", "git"];
+
+  // ---------- canvas map ----------
+  var cv = $("#map"), ctx = cv.getContext("2d");
+  var W = 1060, H = 262;
+  var nodes = [];           // {x,y,w,h,t,s,hot,col,a}  a = fade-in 0..1
+
+  function fit() {
+    var cssW = cv.clientWidth || W, dpr = window.devicePixelRatio || 1;
+    cv.width = Math.round(cssW * dpr); cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); W = cssW; draw();
+  }
+  window.addEventListener("resize", fit);
+
+  function rrect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+
+  function slot(i) {
+    var col = Math.floor(i / 4), row = i % 4;
+    var x0 = 200;
+    var nw = Math.min(206, (W - 8 - x0 - 3 * 12) / 4);
+    var gapx = (W - 8 - x0 - nw * 4) / 3;
+    return { x: x0 + col * (nw + gapx), y: 18 + row * 58, w: nw, h: 46 };
+  }
+
+  function drawRoot() {
+    var rx = 12, ry = H / 2 - 30, rw = 178, rh = 60;
+    ctx.fillStyle = "#EAF0F1"; rrect(rx, ry, rw, rh, 10); ctx.fill();
+    ctx.strokeStyle = "#00567C"; ctx.lineWidth = 1.8; rrect(rx, ry, rw, rh, 10); ctx.stroke();
+    ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = "#00567C"; ctx.font = "800 13px 'JetBrains Mono', Menlo, Consolas, monospace";
+    ctx.fillText("falcontalent.com", rx + rw / 2, ry + 27);
+    ctx.fillStyle = "#5C7880"; ctx.font = "10.5px 'Avenir Next', 'Segoe UI', system-ui, sans-serif";
+    ctx.fillText("one name is all you start with", rx + rw / 2, ry + 45);
+    return { x: rx + rw, y: ry + rh / 2 };
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    var root = drawRoot();
+
+    // edges first
+    nodes.forEach(function (n) {
+      ctx.save();
+      ctx.globalAlpha = 0.30 * n.a;
+      ctx.strokeStyle = n.col; ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(root.x, root.y);
+      var mx = (root.x + n.x) / 2;
+      ctx.bezierCurveTo(mx, root.y, mx, n.y + n.h / 2, n.x, n.y + n.h / 2);
+      ctx.stroke();
+      ctx.restore();
+    });
+
+    // nodes
+    nodes.forEach(function (n) {
+      ctx.save();
+      ctx.globalAlpha = n.a;
+      var hot = n.hot === 2, warm = n.hot === 1;
+      ctx.fillStyle = hot ? "rgba(214,69,69,.09)" : warm ? "rgba(242,210,0,.11)" : "#FBFCFC";
+      rrect(n.x, n.y, n.w, n.h, 8); ctx.fill();
+      ctx.strokeStyle = hot ? "#D64545" : warm ? "#E0C200" : "#E0E7E8";
+      ctx.lineWidth = hot ? 1.6 : 1.2; rrect(n.x, n.y, n.w, n.h, 8); ctx.stroke();
+      ctx.fillStyle = n.col; rrect(n.x, n.y, 3.5, n.h, 2); ctx.fill();
+
+      ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+      ctx.fillStyle = hot ? "#B23333" : "#12333D";
+      ctx.font = "700 9.9px 'JetBrains Mono', Menlo, Consolas, monospace";
+      ctx.fillText(clip(n.t, n.w - 17, ctx), n.x + 11, n.y + 20);
+      ctx.fillStyle = "#8AA1A8"; ctx.font = "9.6px 'Avenir Next', 'Segoe UI', system-ui, sans-serif";
+      ctx.fillText(clip(n.s, n.w - 18, ctx), n.x + 11, n.y + 35);
+      ctx.restore();
+    });
+
+    // counters — stacked under the root so they never run past the canvas edge
+    var hot = nodes.filter(function (n) { return n.hot === 2; }).length;
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#5C7880"; ctx.font = "800 10.5px 'Avenir Next', 'Segoe UI', system-ui, sans-serif";
+    ctx.fillText(nodes.length + " assets found", 14, H / 2 + 48);
+    ctx.fillStyle = "#C1403f"; ctx.font = "800 10.5px 'Avenir Next', 'Segoe UI', system-ui, sans-serif";
+    ctx.fillText(hot + " directly attackable", 14, H / 2 + 64);
+    ctx.fillStyle = "#146d68"; ctx.font = "800 10.5px 'Avenir Next', 'Segoe UI', system-ui, sans-serif";
+    ctx.fillText("packets sent to them: 0", 14, H / 2 + 80);
+  }
+
+  function clip(txt, max, c) {
+    if (c.measureText(txt).width <= max) return txt;
+    var s = txt;
+    while (s.length > 3 && c.measureText(s + "…").width > max) s = s.slice(0, -1);
+    return s + "…";
+  }
+
+  // ---------- run a tool ----------
+  var done = {}, busy = false;
+
+  function runTool(k, cb) {
+    if (done[k] || busy) { if (cb) cb(); return; }
+    busy = true; done[k] = true;
+    document.querySelector('.tool[data-t="' + k + '"]').classList.add("done");
+    var T = TOOLS[k];
+    $("#cap").innerHTML = T.cap;
+
+    // console lines
+    var con = $("#con"), li = 0;
+    (function pl() {
+      if (li >= T.lines.length) { addNodes(); return; }
+      var d = document.createElement("div");
+      var txt = T.lines[li];
+      d.className = li === 0 ? "c" : (txt.indexOf("[!]") >= 0 ? "h" : "o");
+      d.textContent = txt;
+      con.appendChild(d); con.scrollTop = con.scrollHeight;
+      li++; setTimeout(pl, 90);
+    })();
+
+    function addNodes() {
+      var base = 0;
+      for (var i = 0; i < ORDER.indexOf(k); i++) base += TOOLS[ORDER[i]].finds.length;
+      var j = 0;
+      (function nx() {
+        if (j >= T.finds.length) {
+          var d = document.createElement("div");
+          d.className = "g"; d.textContent = "[+] " + T.finds.length + " assets added to the map — target still has no idea.";
+          con.appendChild(d); con.scrollTop = con.scrollHeight;
+          busy = false; if (cb) cb(); return;
+        }
+        var f = T.finds[j], sl = slot(base + j);
+        var n = { x: sl.x, y: sl.y, w: sl.w, h: sl.h, t: f.t, s: f.s, hot: f.hot, col: COL[k], a: 0 };
+        nodes.push(n);
+        var fr = 0;
+        (function fade() {
+          n.a = Math.min(1, fr / 8); draw();
+          if (fr++ < 8) setTimeout(fade, 26);
+          else { j++; setTimeout(nx, 90); }
+        })();
+      })();
+    }
+  }
+
+  function reset() {
+    nodes = []; done = {}; busy = false;
+    Array.prototype.forEach.call(document.querySelectorAll(".tool"), function (b) { b.classList.remove("done"); });
+    $("#con").innerHTML = '<div class="dim">Pick a source. Every one of these reads something the target published — you never send them a packet.</div>';
+    $("#cap").innerHTML = "";
+    draw();
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll(".tool"), function (b) {
+    b.addEventListener("click", function () { runTool(b.getAttribute("data-t")); });
+  });
+  $("#rst").addEventListener("click", reset);
+  $("#all").addEventListener("click", function () {
+    if (busy) return;
+    var i = 0;
+    (function nx() {
+      if (i >= ORDER.length) {
+        $("#cap").innerHTML = "<b>Every one of those sources is public, and you never sent the target a single packet.</b> " +
+          "From one domain name you now have their mail provider, four hostnames they never advertised, an open RDP port, " +
+          "an unpatched app with a named CVE, a live cloud key and 14 staff emails. " +
+          "<span class='r'>The attack you run later today is already fully planned — by them.</span>";
+        return;
+      }
+      runTool(ORDER[i++], nx);
+    })();
+  });
+
+  // hooks: ?all=1 or ?tool=crt
+  var qs = new URLSearchParams(location.search);
+  reset(); fit();
+  if (qs.get("all") === "1") $("#all").click();
+  else if (qs.get("tool")) runTool(qs.get("tool"));
+})();
+</script>
+</body></html>

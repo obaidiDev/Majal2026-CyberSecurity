@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="_shared.css?v=1">
+<style>
+  body { padding: 6px; }
+  .toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; flex-wrap: wrap; }
+  .mode { font-family: inherit; font-size: 13px; font-weight: 700; border-radius: 999px;
+    padding: 8px 15px; cursor: pointer; border: 1px solid #CDD8DA; background: #fff; color: #12333D; }
+  .mode.sel { background: #00567C; border-color: #00567C; color: #fff; }
+  .mode:hover:not(.sel) { background: #EEF3F3; }
+  .fw { margin-left: auto; font-family: inherit; font-size: 12.5px; font-weight: 700;
+    border: 1px solid #CDD8DA; background: #fff; color: #6a808a; border-radius: 999px;
+    padding: 8px 14px; cursor: pointer; }
+  .fw::before { content: "\2610  "; }
+  .fw.on { background: rgba(31,143,137,.13); border-color: #1F8F89; color: #146d68; }
+  .fw.on::before { content: "\2611  "; }
+  .run { font-family: inherit; font-size: 13px; font-weight: 800; border-radius: 999px;
+    padding: 8px 18px; cursor: pointer; border: 1px solid #B23333; background: #D64545; color: #fff; }
+  .run:hover { background: #C1403f; }
+  .run:disabled { opacity: .5; cursor: default; }
+
+  canvas#scene { width: 100%; height: 250px; display: block; border: 1px solid #E0E7E8;
+    border-radius: 10px; background: #fff; }
+
+  .two { display: grid; grid-template-columns: 1.32fr 1fr; gap: 12px; margin-top: 10px; align-items: start; }
+  .term { background: #06232B; border: 1px solid #0C3A46; border-radius: 10px; padding: 11px 13px;
+    font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 12.5px; line-height: 1.55;
+    height: 186px; overflow-y: auto; color: #BFE0E2; white-space: pre-wrap; word-break: break-word; cursor: text; }
+  .term::-webkit-scrollbar { width: 7px; } .term::-webkit-scrollbar-thumb { background: #1F5563; border-radius: 4px; }
+  .term .p { color: #33D3CB; font-weight: 700; }
+  .term .o { color: #8FB0B6; }
+  .term .e { color: #FF7A7A; }
+  .term .hint { color: #6B8A90; }
+  .term input { background: transparent; border: 0; outline: none; color: #EAF7F5; width: 72%;
+    font-family: inherit; font-size: 12.5px; padding: 0; }
+
+  .explain { background: #F7FAFA; border: 1px solid #E0E7E8; border-radius: 10px; padding: 11px 13px; height: 186px; overflow-y: auto; }
+  .explain h4 { margin: 0 0 6px; font-size: 13px; color: #00567C; font-weight: 800; }
+  .explain p { margin: 0 0 8px; font-size: 12.4px; line-height: 1.5; color: #42606A; }
+  .explain p b { color: #12333D; }
+  .explain .r { color: #C1403f; font-weight: 700; }
+  .explain .g { color: #146d68; font-weight: 700; }
+  .explain code { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 11.5px;
+    background: #EAF0F0; border-radius: 4px; padding: 1px 5px; color: #12333D; }
+  .cap2 { margin-top: 9px; font-size: 12.8px; line-height: 1.45; color: #42606A; min-height: 20px; }
+  .cap2 b { color: #12333D; }
+</style>
+</head><body>
+  <div class="toolbar">
+    <button class="mode sel" data-m="bind">Bind shell</button>
+    <button class="mode" data-m="reverse">Reverse shell</button>
+    <button class="mode" data-m="web">Web shell</button>
+    <button class="run" id="run">&#9654; Connect</button>
+    <button class="fw on" id="fwtog">Firewall blocks inbound</button>
+  </div>
+
+  <canvas id="scene"></canvas>
+
+  <div class="two">
+    <div class="term" id="term"></div>
+    <div class="explain" id="explain"></div>
+  </div>
+  <div class="cap2" id="cap2"></div>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (s) { return document.querySelector(s); };
+
+  var MODES = {
+    bind: {
+      name: "Bind shell",
+      dir: 1,                       // attacker -> target
+      port: "4444",
+      listenAt: "target",
+      listenLabel: ":4444 listening",
+      title: "Bind shell — the target listens, you dial in",
+      body: "The target runs a shell bound to an open port and <b>waits</b>. You connect <b>inbound</b> to it. " +
+            "Simple — and almost useless in the real world, because every firewall drops unexpected inbound connections.",
+      okCap: "<b>Connected.</b> With no inbound filtering, dialling straight into a listening shell works. Real networks aren't this kind.",
+      badCap: "<b>Dropped.</b> The firewall blocks inbound connections it didn't expect — so bind shells die at the perimeter. This is why attackers flip the direction."
+    },
+    reverse: {
+      name: "Reverse shell",
+      dir: -1,                      // target -> attacker
+      port: "443",
+      listenAt: "attacker",
+      listenLabel: ":443 listening",
+      title: "Reverse shell — the target dials <i>you</i>",
+      body: "You listen; the code you got running on the target <b>connects out</b> to you. Firewalls filter what comes <b>in</b> " +
+            "far more tightly than what goes <b>out</b> — and on port 443 it looks like ordinary HTTPS traffic leaving the building.",
+      okCap: "<b>Shell received.</b> Outbound was allowed, so the connection walked straight out. This is the shape of almost every real intrusion.",
+      badCap: ""
+    },
+    web: {
+      name: "Web shell",
+      dir: 1,
+      port: "443",
+      listenAt: "target",
+      listenLabel: ":443 web server",
+      title: "Web shell — a page that runs commands",
+      body: "You upload a small script into the web root (<code>shell.php</code>). Now every command is just a normal <b>web request</b> " +
+            "to a port the firewall already has to keep open. No new connection, no new port — it hides inside traffic the server exists to serve.",
+      okCap: "<b>Shell in a web page.</b> It rides port 443, which was already open. Nothing new had to get through the firewall.",
+      badCap: ""
+    }
+  };
+
+  var mode = "bind", fw = true, state = "idle", running = false;
+
+  // ---------- canvas scene ----------
+  var cv = $("#scene"), ctx = cv.getContext("2d");
+  var W = 1000, H = 250, raf = null, t0 = 0, prog = 0, blockedAt = 0;
+
+  function fit() {
+    var cssW = cv.clientWidth || W, dpr = window.devicePixelRatio || 1;
+    cv.width = Math.round(cssW * dpr); cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); W = cssW; draw();
+  }
+  window.addEventListener("resize", fit);
+
+  function rrect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+
+  function box(x, y, w, h, accent, title, sub, listen) {
+    ctx.save();
+    ctx.shadowColor = "rgba(18,51,61,.10)"; ctx.shadowBlur = 8; ctx.shadowOffsetY = 2;
+    ctx.fillStyle = "#fff"; rrect(x, y, w, h, 10); ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle = "#E0E7E8"; ctx.lineWidth = 1; rrect(x, y, w, h, 10); ctx.stroke();
+    ctx.fillStyle = accent; rrect(x, y, w, 4, 2); ctx.fill();
+
+    ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = accent; ctx.font = "800 14px 'Avenir Next', 'Segoe UI', system-ui, sans-serif";
+    ctx.fillText(title, x + 14, y + 30);
+    ctx.fillStyle = "#5C7880"; ctx.font = "12px 'JetBrains Mono', Menlo, Consolas, monospace";
+    ctx.fillText(sub, x + 14, y + 50);
+    if (listen) {
+      ctx.fillStyle = "rgba(31,143,137,.13)"; rrect(x + 14, y + 62, ctx.measureText(listen).width + 18, 22, 6); ctx.fill();
+      ctx.fillStyle = "#146d68"; ctx.font = "700 11.5px 'JetBrains Mono', Menlo, Consolas, monospace";
+      ctx.fillText(listen, x + 23, y + 77);
+    }
+  }
+
+  function draw() {
+    var m = MODES[mode];
+    ctx.clearRect(0, 0, W, H);
+
+    var bw = 236, bh = 96, by = 66;
+    var ax = 22, tx = W - bw - 22;
+    var wireY = 186;
+    var fx = W / 2;
+
+    // ---- wire
+    ctx.strokeStyle = "#DCE6E7"; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(ax + bw / 2, wireY); ctx.lineTo(tx + bw / 2, wireY); ctx.stroke();
+
+    // ---- firewall
+    var gateOpen = (mode === "reverse") || (mode === "web") || !fw;
+    var fwCol = gateOpen ? "#1F8F89" : "#D64545";
+    ctx.save();
+    ctx.fillStyle = gateOpen ? "rgba(31,143,137,.08)" : "rgba(214,69,69,.08)";
+    rrect(fx - 21, 50, 42, 150, 8); ctx.fill();
+    ctx.strokeStyle = fwCol; ctx.lineWidth = 2; ctx.setLineDash([5, 4]);
+    rrect(fx - 21, 50, 42, 150, 8); ctx.stroke();
+    ctx.restore();
+
+    ctx.textAlign = "center";
+    ctx.fillStyle = fwCol; ctx.font = "800 11.5px 'Avenir Next', 'Segoe UI', system-ui, sans-serif";
+    ctx.fillText("FIREWALL", fx, 20);
+    ctx.font = "11px 'JetBrains Mono', Menlo, Consolas, monospace";
+    ctx.fillStyle = "#5C7880";
+    var rule = !fw ? "in: ALLOW  ·  out: ALLOW"
+             : (mode === "web") ? "in: DENY except :443  ·  out: ALLOW"
+             : "in: DENY  ·  out: ALLOW";
+    ctx.fillText(rule, fx, 38);
+
+    // gate marker on the wire
+    ctx.fillStyle = gateOpen ? "#1F8F89" : "#D64545";
+    ctx.beginPath(); ctx.arc(fx, wireY, 7, 0, Math.PI * 2); ctx.fill();
+    if (!gateOpen) {
+      ctx.strokeStyle = "#fff"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(fx - 3.2, wireY - 3.2); ctx.lineTo(fx + 3.2, wireY + 3.2);
+      ctx.moveTo(fx + 3.2, wireY - 3.2); ctx.lineTo(fx - 3.2, wireY + 3.2); ctx.stroke();
+    }
+
+    // ---- boxes
+    box(ax, by, bw, bh, "#D64545", "YOU · attacker", "185.220.101.7",
+        m.listenAt === "attacker" ? m.listenLabel : null);
+    box(tx, by, bw, bh, "#00567C", "TARGET · vpn-gw01", "10.0.0.7",
+        m.listenAt === "target" ? m.listenLabel : null);
+
+    // ---- direction label
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#8AA1A8"; ctx.font = "700 11.5px 'Avenir Next', 'Segoe UI', system-ui, sans-serif";
+    var dirTxt = m.dir === 1 ? "connection opens → (inbound to the target)"
+                             : "← connection opens (outbound from the target)";
+    ctx.fillText(dirTxt, W / 2, 224);
+
+    // ---- packet
+    if (state !== "idle") {
+      var startX = m.dir === 1 ? ax + bw / 2 : tx + bw / 2;
+      var endX   = m.dir === 1 ? tx + bw / 2 : ax + bw / 2;
+      var stopP  = (state === "blocked") ? blockedAt : prog;
+      var px = startX + (endX - startX) * stopP;
+
+      // trail
+      ctx.strokeStyle = m.dir === 1 ? "rgba(214,69,69,.45)" : "rgba(31,143,137,.5)";
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(startX, wireY); ctx.lineTo(px, wireY); ctx.stroke();
+
+      if (state === "blocked") {
+        ctx.fillStyle = "#D64545";
+        ctx.beginPath(); ctx.arc(px, wireY, 9, 0, Math.PI * 2); ctx.fill();
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#C1403f"; ctx.font = "800 12.5px 'Avenir Next', 'Segoe UI', system-ui, sans-serif";
+        ctx.fillText("DROPPED", px, wireY - 16);
+      } else {
+        var col = m.dir === 1 ? "#D64545" : "#1F8F89";
+        ctx.save();
+        ctx.shadowColor = col; ctx.shadowBlur = 10;
+        ctx.fillStyle = col;
+        ctx.beginPath(); ctx.arc(px, wireY, 8, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#5C7880"; ctx.font = "700 11px 'JetBrains Mono', Menlo, Consolas, monospace";
+        ctx.fillText("tcp/" + m.port, px, wireY - 16);
+      }
+      if (state === "done") {
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#146d68"; ctx.font = "800 13px 'Avenir Next', 'Segoe UI', system-ui, sans-serif";
+        ctx.fillText("● SHELL OPEN", W / 2, 245);
+      }
+    }
+  }
+
+  // ---------- animation ----------
+  function animate(ts) {
+    if (!t0) t0 = ts;
+    var dur = 1150;
+    prog = Math.min(1, (ts - t0) / dur);
+    var m = MODES[mode];
+    var willBlock = (mode === "bind" && fw);
+    if (willBlock && prog >= 0.40) {
+      state = "blocked"; blockedAt = 0.40; running = false; draw(); finish(false); return;
+    }
+    draw();
+    if (prog < 1) { raf = requestAnimationFrame(animate); }
+    else { state = "done"; running = false; draw(); finish(true); }
+  }
+
+  function connect() {
+    if (running) return;
+    running = true; state = "run"; prog = 0; t0 = 0;
+    $("#run").disabled = true;
+    $("#term").innerHTML = '<div class="hint">connecting…</div>';
+    raf = requestAnimationFrame(animate);
+  }
+
+  function finish(ok) {
+    $("#run").disabled = false;
+    var m = MODES[mode];
+    $("#cap2").innerHTML = ok ? m.okCap : m.badCap;
+    if (ok) openTerm(); else {
+      $("#term").innerHTML = '<div class="e">connection refused — no route through the firewall.</div>' +
+        '<div class="hint">No shell. Switch to a <b>reverse shell</b>, or turn the firewall rule off, and try again.</div>';
+    }
+  }
+
+  // ---------- the mini shell ----------
+  var USER = "www-data", HOST = "vpn-gw01", CWD = "/var/www/html";
+  var FILES = { "config.php": 1, "index.php": 1, "uploads": 1, "vendor": 1 };
+  var CMDS = {
+    "whoami": USER,
+    "hostname": HOST,
+    "pwd": CWD,
+    "ls": "config.php  index.php  uploads  vendor",
+    "id": "uid=33(" + USER + ") gid=33(" + USER + ") groups=33(" + USER + ")",
+    "uname -a": "Linux vpn-gw01 5.4.0-124-generic #140-Ubuntu SMP x86_64 GNU/Linux",
+    "date": "Tue Jul 21 03:14:07 UTC 2026",
+    "ps": "  PID TTY          TIME CMD\n  914 ?        00:00:01 apache2\n 1207 ?        00:00:00 sh\n 1208 ?        00:00:00 ps",
+    "cat /etc/passwd": "root:x:0:0:root:/root:/bin/bash\nwww-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\nlayla:x:1001:1001::/home/layla:/bin/bash",
+    "sudo -l": "User www-data may run the following commands on vpn-gw01:\n    (ALL) NOPASSWD: /usr/bin/find",
+    "help": "try:  whoami   id   pwd   ls   hostname   uname -a   ps   date\n      cat /etc/passwd   sudo -l   clear"
+  };
+
+  function openTerm() {
+    $("#term").innerHTML =
+      '<div class="o">Shell opened on ' + HOST + '. You are typing on <b>their</b> machine now.</div>' +
+      '<div class="hint">A shell is just a command interpreter — you type, it runs, it answers. Try <b>whoami</b>, then <b>sudo -l</b>. (<b>help</b> lists commands.)</div>';
+    newPrompt();
+  }
+  function newPrompt() {
+    var term = $("#term");
+    var line = document.createElement("div");
+    line.innerHTML = '<span class="p">' + USER + '@' + HOST + ':' + CWD + '$</span> ';
+    var inp = document.createElement("input");
+    inp.setAttribute("spellcheck", "false"); inp.setAttribute("autocomplete", "off");
+    line.appendChild(inp); term.appendChild(line);
+    term.scrollTop = term.scrollHeight;
+    inp.focus();
+    inp.addEventListener("keydown", function (e) {
+      if (e.key !== "Enter") return;
+      var cmd = inp.value.trim();
+      var txt = inp.value;
+      inp.remove();
+      line.innerHTML += '<span style="color:#EAF7F5">' + esc(txt) + '</span>';
+      if (cmd === "clear") { term.innerHTML = ""; newPrompt(); return; }
+      if (cmd) {
+        var out = document.createElement("div");
+        if (Object.prototype.hasOwnProperty.call(CMDS, cmd)) {
+          out.className = "o"; out.textContent = CMDS[cmd];
+        } else {
+          out.className = "e"; out.textContent = "bash: " + cmd.split(" ")[0] + ": command not found";
+        }
+        term.appendChild(out);
+      }
+      newPrompt();
+    });
+  }
+  function esc(s) { return String(s).replace(/[&<>]/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; }); }
+  $("#term").addEventListener("click", function () {
+    var i = $("#term").querySelector("input"); if (i) i.focus();
+  });
+
+  // ---------- wiring ----------
+  function setMode(m) {
+    mode = m;
+    Array.prototype.forEach.call(document.querySelectorAll(".mode"), function (b) {
+      b.classList.toggle("sel", b.getAttribute("data-m") === m);
+    });
+    state = "idle"; prog = 0; running = false;
+    if (raf) { cancelAnimationFrame(raf); raf = null; }
+    var d = MODES[m];
+    var kicker = m === "bind" ? '<p class="r">Direction is everything.</p>'
+               : m === "reverse" ? '<p class="g">This is the shape of almost every real intrusion.</p>'
+               : '<p class="g">It hides in traffic the server has to accept anyway.</p>';
+    $("#explain").innerHTML = "<h4>" + d.title + "</h4><p>" + d.body + "</p>" + kicker;
+    $("#term").innerHTML = '<div class="hint">Press <b>▶ Connect</b> to open the shell, then type into it.</div>';
+    $("#cap2").innerHTML = "";
+    $("#run").disabled = false;
+    draw();
+  }
+  Array.prototype.forEach.call(document.querySelectorAll(".mode"), function (b) {
+    b.addEventListener("click", function () { setMode(b.getAttribute("data-m")); });
+  });
+  $("#fwtog").addEventListener("click", function () {
+    fw = !fw; this.classList.toggle("on", fw);
+    this.textContent = fw ? "Firewall blocks inbound" : "Firewall allows everything";
+    state = "idle"; prog = 0; $("#cap2").innerHTML = "";
+    $("#term").innerHTML = '<div class="hint">Press <b>▶ Connect</b> to open the shell, then type into it.</div>';
+    draw();
+  });
+  $("#run").addEventListener("click", connect);
+
+  // screenshot / presenter hook: ?mode=reverse&go=1&fw=0
+  var qs = new URLSearchParams(location.search);
+  if (qs.get("fw") === "0") { fw = false; $("#fwtog").classList.remove("on"); $("#fwtog").textContent = "Firewall allows everything"; }
+  setMode(qs.get("mode") && MODES[qs.get("mode")] ? qs.get("mode") : "bind");
+  fit();
+  if (qs.get("go") === "1") {
+    // instant end-state for screenshots
+    var willBlock = (mode === "bind" && fw);
+    state = willBlock ? "blocked" : "done"; prog = 1; blockedAt = 0.40; draw(); finish(!willBlock);
+  }
+})();
+</script>
+</body></html>

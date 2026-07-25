@@ -55,6 +55,12 @@
   .def2 .tog::before { content: "\2610  "; }
   .def2 .tog.on { background: rgba(31,143,137,.13); border-color: #1F8F89; color: #146d68; }
   .def2 .tog.on::before { content: "\2611  "; }
+  .whatis { margin-top: 9px; background: #F7FAFA; border: 1px solid #E0E7E8; border-left: 3px solid #00567C;
+    border-radius: 0 8px 8px 0; padding: 9px 12px; font-size: 12.3px; line-height: 1.5; color: #42606A; }
+  .whatis b { color: #12333D; }
+  .whatis code { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 11.3px;
+    background: #EAF0F0; border-radius: 4px; padding: 1px 5px; color: #12333D; }
+  .whatis .rr { color: #C1403f; font-weight: 700; }
 
   /* link */
   .msg { background: #F1F5F5; border: 1px solid #E0E7E8; border-radius: 4px 15px 15px 15px; padding: 14px 16px;
@@ -126,7 +132,13 @@
       </div>
       <div class="term2" id="term2"><span class="dim">The document looks empty until you &ldquo;Enable Content&rdquo;.
 That button runs the macro hidden inside.</span></div>
-      <div class="def2"><button class="tog" id="macrotog">Macros blocked by policy</button></div>
+      <div class="def2">
+        <button class="tog" id="macrotog">Macros blocked by policy</button>
+        <div class="whatis"><b>What is a macro?</b> Office documents can carry small programs — originally so accountants could
+        automate spreadsheets. A macro named <code>AutoOpen()</code> runs the moment the document is opened. Microsoft now blocks
+        macros in files from the internet by default, which is exactly why the attacker needs you to press
+        <b>&ldquo;Enable Content&rdquo;</b> yourself: <span class="rr">the button is the exploit.</span></div>
+      </div>
     </div>
     <div class="cap" id="attcap">One click on <b>&ldquo;Enable Content&rdquo;</b> runs code hidden in the file. Try the defence toggle, then click again.</div>
   </div>

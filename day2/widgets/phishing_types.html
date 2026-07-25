@@ -4,25 +4,27 @@
 <link rel="stylesheet" href="_shared.css?v=1">
 <style>
   body { padding: 6px; }
-  .def { font-size: 14.5px; line-height: 1.4; color: #29474F; background: rgba(0,86,124,.06);
-    border-left: 4px solid #00567C; border-radius: 0 8px 8px 0; padding: 9px 13px; margin-bottom: 11px; }
+  .def { font-size: 13.9px; line-height: 1.4; color: #29474F; background: rgba(0,86,124,.06);
+    border-left: 4px solid #00567C; border-radius: 0 8px 8px 0; padding: 8px 13px; margin-bottom: 9px; }
   .def b { color: #00567C; }
   .cols { display: grid; grid-template-columns: 292px 1fr; gap: 14px; align-items: start; }
 
   /* ---- type list ---- */
-  .types { display: flex; flex-direction: column; gap: 6px; }
+  .types { display: flex; flex-direction: column; gap: 5px; }
   .type { text-align: left; border: 1px solid #D3E1E1; background: #fff; border-radius: 9px;
-    padding: 8px 11px; cursor: pointer; transition: all 120ms; }
+    padding: 6px 11px; cursor: pointer; transition: all 120ms; }
   .type:hover { border-color: #1F8F89; background: #F6FbFb; }
   .type.on { border-color: #1F8F89; background: rgba(31,143,137,.09); box-shadow: inset 3px 0 0 #1F8F89; }
-  .type .tn { font-weight: 800; font-size: 15.1px; color: #00567C; }
+  .type .tn { font-weight: 800; font-size: 14.4px; color: #00567C; }
   .type.on .tn { color: #146d68; }
-  .type .td { font-size: 12.5px; color: #7A9198; margin-top: 1px; line-height: 1.3; }
+  .type .td { font-size: 11.9px; color: #7A9198; margin-top: 1px; line-height: 1.28; }
   .chan { display: inline-block; font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 9.9px;
     font-weight: 700; letter-spacing: .05em; padding: 1px 6px; border-radius: 999px; margin-left: 6px; vertical-align: middle; }
   .chan.email { background: rgba(0,86,124,.12); color: #00567C; }
   .chan.sms { background: rgba(31,143,137,.14); color: #146d68; }
   .chan.call { background: rgba(51,211,203,.2); color: #0E7C86; }
+  .chan.qr { background: rgba(122,90,168,.15); color: #6A4A98; }
+  .chan.ai { background: rgba(199,122,32,.16); color: #A5620F; }
 
   /* ---- example viewer ---- */
   .viewer { border: 1px solid #E0E7E8; border-radius: 12px; background: #F7FAFA; padding: 13px 14px 14px; }
@@ -60,6 +62,13 @@
   .call-caller { font-size: 19.7px; font-weight: 800; }
   .call-num { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 12.8px; color: #7FB8BE; margin-top: 3px; }
   .call-status { font-size: 12.2px; color: #7FE3DC; letter-spacing: .1em; text-transform: uppercase; margin: 9px 0 12px; }
+  .call-ai { display: inline-block; background: rgba(199,122,32,.28); color: #F2C14E; font-family: "JetBrains Mono", Menlo, Consolas, monospace;
+    font-size: 11px; font-weight: 700; letter-spacing: .06em; border-radius: 999px; padding: 3px 9px; margin-bottom: 9px; }
+  .m-qr { background: linear-gradient(160deg,#0a6e9c,#00567C); border-radius: 14px; padding: 15px; text-align: center; color: #fff; }
+  .qr-txt { font-weight: 800; font-size: 16.5px; letter-spacing: .04em; margin-bottom: 10px; }
+  .qr-txt small { display: block; font-weight: 600; font-size: 11.5px; opacity: .85; margin-top: 3px; }
+  .m-qr img { width: 132px; height: 132px; border-radius: 7px; background: #fff; padding: 7px; display: block; margin: 0 auto; }
+  .qr-cap { font-size: 11.5px; opacity: .9; margin-top: 9px; }
   .call-script { background: rgba(255,255,255,.07); border-radius: 12px; padding: 10px 12px; font-size: 14.5px;
     line-height: 1.5; color: #CFE6E7; text-align: left; font-style: italic; }
 
@@ -122,7 +131,20 @@
         subj:"Quick task", greet:"Hi,",
         body:"Are you at your desk? I need you to update our supplier's bank details before today's payment run, then confirm once it's done." },
       flags:["No link, no malware — just a request","Impersonates the CEO (look-alike address)","Moves money / changes payment details","“Are you at your desk?” isolates you, fast"] },
+    { id:"quishing", name:"Quishing (QR)", chan:"QR", reach:"Bulk",
+      td:"A QR code you cannot read before you trust it.",
+      mock:{ kind:"qr", title:"PAY FOR PARKING", sub:"Scan the code to pay",
+        cap:"Sticker placed over the real code on a city parking meter." },
+      flags:["You cannot read a QR code with your eyes — you trust it blind","A printed sticker beats every email filter: there is no email","Opens on your phone, where the address bar is tiny or hidden","Real destination: secure-parking-pay.ru, not the city"] },
+    { id:"deepfake", name:"Deepfake / AI vishing", chan:"AI", reach:"Targeted",
+      td:"A cloned voice — or a face — on a live call.",
+      mock:{ kind:"call", caller:"Khalid Al-Amri (CEO)", num:"+966 55 8xx xxxx  (spoofed)", ai:true,
+        script:"“It's Khalid. I'm about to board — the acquisition needs the deposit released now. You know I wouldn't ask if it weren't urgent. Push it through and confirm to me directly.”" },
+      flags:["The voice is really his — cloned from a conference talk or podcast","Video calls can be faked too; “seeing them” is no longer proof","Authority + urgency + secrecy, in real time","The only defence left is the call-back: hang up, dial the number you already had"] },
   ];
+
+  // real scannable QR (offline, embedded) — decodes to the phishing URL
+  var QR_PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMYAAADGAQMAAACzVW0eAAAABlBMVEUGIyv///+C0gErAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAFWSURBVFiF7ZbNjcUgDIRHogBKonVKcgFIsxqb8PJWm73ahyAUJXwcHP+MDT4tvIT/+cAAoJGxV6e+MWqQQZ1N+l4YjdQhShBgNBury2TZbmilCCdNka9LLP6gEKEbCwwAf+QBEwlUJTbO/lU/lkhi7Uyc8mUsFCCGJsOHQ8U8ZIYVSCzDgiKvNFRW3jyaSEyvnoYRbVl95UFLJqQi7H6N2l19rh4eTSdTVneiS/NkflffYA1C307cfHqtoAAxRRid58rCCKstn4AaTGT1jjN3tC2d0BUlclAdQ39wom0FCP3Yr6ibnTywXGIxBcjSLS1XlVg64YxBeOuxQn1TF6YSczH27NMzRgDWIFc3O8oXPmYFYnt6cmnZMV9VyPCGFoXrV2KjBIH3fz+ISQq1CGWya0zoXyXiZ+0jgVVIRPsMUN7corbTCaJKcFOX7/pBGnlaeAmfffADK0+viLI5npIAAAAASUVORK5CYII=";
 
   function esc(s){ return s; } // mock strings are trusted, may contain <span class="rf">
 
@@ -138,9 +160,15 @@
       return '<div class="m-sms"><div class="sms-top">' + m.top + '</div>' +
         '<div class="sms-bubble">' + m.body + '</div></div>';
     }
+    if (m.kind === "qr") {
+      return '<div class="m-qr"><div class="qr-txt">' + m.title + '<small>' + m.sub + '</small></div>' +
+        '<img src="' + QR_PNG + '" alt="QR code">' +
+        '<div class="qr-cap">' + m.cap + '</div></div>';
+    }
     return '<div class="m-call"><div class="call-caller">' + m.caller + '</div>' +
       '<div class="call-num">' + m.num + '</div>' +
       '<div class="call-status">● Incoming call…</div>' +
+      (m.ai ? '<div class="call-ai">◈ VOICE CLONED BY AI</div>' : '') +
       '<div class="call-script">' + m.script + '</div></div>';
   }
 
