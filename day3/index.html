@@ -255,7 +255,54 @@
       now? ~90s.</aside>
     </section>
 
-    <!-- ============ FOUNDATION 2 · SWITCH vs ROUTER ============ -->
+    <!-- ============ FOUNDATION 2 · MAC vs IP vs PORT ============ -->
+    <section class="primer">
+      <p class="kicker">Act 1 · first principles · the three addresses</p>
+      <h2>Three addresses, three jobs: MAC, IP and port</h2>
+      <svg class="dgm" viewBox="0 0 940 178" role="img"
+           aria-label="One outgoing message drawn as nested wrappers: the frame carries MAC addresses, the packet carries IP addresses, the segment carries the port, and the data sits inside">
+        <rect x="16" y="22" width="908" height="140" rx="9" fill="#fff" stroke="#5c7880" stroke-width="1.5"/>
+        <text class="lbl" x="30" y="15">frame · one hop of wire</text>
+        <text class="m" x="908" y="43" text-anchor="end" fill="#1f8f89">to MAC a1:b2:c3:44:55:66</text>
+        <rect x="44" y="52" width="852" height="98" rx="8" fill="#f6f8f8" stroke="#7a5cc4" stroke-width="1.5"/>
+        <text class="lbl" x="58" y="46" fill="#7a5cc4">packet · end to end</text>
+        <text class="m" x="880" y="72" text-anchor="end" fill="#7a5cc4">to IP 142.250.0.14</text>
+        <rect x="72" y="80" width="796" height="60" rx="7" fill="#fff" stroke="#00567d" stroke-width="1.5"/>
+        <text class="lbl" x="86" y="74" fill="#00567d">segment · which program</text>
+        <text class="m" x="852" y="100" text-anchor="end">to port 443</text>
+        <rect x="100" y="106" width="724" height="26" rx="5" fill="#eef3f3" stroke="#c3d2d5" stroke-width="1.5"/>
+        <text class="t" x="462" y="124" text-anchor="middle">your actual message</text>
+        <text class="cap" x="470" y="173" text-anchor="middle">every message you send carries all three, wrapped one inside the other</text>
+      </svg>
+      <div class="k2 c3" style="margin-top:.4em">
+        <div class="card"><h3>MAC <span class="tag">which device</span></h3>
+          <p>A 48-bit ID <strong>burned into the network card at the factory</strong>. Only meaningful on the <em>local</em> wire — a
+          router strips it and writes a fresh one every hop.</p>
+          <span class="ex"><b>Analogy:</b> your <b>ID card</b> — yours for life, unchanged when you move.</span></div>
+        <div class="card"><h3>IP <span class="tag">which machine, where</span></h3>
+          <p>A logical address the network <strong>assigns</strong> you, like <span class="mono">192.168.1.50</span>. It survives the whole
+          trip end-to-end — it's what routers steer by.</p>
+          <span class="ex"><b>Analogy:</b> your <b>street address</b> — move office, get a new one.</span></div>
+        <div class="card"><h3>Port <span class="tag">which program</span></h3>
+          <p>A number from <strong>1–65,535</strong> picking one <em>program</em> on that machine — <span class="mono">443</span> the web
+          server, <span class="mono">22</span> SSH. Many conversations, one machine.</p>
+          <span class="ex"><b>Analogy:</b> the <b>department</b> at that address — Sales vs Payroll.</span></div>
+      </div>
+      <div class="callout" style="margin-top:.45em"><strong>One sentence to keep:</strong> the <strong>MAC</strong> gets it to the next
+      device on this wire, the <strong>IP</strong> to the right machine anywhere on earth, the <strong>port</strong> to the right program
+      on it. Every attack today targets one of the three.</div>
+      <aside class="notes">The single most load-bearing slide of the day — if they leave with only one thing, make it this. Teach it
+      strictly as three jobs, not three formats: <b>MAC = which device</b> (factory-fixed, local-only, rewritten every hop), <b>IP = which
+      machine and where</b> (assigned, end-to-end, routable), <b>port = which program</b> (1–65535, picks the service). Use the ID-card /
+      street-address / department analogy and repeat it verbatim — it's the one they'll quote back. Point at the diagram and note the
+      nesting: all three ride on the same message, wrapped one inside the other; that picture is literally what the encapsulation player
+      animates shortly. Then map the day forward: ARP spoofing lies about MAC, subnetting and NAT are about IP reach, and port
+      scanning hunts programs. Check for understanding before moving on — ask which of the three changes when you carry your laptop to a
+      café (the IP). ~2 min; this one is worth the time. It has to land <em>before</em> the next slide, which is built entirely on MAC
+      vs IP.</aside>
+    </section>
+
+    <!-- ============ FOUNDATION 3 · SWITCH vs ROUTER ============ -->
     <section class="primer">
       <p class="kicker">Act 1 · first principles · the two boxes</p>
       <h2>Switch vs router — <em>inside</em> a network vs <em>between</em></h2>
@@ -311,52 +358,6 @@
       is why the word confuses everyone. Do NOT go into routing tables — they only need "it decides the next hop". ~90s.</aside>
     </section>
 
-    <!-- ============ FOUNDATION 3 · MAC vs IP vs PORT ============ -->
-    <section class="primer">
-      <p class="kicker">Act 1 · first principles · the three addresses</p>
-      <h2>Three addresses, three jobs: MAC, IP and port</h2>
-      <svg class="dgm" viewBox="0 0 940 178" role="img"
-           aria-label="One outgoing message drawn as nested wrappers: the frame carries MAC addresses, the packet carries IP addresses, the segment carries the port, and the data sits inside">
-        <rect x="16" y="22" width="908" height="140" rx="9" fill="#fff" stroke="#5c7880" stroke-width="1.5"/>
-        <text class="lbl" x="30" y="15">frame · one hop of wire</text>
-        <text class="m" x="908" y="43" text-anchor="end" fill="#1f8f89">to MAC a1:b2:c3:44:55:66</text>
-        <rect x="44" y="52" width="852" height="98" rx="8" fill="#f6f8f8" stroke="#7a5cc4" stroke-width="1.5"/>
-        <text class="lbl" x="58" y="46" fill="#7a5cc4">packet · end to end</text>
-        <text class="m" x="880" y="72" text-anchor="end" fill="#7a5cc4">to IP 142.250.0.14</text>
-        <rect x="72" y="80" width="796" height="60" rx="7" fill="#fff" stroke="#00567d" stroke-width="1.5"/>
-        <text class="lbl" x="86" y="74" fill="#00567d">segment · which program</text>
-        <text class="m" x="852" y="100" text-anchor="end">to port 443</text>
-        <rect x="100" y="106" width="724" height="26" rx="5" fill="#eef3f3" stroke="#c3d2d5" stroke-width="1.5"/>
-        <text class="t" x="462" y="124" text-anchor="middle">your actual message</text>
-        <text class="cap" x="470" y="173" text-anchor="middle">every message you send carries all three, wrapped one inside the other</text>
-      </svg>
-      <div class="k2 c3" style="margin-top:.4em">
-        <div class="card"><h3>MAC <span class="tag">which device</span></h3>
-          <p>A 48-bit ID <strong>burned into the network card at the factory</strong>. Only meaningful on the <em>local</em> wire — a
-          router strips it and writes a fresh one every hop.</p>
-          <span class="ex"><b>Analogy:</b> your <b>ID card</b> — yours for life, unchanged when you move.</span></div>
-        <div class="card"><h3>IP <span class="tag">which machine, where</span></h3>
-          <p>A logical address the network <strong>assigns</strong> you, like <span class="mono">192.168.1.50</span>. It survives the whole
-          trip end-to-end — it's what routers steer by.</p>
-          <span class="ex"><b>Analogy:</b> your <b>street address</b> — move office, get a new one.</span></div>
-        <div class="card"><h3>Port <span class="tag">which program</span></h3>
-          <p>A number from <strong>1–65,535</strong> picking one <em>program</em> on that machine — <span class="mono">443</span> the web
-          server, <span class="mono">22</span> SSH. Many conversations, one machine.</p>
-          <span class="ex"><b>Analogy:</b> the <b>department</b> at that address — Sales vs Payroll.</span></div>
-      </div>
-      <div class="callout" style="margin-top:.45em"><strong>One sentence to keep:</strong> the <strong>MAC</strong> gets it to the next
-      device on this wire, the <strong>IP</strong> to the right machine anywhere on earth, the <strong>port</strong> to the right program
-      on it. Every attack today targets one of the three.</div>
-      <aside class="notes">The single most load-bearing slide of the day — if they leave with only one thing, make it this. Teach it
-      strictly as three jobs, not three formats: <b>MAC = which device</b> (factory-fixed, local-only, rewritten every hop), <b>IP = which
-      machine and where</b> (assigned, end-to-end, routable), <b>port = which program</b> (1–65535, picks the service). Use the ID-card /
-      street-address / department analogy and repeat it verbatim — it's the one they'll quote back. Point at the diagram and note the
-      nesting: all three ride on the same message, wrapped one inside the other; that picture is literally what the encapsulation player
-      animates in two slides. Then map the day forward: ARP spoofing lies about MAC, subnetting and NAT are about IP reach, and port
-      scanning hunts programs. Check for understanding before moving on — ask which of the three changes when you carry your laptop to a
-      café (the IP). ~2 min; this one is worth the time.</aside>
-    </section>
-
     <!-- ============ FOUNDATION 4 · PROTOCOLS & THE OSI MODEL ============ -->
     <section class="primer">
       <p class="kicker">Act 1 · first principles · the model</p>
@@ -382,8 +383,8 @@
           <span class="jb">The bits themselves — <b>voltage, light, radio</b>. Cables, fibre, Wi&#8209;Fi.</span></div>
       </div>
       <div class="callout hot" style="margin-top:.5em"><strong>Notice layers 4, 3 and 2:</strong> they are exactly the port, the IP and the
-      MAC from the last slide. That's not a coincidence — the three addresses <em>are</em> three layers. Next: watch a real message get
-      wrapped, layer by layer.</div>
+      MAC — and layers 3 and 2 are exactly the router and the switch. That's not a coincidence; the addresses and the boxes <em>are</em> the
+      layers. Next: watch a real message get wrapped, layer by layer.</div>
       <aside class="notes">The model, defined before it's used. Two definitions, slowly: <b>protocol</b> = agreed rules (call back to the
       traffic law from the network slide); <b>OSI model</b> = a seven-layer map that splits the job so each layer solves one problem and
       trusts the one below — the reason you can swap Wi&#8209;Fi for a cable without rewriting the browser. Read the layers <em>downward</em>
