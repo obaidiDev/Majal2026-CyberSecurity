@@ -215,16 +215,21 @@
       <p class="kicker">Injection · the classic</p>
       <h2>SQL injection: type into a login box, rewrite the query</h2>
       <iframe class="wframe" style="height:566px"
-              src="widgets/sqli.html?v=1"
+              src="widgets/sqli.html?v=2"
               title="SQL injection sandbox over a real toy database" scrolling="auto"></iframe>
       <aside class="notes">The centrepiece. One-line primer first: behind the login is a query the server BUILDS from your
-      input — SELECT * FROM users WHERE user='…' AND pass='…'. If it glues your text straight in, your text can BE part of
-      the query. Drive the beats: (1) type admin' OR '1'='1' -- and watch the WHERE clause turn always-true, the -- comment
-      out the password check, and the row return → logged in as admin, no password. (2) UNION SELECT to dump every user's
-      hash from the table. Watch the query string rewrite live as they type — that's the reveal you can't just tell them.
-      Then flip "parameterised query": the same input is now sent as a bound VALUE, printed as literal text inside the
-      cell — injection dies. Land: concatenation is the bug; parameterisation is the fix; real DBs are millions of rows but
-      the mechanism is identical.</aside>
+      input — SELECT * FROM users WHERE username='…' AND password_hash='…'. If it glues your text straight in, your text can
+      BE part of the query. The four presets are numbered because they are the real attacker's order — walk them:
+      (1) NORMAL LOGIN, so they see the honest case; point out the password is hashed BEFORE the query is built, so that box
+      can't carry SQL — the username is the hole. (2) PROBE WITH ONE QUOTE: a single ' and the database throws a 500 syntax
+      error. Dwell here — this is how the bug is FOUND. The error proves your text reached the query and it names MySQL;
+      it's the same "500 leaks internals" lesson from the status-code slide. (3) ADMIN: admin'-- closes their quote and the
+      -- comments the password check away entirely — logged in as admin, no password. (4) MATCH EVERY ROW: ' OR '1'='1' --
+      turns the WHERE always-true, so all four rows match and the app logs you in as the first. Watch the query rewrite live
+      as they type — that's the reveal you can't just tell them. Note the table on screen is the SERVER's view, not something
+      the login page shows you; pulling data onto the page is UNION SELECT, which needs a page that DISPLAYS results (a search
+      box), so name it and move on. Then flip "parameterised query": the same input is sent as a bound VALUE — injection dies.
+      Land: concatenation is the bug; parameterisation is the fix; real DBs are millions of rows but the mechanism is identical.</aside>
     </section>
 
     <!-- ================= COMMAND INJECTION + TRAVERSAL ================= -->
