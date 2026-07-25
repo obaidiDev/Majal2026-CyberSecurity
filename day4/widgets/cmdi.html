@@ -176,8 +176,12 @@ function run() {
     } else {
       // hardened: pass the whole thing as a single argument, no shell
       cmdEl.innerHTML = '<span class="fixed">execFile("ping", ["-c1", ' + JSON.stringify(v) + '])</span>  <span style="color:#5f7681">// no shell, one argument</span>';
-      termEl.innerHTML = '<span class="prompt">$ ping -c1 "' + esc(v) + '"</span>\n<span class="sys">ping: cannot resolve \'' + esc(v) + '\': Name or service not known</span>';
-      if (/[;&|`$]/.test(v)) showV(false, "Injection neutralised", 'The whole string is passed as <b>one argument</b> to ping, never to a shell — so <b>;</b> is just part of a (bad) hostname. No shell, nothing to inject into.');
+      // a clean hostname still works — the fix must not break the feature
+      var clean = /^[A-Za-z0-9][A-Za-z0-9.\-]*$/.test(v.trim());
+      termEl.innerHTML = '<span class="prompt">$ ping -c1 "' + esc(v) + '"</span>\n' + (clean
+        ? '<span class="ok">PING ' + esc(v.trim()) + ': 56 data bytes — 1 packets, 0% loss</span>'
+        : '<span class="sys">ping: cannot resolve \'' + esc(v) + '\': Name or service not known</span>');
+      if (/[;&|`$]/.test(v)) showV(false, "Injection neutralised", 'A normal host still pings fine — but the whole tampered string is passed as <b>one argument</b> to ping, never to a shell. So <b>;</b> is just part of a (bad) hostname. No shell, nothing to inject into.');
     }
   } else {
     var resolved = resolvePath(v);

