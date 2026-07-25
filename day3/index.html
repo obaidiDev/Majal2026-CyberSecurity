@@ -72,6 +72,64 @@
     .enum .t .why { display: block; margin-top: .4em; font-size: .55em; color: #86b4b7;
       border-top: 1px solid #0a4657; padding-top: .38em; }
     .enum .t .why b { color: #F2D200; font-weight: 700; }
+
+    /* ===== concept-slide foundations (a primer before each simulation) ===== */
+    .hero { display: flex; justify-content: center; align-items: center; gap: 22px; flex-wrap: wrap;
+      background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: .75em 1em; margin: .35em 0 .15em; }
+    .hero .cue { font-size: .64em; color: var(--muted); max-width: 16em; line-height: 1.45; }
+    .hero .cue b { color: var(--petrol); font-weight: 700; }
+    /* an IP address, split network | host */
+    .hero .addrbar, .hero .namebar, .hero .flags { flex: 0 0 auto; }
+    .addrbar { display: inline-flex; font-family: var(--mono); font-weight: 800; font-size: 1.05em;
+      border-radius: 6px; overflow: hidden; border: 1px solid var(--line); }
+    .addrbar .seg { flex: 0 0 auto; white-space: nowrap; padding: .38em .8em; display: flex; flex-direction: column; align-items: center; gap: .2em; }
+    .addrbar .seg small { font-family: var(--sans); font-size: .5em; font-weight: 800; letter-spacing: .07em;
+      text-transform: uppercase; opacity: .9; }
+    .addrbar .net { background: var(--petrol); color: #fff; }
+    .addrbar .host { background: #D8EEEC; color: #1F8F89; }
+    /* a DNS name, split into labels (read right→left) */
+    .namebar { display: inline-flex; align-items: stretch; font-family: var(--mono); font-weight: 800; font-size: 1.02em; }
+    .namebar .lab { padding: .38em .75em; display: flex; flex-direction: column; align-items: center; gap: .2em;
+      border: 1px solid var(--line); border-right: 0; background: var(--panel); }
+    .namebar .lab:first-child { border-radius: 6px 0 0 6px; }
+    .namebar .lab:last-child { border-right: 1px solid var(--line); border-radius: 0 6px 6px 0; background: #EAF1F1; }
+    .namebar .lab small { font-family: var(--sans); font-size: .48em; font-weight: 800; letter-spacing: .05em;
+      text-transform: uppercase; color: var(--muted); }
+    /* a unix permission string, group by group */
+    .permstr { font-family: var(--mono); font-weight: 800; font-size: 1.5em; letter-spacing: .06em; color: var(--ink); }
+    .permstr .g { padding: 0 .06em .06em; border-bottom: 3px solid transparent; }
+    .permstr .own { border-color: #1F8F89; } .permstr .grp { border-color: #7a5cc4; } .permstr .oth { border-color: var(--muted); }
+    .permstr .suid { background: var(--yellow); border-radius: 3px; padding: 0 .12em; }
+    .permleg { display: flex; gap: 14px; justify-content: center; margin-top: .55em; font-size: .58em; color: var(--muted); }
+    .permleg i { display: inline-block; width: 20px; height: 4px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+    /* firewall direction rows */
+    .fwdiag { display: flex; flex-direction: column; gap: 7px; min-width: 340px; }
+    .fwrow { display: grid; grid-template-columns: 116px 1fr; align-items: center; gap: 12px; padding: .5em .8em;
+      border-radius: 7px; border: 1px solid var(--line); font-size: .66em; }
+    .fwrow .dir { font-family: var(--mono); font-weight: 800; font-size: .92em; }
+    .fwrow .ex { color: var(--muted); line-height: 1.35; }
+    .fwrow.deny { background: rgba(214,69,69,.07); border-color: #E9C4C4; } .fwrow.deny .dir { color: var(--bad); }
+    .fwrow.allow { background: rgba(31,143,137,.08); border-color: #9fd4cf; } .fwrow.allow .dir { color: #167a75; }
+    /* small labelled 'device' box (IP + MAC) */
+    .devbox { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: .6em .9em; text-align: center; }
+    .devbox .t { font-size: .6em; font-weight: 800; color: var(--ink); letter-spacing: .02em; }
+    .devbox .kv { font-family: var(--mono); font-size: .64em; margin-top: .35em; }
+    .devbox .kv .k { color: var(--muted); } .devbox .kv .ip { color: var(--petrol); font-weight: 800; }
+    .devbox .kv .mac { color: #1F8F89; font-weight: 800; }
+    /* flag chips (TCP) */
+    .flags { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    .flag { font-family: var(--mono); font-weight: 800; font-size: .7em; color: #fff; background: var(--petrol);
+      border-radius: 999px; padding: .3em .8em; }
+    .flag small { font-family: var(--sans); font-weight: 700; opacity: .85; margin-left: .3em; }
+    /* compact scope so a primer (hero + card grid + bridge) fits the 720px frame */
+    .primer .hero { padding: .42em .85em; margin: .22em 0 .08em; gap: 16px; }
+    .primer .hero .cue { font-size: .59em; }
+    .primer .k2 { gap: 9px; margin-top: .36em !important; }
+    .primer .k2 .card { padding: .45em .66em; }
+    .primer .k2 .card h3 { font-size: .76em; margin-bottom: .2em; }
+    .primer .k2 .card p { font-size: .59em; line-height: 1.3; }
+    .primer .k2 .card .ex { margin-top: .34em; padding-top: .32em; font-size: .56em; }
+    .primer .callout { font-size: .72em; padding: .5em .85em; margin-top: .45em !important; }
   </style>
 </head>
 <body>
@@ -127,6 +185,42 @@
       Keep it ~90 seconds; the depth comes in the next slides.</aside>
     </section>
 
+    <!-- ============ PRIMER · WHAT AN IP ADDRESS IS ============ -->
+    <section class="primer">
+      <p class="kicker">Act 1 · addressing · first principles</p>
+      <h2>First: an IP address is just four numbers — and really two things</h2>
+      <div class="hero">
+        <div class="namebar">
+          <span class="lab" style="background:var(--petrol);color:#fff;border-color:var(--petrol)">192.168.1<small style="color:#cfe0ef">network · which wire</small></span>
+          <span class="lab" style="background:#D8EEEC;color:#1F8F89;border-color:#9fd4cf">.50<small style="color:#5c9d97">host · which machine</small></span>
+        </div>
+        <div class="cue">Like a street name plus a house number: the <b>network</b> part says which wire you're on,
+          the <b>host</b> part says which machine on it.</div>
+      </div>
+      <div class="k2 c4" style="margin-top:.55em">
+        <div class="card"><h3>32 on/off switches</h3>
+          <p>Four numbers, each <strong>0–255</strong> — that's 8 bits apiece, <strong>32 bits</strong> in total. That's all an IPv4 address is.</p>
+          <span class="ex"><b>e.g.</b> 192.168.1.50</span></div>
+        <div class="card"><h3>Network + host</h3>
+          <p>The address splits into a <strong>left half</strong> (the wire) and a <strong>right half</strong> (the machine). Same left half = same local network.</p>
+          <span class="ex"><b>So:</b> .10 and .50 here are neighbours.</span></div>
+        <div class="card"><h3>The mask draws the line</h3>
+          <p>The <strong>subnet mask</strong> (<span class="mono">/24</span>) is just <em>where</em> the split falls. Move it and machines fall in or out of &ldquo;your wire.&rdquo;</p>
+          <span class="ex"><b>/24 =</b> first 24 bits are the network.</span></div>
+        <div class="card"><h3>Private vs public</h3>
+          <p><span class="mono">192.168.x</span>, <span class="mono">10.x</span>, <span class="mono">172.16–31.x</span> are <strong>private</strong> — reused inside every office. Everything else is <strong>public</strong>.</p>
+          <span class="ex"><b>Private</b> can't be reached from the internet directly.</span></div>
+      </div>
+      <div class="callout" style="margin-top:.7em"><strong>Two devices move your traffic:</strong> a <strong>switch</strong> shuttles frames
+      <em>within</em> one wire using MAC addresses; a <strong>router</strong> passes packets <em>between</em> wires using IPs. The next slide is a
+      toy — slide the mask and watch machines fall to the far side of the router.</div>
+      <aside class="notes">Pure foundation, no attack yet — the substrate the whole day stands on. Land three things and move on:
+      (1) an IP is 4 octets = 32 bits, nothing mystical; (2) it has a network half and a host half, and the mask is just the movable
+      boundary between them; (3) private ranges are reused everywhere, which is why the internet can't route to them (sets up NAT).
+      Name switch-vs-router here so it's defined before ARP and segmentation use it. Keep it ~90s; the next slide lets them feel the
+      mask by moving it.</aside>
+    </section>
+
     <!-- ================= ACT 1 · ADDRESSING, SUBNETS, NAT ================= -->
     <section>
       <p class="kicker">Act 1 · addressing &amp; reach</p>
@@ -146,6 +240,40 @@
       <b>NAT</b>, which lets the office out and matches up the replies, but nothing outside can start a conversation in. Ask
       the room the question this answers: "if the office is unreachable, how did we get in on Day 2?" — you didn't knock, you
       got <em>invited</em>, by phishing. Every attack today only works because you're already on the wire.</aside>
+    </section>
+
+    <!-- ============ PRIMER · MAC, FRAMES, BROADCAST ============ -->
+    <section class="primer">
+      <p class="kicker">Act 1 · the local wire · first principles</p>
+      <h2>Every device carries <em>two</em> addresses — and traffic rides in frames</h2>
+      <div class="hero">
+        <div class="devbox"><div class="t">A laptop on the wire</div>
+          <div class="kv"><span class="k">IP </span><span class="ip">192.168.1.50</span> &nbsp;·&nbsp; <span class="k">MAC </span><span class="mac">a1:b2:c3:44:55:66</span></div>
+        </div>
+        <div class="cue">The <b>IP</b> can change (it's assigned); the <b>MAC</b> is burned into the network card at the
+          factory. Both point at the same machine, for different jobs.</div>
+      </div>
+      <div class="k2 c3" style="margin-top:.55em">
+        <div class="card"><h3>MAC address <span class="tag">hardware</span></h3>
+          <p>A 48-bit ID fixed to the network card, like <span class="mono">a1:b2:c3:44:55:66</span>. It only means anything on
+          <strong>this local wire</strong> — routers don't carry it across.</p>
+          <span class="ex"><b>IP =</b> the mailing address · <b>MAC =</b> the physical badge.</span></div>
+        <div class="card"><h3>Frame wraps packet <span class="tag">nesting</span></h3>
+          <p>Day 1's onion: the <strong>IP packet</strong> (with IP addresses) is wrapped in a <strong>frame</strong> (with MAC
+          addresses) to cross <em>one hop</em> of wire. New frame each hop.</p>
+          <span class="ex"><b>To send a frame you need the destination's MAC.</b></span></div>
+        <div class="card"><h3>Broadcast vs unicast <span class="tag">reach</span></h3>
+          <p><strong>Unicast</strong> = a frame to one MAC. <strong>Broadcast</strong> = destination
+          <span class="mono">ff:ff:ff:ff:ff:ff</span> — <em>every</em> device on the wire receives it.</p>
+          <span class="ex"><b>Broadcast</b> is how you ask a question of the whole room.</span></div>
+      </div>
+      <div class="callout" style="margin-top:.7em"><strong>The gap:</strong> to put a frame on the wire you need the destination's
+      <em>MAC</em> — but you usually only know its <em>IP</em>. The protocol that bridges that gap is <strong>ARP</strong>, and it's the
+      toy on the next slide. Watch <em>how</em> it asks — because that's also its weakness.</div>
+      <aside class="notes">Foundation for ARP and, later, MITM. Three beats: (1) two addresses per device — IP is assigned and
+      logical, MAC is burned-in and local-only; the who-vs-where framing; (2) frame-wraps-packet is just Day 1's encapsulation named
+      at layer 2 — a fresh frame every hop; (3) broadcast (all-ones MAC) vs unicast, because the ARP request is a broadcast. End on the
+      gap — you know the IP, need the MAC — which is exactly the problem ARP solves next. ~75s.</aside>
     </section>
 
     <!-- ================= ACT 1 · IP vs MAC + ARP ================= -->
@@ -200,6 +328,43 @@
       nothing, so defenders can't simply "patch" it — they can only segment and monitor.</aside>
     </section>
 
+    <!-- ============ PRIMER · PORTS & SERVICES ============ -->
+    <section class="primer">
+      <p class="kicker">Act 1 · ports · first principles</p>
+      <h2>One machine runs many programs — a port says which one you want</h2>
+      <div class="hero">
+        <div class="flags">
+          <span class="flag">22 <small>SSH</small></span>
+          <span class="flag">80 <small>HTTP</small></span>
+          <span class="flag">443 <small>HTTPS</small></span>
+          <span class="flag">445 <small>SMB</small></span>
+          <span class="flag">3389 <small>RDP</small></span>
+        </div>
+        <div class="cue">One IP, but up to <b>65,535</b> ports. The port number is how the machine knows which
+          <b>program</b> a packet is meant for.</div>
+      </div>
+      <div class="k2 c3" style="margin-top:.55em">
+        <div class="card"><h3>Why ports exist</h3>
+          <p>A server runs a web server <em>and</em> a database <em>and</em> SSH at once. They share one IP — the <strong>port
+          number</strong> is what keeps their traffic apart.</p>
+          <span class="ex"><b>IP</b> finds the machine; <b>port</b> finds the program on it.</span></div>
+        <div class="card"><h3>Listening = a door that's open</h3>
+          <p>A program that's running and waiting for connections is <strong>listening</strong> on its port. A listening port =
+          an <strong>open door</strong>. No program there = <strong>closed</strong>.</p>
+          <span class="ex"><b>Open</b> means something is behind it to talk to — or attack.</span></div>
+        <div class="card"><h3>Numbers you'll keep seeing</h3>
+          <p>Services sit on <strong>well-known ports</strong> by convention: <span class="mono">22</span> SSH,
+          <span class="mono">80/443</span> web, <span class="mono">445</span> file shares, <span class="mono">3389</span> remote desktop.</p>
+          <span class="ex"><b>See a port</b> → you can guess the service.</span></div>
+      </div>
+      <div class="callout" style="margin-top:.7em"><strong>A port scan just knocks on every door and notes which open.</strong> Each open
+      door is a running service — and each service is its own way in. The next slide is that scanner; press it and read the doors.</div>
+      <aside class="notes">Foundation for the port scan and, really, for all of Act 2's targeting. Land: (1) one IP hosts many
+      programs, and the port number multiplexes them — that's the whole reason ports exist; (2) &ldquo;listening&rdquo; is the key word —
+      an open port is a program waiting, a door with something behind it; (3) well-known ports let you read a scan at a glance. Don't
+      drill the numbers; they'll meet them live on the next slide and again in the port-scan mapping (SSH→login, SMB/RDP→lateral). ~70s.</aside>
+    </section>
+
     <!-- ================= ACT 1 · PORTS & SERVICES ================= -->
     <section>
       <p class="kicker">Act 1 · ports &amp; services</p>
@@ -218,6 +383,41 @@
       surface. This is nmap at toy scale; a real scan sweeps all 65,535 ports and fingerprints versions to match known CVEs.</aside>
     </section>
 
+    <!-- ============ PRIMER · TCP / UDP / FLAGS ============ -->
+    <section class="primer">
+      <p class="kicker">Act 1 · connections · first principles</p>
+      <h2>Two ways to send data: with a handshake, or without</h2>
+      <div class="hero">
+        <div class="flags">
+          <span class="flag">SYN <small>let's start</small></span>
+          <span class="flag">ACK <small>got it</small></span>
+          <span class="flag" style="background:var(--bad)">RST <small>go away</small></span>
+        </div>
+        <div class="cue">TCP's &ldquo;handshake&rdquo; is nothing but these tiny <b>flag</b> bits in the header, sent back and
+          forth: <b>SYN → SYN-ACK → ACK</b>, then data.</div>
+      </div>
+      <div class="k2 c3" style="margin-top:.55em">
+        <div class="card"><h3>TCP <span class="tag">reliable</span></h3>
+          <p>Sets up a <strong>connection</strong> first, numbers every byte, re-sends anything lost, keeps order. Costs a little
+          time; buys certainty.</p>
+          <span class="ex"><b>Used by:</b> the web, SSH, RDP, file shares.</span></div>
+        <div class="card"><h3>UDP <span class="tag">fast &amp; loose</span></h3>
+          <p>No setup, no memory, no re-send. Packets just fly; a lost one is simply <em>gone</em>. Less overhead, less certainty.</p>
+          <span class="ex"><b>Used by:</b> DNS lookups, voice, video, games.</span></div>
+        <div class="card"><h3>Flags = control bits <span class="tag">SYN·ACK·RST</span></h3>
+          <p>A handful of on/off bits steer a TCP connection. <strong>SYN</strong> opens, <strong>ACK</strong> confirms,
+          <strong>RST</strong> refuses/aborts. That's the whole handshake.</p>
+          <span class="ex"><b>State</b> = both sides remembering where they are.</span></div>
+      </div>
+      <div class="callout" style="margin-top:.7em"><strong>The same handshake is the attacker's scanning trick:</strong> send only the
+      first <span class="mono">SYN</span>, read the reply, and bail before finishing. The next toy plays all three — TCP, UDP, and that
+      half-open scan.</div>
+      <aside class="notes">Foundation for the tcp/udp toy and the SYN scan. Beats: (1) reliable vs unreliable is a genuine trade-off,
+      not good vs bad — match protocol to job; (2) &ldquo;connection&rdquo; means both sides hold state (remember the conversation), which
+      UDP doesn't; (3) flags are just control bits, and the 3-way handshake is literally SYN/SYN-ACK/ACK. Plant the hook: the scanner
+      abuses the handshake by never finishing it. Keep sequence-numbers to one phrase (&ldquo;numbers every byte&rdquo;) — the toy shows it. ~75s.</aside>
+    </section>
+
     <!-- ================= ACT 1 · TCP vs UDP + SYN SCAN ================= -->
     <section>
       <p class="kicker">Act 1 · connections</p>
@@ -232,6 +432,43 @@
       lost one is simply gone; great for DNS, voice, video. <b>SYN scan</b>: the attacker's trick — send only the SYN, read
       the reply (SYN-ACK = open, RST = closed), then send RST to bail before completing. That half-open scan is exactly how
       the port sweep two slides back found the doors — fast and quiet. Ties the connection mechanism to the recon they saw.</aside>
+    </section>
+
+    <!-- ============ PRIMER · DNS NAMES & HIERARCHY ============ -->
+    <section class="primer">
+      <p class="kicker">Act 1 · names → addresses · first principles</p>
+      <h2>A web name is read right-to-left — like a postal address, biggest last</h2>
+      <div class="hero">
+        <div class="namebar">
+          <span class="lab">www<small>host</small></span><span style="align-self:center;font-weight:800;color:var(--muted);padding:0 .2em">.</span>
+          <span class="lab">majal<small>the org</small></span><span style="align-self:center;font-weight:800;color:var(--muted);padding:0 .2em">.</span>
+          <span class="lab">sa<small>country · TLD</small></span><span style="align-self:center;font-weight:800;color:var(--muted);padding:0 .2em">.</span>
+          <span class="lab">&nbsp;·&nbsp;<small>the root</small></span>
+        </div>
+        <div class="cue">Machines route to <b>numbers</b>, but people remember <b>names</b>. DNS turns
+          <span class="mono">majal.sa</span> into an IP — by walking this tree.</div>
+      </div>
+      <div class="k2 c3" style="margin-top:.55em">
+        <div class="card"><h3>Nobody knows every name</h3>
+          <p>No single server holds the whole internet. It's a <strong>tree of referrals</strong>: the root points to the country
+          (<span class="mono">.sa</span>), which points to the org's own server.</p>
+          <span class="ex"><b>Each level</b> only knows who to ask next.</span></div>
+        <div class="card"><h3>Your resolver does the walk</h3>
+          <p>You don't climb the tree yourself — a helper called the <strong>resolver</strong> asks each level for you and hands
+          back the final IP.</p>
+          <span class="ex"><b>One question in,</b> one answer out.</span></div>
+        <div class="card"><h3>…and remembers it</h3>
+          <p>The resolver <strong>caches</strong> the answer for a while (its <strong>TTL</strong>), so the next lookup of the same
+          name is instant — no walk.</p>
+          <span class="ex"><b>Billions of lookups/sec</b> ride on this caching.</span></div>
+      </div>
+      <div class="callout" style="margin-top:.7em"><strong>Here's the catch you'll weaponise later:</strong> DNS believes
+      <em>whoever answers first</em>. Forge a reply and the victim happily connects to <em>your</em> server. Watch the walk — and that
+      gap — on the next slide.</div>
+      <aside class="notes">Foundation for the DNS resolver toy. Land: (1) read the name right-to-left, biggest scope last, with an
+      invisible root dot — demystifies &ldquo;what is a TLD&rdquo;; (2) it's a hierarchy of referrals, not one magic lookup — nobody holds
+      everything; (3) the resolver does the recursion and caches by TTL. End on trust-by-answer, the same flaw as ARP/DHCP — that rhyme
+      (three protocols, same weakness) is the real spine of Act 1. The toy animates the walk and the cache hit. ~75s.</aside>
     </section>
 
     <!-- ================= ACT 1 · DNS ================= -->
@@ -250,6 +487,36 @@
       cached at every layer. We won't build the spoof here — the ARP version in Act 2 makes the same point on the wire.</aside>
     </section>
 
+    <!-- ============ PRIMER · READING A CAPTURE ============ -->
+    <section class="primer">
+      <p class="kicker">Act 1 · reading the wire · first principles</p>
+      <h2>Before the tool: how you actually read a captured packet</h2>
+      <div class="callout" style="margin-top:.3em"><strong>Wireshark</strong> records every packet on the wire and lets you open one
+      up. Day 1 showed a message get <em>wrapped</em> layer by layer; Wireshark simply <em>un-wraps</em> it — and its window has three
+      panes that do exactly that, top to bottom.</div>
+      <div class="k2 c3" style="margin-top:.6em">
+        <div class="card"><h3>1 · The packet list <span class="tag">top</span></h3>
+          <p>One row per packet: <strong>time, source, destination, protocol, summary</strong>. Colour tells you the protocol at a
+          glance. You click a row to inspect it.</p>
+          <span class="ex"><b>Look for:</b> the 3 handshake packets, then the login.</span></div>
+        <div class="card"><h3>2 · The dissection tree <span class="tag">middle</span></h3>
+          <p>The chosen packet, <strong>un-nested</strong>: one expandable line per layer — <span class="mono">Ethernet</span>
+          (MACs) › <span class="mono">IP</span> › <span class="mono">TCP</span> (ports) › the app. Day 1's onion, opened.</p>
+          <span class="ex"><b>Every layer you learned</b> is one row here.</span></div>
+        <div class="card"><h3>3 · The bytes <span class="tag">bottom</span></h3>
+          <p>The raw packet in <strong>hex and text</strong>. If the app didn't encrypt, the text column is plainly readable —
+          headers, form fields, and all.</p>
+          <span class="ex"><b>Including,</b> for plain HTTP, the password.</span></div>
+      </div>
+      <div class="callout hot" style="margin-top:.8em"><strong>The point of the next slide:</strong> a packet isn't magic — it's these
+      nested labels, and anyone on the wire can read the unencrypted ones. One real login, every layer, the password in the clear —
+      then the same login over HTTPS, sealed.</div>
+      <aside class="notes">Orientation so nobody is lost when the Wireshark UI appears. Just teach the three panes and their
+      top-to-bottom logic: list (pick a packet) → tree (layers unwrapped, one per line — tie straight back to Day 1's encapsulation) →
+      hex/text (the actual bytes; readable if unencrypted). Set the expectation for the marquee: they'll see the TCP handshake from two
+      slides ago, then a cleartext password, then watch HTTPS hide it. ~60s — it's a map, not a lecture.</aside>
+    </section>
+
     <!-- ================= ACT 1 · WIRESHARK (marquee) ================= -->
     <section>
       <p class="kicker">Act 1 · open a real packet</p>
@@ -266,6 +533,35 @@
       packet — same login, but TLS has sealed it; the bytes are opaque ciphertext, no password to see. Two lands: (1) a packet
       is just these nested headers you can read; (2) HTTP exposes everything to anyone on the wire, HTTPS doesn't — which is
       exactly the attack we run next. Bridge to Act 2: "so how does an attacker get onto the wire to read HTTP? Watch."</aside>
+    </section>
+
+    <!-- ============ PRIMER · CERTIFICATES & TRUST ============ -->
+    <section class="primer">
+      <p class="kicker">Act 1 · the padlock · first principles</p>
+      <h2>HTTPS solves <em>two</em> problems — and the second is the hard one</h2>
+      <div class="k2 c3" style="margin-top:.5em">
+        <div class="card"><h3>Problem 1 · secrecy</h3>
+          <p>Scramble the data so a sniffer sees only ciphertext. That's <strong>encryption</strong> — Day 1's key exchange, and
+          honestly the <em>easy</em> half.</p>
+          <span class="ex"><b>Anyone</b> can encrypt. That's not enough.</span></div>
+        <div class="card"><h3>Problem 2 · identity</h3>
+          <p>Be sure you scrambled it to the <strong>real</strong> majal.sa, not an impostor in the middle. Encrypting to the wrong
+          server is worse than not encrypting.</p>
+          <span class="ex"><b>This</b> is the half a certificate solves.</span></div>
+        <div class="card"><h3>The certificate <span class="tag">an ID card</span></h3>
+          <p>A signed card the server presents: its <strong>name</strong>, its <strong>public key</strong>, and a
+          <strong>signature</strong> vouching that the two belong together.</p>
+          <span class="ex"><b>Name + key,</b> notarised.</span></div>
+      </div>
+      <div class="callout" style="margin-top:.7em"><strong>Who does the vouching? A Certificate Authority (CA)</strong> your browser
+      already trusts. Anyone can <em>type</em> the name &ldquo;majal.sa&rdquo; into a certificate — but only a CA's signature makes it
+      believable, and <strong>you can't forge that</strong>. A certificate signed by nobody (<em>self-signed</em>) is the tell of an
+      impostor.</div>
+      <aside class="notes">Foundation for the TLS/cert toy and, downstream, the HTTPS MITM. The one idea students miss:
+      encryption ≠ authentication. Encryption is easy; knowing <em>who</em> you encrypted to is the hard part, and that's the
+      certificate's whole job — it binds a public key to a name, and a CA signature makes the binding trustworthy. Say plainly: anyone
+      can claim a name, nobody but a CA can sign for it, self-signed = unvouched. That single asymmetry is what makes the next slide's
+      man-in-the-middle fail — and why the only way past it is tricking the human. ~80s.</aside>
     </section>
 
     <!-- ================= ACT 1 · TLS & CERTIFICATES ================= -->
@@ -321,6 +617,42 @@
       hacking — it's scanning, logging in, and reusing credentials. Each following slide drills one stage of this loop.</aside>
     </section>
 
+    <!-- ============ PRIMER · FIREWALLS & SHELLS ============ -->
+    <section class="primer">
+      <p class="kicker">Act 2 · staying in touch · first principles</p>
+      <h2>A firewall guards the door — and direction is everything</h2>
+      <div class="hero" style="justify-content:space-between">
+        <div class="fwdiag">
+          <div class="fwrow deny"><span class="dir">✕ INBOUND</span><span class="ex">internet → office: <b>denied by default.</b> Nobody dials in.</span></div>
+          <div class="fwrow allow"><span class="dir">✓ OUTBOUND</span><span class="ex">office → internet: <b>allowed.</b> Staff must browse, email, update.</span></div>
+        </div>
+        <div class="cue">A <b>firewall</b> is a guard that allows or denies traffic by rule — mostly by <b>port</b> and
+          <b>direction</b>. It's <em>stateful</em>: replies to your own outbound requests are let back in.</div>
+      </div>
+      <div class="k2 c3" style="margin-top:.5em">
+        <div class="card"><h3>What a shell is</h3>
+          <p>A <strong>shell</strong> is a remote command line on the victim — the thing Day 2 landed. To use it, you need a network
+          <strong>path</strong> between you and it.</p>
+          <span class="ex"><b>The firewall decides</b> whether that path can exist.</span></div>
+        <div class="card"><h3>Bind = you dial IN</h3>
+          <p>The victim opens a port and waits; <strong>you connect inward</strong>. Obvious — and doomed, because inbound is the one
+          direction the firewall blocks.</p>
+          <span class="ex"><b>Needs inbound.</b> Dead on arrival.</span></div>
+        <div class="card"><h3>Reverse = victim dials OUT</h3>
+          <p>Flip the arrow: the <strong>victim connects out to you</strong>. The firewall waves it through, because outbound is how
+          everyone works.</p>
+          <span class="ex"><b>This</b> is how nearly every real foothold phones home.</span></div>
+      </div>
+      <div class="callout hot" style="margin-top:.65em"><strong>The whole trick is that one flip.</strong> A firewall guards the
+      <em>entrance</em>, not the <em>exit</em> — so make the victim call out, and dress it up as ordinary web traffic on 443. Run all
+      three on the next slide.</div>
+      <aside class="notes">The missing foundation the C2 toy assumes — teach it before, not during. Two halves: (1) a firewall filters
+      by port and direction, and the asymmetry is the whole lesson — inbound denied, outbound allowed, stateful so your own replies
+      return; anchor it to the port-scan firewall toggle they already saw. (2) a shell needs a path, and bind (dial in, blocked) vs
+      reverse (dial out, allowed) is just which end opens the connection. Land the one-liner — &ldquo;guards the door, not the exit&rdquo; —
+      then the toy shows bind die, reverse work, and C2 hide on 443. ~85s; this is load-bearing.</aside>
+    </section>
+
     <!-- ================= ACT 2 · C2 / KEEPING THE SHELL ================= -->
     <section>
       <p class="kicker">Act 2 · staying in touch · command &amp; control</p>
@@ -370,6 +702,33 @@
       lateral targets). This is a checklist attackers automate (tools like LinPEAS); we keep it to the six that matter.</aside>
     </section>
 
+    <!-- ============ PRIMER · SWITCHES & THE ARP LIE ============ -->
+    <section class="primer">
+      <p class="kicker">Act 2 · sniff the wire · first principles</p>
+      <h2>Why you can't just &ldquo;listen&rdquo; — and how one lie fixes that</h2>
+      <div class="k2 c3" style="margin-top:.5em">
+        <div class="card"><h3>A switch is not a megaphone</h3>
+          <p>A <strong>switch</strong> sends each frame <em>only</em> to the port of its real destination MAC. So on a switched
+          network you <strong>don't</strong> normally see anyone else's traffic — even on the same wire.</p>
+          <span class="ex"><b>That's</b> why simply sniffing gets you nothing.</span></div>
+        <div class="card"><h3>Everything leaves via the gateway</h3>
+          <p>Any traffic bound for another network goes to the <strong>gateway</strong> (the router) first. So the victim → gateway
+          path carries all the interesting stuff — logins, browsing, the lot.</p>
+          <span class="ex"><b>Own that path</b> and you own the traffic.</span></div>
+        <div class="card"><h3>ARP takes no proof <span class="tag">recall</span></h3>
+          <p>Remember slide 4: ARP believes <em>any</em> machine that claims an IP. So <strong>lie to both sides</strong> — tell the
+          victim &ldquo;I'm the gateway,&rdquo; tell the gateway &ldquo;I'm the victim.&rdquo;</p>
+          <span class="ex"><b>Both cache your MAC.</b> Traffic now bends through you.</span></div>
+      </div>
+      <div class="callout hot" style="margin-top:.75em"><strong>That detour is a man-in-the-middle.</strong> The switch was doing its job
+      perfectly — you didn't break it, you fed it a lie about who's where. Spoof, then read the victim's login, on the next slide.</div>
+      <aside class="notes">Foundation for the MITM toy — it removes the two &ldquo;wait, why does this work?&rdquo; gaps. (1) A switch
+      isolates traffic by MAC, so sniffing alone fails — this is the thing beginners don't know and it's why an attack is even needed.
+      (2) All off-subnet traffic funnels through the gateway, so impersonating the gateway captures everything. (3) Tie back hard to the
+      ARP primer: ARP has no authentication, so poisoning both victim and gateway reroutes the path through you. Then the toy: normal =
+      empty capture, spoof = the path bends and the cleartext password appears, HTTPS = still relayed but sealed. ~75s.</aside>
+    </section>
+
     <!-- ================= ACT 2 · ARP-SPOOF MITM (marquee) ================= -->
     <section>
       <p class="kicker">Act 2 · sniff the wire · man-in-the-middle</p>
@@ -388,6 +747,50 @@
       seeds Day 5 — ARP spoofing is noisy and detectable, which the defender will catch.</aside>
     </section>
 
+    <!-- ============ PRIMER · LINUX USERS & PERMISSIONS ============ -->
+    <section class="primer">
+      <p class="kicker">Act 2 · escalate · first principles</p>
+      <h2>Who's allowed to do what on Linux — and the bit that leaks power</h2>
+      <div class="hero">
+        <div style="text-align:center">
+          <div class="permstr">-<span class="g suid">rws</span><span class="g grp">r-x</span><span class="g oth">r-x</span></div>
+          <div class="permleg">
+            <span><i style="background:#1F8F89"></i>owner (root)</span>
+            <span><i style="background:#7a5cc4"></i>group</span>
+            <span><i style="background:var(--muted)"></i>others (you)</span>
+            <span><i style="background:var(--yellow)"></i>the SUID <b>s</b></span>
+          </div>
+        </div>
+        <div class="cue">Every file lists read/write/execute for three audiences. Here <span class="mono">ls -l</span> shows a
+          root-owned file with an <b>s</b> where owner's <b>x</b> should be — that's the trapdoor.</div>
+      </div>
+      <div class="k2 c4" style="margin-top:.5em">
+        <div class="card"><h3>Users &amp; root</h3>
+          <p>Every process runs <em>as</em> some user (a <strong>uid</strong>). <strong>root</strong> (uid 0) can do anything. You
+          landed as low-priv <span class="mono">alice</span>.</p>
+          <span class="ex"><b>Goal:</b> become root on this box.</span></div>
+        <div class="card"><h3>rwx × 3</h3>
+          <p><strong>r</strong>ead, <strong>w</strong>rite, e<strong>x</strong>ecute — listed for <strong>owner</strong>,
+          <strong>group</strong>, and <strong>others</strong>. That's the <span class="mono">-rwxr-xr-x</span> string.</p>
+          <span class="ex"><b>Others = you,</b> unless you own it.</span></div>
+        <div class="card" style="border-top-color:var(--bad)"><h3>The SUID bit</h3>
+          <p>An <span class="mono">s</span> in the owner slot: the program runs as its <strong>owner</strong>, not as you. A
+          root-owned SUID program you can abuse = a <strong>root shell</strong>.</p>
+          <span class="ex"><b>Power leaks</b> from owner to runner.</span></div>
+        <div class="card"><h3>sudo &amp; cron</h3>
+          <p><span class="mono">sudo</span> runs a command as root (sometimes with no password); <span class="mono">cron</span>
+          runs jobs on a schedule (sometimes as root). Misconfigure either → a way up.</p>
+          <span class="ex"><b>Both</b> are top escalation leads.</span></div>
+      </div>
+      <div class="callout hot" style="margin-top:.6em"><strong>Privilege escalation = finding one such misconfiguration</strong> —
+      not a movie exploit. On the next slide, three leads work and one is a trap; the trap teaches that <em>writable ≠ exploitable</em>.</div>
+      <aside class="notes">The foundation the privesc sandbox completely assumes. Walk the permission string once, out loud:
+      dash, then three triples (owner/group/other), each r-w-x; &ldquo;others&rdquo; is you. Then the four leads the toy uses — uid/root,
+      the rwx model, the SUID bit (power runs as the owner, so a root-owned SUID binary is a trapdoor), and sudo/cron misconfigs. Land
+      the through-line: escalation is hygiene failures, not 0-days. Prime the trap — /tmp is writable but nothing privileged runs your
+      file there, so writable isn't exploitable. ~85s; without this the sandbox is hieroglyphics.</aside>
+    </section>
+
     <!-- ================= ACT 2 · PRIVILEGE ESCALATION ================= -->
     <section>
       <p class="kicker">Act 2 · escalate · low-priv → root</p>
@@ -403,6 +806,43 @@
       "exploitable"; it only matters if something privileged runs your file. The prompt flips alice$ → root#, uid 1000 → 0.
       Two lands: (1) privesc is misconfigurations, not 0-days; (2) the fix is hygiene — least privilege, audit SUID/sudoers.
       Real hunters automate this with LinPEAS/WinPEAS; every technique here is real (toy targets).</aside>
+    </section>
+
+    <!-- ============ PRIMER · HOW PASSWORDS ARE STORED ============ -->
+    <section class="primer">
+      <p class="kicker">Act 2 · loot · first principles</p>
+      <h2>The server never stored your password — just its fingerprint</h2>
+      <div class="hero">
+        <div style="font-family:var(--mono);font-weight:800;text-align:center;font-size:.8em">
+          <span style="color:var(--petrol)">Summer2026!</span>
+          <span style="color:var(--muted);margin:0 .5em">— one-way hash →</span>
+          <span style="color:#1F8F89">41aed72cec76…</span>
+          <div style="font-family:var(--sans);font-size:.62em;color:var(--muted);font-weight:600;margin-top:.4em">easy this way ▶ &nbsp;·&nbsp; ◀ practically impossible to reverse</div>
+        </div>
+        <div class="cue">Systems keep a <b>hash</b> — Day 1's fingerprint — not your actual password. You can't run it
+          backwards. But you <em>can</em> guess and check.</div>
+      </div>
+      <div class="k2 c3" style="margin-top:.5em">
+        <div class="card"><h3>Why a hash, not the password</h3>
+          <p>If the database leaks, the attacker gets fingerprints, not passwords. Verifying a login means hashing what you typed and
+          comparing — the server <strong>never needs the plaintext</strong>.</p>
+          <span class="ex"><b>Day 1's lesson,</b> now from the loot side.</span></div>
+        <div class="card"><h3>Cracking = guess &amp; compare</h3>
+          <p>Hash millions of candidate passwords and look for a match — a <strong>dictionary</strong> (word lists) or
+          <strong>brute force</strong>. Weak/common falls in seconds; long &amp; random doesn't.</p>
+          <span class="ex"><b>No salt (NTLM):</b> one guess tests every account at once.</span></div>
+        <div class="card" style="border-top-color:var(--bad)"><h3>Pass-the-hash <span class="tag">no crack needed</span></h3>
+          <p>On Windows/SMB the <strong>hash itself</strong> is what proves who you are. Steal the fingerprint and you log in
+          <em>without ever knowing the password</em> — strength stops mattering.</p>
+          <span class="ex"><b>A leaked hash = a working key.</b></span></div>
+      </div>
+      <div class="callout" style="margin-top:.6em"><strong>So once you've dumped the hashes, you choose:</strong> crack the weak ones
+      offline, or pass the strong one's hash straight into a login. The next slide does both, on real NTLM hashes.</div>
+      <aside class="notes">Foundation for the credloot toy. Three ideas: (1) storage is one-way hashes, not plaintext — reinforce
+      Day 1 and explain <em>why</em> (a leak yields fingerprints; login = hash-and-compare); (2) cracking is guess-and-compare, bounded
+      entirely by password strength, and NTLM's missing salt means one hash of a candidate tests all accounts at once; (3) pass-the-hash
+      — for NTLM/SMB the hash <em>is</em> the credential, so a strong password can't save a leaked account. Set up the choice the toy
+      offers: crack the weak three, pass the strong one. ~80s.</aside>
     </section>
 
     <!-- ================= ACT 2 · CREDENTIAL LOOT ================= -->
@@ -523,6 +963,37 @@
       hides the attacker's theft); (3) the payday — data sale or ransomware with double extortion (encrypt + leak). Land the
       bridge: exfil is bulky and anomalous, so even an attacker who was quiet all day gets loud here — setting up "you left
       tracks." Don't dwell; the emotional weight (this is a real business-ending event) is enough.</aside>
+    </section>
+
+    <!-- ============ PRIMER · THE DEFENDER'S SENSORS ============ -->
+    <section class="primer">
+      <p class="kicker">The other side · first principles</p>
+      <h2>Before you see the alerts: who's actually watching, and for what</h2>
+      <div class="k2 c5" style="margin-top:.6em">
+        <div class="card"><h3>SIEM <span class="tag">the console</span></h3>
+          <p>The central screen that <strong>collects every alert</strong> from all the sensors below into one place.</p>
+          <span class="ex"><b>Friday's chair</b> — where the week gets reconstructed.</span></div>
+        <div class="card"><h3>IDS <span class="tag">network</span></h3>
+          <p>Watches <strong>traffic</strong> for known-bad patterns — like one host probing a thousand ports.</p>
+          <span class="ex"><b>Catches:</b> the internal port scan.</span></div>
+        <div class="card"><h3>EDR <span class="tag">on the host</span></h3>
+          <p>Watches what happens <strong>on a machine</strong> — odd processes, a root shell spawning from a web server.</p>
+          <span class="ex"><b>Catches:</b> the privilege escalation.</span></div>
+        <div class="card"><h3>arpwatch <span class="tag">the wire</span></h3>
+          <p>Notices when a gateway's <strong>MAC suddenly changes</strong> — the signature of ARP spoofing.</p>
+          <span class="ex"><b>Catches:</b> the man-in-the-middle.</span></div>
+        <div class="card"><h3>DLP <span class="tag">data exit</span></h3>
+          <p>Watches <strong>data leaving</strong> — a gigabyte heading to a stranger at 3am.</p>
+          <span class="ex"><b>Catches:</b> the exfiltration.</span></div>
+      </div>
+      <div class="callout hot" style="margin-top:.9em"><strong>Notice what's <em>not</em> on this list:</strong> a sensor for reading
+      files or cracking hashes on your <em>own</em> laptop. Work that never touches the network or the target is invisible — which is
+      exactly why some of your moves screamed and others left nothing. Replay them on the next slide.</div>
+      <aside class="notes">Foundation that makes the SIEM payoff land instead of washing over them. Define the five sensor types by
+      <em>where</em> each looks: SIEM = the aggregator (the console they'll sit at Friday); IDS = network patterns; EDR = host behaviour;
+      arpwatch = MAC changes on the wire; DLP = data egress. Pre-map each to the move it will catch so the next slide is recognition, not
+      new information. Then plant the punchline — nothing watches your own laptop, so local/offline work (enumeration, cracking) is
+      silent. That asymmetry is the whole bridge to Day 5. ~70s.</aside>
     </section>
 
     <!-- ================= ACT 2 · YOU LEFT TRACKS ================= -->
