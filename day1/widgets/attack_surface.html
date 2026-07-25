@@ -183,8 +183,8 @@
       cap:'A <span class="dngr">phishing email</span> leaves the attacker, addressed to an employee.',
       step:'<b>&#9312;</b> A phishing email is sent to an employee &mdash; the attacker picks <b>one</b> point on the surface.' },
     { type:"pause", at:"laptop", dur:850, pulse:"laptop",
-      cap:'The employee clicks &mdash; malware runs and steals their password.',
-      step:'<b>&#9313;</b> The employee clicks. Malware runs and steals their password.' },
+      cap:'The employee clicks &mdash; <span class="dngr">malware</span> runs and steals their password.',
+      step:'<b>&#9313;</b> The employee clicks. <b>Malware</b> &mdash; any software written to act against the owner of the machine &mdash; runs and steals their password.' },
     { type:"move", a:"laptop", b:"wifi", edge:"laptop-wifi", dur:950,
       cap:'The attacker signs in with the stolen password &mdash; a valid login, not an exploit.',
       step:'<b>&#9314;</b> The attacker logs in with the stolen password &mdash; a valid login, not a hack.' },
@@ -196,7 +196,7 @@
       step:'<b>&#9316;</b> Lateral movement: the attacker pivots toward the database.' },
     { type:"pause", at:"db", dur:1300, pulse:"db", breach:true,
       cap:'The <span class="dngr">database is copied</span> &mdash; yet it was never internet-facing.',
-      step:'<b>&#9317;</b> The database is exfiltrated &mdash; and it was <b>never on the surface</b>. One vector still reached it.' }
+      step:'<b>&#9317;</b> The database is <b>exfiltrated</b> &mdash; copied out to the attacker &mdash; and it was <b>never on the surface</b>. One vector still reached it.' }
   ];
   var BLOCK = [
     { type:"move", a:"net", b:"laptop", frac:0.46, dur:800, edge:null,

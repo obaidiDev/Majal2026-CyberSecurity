@@ -7,6 +7,41 @@
   <link rel="stylesheet" href="../shared/dist/reset.css">
   <link rel="stylesheet" href="../shared/dist/reveal.css">
   <link rel="stylesheet" href="../shared/css/course.css?v=5">
+  <style>
+  /* ===== Day-1 first-principles primers — same vocabulary as Day 3 ===== */
+  .k2 { display: grid; gap: 14px; margin-top: .3em; }
+  .k2.c2 { grid-template-columns: 1fr 1fr; }
+  .k2.c3 { grid-template-columns: repeat(3,1fr); }
+  .k2.c4 { grid-template-columns: repeat(4,1fr); }
+  .k2 .card h3 { margin: 0 0 .3em; font-size: .82em; color: var(--petrol); letter-spacing: -.01em; }
+  .k2 .card h3 .tag { font-family: var(--mono); font-size: .58em; font-weight: 700; color: var(--muted);
+    letter-spacing: .05em; text-transform: uppercase; margin-left: .4em; }
+  .k2 .card p { margin: 0; font-size: .64em; color: var(--muted); line-height: 1.42; }
+  .k2 .card .ex { display: block; margin-top: .55em; font-size: .6em; color: var(--slate);
+    border-top: 1px dashed var(--line); padding-top: .45em; }
+  .k2 .card .ex b { color: var(--petrol); font-weight: 700; }
+  .dgm { width: 100%; display: block; margin: .1em 0 .05em; }
+  .dgm .lbl { font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: .09em;
+    text-transform: uppercase; fill: var(--muted); }
+  .dgm .cap { font-family: var(--sans); font-size: 13.5px; fill: var(--slate); font-weight: 600; }
+  .dgm .box { fill: #fff; stroke: var(--line); stroke-width: 1.5; }
+  .dgm .t { font-family: var(--sans); font-size: 12.5px; fill: var(--ink); font-weight: 700; }
+  .dgm .tw { font-family: var(--sans); font-size: 12.5px; fill: #fff; font-weight: 800; }
+  .dgm .m { font-family: var(--mono); font-size: 12px; fill: var(--petrol); font-weight: 700; }
+  .dgm .mg { font-family: var(--mono); font-size: 11.5px; fill: var(--muted); font-weight: 700; }
+  .dgm .wire { stroke: var(--muted); stroke-width: 2; fill: none; }
+  .dgm .wire.hot { stroke: var(--petrol); stroke-width: 2.5; fill: none; }
+  .dgm .sep { font-family: var(--sans); font-size: 30px; font-weight: 800; fill: #c3d2d5; }
+  .primer .k2 { gap: 9px; margin-top: .36em !important; }
+  .primer .k2 .card { padding: .45em .66em; }
+  .primer .k2 .card h3 { font-size: .76em; margin-bottom: .2em; }
+  .primer .k2 .card p { font-size: .59em; line-height: 1.3; }
+  .primer .k2 .card .ex { margin-top: .34em; padding-top: .32em; font-size: .56em; }
+  .primer .callout { font-size: .68em; padding: .5em .9em; }
+  .k2 .card.bad-c  { border-top-color: #D64545 !important; }
+  .k2 .card.warn-c { border-top-color: #E3B23C !important; }
+  .k2 .card.good-c { border-top-color: #1F8F89 !important; }
+  </style>
 </head>
 <body>
 <div class="reveal">
@@ -85,7 +120,7 @@
     <section>
       <p class="kicker">Foundations · where attacks get in</p>
       <h2>Attack surface vs. attack vector</h2>
-      <iframe class="wframe" style="height:566px" src="widgets/attack_surface.html?v=2"
+      <iframe class="wframe" style="height:566px" src="widgets/attack_surface.html?v=3"
               title="Attack surface and attack vectors" scrolling="auto"></iframe>
       <aside class="notes">Two words students constantly confuse, made physical. ATTACK SURFACE = the sum of every point an outsider could reach — here the web server, Wi-Fi gateway, laptop, and phone (4 of 5 assets). The database is INTERNAL: no direct path from outside, so it is not on the surface. ATTACK VECTOR = the single path an attacker actually takes. Press "Trace the attack": a phishing email hits one exposed point (the human/laptop), the attacker logs in with the stolen password — a valid login, not an exploit — then moves LATERALLY, laptop → gateway → database. The payoff to say aloud: the crown-jewel database was never on the surface, yet one vector still reached it through a weaker, exposed neighbour. Then press "Shrink the surface": close the human entry points (training, mail filtering, MFA) and re-trace — the same attack now has nowhere to land. The law to leave them with: you reduce risk by SHRINKING THE SURFACE (fewer exposed points) and by BREAKING VECTORS (segmentation, so one foothold can't reach everything). This is the mental model behind every control in the course.</aside>
     </section>
@@ -114,6 +149,61 @@
       <p class="sub" style="margin-top:1em">Every control you'll ever configure exists to produce one of these. Every attack exists to break one. When you meet a new tool, ask: <em>which of the three?</em></p>
       <aside class="notes">Don't lecture the definitions — they'll build each one next. Land only the framing:
       controls produce a property; attacks break one. Availability is a security property, not "IT's problem".</aside>
+    </section>
+
+    <!-- ============ PRIMER: the words of encryption ============ -->
+    <section class="primer">
+      <p class="kicker">Confidentiality · first principles · the words</p>
+      <h2>Encryption, in the words you'll use all week</h2>
+      <svg class="dgm" viewBox="0 0 940 150" role="img"
+           aria-label="Plaintext is encrypted with a cipher and a key into ciphertext, travels the wire where Eve sees only gibberish, and is decrypted back to plaintext">
+        <text class="lbl" x="16" y="13">plaintext</text>
+        <rect class="box" x="16" y="24" width="150" height="44" rx="6"/>
+        <text class="t" x="91" y="51" text-anchor="middle">MEET AT DAWN</text>
+        <line class="wire hot" x1="166" y1="46" x2="228" y2="46"/>
+        <rect x="228" y="20" width="128" height="52" rx="7" fill="#00567d"/>
+        <text class="tw" x="292" y="41" text-anchor="middle">ENCRYPT</text>
+        <text class="mg" x="292" y="59" text-anchor="middle" style="fill:rgba(255,255,255,.88)">cipher + key</text>
+        <line class="wire hot" x1="356" y1="46" x2="418" y2="46"/>
+        <text class="lbl" x="418" y="13">ciphertext</text>
+        <rect class="box" x="418" y="24" width="150" height="44" rx="6"/>
+        <text class="m" x="493" y="51" text-anchor="middle">0B 04 09 17 6F</text>
+        <line class="wire hot" x1="568" y1="46" x2="630" y2="46"/>
+        <rect x="630" y="20" width="128" height="52" rx="7" fill="#1f8f89"/>
+        <text class="tw" x="694" y="41" text-anchor="middle">DECRYPT</text>
+        <text class="mg" x="694" y="59" text-anchor="middle" style="fill:rgba(255,255,255,.88)">cipher + key</text>
+        <line class="wire hot" x1="758" y1="46" x2="820" y2="46"/>
+        <rect class="box" x="820" y="24" width="104" height="44" rx="6"/>
+        <text class="t" x="872" y="51" text-anchor="middle">MEET…</text>
+        <line x1="493" y1="76" x2="493" y2="104" stroke="#D64545" stroke-width="2" stroke-dasharray="4 3"/>
+        <text class="cap" x="493" y="122" text-anchor="middle" style="fill:#D64545">👁 Eve is on the wire — she sees this box, and only this box</text>
+        <text class="cap" x="493" y="142" text-anchor="middle">the method is public · the <tspan font-weight="800">key</tspan> is the secret</text>
+      </svg>
+      <div class="k2 c4">
+        <div class="card"><h3>Plaintext <span class="tag">in</span></h3>
+          <p>The readable message, before anything is done to it. Also the word for whatever comes back out after decryption.</p></div>
+        <div class="card"><h3>Ciphertext <span class="tag">out</span></h3>
+          <p>The scrambled result. This — and <em>only</em> this — is what travels, and what an eavesdropper gets.</p></div>
+        <div class="card warn-c"><h3>Key <span class="tag">the secret</span></h3>
+          <p>The secret input that decides which of the many possible outputs you get. The one thing you must protect.</p></div>
+        <div class="card"><h3>Cipher <span class="tag">the method</span></h3>
+          <p>The algorithm itself — the recipe. Public, published, studied by everyone. Same cipher + different key = different ciphertext.</p></div>
+      </div>
+      <div class="callout"><strong>Encryption</strong> turns plaintext into ciphertext using a cipher and a key;
+      <strong>decryption</strong> reverses it. The whole field is <em>cryptography</em>. Everything for the next hour is
+      one question: <em>who can reverse it?</em>
+      <span class="sub" style="display:block;margin-top:.3em">You'll meet the same three people all day — <strong>Alice</strong> sends,
+      <strong>Bob</strong> receives, <strong>Eve</strong> eavesdrops. They're the standard cast in every cryptography paper ever written.</span></div>
+      <aside class="notes">The vocabulary slide the crypto block needs before a single cipher appears. Walk the diagram left to right once — plaintext in,
+      cipher + key, ciphertext out, cipher + key again, plaintext back. Then the four words, and insist on them, because students blur them constantly:
+      PLAINTEXT is the readable form (it does not have to be text — a plaintext can be an image or a binary). CIPHERTEXT is the scrambled form, and it is
+      the ONLY thing on the wire. The KEY is the secret; the CIPHER is the public method. That split is the entire idea, and it is worth stating twice:
+      you do not get security by hiding the algorithm, you get it by hiding the key — which is exactly what they will prove for themselves two slides from
+      now when 25 Caesar keys fall in ten seconds. ENCRYPTION = plaintext → ciphertext under a key; DECRYPTION = the reverse; CRYPTOGRAPHY = the field
+      that studies both. Introduce the cast explicitly rather than letting the widgets do it silently: Alice, Bob and Eve are the universal convention —
+      A sends to B, E eavesdrops — and a fourth, Mallory, shows up later as the ACTIVE attacker who can change traffic, not just read it. Finally set the
+      through-line for the block: every slide that follows asks the same question in a different way — who can reverse this, and what would they need?
+      Keep to ~2 minutes. Do not preview symmetric vs asymmetric here; that distinction is earned on the next three slides.</aside>
     </section>
 
     <!-- ================= CONFIDENTIALITY ================= -->
@@ -211,6 +301,42 @@
       is worth stating that a signature is the one crypto primitive that produces evidence rather than protection.</aside>
     </section>
 
+    <!-- ============ PRIMER: encoding vs encryption vs hashing ============ -->
+    <section class="primer">
+      <p class="kicker">Integrity · first principles · three things people confuse</p>
+      <h2>Encoding, encryption, hashing — three different jobs</h2>
+      <p class="sub">All three turn readable input into unreadable output. Only one of them is <em>not meant to be undone</em>.</p>
+      <div class="k2 c3">
+        <div class="card bad-c"><h3>Encoding <span class="tag">not security</span></h3>
+          <p><strong>Reversible by anyone. No key.</strong> Its job is <em>compatibility</em> — packing data into a form some
+          system can carry safely.</p>
+          <span class="ex"><b>Base64, URL-encoding.</b> Anyone can decode it in one command. If a system "encodes" your
+          password, it has protected nothing.</span></div>
+        <div class="card"><h3>Encryption <span class="tag">confidentiality</span></h3>
+          <p><strong>Reversible — but only with the key.</strong> Its job is <em>secrecy</em>: keep the content readable to
+          key-holders and useless to everyone else.</p>
+          <span class="ex"><b>AES, RSA.</b> What you just spent the last hour building.</span></div>
+        <div class="card good-c"><h3>Hashing <span class="tag">integrity</span></h3>
+          <p><strong>Not reversible at all. No key.</strong> Its job is <em>proof</em>: a short fingerprint that changes if
+          the input changes by even one bit.</p>
+          <span class="ex"><b>SHA-256.</b> Any input, any size — always the same fixed-size output.</span></div>
+      </div>
+      <div class="callout hot"><strong>The question that separates them:</strong> <em>who can get the original back?</em>
+      Encoding — anyone. Encryption — whoever holds the key. Hashing — <strong>nobody, ever, by design.</strong>
+      <span class="sub" style="display:block;margin-top:.3em">So when someone says "the passwords in our database are encrypted",
+      that is the wrong answer, and worth catching: encrypted means there's a key somewhere that turns them back into passwords.
+      Stored passwords should be <em>hashed</em> — see the next three slides.</span></div>
+      <aside class="notes">The single most common confusion in the whole subject, and cheap to fix if you fix it before the hash demos rather than after.
+      Run the three cards as one question: WHO CAN GET THE ORIGINAL BACK? ENCODING — anybody, because there is no secret involved at all; Base64 exists so
+      that binary data can survive a channel that only carries text, and calling it security is a genuine, frequent, real-world mistake (students will meet
+      Base64 in Day 4's web work and should never mistake it for protection). ENCRYPTION — only the key-holder; the transformation is designed to be undone,
+      by exactly one party. HASHING — nobody. Not the attacker, not the server, not the person who wrote it. That is not a limitation, it is the entire
+      point, and it is why a hash can be published safely next to the file it describes. Land the practical test they can use for the rest of their careers:
+      if you can get the input back, it was never a hash. Then the pointed example in the callout — "our passwords are encrypted" is a red flag, because it
+      means a key exists that reverses them, and whoever steals the database will look for that key too. Hashed passwords have no such key. That sets up the
+      next three slides exactly: fingerprint → tamper check → password storage. Two minutes, then straight into the avalanche.</aside>
+    </section>
+
     <!-- ================= INTEGRITY ================= -->
     <section data-w="avalanche">
       <p class="kicker">Integrity · proof that nothing changed</p>
@@ -250,6 +376,45 @@
       deliberately slow, memory-hard function — bcrypt, scrypt, or Argon2 (today's default). They salt for you and expose a tunable WORK FACTOR you turn up
       as hardware gets faster: one login costs a legitimate user a fraction of a second, while cracking a stolen database costs the attacker centuries. So
       the rule to leave them with is not "hash your passwords" — it is "never design this yourself; use Argon2 or bcrypt."</aside>
+    </section>
+
+    <!-- ============ PRIMER: what breaks and defends availability ============ -->
+    <section class="primer">
+      <p class="kicker">Availability · first principles · what breaks it, what defends it</p>
+      <h2>Availability breaks for boring reasons, not just attacks</h2>
+      <div class="k2 c4">
+        <div class="card bad-c"><h3>Flooding <span class="tag">deliberate</span></h3>
+          <p>More requests than you can answer, so real users get nothing. <strong>DoS</strong> = one source;
+          <strong>DDoS</strong> = thousands at once.</p></div>
+        <div class="card bad-c"><h3>Ransomware <span class="tag">deliberate</span></h3>
+          <p>Your data is still there and still yours — encrypted, and you don't have the key. Same property, no traffic involved.</p></div>
+        <div class="card warn-c"><h3>Failure <span class="tag">accident</span></h3>
+          <p>A dead disk, a full disk, a cut cable, a power cut, an expired certificate. No attacker required.</p></div>
+        <div class="card warn-c"><h3>Us <span class="tag">accident</span></h3>
+          <p>A bad deploy, a wrong firewall rule, a mistyped command. Statistically the most common outage of all.</p></div>
+      </div>
+      <p class="sub" style="margin:.55em 0 0">The four defences — <em>the next slide's controls, by name:</em></p>
+      <div class="k2 c4">
+        <div class="card good-c"><h3>Rate limiting</h3>
+          <p>Cap how many requests one source may make per second. Cheap junk gets refused <em>before</em> it costs you real work.</p></div>
+        <div class="card good-c"><h3>Filtering</h3>
+          <p>Recognise attack traffic by its pattern and drop it upstream — ideally on someone else's much bigger network.</p></div>
+        <div class="card good-c"><h3>Scaling out</h3>
+          <p>More servers sharing the load, so the same flood is spread thinner and no one machine <em>is</em> the service.</p></div>
+        <div class="card good-c"><h3>Backups</h3>
+          <p>The only one that still works <em>after</em> the data is already encrypted or gone. Untested backup, no backup.</p></div>
+      </div>
+      <aside class="notes">Two corrections to the instinct students arrive with. FIRST: availability is not a synonym for DDoS. The top row is deliberately
+      half attack and half accident — flooding and ransomware are adversarial, but dead hardware, full disks, expired certificates and bad deploys take far
+      more services down in practice than attackers do, and a mistyped command by your own team is statistically the most likely outage you will ever cause.
+      That is why availability sits inside security at all: the property is "authorised users can reach it", and the property does not care why they can't.
+      SECOND: name the controls before they meet them as unlabelled checkboxes on the next slide. RATE LIMITING caps requests per source per second — the key
+      insight is that it refuses cheap traffic cheaply, before it costs you a database query. FILTERING recognises attack traffic by pattern and drops it, and
+      for volumetric floods it must happen UPSTREAM, on a provider's network far bigger than your own — you cannot filter a flood that has already saturated
+      your cable. SCALING OUT spreads load across more machines so no single one is the whole service; it buys headroom, not immunity, and the attacker can
+      always rent more. BACKUPS are the odd one out and the most important: they are the only control on this slide that still helps AFTER the damage, which is
+      exactly why they are the ransomware answer. Say the rule aloud — a backup you have never restored from is not a backup, it is a hope. Then go straight to
+      the simulation and have them drive the first three.</aside>
     </section>
 
     <!-- ================= AVAILABILITY ================= -->
@@ -393,6 +558,68 @@
       managers also flag reused and breached passwords for you. Frame it as the action every student should take today.</aside>
     </section>
 
+
+    <!-- ============ PRIMER: the risk chain, defined ============ -->
+    <section class="primer">
+      <p class="kicker">Risk vocabulary · first principles · six words, one chain</p>
+      <h2>Asset, threat, vulnerability, exploit — one chain</h2>
+      <svg class="dgm" viewBox="0 0 930 112" role="img"
+           aria-label="A threat uses an exploit against a vulnerability in an asset, causing impact; a control breaks the chain at any link">
+        <text class="lbl" x="465" y="13" text-anchor="middle">read it as one sentence, left to right</text>
+        <rect class="box" x="8" y="30" width="112" height="42" rx="6" style="stroke:#D64545;stroke-width:2"/>
+        <text class="t" x="64" y="56" text-anchor="middle">THREAT</text>
+        <line class="wire" x1="120" y1="51" x2="192" y2="51"/>
+        <text class="mg" x="156" y="45" text-anchor="middle">uses</text>
+        <rect class="box" x="192" y="30" width="112" height="42" rx="6" style="stroke:#C05621;stroke-width:2"/>
+        <text class="t" x="248" y="56" text-anchor="middle">EXPLOIT</text>
+        <line class="wire" x1="304" y1="51" x2="376" y2="51"/>
+        <text class="mg" x="340" y="45" text-anchor="middle">against</text>
+        <rect class="box" x="376" y="30" width="170" height="42" rx="6" style="stroke:#E3B23C;stroke-width:2"/>
+        <text class="t" x="461" y="56" text-anchor="middle">VULNERABILITY</text>
+        <line class="wire" x1="546" y1="51" x2="618" y2="51"/>
+        <text class="mg" x="582" y="45" text-anchor="middle">in an</text>
+        <rect class="box" x="618" y="30" width="112" height="42" rx="6" style="stroke:#1F8F89;stroke-width:2"/>
+        <text class="t" x="674" y="56" text-anchor="middle">ASSET</text>
+        <line class="wire" x1="730" y1="51" x2="802" y2="51"/>
+        <text class="mg" x="766" y="45" text-anchor="middle">causing</text>
+        <rect class="box" x="802" y="30" width="112" height="42" rx="6" style="stroke:#D64545;stroke-width:2"/>
+        <text class="t" x="858" y="56" text-anchor="middle">IMPACT</text>
+        <path d="M64 78 v8 h794 v-8" fill="none" stroke="#00567d" stroke-width="2" stroke-dasharray="5 4"/>
+        <text class="cap" x="465" y="104" text-anchor="middle" style="fill:#00567d;font-weight:800">a CONTROL can break this chain at <tspan font-style="italic">any</tspan> link</text>
+      </svg>
+      <div class="k2 c3">
+        <div class="card good-c"><h3>Asset <span class="tag">what you defend</span></h3>
+          <p>Anything with value: data, a system, a service, money, a person, a reputation. If it has no value, it needs no security.</p></div>
+        <div class="card bad-c"><h3>Threat <span class="tag">who or what</span></h3>
+          <p>Any circumstance or actor that could harm the asset. The <em>threat actor</em> is the who; a flood or a failure is a threat too.</p></div>
+        <div class="card warn-c"><h3>Vulnerability <span class="tag">the weakness</span></h3>
+          <p>A weakness that a threat could use. Note whose it is: a vulnerability is a property of <strong>your</strong> system, not of the attacker.</p></div>
+      </div>
+      <div class="k2 c3">
+        <div class="card"><h3>Exploit <span class="tag">the weakness, used</span></h3>
+          <p>The vulnerability actually being taken advantage of. Vulnerability = potential; exploit = it happening. (Also the name of the code that does it.)</p></div>
+        <div class="card bad-c"><h3>Impact <span class="tag">how bad</span></h3>
+          <p>What it costs you if it lands: money, downtime, data, trust, lives.</p></div>
+        <div class="card"><h3>Control <span class="tag">what you add</span></h3>
+          <p>Anything that lowers likelihood <em>or</em> impact — a patch, a lock, a policy, a backup, training.</p></div>
+      </div>
+      <div class="callout"><strong>Risk</strong> isn't an object — it's a <em>measurement</em>:
+      <strong>Likelihood × Impact</strong>. That's why a rare catastrophe and a frequent nuisance can score the same, and why
+      "is it vulnerable?" is the wrong question — the right one is <em>how much risk, and is that more than we accept?</em>
+      <span class="sub" style="display:block;margin-top:.3em">Next slide: the same six words, told as one attack — on Superman.</span></div>
+      <aside class="notes">Definitions first; the Superman slide is then pure illustration, and it lands far better once these words already mean something.
+      Walk the chain left to right: a THREAT runs an EXPLOIT against a VULNERABILITY in an ASSET, producing IMPACT — and a CONTROL can break that chain at any
+      link, which is the practical point of drawing it as a chain at all. Then the three distinctions students reliably get wrong, in order. (1) THREAT vs
+      VULNERABILITY: the threat is external and you usually cannot remove it — you don't get to abolish criminals or storms — while the vulnerability is YOURS,
+      which is precisely why almost all defensive work targets the vulnerability rather than the threat. (2) VULNERABILITY vs EXPLOIT: a vulnerability is a
+      weakness that exists whether or not anyone has noticed; an exploit is that weakness actually being used, and "an exploit" is also the noun for the code
+      that does it. An unexploited vulnerability is still a real risk — this is the answer to "but nobody has attacked us". (3) RISK is not a thing in the
+      system, it is a measurement OF the system: Likelihood × Impact. Hammer the consequence, because it reframes the whole job: security is not "remove every
+      vulnerability", which is impossible, it is "know your risks and spend where they are largest". Note also that ASSET comes first for a reason — you cannot
+      rank risk until you know what is worth defending, which is why real programmes start with an asset inventory and not with tools. NIST's wording, if
+      anyone wants it: a vulnerability is "a weakness that could be exploited or triggered by a threat source"; risk is "a function of the adverse impacts
+      that would arise and the likelihood of occurrence". Keep it to three minutes, then let Superman do the remembering.</aside>
+    </section>
 
     <!-- ============ RISK VOCABULARY (Superman vs Lex, in pictures) ============ -->
     <section>

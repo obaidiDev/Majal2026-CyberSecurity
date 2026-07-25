@@ -1,8 +1,14 @@
 # Majal — Cyber Day 1: *Foundations & the CIA triad*
 
-An offline, single-player, interactive Reveal.js deck (**25 slides**). Every teaching
+An offline, single-player, interactive Reveal.js deck (**29 slides**). Every teaching
 beat is either a hands-on widget you drive, or a sharp explanation in the deck's own
 card/callout style — never a quiz.
+
+**Define before you simulate.** Each block opens with a *first-principles* primer
+slide (same pattern as Day 3) that defines the vocabulary, so every simulation that
+follows is an illustration of words the room already owns rather than the place they
+first meet them. The four primers are the crypto words, encoding-vs-encryption-vs-
+hashing, what breaks and defends availability, and the risk chain.
 
 ## Run it
 Just open **`index.html`** in any modern browser — double-click it, or drag it onto
@@ -27,27 +33,33 @@ a browser window. **No server, no internet, no install.** It runs straight from
 (physical → network → endpoint → application → data, with *human* across all);
 attack surface vs. attack vector, traced live.
 
-**Confidentiality** — Caesar cipher → breaking it by brute force (Kerckhoffs's
-principle, AES-256's keyspace) → symmetric/XOR and the *key-distribution problem*
-→ RSA → Diffie–Hellman (and why it falls to an *active* man-in-the-middle) →
-the digital envelope / TLS handshake → sign-and-seal Tamper Lab (integrity,
-authenticity, non-repudiation).
+**Confidentiality** — *primer:* plaintext, ciphertext, key, cipher, encrypt/decrypt
+and the Alice/Bob/Eve cast. Then Caesar cipher → breaking it by brute force
+(Kerckhoffs's principle, AES-256's keyspace) → symmetric/XOR and the
+*key-distribution problem* → RSA → Diffie–Hellman (and why it falls to an *active*
+man-in-the-middle) → the digital envelope / TLS handshake → sign-and-seal Tamper Lab
+(integrity, authenticity, non-repudiation).
 
-**Integrity** — SHA-256 avalanche and the five hash properties (incl. collision
-resistance, and MD5/SHA-1 being broken); checksum verification; password storage:
-hashing → salting → *slow* hashing (bcrypt/scrypt/Argon2).
+**Integrity** — *primer:* encoding vs. encryption vs. hashing, separated by the one
+question *who can get the original back?* Then SHA-256 avalanche and the five hash
+properties (incl. collision resistance, and MD5/SHA-1 being broken); checksum
+verification; password storage: hashing → salting → *slow* hashing
+(bcrypt/scrypt/Argon2).
 
-**Availability** — live DDoS simulation, plus DoS vs. DDoS and what a botnet is.
+**Availability** — *primer:* what breaks it (flooding, ransomware, plain failure,
+our own mistakes) and the four defences by name — rate limiting, filtering, scaling
+out, backups. Then the live DDoS simulation, plus DoS vs. DDoS and what a botnet is.
 
 **Synthesis** — "which property just broke?", ending on double-extortion ransomware
 (C + A) as the compound case.
 
 **Beyond the triad** — how break-ins actually begin (they *log in*); authentication
 vs. authorisation (+ accounting = AAA); the three authentication factors and what
-MFA actually means; making a leak worthless; the risk vocabulary told as one attack
-on Superman (asset → threat → vulnerability → exploit → impact → control, plus
-likelihood × impact, residual risk, and the four risk responses); threat actors
-plotted by capability × persistence.
+MFA actually means; making a leak worthless; the risk vocabulary — *primer:* the
+chain (threat → exploit → vulnerability → asset → impact, broken anywhere by a
+control) with NIST-grounded definitions, then the same six words told as one attack
+on Superman, plus likelihood × impact, residual risk and the four risk responses;
+threat actors plotted by capability × persistence.
 
 Two open questions are posed here and deliberately **left unanswered until Day 3**:
 *how do you know that public key is really theirs?* and *what stops an active
