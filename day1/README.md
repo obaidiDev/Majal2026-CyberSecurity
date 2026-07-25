@@ -1,6 +1,6 @@
 # Majal — Cyber Day 1: *Foundations & the CIA triad*
 
-An offline, single-player, interactive Reveal.js deck (**29 slides**). Every teaching
+An offline, single-player, interactive Reveal.js deck (**32 slides**). Every teaching
 beat is either a hands-on widget you drive, or a sharp explanation in the deck's own
 card/callout style — never a quiz.
 
@@ -55,11 +55,22 @@ out, backups. Then the live DDoS simulation, plus DoS vs. DDoS and what a botnet
 
 **Beyond the triad** — how break-ins actually begin (they *log in*); authentication
 vs. authorisation (+ accounting = AAA); the three authentication factors and what
-MFA actually means; making a leak worthless; the risk vocabulary — *primer:* the
-chain (threat → exploit → vulnerability → asset → impact, broken anywhere by a
-control) with NIST-grounded definitions, then the same six words told as one attack
-on Superman, plus likelihood × impact, residual risk and the four risk responses;
-threat actors plotted by capability × persistence.
+MFA actually means; making a leak worthless.
+
+**The risk chain, and everything hanging off it** — a *primer* defines the chain
+(threat → exploit → vulnerability → asset → impact, broken anywhere by a control)
+with NIST-grounded wording; Superman then illustrates it; and each node gets its own
+zoom-in, which is where the rest of the security vocabulary lives rather than in a
+glossary dump:
+
+| node | slide |
+| --- | --- |
+| **threat** | threat actors plotted by capability × persistence |
+| **exploit** | exploit vs. payload, and the malware family — named by *how it spreads* (virus/worm/trojan) or *which CIA property it attacks* (ransomware/spyware/rootkit) |
+| **vulnerability** | CVE, CVSS, patching, and zero-day vs. **n-day** |
+| **control** | preventive / detective / corrective × technical / administrative / physical, retro-labelling every control built during the day |
+
+Plus likelihood × impact, residual risk and the four risk responses.
 
 Two open questions are posed here and deliberately **left unanswered until Day 3**:
 *how do you know that public key is really theirs?* and *what stops an active

@@ -696,7 +696,7 @@
 
     <!-- ================= THREAT ACTORS ================= -->
     <section>
-      <p class="kicker">Threat actors · who attacks, and why</p>
+      <p class="kicker">Risk vocabulary · zoom in · the <em>threat</em> node</p>
       <h2>Who's coming for you decides how you defend</h2>
       <iframe class="wframe" style="height:540px" src="widgets/threat_actors.html?v=2"
               title="Threat actors — capability vs. persistence" scrolling="auto"></iframe>
@@ -707,6 +707,130 @@
       public sites. NATION-STATE / APT (state): near-unlimited resources, patient, custom zero-days — you MANAGE the risk, rarely stop it. The takeaway to
       land: don't defend against a bored teenager the way you defend against a government — match the control to the actor. This sets up the rest of the week's
       tooling: every defence answers "which actor, going after what?"</aside>
+    </section>
+
+    <!-- ============ ZOOM: the EXPLOIT node — exploit vs payload ============ -->
+    <section class="primer">
+      <p class="kicker">Risk vocabulary · zoom in · the <em>exploit</em> node</p>
+      <h2>The exploit gets in. The malware is what it leaves.</h2>
+      <div class="callout"><strong>They are not the same thing</strong>, and the difference decides how you defend.
+      The <strong>exploit</strong> is the technique that abuses one specific weakness to get code running.
+      The <strong>payload</strong> — usually <em>malware</em> — is what runs once it's in. Patching kills the exploit;
+      it does nothing about a payload already on the machine.</div>
+      <p class="sub" style="margin:.5em 0 0">Every malware family is named for one of two things — <em>how it spreads</em>, or <em>what it does to you</em>:</p>
+      <div class="k2 c3">
+        <div class="card warn-c"><h3>Virus <span class="tag">how it spreads</span></h3>
+          <p>Attaches itself to a file or program. Needs <strong>a human</strong> to run it, and something to ride on.</p></div>
+        <div class="card warn-c"><h3>Worm <span class="tag">how it spreads</span></h3>
+          <p>Self-propagating — copies itself machine to machine with <strong>nobody clicking anything</strong>. This is the one case where the malware <em>is</em> the exploit.</p></div>
+        <div class="card warn-c"><h3>Trojan <span class="tag">how it spreads</span></h3>
+          <p>Disguised as something you wanted. No technical exploit at all — <strong>the vulnerability being exploited is you</strong>.</p></div>
+      </div>
+      <div class="k2 c3">
+        <div class="card bad-c"><h3>Ransomware <span class="tag">breaks A + C</span></h3>
+          <p>Encrypts your files, then sells them back. Copies them out first, so refusing to pay isn't the end of it.</p></div>
+        <div class="card bad-c"><h3>Spyware <span class="tag">breaks C</span></h3>
+          <p>Watches and reports: keystrokes, screens, files, camera. Its whole job is to <em>not</em> be noticed.</p></div>
+        <div class="card bad-c"><h3>Rootkit <span class="tag">breaks I</span></h3>
+          <p>Hides itself by corrupting what the machine <em>reports about itself</em>. The system lies to you, so the files look clean.</p></div>
+      </div>
+      <aside class="notes">The distinction first, because students merge these two words permanently otherwise. EXPLOIT = the technique that abuses one specific
+      weakness to gain execution — it is a key turning in one particular lock, and it stops working the moment that lock is changed (patched). PAYLOAD = what
+      the attacker chose to run once the door opened. The same exploit can deliver any payload; the same payload can arrive through any exploit. That
+      independence is the practical point: patching removes the exploit but does nothing about malware already resident, which is exactly why "we patched it"
+      is not the same sentence as "we are clean", and why incident response exists as a separate discipline from vulnerability management.
+      Then walk the two rows and make the organising question explicit, because it is what makes this memorable rather than a list. The TOP row is named for
+      HOW IT TRAVELS: a VIRUS needs a host file and a human to run it; a WORM needs neither and spreads itself, which is why worms produce those historic
+      internet-wide events, and it is the one honest case where the malware carries its own exploit; a TROJAN uses no technical exploit at all — it is
+      disguised as something wanted, so the weakness being abused is the person, which is why it belongs to Day 2's social-engineering block.
+      The BOTTOM row is named for WHAT IT DOES, and every one of them lands on a letter of the triad — say this out loud, it is the payoff of the whole day:
+      RANSOMWARE attacks Availability, and with double extortion Confidentiality too. SPYWARE and keyloggers attack Confidentiality. ROOTKITS attack Integrity
+      in the subtlest way available — not your data, but the machine's account of itself, so that ps, ls and the task manager all report a clean system. That
+      last one is worth a beat: once integrity of the reporting is gone, you cannot trust anything the box tells you, which is why serious response means
+      imaging the disk from outside rather than asking the operating system.
+      Close by pointing at the next slide: every exploit needs a weakness to abuse — so where do those come from, and who keeps the list?</aside>
+    </section>
+
+    <!-- ============ ZOOM: the VULNERABILITY node — CVE, CVSS, patching ============ -->
+    <section class="primer">
+      <p class="kicker">Risk vocabulary · zoom in · the <em>vulnerability</em> node</p>
+      <h2>Every known vulnerability has a name — and a clock</h2>
+      <div class="k2 c4">
+        <div class="card"><h3>CVE <span class="tag">the name</span></h3>
+          <p><strong>C</strong>ommon <strong>V</strong>ulnerabilities and <strong>E</strong>xposures — one public ID per
+          flaw, so the whole world can talk about the same bug.</p>
+          <span class="ex"><b>CVE-2021-44228</b> — Log4Shell. Year, then serial.</span></div>
+        <div class="card warn-c"><h3>CVSS <span class="tag">the score</span></h3>
+          <p>A severity rating from <strong>0 to 10</strong>. Log4Shell scored a <strong>10.0</strong> — the maximum.</p>
+          <span class="ex"><b>Careful:</b> severity is not <em>your</em> risk. It doesn't know whether you run the software.</span></div>
+        <div class="card good-c"><h3>Patch <span class="tag">the control</span></h3>
+          <p>The vendor's fix. Applying it is the control that sits on this node — and it's why "just patch" is the most repeated advice in security.</p></div>
+        <div class="card bad-c"><h3>Zero-day <span class="tag">no clock yet</span></h3>
+          <p>A flaw with <strong>no patch in existence</strong> — nobody has catalogued it, so there's nothing to apply.</p></div>
+      </div>
+      <div class="callout hot"><strong>The clock is the whole story.</strong> A <em>zero-day</em> has no fix available.
+      An <em>n-day</em> has had one for n days — and you didn't install it. Nation-states buy zero-days; almost everyone
+      else is breached through an <strong>n-day</strong>, using a public exploit for a bug that was patched months earlier.
+      <span class="sub" style="display:block;margin-top:.3em">Which reframes the job: the dangerous vulnerability usually isn't the
+      one nobody knows about. It's the one everybody knows about, that you haven't got round to.</span></div>
+      <aside class="notes">This is the node where security stops being abstract, because it has an actual public database behind it. CVE = Common
+      Vulnerabilities and Exposures, run by MITRE: one identifier per publicly disclosed flaw, formatted CVE-YEAR-SERIAL, so that a vendor advisory, a scanner
+      output, a news article and a patch note can all be confirmed to mean the identical bug. Before CVEs, that was genuinely ambiguous. Use Log4Shell
+      (CVE-2021-44228, disclosed December 2021) as the worked example — a flaw in Log4j, a Java logging library almost nobody had heard of and almost everybody
+      was running, which is also the cleanest illustration of supply-chain exposure they will meet before Day 2.
+      CVSS is the severity score, 0 to 10; Log4Shell scored the maximum 10.0. Now make the point that separates a professional from a scanner: CVSS is a
+      property of the FLAW, not of YOU. It does not know whether you run that software, whether the affected service is exposed to the internet, or whether the
+      data behind it matters. A 10.0 in a library you do not deploy is not your emergency; a 6.5 on your payment system might be. Tie that straight back to the
+      previous slide — risk is Likelihood x Impact, and CVSS only ever gestures at one half. Organisations that patch strictly in CVSS order are doing
+      arithmetic, not risk management.
+      Then the zero-day / n-day distinction, which is the line to leave them with. A ZERO-DAY has no patch in existence — the defender has had zero days to fix
+      it. An N-DAY is patched, and has been for n days, and is still open on your estate. Students romanticise zero-days because films do; the reality is that
+      the overwhelming majority of real intrusions use n-days, often months or years old, with exploit code available publicly for free. That is genuinely good
+      news, because it means most breaches were preventable with unglamorous maintenance — and it explains why "patch quickly" outranks nearly every expensive
+      product you can buy. Callback to the threat-actor slide: a nation-state can afford to buy or discover a zero-day; a criminal gang simply scans the
+      internet for people who haven't patched.</aside>
+    </section>
+
+    <!-- ============ ZOOM: the CONTROL node — the three timings ============ -->
+    <section class="primer">
+      <p class="kicker">Risk vocabulary · zoom in · the <em>control</em> node</p>
+      <h2>Controls work at three different moments</h2>
+      <div class="k2 c3">
+        <div class="card good-c"><h3>Preventive <span class="tag">before</span></h3>
+          <p>Stop it happening at all.</p>
+          <span class="ex"><b>Today:</b> encryption, MFA, salting + slow hashing, least privilege, rate limiting, patching, shrinking the attack surface.</span></div>
+        <div class="card"><h3>Detective <span class="tag">during / after</span></h3>
+          <p>Notice that it happened.</p>
+          <span class="ex"><b>Today:</b> the checksum that flipped to TAMPERED, the signature that failed to verify. Plus logs and monitoring — <em>Day 5's whole job</em>.</span></div>
+        <div class="card warn-c"><h3>Corrective <span class="tag">after</span></h3>
+          <p>Limit the damage and get back up.</p>
+          <span class="ex"><b>Today:</b> backups and restore. On Day 5: containment, eradication, recovery.</span></div>
+      </div>
+      <p class="sub" style="margin:.55em 0 0">And each of those is <em>technical</em>, <em>administrative</em> or <em>physical</em> — the same three you saw in the domains:</p>
+      <div class="k2 c3">
+        <div class="card"><h3>Technical</h3><p>The machine enforces it: a firewall rule, a permission, a key.</p></div>
+        <div class="card"><h3>Administrative</h3><p>People and process enforce it: policy, training, offboarding, approvals.</p></div>
+        <div class="card"><h3>Physical</h3><p>The building enforces it: doors, locks, cameras, who is in the room.</p></div>
+      </div>
+      <div class="callout hot"><strong>You need all three timings, because prevention eventually fails.</strong>
+      That isn't pessimism, it's the design assumption behind the rest of the week: if a control could be perfect, nobody would
+      need detection or recovery. Everyone does.</div>
+      <aside class="notes">The slide that retro-labels the entire day, so run it as a recall exercise rather than a lecture — ask the room which timing each
+      control they built belongs to before you reveal the examples. PREVENTIVE acts before the event: encryption, MFA, salted and slow password hashes, least
+      privilege, rate limiting, patching, closing entry points on the attack surface. DETECTIVE acts during or after and changes nothing about whether it
+      happened — it tells you that it did: the checksum flipping to TAMPERED, the signature failing to verify, and at scale, logs, alerting and the SIEM that
+      Day 5 is built around. CORRECTIVE acts after, to limit damage and restore service: backups and restore today; containment, eradication and recovery on
+      Day 5. Note out loud that BACKUPS are the only control from the availability block that is corrective rather than preventive, which is precisely why they
+      are the ransomware answer.
+      Then the second axis, which costs thirty seconds and pays back all week: every control is also TECHNICAL (the machine enforces it), ADMINISTRATIVE
+      (people and process enforce it — policy, training, joiners-movers-leavers, approvals) or PHYSICAL (the building enforces it). Point back to the domains
+      slide from this morning: the human layer wrapped every technical layer, and administrative controls are how you actually act on that. Students arriving
+      from a CS background systematically over-weight technical controls and dismiss the other two, and it is worth saying plainly that most real programmes
+      fail on the administrative side — nobody revoked the leaver's access, nobody tested the backup — rather than because the cryptography was weak.
+      Land the closing idea hard, because it is the bridge into the rest of the course: you need all three timings, since prevention eventually fails against a
+      thinking opponent who adapts. That is not defeatism, it is the design assumption of the entire field — if prevention could be made perfect, detection and
+      response would not exist as disciplines, and Day 5 would have nothing to do. Everything from here is about shortening the gap between "it happened" and
+      "we knew".</aside>
     </section>
 
     <!-- ================= RECAP ================= -->
@@ -734,11 +858,15 @@
       </div>
       <div class="callout"><strong>Beyond the triad:</strong> <em>authentication</em> asks who you are, <em>authorisation</em> what you may do — and MFA
       means two proofs from two different rows. Attackers <em>log in</em>, they don’t hack, so make the leak worthless. Risk = <em>Likelihood × Impact</em>,
-      and you attack the weakness, not the strength. And <em>who’s coming for you</em> decides how you defend.</div>
+      and you attack the weakness, not the strength. <em>Who’s coming for you</em> decides how you defend — and because prevention eventually fails,
+      you build controls for all three moments: <em>before</em>, <em>during</em>, <em>after</em>.</div>
       <aside class="notes">Bookend to the opener — the same three cards, now full of what they built. Walk the spine C · I · A quickly, then the three cross-cutting
       reflexes in the callout (logins over exploits; risk = likelihood × impact; match the control to the actor). The one sentence to leave
-      them with: every tool this week produces or breaks one of C, I, A — that question comes first, always. Hand off to Day 3: tomorrow we go on the
-      network itself — the layers, the real protocols, and how each becomes a way through.</aside>
+      them with: every tool this week produces or breaks one of C, I, A — that question comes first, always. Add the one from the control node, because it is
+      what the rest of the week rests on: prevention eventually fails, so detection and recovery are not consolation prizes — they are the plan.
+      Hand off to Day 2: tomorrow they stop defending and start attacking — how a target is chosen, how the lure is built, and how the first foothold is
+      actually won. Tell them to watch for today's vocabulary showing up as someone's job: every step they take tomorrow is a threat running an exploit
+      against a vulnerability in an asset.</aside>
     </section>
 
     <!-- ================= THANK YOU ================= -->
