@@ -6,7 +6,7 @@
   .w { padding: 12px 14px; }
   .modes { display: flex; gap: 8px; margin-bottom: 10px; }
   .modes button { flex: 0 0 auto; }
-  canvas.seq { width: 100%; height: 384px; border: 1px solid #E0E7E8; border-radius: 10px; background: #fff; }
+  canvas.seq { width: 100%; height: 360px; border: 1px solid #E0E7E8; border-radius: 10px; background: #fff; }
   .cap { min-height: 40px; }
   .legend { display:flex; gap:14px; margin-left:auto; align-items:center; font-size:11px; color:#7a8f96; }
   .legend i { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:4px; vertical-align:-1px; }
@@ -70,7 +70,7 @@ var MODES = {
 };
 
 var cv=document.getElementById("cv"), ctx=cv.getContext("2d");
-var W=760, H=384, DPR=1;
+var W=760, H=360, DPR=1;
 function fit(){ var cssW=cv.clientWidth||W; DPR=window.devicePixelRatio||1;
   cv.width=cssW*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); W=cssW; draw(); }
 window.addEventListener("resize", fit);

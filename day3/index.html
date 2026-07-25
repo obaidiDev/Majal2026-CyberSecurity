@@ -222,8 +222,8 @@
     <section>
       <p class="kicker">Act 1 · connections</p>
       <h2>TCP shakes hands before it talks — UDP just fires</h2>
-      <iframe class="wframe" style="height:532px"
-              src="widgets/tcp_udp.html?v=2"
+      <iframe class="wframe" style="height:550px"
+              src="widgets/tcp_udp.html?v=3"
               title="TCP handshake vs UDP, and the SYN scan" scrolling="no"></iframe>
       <aside class="notes">How do two machines actually hold a conversation? Switch between the three tabs and Play each.
       <b>TCP</b>: the 3-way handshake — SYN, SYN-ACK, ACK — builds a connection BEFORE any data; watch both sides walk
@@ -238,8 +238,8 @@
     <section>
       <p class="kicker">Act 1 · names → addresses</p>
       <h2>DNS: the internet's phonebook (and who it trusts)</h2>
-      <iframe class="wframe" style="height:502px"
-              src="widgets/dns_resolve.html?v=2"
+      <iframe class="wframe" style="height:530px"
+              src="widgets/dns_resolve.html?v=3"
               title="DNS recursive resolution" scrolling="no"></iframe>
       <aside class="notes">Machines route to IPs, but humans remember names — DNS bridges the two. Press Resolve and watch
       the recursive walk: your resolver asks a <b>root</b> server (→ "ask .sa"), then the <b>.sa TLD</b> (→ "ask ns1.majal.sa"),
@@ -305,12 +305,14 @@
         <span class="arr">↺</span>
         <div class="stg"><div class="n">GOAL</div><h4>Own the domain</h4><p>Repeat until you hold the crown jewels.</p><span class="tool">exfiltrate</span></div>
       </div>
-      <div class="callout hot" style="margin-top:.9em"><strong>It's a loop, not a straight line.</strong> Each new box you land on
-      restarts the cycle — orient, escalate, loot, move — and every turn is powered by a protocol you just learned in Act 1.</div>
-      <div class="callout" style="margin-top:.5em"><strong>Say it once, plainly:</strong> everything from here is a <em>crime</em>
-      on a network you don't own. Day 2's rule was "passive is legal, active needs permission" — inside the network there is no
-      passive. These techniques are legal in exactly two places: <strong>a lab you built</strong>, or <strong>an engagement you
-      have written authorisation for</strong>.</div>
+      <div class="callout" style="margin-top:.6em"><strong>The terrain:</strong> your foothold <span class="mono">web01</span> is a
+      <strong>Linux</strong> server in the DMZ; behind it is the office — a <strong>Windows domain</strong>. You root the Linux
+      box, loot its credentials, then walk them into the Windows network.</div>
+      <div class="callout hot" style="margin-top:.45em"><strong>It's a loop, not a straight line.</strong> Each box you land on
+      restarts the cycle — orient, escalate, loot, move — every turn powered by a protocol from Act 1.</div>
+      <div class="callout" style="margin-top:.45em"><strong>Say it once, plainly:</strong> everything from here is a <em>crime</em>
+      on a network you don't own — inside, there is no "passive." It's legal in exactly two places: <strong>a lab you built</strong>,
+      or <strong>an engagement you have written authorisation for</strong>.</div>
       <aside class="notes">The map for Act 2. Yesterday ended at a single low-privilege shell; today is the loop that turns it
       into the whole network. Walk the five stages: <b>orient</b> (situational awareness — the port/service skills from Act 1),
       <b>escalate</b> (become admin/root on this box), <b>loot</b> (harvest credentials), <b>move</b> (reuse that loot to log
@@ -372,8 +374,8 @@
     <section>
       <p class="kicker">Act 2 · sniff the wire · man-in-the-middle</p>
       <h2>Become the middle: ARP-spoof, then read the traffic</h2>
-      <iframe class="wframe" style="height:480px"
-              src="widgets/mitm.html?v=1"
+      <iframe class="wframe" style="height:502px"
+              src="widgets/mitm.html?v=2"
               title="ARP spoofing man-in-the-middle capture" scrolling="no"></iframe>
       <aside class="notes">The two Act-1 mechanisms fired at once. Remember slide 2: ARP is an unauthenticated broadcast —
       anyone can lie. Here you do. First press <em>Victim logs in</em> while normal: the traffic goes straight to the gateway,
@@ -390,8 +392,8 @@
     <section>
       <p class="kicker">Act 2 · escalate · low-priv → root</p>
       <h2>Privilege escalation: turn a misconfig into root</h2>
-      <iframe class="wframe" style="height:448px"
-              src="widgets/privesc.html?v=1"
+      <iframe class="wframe" style="height:470px"
+              src="widgets/privesc.html?v=2"
               title="Privilege escalation sandbox" scrolling="no"></iframe>
       <aside class="notes">Stage 2 of the loop. You have alice's shell, not root's — escalation is abusing a
       <em>misconfiguration</em> to become root. Have them click each lead and read the terminal: <b>SUID</b> (a root-owned
@@ -407,19 +409,24 @@
     <section>
       <p class="kicker">Act 2 · loot · credential access</p>
       <h2>Loot the credentials: crack them, or just reuse the hash</h2>
-      <iframe class="wframe" style="height:310px"
-              src="widgets/credloot.html?v=1"
+      <iframe class="wframe" style="height:352px"
+              src="widgets/credloot.html?v=2"
               title="Credential dumping, cracking, and pass-the-hash" scrolling="no"></iframe>
       <div class="callout" style="margin-top:.5em"><strong>Passwords are stored as one-way hashes</strong> (Day&nbsp;1) — but a
       weak one still falls to an offline dictionary in seconds, and for NTLM the hash <em>itself</em> logs you in.</div>
-      <aside class="notes">Stage 3 of the loop. As root you dumped every account's password <b>hash</b> (mimikatz on Windows,
-      /etc/shadow on Linux — a one-way fingerprint from Day 1, not plaintext). Press <b>Run dictionary attack</b>: watch the
-      guesses/sec counter and the wordlist fly. bob (sunshine), alice (Summer2026!) and svc_backup (P@ssw0rd!) all crack in
-      seconds — land that even a "complex-looking" seasonal password with a symbol falls to word+rules. The 16-char random
-      administrator password does NOT crack. So press <b>Pass-the-hash</b>: for NTLM/SMB the hash itself authenticates — you
-      log in as administrator without ever knowing the password. Two lands: (1) password strength decides crack time (this is
-      why length/randomness matter — Day 1's lesson, now from the attacker's side); (2) pass-the-hash means a strong password
-      can't save an account once its hash leaks — and that stolen credential is the fuel for the next slide, lateral movement.</aside>
+      <aside class="notes">Stage 3 of the loop. Bridge the OS jump explicitly: web01 is Linux, but it runs <b>Samba</b> to serve
+      Windows file shares — and Samba keeps its own password database of <b>NT hashes</b> (the Windows format), which as root you
+      dump with <span class="mono">pdbedit</span>. That's how a Linux box hands you Windows-style credentials. (On a real Windows
+      host the equivalent is mimikatz against LSASS or the SAM.) These are the same real NTLM hashes as Day 1's fingerprints —
+      the table computes them live. Press <b>Run dictionary attack</b>: it steps the wordlist, and for each candidate it actually
+      hashes the word and compares. bob (sunshine), alice (Summer2026!) and svc_backup (P@ssw0rd!) match — land that even a
+      "complex-looking" seasonal password with a symbol falls to word+rules. Point out the <b>no-salt</b> line: one hash of a
+      candidate is tested against all four accounts at once, because NTLM adds no per-user salt — that's why it's so weak. The
+      16-char random administrator password never appears in the list, so it does NOT crack. So press <b>Pass-the-hash</b>: for
+      NTLM/SMB the hash itself authenticates — you log in as administrator to the file server without ever knowing the password.
+      Two lands: (1) password strength decides crack time — length/randomness matter (Day 1, from the attacker's side);
+      (2) pass-the-hash means a strong password can't save an account once its hash leaks — that stolen credential is the fuel for
+      lateral movement next.</aside>
     </section>
 
     <!-- ================= ACT 2 · WHAT A DOMAIN IS ================= -->
@@ -462,17 +469,20 @@
     <section>
       <p class="kicker">Act 2 · move · lateral movement</p>
       <h2>Spread: one box at a time, all the way to the domain</h2>
-      <iframe class="wframe" style="height:422px"
-              src="widgets/lateral.html?v=1"
+      <iframe class="wframe" style="height:456px"
+              src="widgets/lateral.html?v=2"
               title="Lateral movement across the network to domain admin" scrolling="no"></iframe>
-      <aside class="notes">Stage 4 — the payoff of the loop. You own web01 (Day 2's foothold) and carry the loot from the last
-      two slides: alice's reused password and administrator's NTLM hash. Click the glowing machines to move: <b>dev-pc</b>
-      via alice's reused password (RDP), which drops <em>new</em> loot (svc_sql creds); then <b>db01</b> via those creds
-      (MSSQL); <b>fileserver</b> and finally the <b>DC</b> via pass-the-hash. Watch the compromise spread node to node until
-      you're <span class="dngr">Domain Admin</span>. Try clicking a box you can reach but lack the credential for — it refuses,
-      reinforcing that movement needs <em>reachability + a credential</em>. The one big land: no single magic exploit — it's a
-      <b>chain</b> of reused passwords and stolen hashes hopping box to box. That's why segmentation, unique passwords, and
-      not reusing local admin accounts matter (Day 5's defences). Real tools: PsExec, Evil-WinRM, CrackMapExec, RDP/SSH.</aside>
+      <aside class="notes">Stage 4 — the payoff of the loop. You own web01 (Day 2's foothold) and carry only the loot from the
+      last two slides: alice's cracked password and the <em>local</em> Administrator NT hash. Click the glowing machines to
+      move. Land the key distinction up front: that local-admin hash opens <b>fileserver</b> (the same local account, reused —
+      a real and common technique) but the <b>DC refuses it</b> — a local admin is not a domain credential. So the DC stays
+      locked until you go get one. The only path that yields it is a <b>chain</b>: <b>dev-pc</b> via alice's password (RDP),
+      which drops svc_sql DB creds → <b>db01</b> via those creds (MSSQL), where a Domain Admin has a live session you steal →
+      only now does the <b>DC</b> light up. Make someone try the DC early — it refuses ("reachable, but you don't hold the
+      credential it accepts"), which nails the rule: movement needs <em>reachability + the right credential</em>. The one big
+      land: no single magic exploit — it's a chain of reused credentials hopping box to box, and one uniquely-strong local
+      admin password would have broken it. That's why segmentation, unique passwords and LAPS matter (Day 5's defences). Real
+      tools: PsExec, Evil-WinRM, CrackMapExec, RDP/SSH.</aside>
     </section>
 
     <!-- ================= ACT 2 · PERSISTENCE ================= -->

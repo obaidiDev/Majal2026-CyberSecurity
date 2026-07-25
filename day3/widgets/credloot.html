@@ -26,7 +26,7 @@
 <div class="w">
   <div class="dump">
     <table class="cr">
-      <thead><tr><th style="width:130px">User</th><th style="width:230px">NTLM hash (dumped as root)</th><th>Result</th></tr></thead>
+      <thead><tr><th style="width:130px">User</th><th style="width:230px">NT hash — <span style="text-transform:none;letter-spacing:0">web01's Samba DB, dumped as root</span></th><th>Result</th></tr></thead>
       <tbody id="rows"></tbody>
     </table>
   </div>
@@ -39,23 +39,92 @@
   <div class="cap" id="cap"></div>
 </div>
 <script>
+/* ---------------------------------------------------------------------------
+   Real NTLM, computed in the browser: NT hash = MD4(password as UTF-16LE).
+   The hashes in the table below are NOT typed in — they are derived from the
+   passwords at load, and the dictionary attack really hashes every candidate
+   and compares. Toy scale (16 words); real scale stated in the closing caption.
+   --------------------------------------------------------------------------- */
+function md4(bytes) {
+  function rol(x, n) { return ((x << n) | (x >>> (32 - n))) >>> 0; }
+  var msg = bytes.slice(), bitLen = bytes.length * 8;
+  msg.push(0x80);
+  while (msg.length % 64 !== 56) msg.push(0);
+  var lo = bitLen >>> 0, hi = Math.floor(bitLen / 4294967296);
+  msg.push(lo & 255, (lo >>> 8) & 255, (lo >>> 16) & 255, (lo >>> 24) & 255,
+           hi & 255, (hi >>> 8) & 255, (hi >>> 16) & 255, (hi >>> 24) & 255);
+
+  var A = 0x67452301, B = 0xefcdab89, C = 0x98badcfe, D = 0x10325476;
+  var F = function (x, y, z) { return (x & y) | (~x & z); };
+  var G = function (x, y, z) { return (x & y) | (x & z) | (y & z); };
+  var H = function (x, y, z) { return x ^ y ^ z; };
+  var S1 = [3, 7, 11, 19], S2 = [3, 5, 9, 13], S3 = [3, 9, 11, 15];
+  var O2 = [0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15];
+  var O3 = [0, 8, 4, 12, 2, 10, 6, 14, 1, 9, 5, 13, 3, 11, 7, 15];
+
+  for (var off = 0; off < msg.length; off += 64) {
+    var X = [], i;
+    for (i = 0; i < 16; i++) {
+      X[i] = (msg[off + i * 4] | (msg[off + i * 4 + 1] << 8) |
+              (msg[off + i * 4 + 2] << 16) | (msg[off + i * 4 + 3] << 24)) >>> 0;
+    }
+    var a = A, b = B, c = C, d = D, s;
+    for (i = 0; i < 16; i++) {                      // round 1
+      s = S1[i % 4];
+      if (i % 4 === 0)      a = rol((a + F(b, c, d) + X[i]) >>> 0, s);
+      else if (i % 4 === 1) d = rol((d + F(a, b, c) + X[i]) >>> 0, s);
+      else if (i % 4 === 2) c = rol((c + F(d, a, b) + X[i]) >>> 0, s);
+      else                  b = rol((b + F(c, d, a) + X[i]) >>> 0, s);
+    }
+    for (i = 0; i < 16; i++) {                      // round 2
+      s = S2[i % 4];
+      if (i % 4 === 0)      a = rol((a + G(b, c, d) + X[O2[i]] + 0x5a827999) >>> 0, s);
+      else if (i % 4 === 1) d = rol((d + G(a, b, c) + X[O2[i]] + 0x5a827999) >>> 0, s);
+      else if (i % 4 === 2) c = rol((c + G(d, a, b) + X[O2[i]] + 0x5a827999) >>> 0, s);
+      else                  b = rol((b + G(c, d, a) + X[O2[i]] + 0x5a827999) >>> 0, s);
+    }
+    for (i = 0; i < 16; i++) {                      // round 3
+      s = S3[i % 4];
+      if (i % 4 === 0)      a = rol((a + H(b, c, d) + X[O3[i]] + 0x6ed9eba1) >>> 0, s);
+      else if (i % 4 === 1) d = rol((d + H(a, b, c) + X[O3[i]] + 0x6ed9eba1) >>> 0, s);
+      else if (i % 4 === 2) c = rol((c + H(d, a, b) + X[O3[i]] + 0x6ed9eba1) >>> 0, s);
+      else                  b = rol((b + H(c, d, a) + X[O3[i]] + 0x6ed9eba1) >>> 0, s);
+    }
+    A = (A + a) >>> 0; B = (B + b) >>> 0; C = (C + c) >>> 0; D = (D + d) >>> 0;
+  }
+  return [A, B, C, D].map(function (v) {
+    var out = "";
+    for (var j = 0; j < 4; j++) out += ("0" + ((v >>> (j * 8)) & 255).toString(16)).slice(-2);
+    return out;
+  }).join("");
+}
+function ntlm(pw) {                                  // password → UTF-16LE bytes → MD4
+  var b = [];
+  for (var i = 0; i < pw.length; i++) { var c = pw.charCodeAt(i); b.push(c & 0xff, (c >> 8) & 0xff); }
+  return md4(b);
+}
+
 var ACCTS = [
-  {user:"bob",           hash:"8846f7eaee8fb117ad06bdd830b7586c", pw:"sunshine",     ms:600,  tc:"instant (top-100 list)"},
-  {user:"alice",         hash:"a9fdfa038c4b75ebc76dc855dd74f0da", pw:"Summer2026!",  ms:2200, tc:"~seconds (word+rules)"},
-  {user:"svc_backup",    hash:"5835048ce94ad0564e29a924a03510ef", pw:"P@ssw0rd!",    ms:3400, tc:"~seconds (common)"},
-  {user:"administrator", hash:"64f12cddaa88057e06a81b54e73b949b", pw:null,          ms:Infinity, tc:"~ centuries (16 random chars)"}
+  {user:"bob",           pw:"sunshine",         tc:"instant · top-100 list"},
+  {user:"alice",         pw:"Summer2026!",      tc:"~seconds · word + rules"},
+  {user:"svc_backup",    pw:"P@ssw0rd!",        tc:"~seconds · very common"},
+  {user:"administrator", pw:"7Kq!vB2mZr9#Xw4T", tc:"~centuries · 16 random chars", strong:1}
 ];
-var WORDS = ["123456","password","qwerty","sunshine","iloveyou","P@ssw0rd","Summer2025","dragon",
-  "hunter2","Summer2026!","monkey","football","letmein","admin123","P@ssw0rd!","trustno1"];
+ACCTS.forEach(function (a) { a.hash = ntlm(a.pw); });   // the table shows REAL hashes
+
+// The wordlist the attack actually walks. Three of the four passwords are in it.
+var WORDS = ["123456","password","qwerty","letmein","dragon","sunshine","monkey","football",
+  "iloveyou","Summer2025","P@ssw0rd","hunter2","Summer2026!","admin123","trustno1","P@ssw0rd!"];
 
 var rowsEl=document.getElementById("rows"), statusEl=document.getElementById("status");
 var cracking=false, raf=null, t0=0, done=false, pthDone=false;
+var found = {};                     // user → the word that actually matched the hash
 
 function rowHTML(a, state){
   var res;
   if(state==="idle") res='<span class="q">— not attempted —</span>';
   else if(state==="trying") res='<span class="try">cracking…</span>';
-  else if(state==="cracked") res='<span class="crk">cracked → <span class="pw">'+a.pw+'</span></span> <span class="stt">'+a.tc+'</span>';
+  else if(state==="cracked") res='<span class="crk">cracked → <span class="pw">'+(found[a.user]||a.pw)+'</span></span> <span class="stt">'+a.tc+'</span>';
   else if(state==="safe") res='<span class="safe">not in wordlist</span> <span class="stt">'+a.tc+'</span>';
   else if(state==="pth") res='<span class="pth">✓ OWNED via pass-the-hash</span> <span class="stt">(password never learned)</span>';
   return '<tr><td class="user">'+a.user+'</td><td class="hash">'+a.hash+'</td><td class="res">'+res+'</td></tr>';
@@ -66,60 +135,72 @@ render(STATES);
 
 function setStatus(html, idle){ statusEl.className = "status"+(idle?" idle":""); statusEl.innerHTML = html; }
 
+var STEP_MS = 265;   // one candidate per tick, so the room can read the wordlist
 function runCrack(){
   if(cracking||done) return; cracking=true; document.getElementById("crack").disabled=true;
   STATES = ["trying","trying","trying","trying"]; render(STATES);
-  t0=0; var TOTAL=4200;
+  t0=0; var idx=-1;
   function frame(ts){
-    if(!t0) t0=ts; var el=ts-t0;
-    // spinning stats
-    var gps = 9.4 + Math.random()*1.2; // million guesses/sec
-    var tried = Math.floor(el/1000 * gps * 1e6);
-    var word = WORDS[Math.floor(el/90)%WORDS.length];
-    setStatus('<span class="k">hashcat</span> · <b>'+gps.toFixed(1)+'M</b> guesses/sec · tried <b>'+tried.toLocaleString()+
-      '</b> · now: <span class="word">'+word+'</span>');
-    ACCTS.forEach(function(a,i){ if(STATES[i]==="trying" && el>=a.ms){ STATES[i]="cracked"; } });
-    render(STATES);
-    if(el<TOTAL){ raf=requestAnimationFrame(frame); }
+    if(!t0) t0=ts;
+    var want = Math.min(WORDS.length, Math.floor((ts-t0)/STEP_MS));
+    while(idx < want-1){
+      idx++;
+      var word = WORDS[idx], h = ntlm(word);          // hash the candidate for real…
+      ACCTS.forEach(function(a,i){                    // …and compare to every row at once
+        if(STATES[i]==="trying" && a.hash===h){ STATES[i]="cracked"; found[a.user]=word; }
+      });
+      var got = ACCTS.filter(function(a){ return found[a.user]; }).length;
+      setStatus('<span class="k">hashcat</span> · candidate <b>'+(idx+1)+'/'+WORDS.length+
+        '</b> · hashing <span class="word">'+word+'</span> → <b>'+h.slice(0,12)+'…</b> · '+
+        '<b style="color:#7fd18b">'+got+'</b> of 4 recovered');
+      render(STATES);
+    }
+    if(idx < WORDS.length-1){ raf=requestAnimationFrame(frame); }
     else {
-      ACCTS.forEach(function(a,i){ if(a.ms===Infinity){ STATES[i]="safe"; } });
+      ACCTS.forEach(function(a,i){ if(STATES[i]==="trying"){ STATES[i]="safe"; } });
       render(STATES); cracking=false; done=true;
       document.getElementById("pth").disabled=false;
-      var n=ACCTS.filter(function(a){return a.ms!==Infinity;}).length;
-      setStatus('done — <b style="color:#7fd18b">'+n+' of 4 cracked</b>. Weak &amp; seasonal passwords fell in seconds; the 16-char random one didn\'t.', true);
-      document.getElementById("cap").innerHTML='Offline cracking speed is set entirely by <b>password strength</b>. bob, alice and svc_backup used guessable passwords — gone in seconds. <b>administrator</b> used 16 random chars: uncrackable this way. So don\'t crack it — <span class="pth" style="color:#7a2fb0">pass the hash</span>.';
+      var n=ACCTS.filter(function(a){ return found[a.user]; }).length;
+      setStatus('wordlist exhausted — <b style="color:#7fd18b">'+n+' of 4 recovered</b>. Every hash here is the real NTLM of its password, and every candidate above was really hashed and compared.', true);
+      document.getElementById("cap").innerHTML='Offline cracking speed is set entirely by <b>password strength</b>. bob, alice and svc_backup chose words a list already contains — gone. <b>administrator</b> used 16 random characters: not in any list, so not cracked. Note one candidate was hashed <em>once</em> and tested against <b>all four</b> accounts — NTLM has <b>no salt</b>. <span class="stt">Real scale: a GPU does tens of billions of NTLM guesses/sec against 14-million-word lists — these three fall in well under a second.</span> So don\'t crack administrator — <span class="pth" style="color:#7a2fb0">pass the hash</span>.';
     }
   }
   raf=requestAnimationFrame(frame);
 }
+function pthCmd(){
+  return '<span class="k">$</span> impacket-psexec -hashes :'+ACCTS[3].hash+
+    ' <span style="color:#33D3CB">administrator</span>@192.168.1.5 → <b style="color:#7fd18b">authenticated</b>';
+}
 function runPth(){
   if(!done||pthDone) return; pthDone=true;
   STATES[3]="pth"; render(STATES);
-  setStatus('<span class="k">$</span> impacket-psexec -hashes :64f12cddaa88057e06a81b54e73b949b <span style="color:#33D3CB">administrator</span>@192.168.1.7 → <b style="color:#7fd18b">authenticated</b>');
+  setStatus(pthCmd());
   document.getElementById("pth").disabled=true;
-  document.getElementById("cap").innerHTML='<span class="dngr">You logged in as administrator without ever knowing the password.</span> For NTLM/SMB, the <b>hash itself is the key</b> — a strong password can\'t save an account once its hash leaks. This is the engine of <b>lateral movement</b> — next.';
+  document.getElementById("cap").innerHTML='<span class="dngr">You logged in as administrator without ever knowing the password.</span> For NTLM/SMB, the <b>hash itself is the key</b> — a strong password can\'t save an account once its hash leaks. That same local admin account is reused on the file server (192.168.1.5, SMB open — you saw it in the port scan). This is the engine of <b>lateral movement</b> — next.';
 }
 document.getElementById("crack").onclick=runCrack;
 document.getElementById("pth").onclick=runPth;
-document.getElementById("reset").onclick=function(){ if(raf)cancelAnimationFrame(raf); cracking=false; done=false; pthDone=false;
+var CAP0 = 'web01 is a <b>Linux</b> box — but it also serves the department\'s file shares over <b>Samba</b> (port 445, from the port scan), and Samba keeps its own password database. As root: <span class="stt">pdbedit -L -w</span> hands you every account\'s <b>NT hash</b> — the same format Windows uses. You can\'t reverse a hash. Two ways forward: <b>crack</b> it offline, or <b>reuse</b> it as-is.';
+document.getElementById("reset").onclick=function(){ if(raf)cancelAnimationFrame(raf); cracking=false; done=false; pthDone=false; found={};
   STATES=["idle","idle","idle","idle"]; render(STATES); document.getElementById("crack").disabled=false; document.getElementById("pth").disabled=true;
   setStatus('idle — passwords are stored as one-way <b style="color:#5c7d86">hashes</b>, not plain text. Crack them offline, or reuse them directly.', true);
-  document.getElementById("cap").innerHTML=''; };
+  document.getElementById("cap").innerHTML=CAP0; };
 
-document.getElementById("cap").innerHTML='As root you dumped every account\'s password <b>hash</b> (a one-way fingerprint — Day 1). You can\'t read them directly. Two ways forward: <b>crack</b> them offline, or <b>reuse</b> the hash as-is.';
+document.getElementById("cap").innerHTML=CAP0;
 
 // hooks: ?state=cracked|pth
 var st=(location.search.match(/state=(\w+)/)||[])[1];
 if(st==="cracked"||st==="pth"){
   STATES=["cracked","cracked","cracked","safe"];
+  ACCTS.forEach(function(a){ if(!a.strong) found[a.user]=a.pw; });
   if(st==="pth"){ STATES[3]="pth"; }
   render(STATES); done=true; document.getElementById("crack").disabled=true;
   document.getElementById("pth").disabled = (st==="pth");
   if(st==="pth"){ pthDone=true;
-    setStatus('<span class="k">$</span> impacket-psexec -hashes :64f12cddaa88057e06a81b54e73b949b <span style="color:#33D3CB">administrator</span>@192.168.1.7 → <b style="color:#7fd18b">authenticated</b>');
+    setStatus(pthCmd());
     document.getElementById("cap").innerHTML='<span class="dngr">You logged in as administrator without ever knowing the password.</span> For NTLM/SMB, the <b>hash itself is the key</b>. This is the engine of <b>lateral movement</b> — next.';
   } else {
-    setStatus('done — <b style="color:#7fd18b">3 of 4 cracked</b>. Weak &amp; seasonal passwords fell in seconds; the 16-char random one didn\'t.', true);
+    setStatus('wordlist exhausted — <b style="color:#7fd18b">3 of 4 recovered</b>. Weak &amp; seasonal passwords fell; the 16-char random one never appeared in the list.', true);
     document.getElementById("cap").innerHTML='Offline cracking speed is set entirely by <b>password strength</b>. The 16-char random administrator password is uncrackable this way — so <span class="pth" style="color:#7a2fb0">pass the hash</span> instead.';
   }
 }
