@@ -342,82 +342,6 @@
       tooling: every defence answers "which actor, going after what?"</aside>
     </section>
 
-    <!-- ================= NETWORK · OSI MODEL ================= -->
-    <section>
-      <p class="kicker">Network fundamentals · the 7-layer model</p>
-      <h2>The OSI model — each layer adds its own header</h2>
-      <iframe class="wframe" style="height:470px" src="widgets/osi_encapsulation.html?v=1"
-              title="OSI model — encapsulation, layer by layer" scrolling="auto"></iframe>
-      <aside class="notes">The map for "where does each thing live." Press Play. The SAME message goes DOWN 7 layers on the sender, each
-      layer wrapping the value in its own header (encapsulation), then UP 7 on the receiver, each header stripped in reverse (decapsulation).
-      Watch the PDU grow: L7 the data → L6 encrypts it (TLS) → L5 session → L4 adds a TCP header (ports + sequence) making a SEGMENT → L3 adds an
-      IP header (the addresses from the last slide) making a PACKET → L2 wraps a FRAME (MAC addresses) + an FCS error-check → L1 turns the whole thing
-      into BITS on the wire. The receiver undoes it in the exact reverse order. Two honest caveats to say aloud: (1) OSI is a MODEL — the real internet
-      (TCP/IP) folds layers 5-7 into "the app" and adds the concrete headers at 4-3-2, which is what we show; (2) each header is data ABOUT the data, read
-      only by its peer layer on the other side. Tie it forward: the IP header here is the packet's address label from the previous slide; Day 3's Wireshark
-      just opens these same headers on real traffic.</aside>
-    </section>
-
-    <!-- ================= NETWORK · PACKET JOURNEY ================= -->
-    <section>
-      <p class="kicker">Network fundamentals · how data actually moves</p>
-      <h2>A message travels as packets, not one stream</h2>
-      <iframe class="wframe" style="height:566px" src="widgets/packet_journey.html?v=1"
-              title="Packet journey — split, route, reassemble" scrolling="auto"></iframe>
-      <aside class="notes">The mental model for the whole week. Press Send: "HELLO" is SPLIT into 5 packets, each carrying its own header
-      (from-IP, to-IP, sequence number, TTL). Packets HOP router-to-router — laptop → home router → ISP → a backbone router → server — and
-      DIFFERENT packets take DIFFERENT paths (top vs bottom). They ARRIVE OUT OF ORDER (watch the reassembly strip: 2, 4, 3, 5, 1) and the server
-      REORDERS them by sequence number to recover "HELLO". Point at the inspector: TTL drops by one each hop — that's the "hop limit" that stops packets
-      looping forever. Then hit "Cut the top link" and Send again: every packet REROUTES through the bottom path — the network routes around damage,
-      which is literally why it was built. Nothing here needs the destination to be reachable by a single wire. Day 3 opens real packets in Wireshark;
-      today they just need this picture: addressed packets, independent paths, reassembly by sequence.</aside>
-    </section>
-
-    <!-- ================= NETWORK · WI-FI & THE EVIL TWIN ================= -->
-    <section>
-      <p class="kicker">Network fundamentals · the wireless edge</p>
-      <h2>Wi-Fi is a shared room, not a private wire</h2>
-      <style>
-        .wf { display:grid; grid-template-columns:repeat(4,1fr); gap:15px; margin:.5em 0 0; }
-        .wf .card h3 { margin:0 0 .35em; font-size:.8em; color:var(--petrol); letter-spacing:-.01em; }
-        .wf .card p { margin:0; font-size:.63em; color:var(--muted); line-height:1.45; }
-        .wf .card .ex { display:block; margin-top:.6em; font-size:.58em; color:var(--slate);
-          border-top:1px dashed var(--line); padding-top:.5em; }
-        .wf .card .ex b { color:var(--petrol); font-weight:700; }
-      </style>
-      <div class="wf">
-        <div class="card"><h3>Radio reaches everyone</h3>
-          <p>A cable carries your packets to one place. Wi-Fi <strong>broadcasts them into the air</strong>, where every device
-          in range can hear them.</p>
-          <span class="ex"><b>So:</b> privacy on Wi-Fi is done by <em>encryption</em>, not by the wire.</span></div>
-        <div class="card"><h3>WPA2 / WPA3 — the password</h3>
-          <p>The network key encrypts the radio link, so neighbours hear noise instead of your traffic.</p>
-          <span class="ex"><b>But:</b> it protects the <em>air</em> only — everyone who knows the café password is inside it
-          with you.</span></div>
-        <div class="card" style="border-top-color:#D64545"><h3>Open networks</h3>
-          <p>"Free Airport WiFi" with no password means <strong>no encryption at all</strong>. Anyone nearby with a laptop can
-          read what isn't otherwise protected.</p>
-          <span class="ex"><b>Your last defence:</b> HTTPS, on every single site.</span></div>
-        <div class="card" style="border-top-color:#D64545"><h3>The evil twin</h3>
-          <p>An attacker runs an access point using the <strong>same network name</strong>. Your phone prefers the stronger
-          signal — and joins it automatically, without asking.</p>
-          <span class="ex"><b>Result:</b> all your traffic now flows through them.</span></div>
-      </div>
-      <div class="callout hot" style="margin-top:1em">The lesson isn't "avoid public Wi-Fi" — it's that
-      <strong>the network is never what's protecting you</strong>. End-to-end encryption is. That's why the padlock matters, and why
-      a certificate warning on a café network should end the session.</div>
-      <aside class="notes">Closes the network block with the one piece of it students touch every day. Beats: (1) a wire delivers
-      to one socket, radio delivers to <em>everyone in range</em> — so on Wi-Fi, privacy has to come from encryption; that
-      re-frames the WPA password not as "permission to join" but as "the key that scrambles the air". (2) WPA2/WPA3 secures the
-      radio hop only — on a shared café password, everyone who has it is inside the encrypted zone with you; it is not a private
-      tunnel. (3) An <b>open</b> network has none of that: the traffic is literally readable by anyone with a cheap adapter,
-      which is why HTTPS-everywhere stopped being optional. (4) The <b>evil twin</b> is the memorable one — devices auto-join
-      the strongest signal with a remembered name, so an attacker just names their access point "Starbucks WiFi" and waits.
-      Ask the room how many phones would join automatically right now. Land the callout hard: the defence isn't avoiding
-      networks, it's assuming every network is hostile and relying on end-to-end encryption instead — which is exactly what
-      Day 3 will prove, when we sit in the middle of a network and try (and fail) to read HTTPS.</aside>
-    </section>
-
     <!-- ================= RECAP ================= -->
     <section>
       <p class="kicker">Day 1 · recap</p>
@@ -439,10 +363,11 @@
           <p class="sub">You watched a DDoS drop real users — and the defences that bring them back. A security property, not “IT’s problem”.</p>
         </div>
       </div>
-      <div class="callout"><strong>Beyond the triad:</strong> attackers <em>log in</em>, they don’t hack — so make the leak worthless. Risk = <em>Likelihood × Impact</em>, and you attack the weakness, not the strength. <em>Who’s coming for you</em> decides how you defend. And data moves as addressed packets, wrapped layer by layer.</div>
-      <aside class="notes">Bookend to the opener — the same three cards, now full of what they built. Walk the spine C · I · A quickly, then the four cross-cutting
-      reflexes in the callout (logins over exploits; risk = likelihood × impact; match the control to the actor; packets & layers). The one sentence to leave
-      them with: every tool this week produces or breaks one of C, I, A — that question comes first, always.</aside>
+      <div class="callout"><strong>Beyond the triad:</strong> attackers <em>log in</em>, they don’t hack — so make the leak worthless. Risk = <em>Likelihood × Impact</em>, and you attack the weakness, not the strength. And <em>who’s coming for you</em> decides how you defend.</div>
+      <aside class="notes">Bookend to the opener — the same three cards, now full of what they built. Walk the spine C · I · A quickly, then the three cross-cutting
+      reflexes in the callout (logins over exploits; risk = likelihood × impact; match the control to the actor). The one sentence to leave
+      them with: every tool this week produces or breaks one of C, I, A — that question comes first, always. Hand off to Day 3: tomorrow we go on the
+      network itself — the layers, the real protocols, and how each becomes a way through.</aside>
     </section>
 
     <!-- ================= THANK YOU ================= -->

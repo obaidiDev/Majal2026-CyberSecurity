@@ -149,10 +149,27 @@
       (Day 2's role), now inside the network with one low-privilege shell, aiming for the whole domain.</aside>
     </section>
 
+    <!-- ============ ACT 1 · OSI / ENCAPSULATION (moved from Day 1) ============ -->
+    <section>
+      <p class="kicker">Act 1 · the network's language · the 7-layer model</p>
+      <h2>A message is built in layers — each adds its own header</h2>
+      <iframe class="wframe" style="height:470px" src="widgets/osi_encapsulation.html?v=1"
+              title="OSI model — encapsulation, layer by layer" scrolling="auto"></iframe>
+      <aside class="notes">The map for "where does each thing live" — and the foundation the whole day stands on. Press Play. The SAME
+      message goes DOWN 7 layers on the sender, each layer wrapping the value in its own header (encapsulation), then UP 7 on the receiver,
+      each header stripped in reverse (decapsulation). Watch the PDU grow: L7 the data → L6 encrypts it (TLS) → L5 session → L4 adds a TCP
+      header (ports + sequence) making a SEGMENT → L3 adds an IP header (the addresses) making a PACKET → L2 wraps a FRAME (MAC addresses) +
+      an FCS error-check → L1 turns the whole thing into BITS on the wire. The receiver undoes it in exact reverse order. Two honest caveats
+      to say aloud: (1) OSI is a MODEL — the real internet (TCP/IP) folds layers 5–7 into "the app" and adds the concrete headers at 4-3-2,
+      which is what the next slide names; (2) each header is data ABOUT the data, read only by its peer layer on the other side. Tie it forward
+      hard: <b>every attack today abuses one of these layers</b> (ARP at L2, IP/subnets at L3, ports/TCP at L4, DNS/HTTP/TLS at L7), and
+      Wireshark — later in this same Act — just opens these exact headers on real traffic.</aside>
+    </section>
+
     <!-- ================= ACT 1 · PROTOCOL MAP ================= -->
     <section>
       <p class="kicker">Act 1 · the network's language</p>
-      <h2>Day 1 gave you the layers — here are the real protocols</h2>
+      <h2>Those layers have names — here are the real protocols at each</h2>
       <div class="pstack">
         <div class="player app">
           <div class="lname">Application<small>Layer 7</small></div>
@@ -175,14 +192,30 @@
           <div class="job">The <b>local</b> wire — MAC addresses, one hop at a time.</div>
         </div>
       </div>
-      <div class="callout" style="margin-top:.7em"><strong>Day 1 showed a packet get wrapped layer by layer.</strong>
-      Today we open the wrappers by name — and every one of these protocols becomes a door in Act 2.</div>
-      <aside class="notes">The orientation slide. Day 1's OSI stepper showed encapsulation abstractly; now name the real
+      <div class="callout" style="margin-top:.7em"><strong>You just watched a message get wrapped layer by layer.</strong>
+      Now we open the wrappers by name — and every one of these protocols becomes a door in Act 2.</div>
+      <aside class="notes">The orientation slide — it follows straight on from the encapsulation stepper. Name the real
       protocols and where each lives (this is TCP/IP — layers 5–7 folded into "Application"). Read bottom-up if it helps:
       the frame on the local wire (Ethernet + ARP, MAC addresses) → the packet across networks (IP) → the connection
       (TCP/UDP, where ports live) → what you use (HTTP, DNS, SSH, RDP). Land the promise: each row is both a mechanism
       we'll learn and a door we'll abuse — ARP→spoofing, ports→scanning, TCP→stealth scans, HTTP→cleartext sniffing.
       Keep it ~90 seconds; the depth comes in the next slides.</aside>
+    </section>
+
+    <!-- ============ ACT 1 · PACKET JOURNEY (moved from Day 1) ============ -->
+    <section>
+      <p class="kicker">Act 1 · how data actually moves</p>
+      <h2>A message travels as packets, not one stream</h2>
+      <iframe class="wframe" style="height:566px" src="widgets/packet_journey.html?v=1"
+              title="Packet journey — split, route, reassemble" scrolling="auto"></iframe>
+      <aside class="notes">The mental model for the whole network. Press Send: "HELLO" is SPLIT into 5 packets, each carrying its own
+      header (from-IP, to-IP, sequence number, TTL). Packets HOP router-to-router — laptop → home router → ISP → a backbone router → server —
+      and DIFFERENT packets take DIFFERENT paths (top vs bottom). They ARRIVE OUT OF ORDER (watch the reassembly strip: 2, 4, 3, 5, 1) and the
+      server REORDERS them by sequence number to recover "HELLO". Point at the inspector: TTL drops by one each hop — that's the "hop limit"
+      that stops packets looping forever, and it's exactly what <b>traceroute</b> abuses in the discovery slide shortly. Then hit "Cut the top link" and
+      Send again: every packet REROUTES through the bottom path — the network routes around damage, which is literally why it was built. Land
+      the picture: addressed packets, independent paths, reassembly by sequence — the header that says <em>where</em> is the IP header from the
+      layer stack you just saw.</aside>
     </section>
 
     <!-- ============ PRIMER · WHAT AN IP ADDRESS IS ============ -->
@@ -492,8 +525,8 @@
       <p class="kicker">Act 1 · reading the wire · first principles</p>
       <h2>Before the tool: how you actually read a captured packet</h2>
       <div class="callout" style="margin-top:.3em"><strong>Wireshark</strong> records every packet on the wire and lets you open one
-      up. Day 1 showed a message get <em>wrapped</em> layer by layer; Wireshark simply <em>un-wraps</em> it — and its window has three
-      panes that do exactly that, top to bottom.</div>
+      up. You watched a message get <em>wrapped</em> layer by layer at the start of Act 1; Wireshark simply <em>un-wraps</em> it — and its
+      window has three panes that do exactly that, top to bottom.</div>
       <div class="k2 c3" style="margin-top:.6em">
         <div class="card"><h3>1 · The packet list <span class="tag">top</span></h3>
           <p>One row per packet: <strong>time, source, destination, protocol, summary</strong>. Colour tells you the protocol at a
@@ -524,8 +557,8 @@
       <iframe class="wframe" style="height:520px"
               src="widgets/wireshark.html?v=1"
               title="Wireshark capture — HTTP cleartext vs HTTPS/TLS" scrolling="no"></iframe>
-      <aside class="notes">The payoff of Act 1 — Day 1 promised "Day 3 opens real packets in Wireshark," and here it is.
-      This is a real capture of one login. Walk the packet list: notice packets 1–3 are the <em>TCP handshake</em> from two
+      <aside class="notes">The payoff of Act 1 — the encapsulation stepper that opened the Act promised these headers on real
+      traffic, and here they are (a reconstructed capture of one login). Walk the packet list: notice packets 1–3 are the <em>TCP handshake</em> from two
       slides ago. Click packet 4 (POST /login) and open the dissection tree: it is literally every layer they learned as one
       row each — <b>Ethernet</b> (the MAC addresses ARP resolved), <b>IP</b> (the addresses), <b>TCP</b> (the ports that pick
       the service), then <b>HTTP</b>. Then the gut-punch: the hex pane on the right shows <span class="dngr">username=alice
@@ -584,6 +617,51 @@
       your pane. The final land, and the best line of the day: TLS did not fail — <em>alice overrode it</em>. The last defence
       was a human decision, which is exactly Day 2's territory. This is also why browsers made that warning so ugly and hard to
       bypass, and why a cert warning on a public Wi-Fi network should end the session.</aside>
+    </section>
+
+    <!-- ============ ACT 1 · WI-FI & THE EVIL TWIN (moved from Day 1) ============ -->
+    <section>
+      <p class="kicker">Act 1 · the wireless edge · where you'll sit in Act 2</p>
+      <h2>Wi-Fi is a shared room, not a private wire</h2>
+      <style>
+        .wf { display:grid; grid-template-columns:repeat(4,1fr); gap:15px; margin:.5em 0 0; }
+        .wf .card h3 { margin:0 0 .35em; font-size:.8em; color:var(--petrol); letter-spacing:-.01em; }
+        .wf .card p { margin:0; font-size:.63em; color:var(--muted); line-height:1.45; }
+        .wf .card .ex { display:block; margin-top:.6em; font-size:.58em; color:var(--slate);
+          border-top:1px dashed var(--line); padding-top:.5em; }
+        .wf .card .ex b { color:var(--petrol); font-weight:700; }
+      </style>
+      <div class="wf">
+        <div class="card"><h3>Radio reaches everyone</h3>
+          <p>A cable carries your packets to one place. Wi-Fi <strong>broadcasts them into the air</strong>, where every device
+          in range can hear them.</p>
+          <span class="ex"><b>So:</b> privacy on Wi-Fi is done by <em>encryption</em>, not by the wire.</span></div>
+        <div class="card"><h3>WPA2 / WPA3 — the password</h3>
+          <p>The network key encrypts the radio link, so neighbours hear noise instead of your traffic.</p>
+          <span class="ex"><b>But:</b> it protects the <em>air</em> only — everyone who knows the café password is inside it
+          with you.</span></div>
+        <div class="card" style="border-top-color:#D64545"><h3>Open networks</h3>
+          <p>"Free Airport WiFi" with no password means <strong>no encryption at all</strong>. Anyone nearby with a laptop can
+          read what isn't otherwise protected.</p>
+          <span class="ex"><b>Your last defence:</b> HTTPS, on every single site.</span></div>
+        <div class="card" style="border-top-color:#D64545"><h3>The evil twin</h3>
+          <p>An attacker runs an access point using the <strong>same network name</strong>. Your phone prefers the stronger
+          signal — and joins it automatically, without asking.</p>
+          <span class="ex"><b>Result:</b> all your traffic now flows through them.</span></div>
+      </div>
+      <div class="callout hot" style="margin-top:1em">The lesson isn't "avoid public Wi-Fi" — it's that
+      <strong>the network is never what's protecting you</strong>. End-to-end encryption is. That's why the padlock matters, and why
+      a certificate warning on a café network should end the session.</div>
+      <aside class="notes">Capstone of Act 1's "language" block, right before we go inside — it closes the loop from the TLS slide
+      (E2E encryption + the human click-through) and sets up Act 2's man-in-the-middle. Beats: (1) a wire delivers to one socket, radio
+      delivers to <em>everyone in range</em> — so on Wi-Fi, privacy has to come from encryption; that re-frames the WPA password not as
+      "permission to join" but as "the key that scrambles the air". (2) WPA2/WPA3 secures the radio hop only — on a shared café password,
+      everyone who has it is inside the encrypted zone with you; not a private tunnel. (3) An <b>open</b> network has none of that: traffic
+      is literally readable by anyone with a cheap adapter, which is why HTTPS-everywhere stopped being optional. (4) The <b>evil twin</b> is
+      the memorable one — devices auto-join the strongest signal with a remembered name, so an attacker just names their AP "Starbucks WiFi"
+      and waits. Ask the room how many phones would join automatically right now. Land the callout hard: the defence isn't avoiding networks,
+      it's assuming every network is hostile and relying on end-to-end encryption — which is exactly what Act 2 proves in a moment, when we
+      sit in the middle of a network and try (and fail) to read HTTPS.</aside>
     </section>
 
     <!-- ================= ACT 2 · THE INSIDE LOOP ================= -->
