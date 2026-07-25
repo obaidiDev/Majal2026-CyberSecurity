@@ -23,10 +23,10 @@
     .k2 .card .ex b { color: var(--petrol); font-weight: 700; }
 
     /* Protocol map — the TCP/IP stack with real protocols slotted onto Day 1's layers */
-    .pstack { display: flex; flex-direction: column; gap: 8px; margin-top: .45em; }
+    .pstack { display: flex; flex-direction: column; gap: 7px; margin-top: .35em; }
     .player { display: grid; grid-template-columns: 200px 1fr 250px; align-items: center; gap: 18px;
       background: var(--panel); border: 1px solid var(--line); border-left: 5px solid var(--edge, var(--petrol));
-      border-radius: 3px; padding: .42em .9em; }
+      border-radius: 3px; padding: .3em .9em; }
     .player .lname { font-weight: 800; color: var(--ink); font-size: .82em; line-height: 1.15; }
     .player .lname small { display: block; font-family: var(--mono); font-size: .56em; font-weight: 700;
       color: var(--muted); letter-spacing: .04em; text-transform: uppercase; margin-top: .2em; }
@@ -121,6 +121,38 @@
     .flag { font-family: var(--mono); font-weight: 800; font-size: .7em; color: #fff; background: var(--petrol);
       border-radius: 999px; padding: .3em .8em; }
     .flag small { font-family: var(--sans); font-weight: 700; opacity: .85; margin-left: .3em; }
+    /* ===== Act 1 foundations · the definition slides that open the day ===== */
+    .dgm { width: 100%; display: block; margin: .1em 0 .05em; }
+    .dgm .lbl  { font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: .09em;
+      text-transform: uppercase; fill: var(--muted); }
+    .dgm .cap  { font-family: var(--sans); font-size: 13.5px; fill: var(--slate); font-weight: 600; }
+    .dgm .capb { font-family: var(--sans); font-size: 13.5px; fill: var(--petrol); font-weight: 800; }
+    .dgm .box  { fill: #fff; stroke: var(--line); stroke-width: 1.5; }
+    .dgm .t    { font-family: var(--sans); font-size: 12.5px; fill: var(--ink); font-weight: 700; }
+    .dgm .tw   { font-family: var(--sans); font-size: 12.5px; fill: #fff; font-weight: 800; }
+    .dgm .tws  { font-family: var(--mono); font-size: 10.5px; fill: rgba(255,255,255,.82); font-weight: 700; }
+    .dgm .m    { font-family: var(--mono); font-size: 12px; fill: var(--petrol); font-weight: 700; }
+    .dgm .mg   { font-family: var(--mono); font-size: 11.5px; fill: var(--muted); font-weight: 700; }
+    .dgm .wire { stroke: var(--muted); stroke-width: 2; fill: none; }
+    .dgm .wire.hot { stroke: var(--petrol); stroke-width: 2.5; }
+    .dgm .sep  { font-family: var(--sans); font-size: 30px; font-weight: 800; fill: #c3d2d5; }
+
+    /* the 7-layer model, as a definitional stack (no protocols yet) */
+    .osi7 { display: flex; flex-direction: column; gap: 4px; margin-top: .35em; }
+    .ol { display: grid; grid-template-columns: 30px 148px 1fr; align-items: center; gap: 12px;
+      background: var(--panel); border: 1px solid var(--line); border-left: 5px solid var(--edge, var(--petrol));
+      border-radius: 3px; padding: .26em .85em; }
+    .ol .n  { font-family: var(--mono); font-weight: 800; font-size: .66em; color: #fff;
+      background: var(--edge, var(--petrol)); border-radius: 3px; text-align: center; padding: .12em 0; }
+    .ol .nm { font-weight: 800; font-size: .7em; color: var(--ink); letter-spacing: -.01em; }
+    .ol .jb { font-size: .6em; color: var(--muted); line-height: 1.32; }
+    .ol .jb b { color: var(--petrol); font-weight: 700; }
+    .ol.l7, .ol.l6, .ol.l5 { --edge: var(--teal); }
+    .ol.l4 { --edge: var(--petrol); }
+    .ol.l3 { --edge: #7a5cc4; }
+    .ol.l2 { --edge: var(--muted); }
+    .ol.l1 { --edge: #93a6ab; }
+
     /* compact scope so a primer (hero + card grid + bridge) fits the 720px frame */
     .primer .hero { padding: .42em .85em; margin: .22em 0 .08em; gap: 16px; }
     .primer .hero .cue { font-size: .59em; }
@@ -141,27 +173,240 @@
       <p class="kicker">Day 3 · Moving Through</p>
       <h1>One foothold isn't the prize —<br>the network is.</h1>
       <p class="sub" style="margin-top:1.2em;max-width:25em">Yesterday you landed a single shell. Today you turn it into
-      control of everything reachable. But first you have to speak the network's <em>language</em> — the real protocols
-      underneath Day&nbsp;1's diagrams. <strong>Learn the mechanism, then watch each one become a way through.</strong></p>
-      <aside class="notes">Frame the two acts. ACT 1: the network's language — the concrete protocols (ARP, ports/TCP/UDP,
-      DNS, HTTP/TLS) that Day 1 deliberately left as a cartoon. ACT 2: moving through — every attack today weaponises a
+      control of everything reachable. But first you have to speak the network's <em>language</em> — starting from
+      <em>what a network even is</em>, and building up to the real protocols. <strong>Learn the mechanism, then watch each one
+      become a way through.</strong></p>
+      <aside class="notes">Frame the two acts. ACT 1: the network's language — four foundation slides from absolute zero (what a
+      network is, switch vs router, the three addresses, the OSI model), then the concrete protocols (ARP, ports/TCP/UDP,
+      DNS, HTTP/TLS). Assume nobody in the room has ever had this explained; nothing today survives a shaky foundation here.
+      ACT 2: moving through — every attack today weaponises a
       protocol they just learned. The spine of the day: learn the mechanism, then abuse it. They are still the attacker
       (Day 2's role), now inside the network with one low-privilege shell, aiming for the whole domain.</aside>
     </section>
 
+    <!-- ============ FOUNDATION 1 · WHAT A NETWORK IS ============ -->
+    <section class="primer">
+      <p class="kicker">Act 1 · first principles · the definition</p>
+      <h2>A network is machines that <em>agreed</em> to talk</h2>
+      <svg class="dgm" viewBox="0 0 940 172" role="img"
+           aria-label="Zooming out: two linked machines, then an office LAN with a switch and router, then the internet as a network of networks">
+        <!-- 1 · the atom -->
+        <text class="lbl" x="20" y="13">1 · the atom</text>
+        <rect class="box" x="28" y="46" width="80" height="50" rx="6"/>
+        <text class="t" x="68" y="76" text-anchor="middle">laptop</text>
+        <rect class="box" x="162" y="46" width="80" height="50" rx="6"/>
+        <text class="t" x="202" y="76" text-anchor="middle">server</text>
+        <line class="wire hot" x1="108" y1="71" x2="162" y2="71"/>
+        <text class="mg" x="135" y="112" text-anchor="middle">a link</text>
+        <text class="cap" x="135" y="142" text-anchor="middle">two nodes + one link</text>
+        <text class="mg" x="135" y="160" text-anchor="middle">…is already a network</text>
+        <text class="sep" x="262" y="82">›</text>
+
+        <!-- 2 · a LAN -->
+        <text class="lbl" x="300" y="13">2 · a local network (LAN)</text>
+        <rect class="box" x="308" y="28" width="64" height="38" rx="5"/><text class="mg" x="340" y="52" text-anchor="middle">PC</text>
+        <rect class="box" x="392" y="28" width="64" height="38" rx="5"/><text class="mg" x="424" y="52" text-anchor="middle">PC</text>
+        <rect class="box" x="476" y="28" width="64" height="38" rx="5"/><text class="mg" x="508" y="52" text-anchor="middle">printer</text>
+        <line class="wire" x1="340" y1="66" x2="400" y2="100"/>
+        <line class="wire" x1="424" y1="66" x2="427" y2="100"/>
+        <line class="wire" x1="508" y1="66" x2="455" y2="100"/>
+        <rect x="372" y="100" width="110" height="34" rx="4" fill="#00567d"/>
+        <text class="tw" x="427" y="121" text-anchor="middle">SWITCH</text>
+        <line class="wire hot" x1="482" y1="117" x2="524" y2="117"/>
+        <rect x="524" y="100" width="90" height="34" rx="4" fill="#1f8f89"/>
+        <text class="tw" x="569" y="121" text-anchor="middle">ROUTER</text>
+        <text class="cap" x="455" y="158" text-anchor="middle">one office, one wire — plus a way out</text>
+        <text class="sep" x="636" y="82">›</text>
+
+        <!-- 3 · the internet -->
+        <text class="lbl" x="668" y="13">3 · the internet</text>
+        <circle cx="800" cy="82" r="27" fill="#eef3f3" stroke="#00567d" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <text class="m" x="800" y="86" text-anchor="middle">ISPs</text>
+        <rect class="box" x="668" y="30" width="60" height="26" rx="4"/><text class="mg" x="698" y="47" text-anchor="middle">LAN</text>
+        <rect class="box" x="872" y="30" width="60" height="26" rx="4"/><text class="mg" x="902" y="47" text-anchor="middle">LAN</text>
+        <rect class="box" x="668" y="108" width="60" height="26" rx="4"/><text class="mg" x="698" y="125" text-anchor="middle">LAN</text>
+        <rect class="box" x="872" y="108" width="60" height="26" rx="4"/><text class="mg" x="902" y="125" text-anchor="middle">LAN</text>
+        <line class="wire" x1="728" y1="49" x2="781" y2="70"/>
+        <line class="wire" x1="872" y1="49" x2="819" y2="70"/>
+        <line class="wire" x1="728" y1="119" x2="781" y2="96"/>
+        <line class="wire" x1="872" y1="119" x2="819" y2="96"/>
+        <text class="cap" x="800" y="158" text-anchor="middle">a network <tspan class="capb">of networks</tspan> — that's all it is</text>
+      </svg>
+      <div class="k2 c4" style="margin-top:.45em">
+        <div class="card"><h3>Nodes <span class="tag">the things</span></h3>
+          <p>Anything with a network address: laptops, phones, servers, printers, cameras — and the switches and routers themselves.</p></div>
+        <div class="card"><h3>Links <span class="tag">the path</span></h3>
+          <p>The wire or the radio that physically carries the bits: Ethernet cable, fibre, Wi&#8209;Fi. A link moves bits; it doesn't understand them.</p></div>
+        <div class="card"><h3>Protocols <span class="tag">the rules</span></h3>
+          <p>An agreed set of rules for how to ask, answer, and address. Without a shared protocol, two connected machines just exchange noise.</p></div>
+        <div class="card"><h3>Scale <span class="tag">lan · wan · internet</span></h3>
+          <p><strong>LAN</strong> = one site. <strong>WAN</strong> = sites joined across distance. <strong>The internet</strong> = every network agreeing on one protocol family.</p></div>
+      </div>
+      <div class="callout" style="margin-top:.55em"><strong>The analogy for the whole of Act 1: a road system.</strong> Nodes are
+      buildings, links are roads, and protocols are the traffic law everyone agreed to obey. Break the law here and you don't get a
+      ticket — <em>you simply don't arrive</em>.</div>
+      <aside class="notes">Slide one of the foundations block, and deliberately the most basic thing in the deck — nothing later works
+      without it. Define a network out loud in one sentence: <b>two or more devices connected by something that carries bits, following
+      shared rules.</b> Then walk the zoom-out: (1) two machines and a link is already a network — demystify the word; (2) an office LAN
+      is the same thing with a switch in the middle so everyone doesn't need a cable to everyone (n machines would need n² cables — the
+      switch is what makes it practical) plus a router as the way out; (3) the internet isn't a thing you connect <em>to</em>, it's every
+      one of those networks agreeing on the same protocol family — a network of networks. Land the three ingredients (nodes, links, rules)
+      and the road analogy; you'll reuse the analogy on the next three slides. Ask the room: how many nodes are on the café Wi&#8209;Fi right
+      now? ~90s.</aside>
+    </section>
+
+    <!-- ============ FOUNDATION 2 · SWITCH vs ROUTER ============ -->
+    <section class="primer">
+      <p class="kicker">Act 1 · first principles · the two boxes</p>
+      <h2>Switch vs router — <em>inside</em> a network vs <em>between</em></h2>
+      <svg class="dgm" viewBox="0 0 940 186" role="img"
+           aria-label="A LAN of three PCs on a switch, connected through a router to other networks; local traffic stays on the switch, off-network traffic crosses the router">
+        <rect x="14" y="22" width="486" height="156" rx="10" fill="#eef3f3" stroke="#c3d2d5" stroke-width="1.5" stroke-dasharray="6 4"/>
+        <text class="lbl" x="28" y="15">one network · 192.168.1.0/24</text>
+        <rect class="box" x="40" y="34" width="86" height="44" rx="6"/>
+        <text class="t" x="83" y="54" text-anchor="middle">PC</text><text class="mg" x="83" y="70" text-anchor="middle">.10</text>
+        <rect class="box" x="184" y="34" width="86" height="44" rx="6"/>
+        <text class="t" x="227" y="54" text-anchor="middle">PC</text><text class="mg" x="227" y="70" text-anchor="middle">.11</text>
+        <rect class="box" x="328" y="34" width="86" height="44" rx="6"/>
+        <text class="t" x="371" y="54" text-anchor="middle">PC</text><text class="mg" x="371" y="70" text-anchor="middle">.12</text>
+        <line class="wire" x1="83" y1="78" x2="180" y2="110"/>
+        <line class="wire" x1="227" y1="78" x2="227" y2="110"/>
+        <line class="wire" x1="371" y1="78" x2="274" y2="110"/>
+        <rect x="150" y="110" width="154" height="38" rx="4" fill="#00567d"/>
+        <text class="tw" x="227" y="127" text-anchor="middle">SWITCH</text>
+        <text class="tws" x="227" y="141" text-anchor="middle">delivers by MAC</text>
+        <text class="cap" x="227" y="170" text-anchor="middle">.10 → .12 never leaves this box</text>
+
+        <line class="wire hot" x1="304" y1="129" x2="556" y2="129"/>
+        <rect x="556" y="101" width="150" height="56" rx="7" fill="#1f8f89"/>
+        <text class="tw" x="631" y="124" text-anchor="middle">ROUTER</text>
+        <text class="tws" x="631" y="141" text-anchor="middle">forwards by IP</text>
+        <text class="lbl" x="631" y="90" text-anchor="middle">a.k.a. your gateway</text>
+        <line class="wire hot" x1="706" y1="129" x2="790" y2="129"/>
+        <path d="M812 98 a30 30 0 0 1 30 -22 a34 34 0 0 1 64 10 a26 26 0 0 1 -6 51 h-84 a22 22 0 0 1 -4 -39 z"
+              fill="#fff" stroke="#c3d2d5" stroke-width="1.5"/>
+        <text class="t" x="860" y="120" text-anchor="middle">other</text>
+        <text class="t" x="860" y="135" text-anchor="middle">networks</text>
+        <text class="cap" x="700" y="170" text-anchor="middle">anything off-network must cross it</text>
+      </svg>
+      <div class="k2 c2" style="margin-top:.4em">
+        <div class="card"><h3>Switch <span class="tag">layer 2 · inside</span></h3>
+          <p>Learns which <strong>MAC address</strong> sits on which of its ports, then sends each frame down <em>only</em> that one port.
+          It never looks at IP addresses and doesn't need one itself.</p>
+          <span class="ex"><b>Analogy:</b> the mail room inside a building — moves post office to office, never leaves the building.</span></div>
+        <div class="card"><h3>Router <span class="tag">layer 3 · between</span></h3>
+          <p>Joins <em>different</em> networks. Reads the destination <strong>IP</strong>, decides the next hop, and hands the packet on.
+          It's your <strong>default gateway</strong> — and where the firewall and NAT live.</p>
+          <span class="ex"><b>Analogy:</b> the post office — everything leaving the building goes through it, and it keeps a record.</span></div>
+      </div>
+      <div class="callout hot" style="margin-top:.45em"><strong>Why an attacker cares:</strong> the switch is what stops you overhearing your
+      neighbours — Act 2 gets round it by lying. The router is the chokepoint every outbound packet must cross, so it's where defenders
+      watch and cut you off. <span class="tiny">(Your home “router” is really four boxes in one: modem + router + switch + Wi&#8209;Fi.)</span></div>
+      <aside class="notes">The second foundation, and the one adults most often have never had explained. Beats: (1) a switch works
+      <em>inside</em> one network using MAC addresses — it learns which machine is on which port and delivers only there; that isolation
+      is a security property, and it's exactly what ARP spoofing defeats later today; (2) a router works <em>between</em> networks using
+      IP — it is the border, the default gateway, and the place NAT and the firewall live; (3) the mail-room / post-office analogy — say
+      it once, it sticks. Mention the hub in passing if asked: the obsolete ancestor that copied every frame to every port, which is why
+      sniffing used to be trivial. Then the practical note: a home "router" is a modem + router + switch + access point in one box, which
+      is why the word confuses everyone. Do NOT go into routing tables — they only need "it decides the next hop". ~90s.</aside>
+    </section>
+
+    <!-- ============ FOUNDATION 3 · MAC vs IP vs PORT ============ -->
+    <section class="primer">
+      <p class="kicker">Act 1 · first principles · the three addresses</p>
+      <h2>Three addresses, three jobs: MAC, IP and port</h2>
+      <svg class="dgm" viewBox="0 0 940 178" role="img"
+           aria-label="One outgoing message drawn as nested wrappers: the frame carries MAC addresses, the packet carries IP addresses, the segment carries the port, and the data sits inside">
+        <rect x="16" y="22" width="908" height="140" rx="9" fill="#fff" stroke="#5c7880" stroke-width="1.5"/>
+        <text class="lbl" x="30" y="15">frame · one hop of wire</text>
+        <text class="m" x="908" y="43" text-anchor="end" fill="#1f8f89">to MAC a1:b2:c3:44:55:66</text>
+        <rect x="44" y="52" width="852" height="98" rx="8" fill="#f6f8f8" stroke="#7a5cc4" stroke-width="1.5"/>
+        <text class="lbl" x="58" y="46" fill="#7a5cc4">packet · end to end</text>
+        <text class="m" x="880" y="72" text-anchor="end" fill="#7a5cc4">to IP 142.250.0.14</text>
+        <rect x="72" y="80" width="796" height="60" rx="7" fill="#fff" stroke="#00567d" stroke-width="1.5"/>
+        <text class="lbl" x="86" y="74" fill="#00567d">segment · which program</text>
+        <text class="m" x="852" y="100" text-anchor="end">to port 443</text>
+        <rect x="100" y="106" width="724" height="26" rx="5" fill="#eef3f3" stroke="#c3d2d5" stroke-width="1.5"/>
+        <text class="t" x="462" y="124" text-anchor="middle">your actual message</text>
+        <text class="cap" x="470" y="173" text-anchor="middle">every message you send carries all three, wrapped one inside the other</text>
+      </svg>
+      <div class="k2 c3" style="margin-top:.4em">
+        <div class="card"><h3>MAC <span class="tag">which device</span></h3>
+          <p>A 48-bit ID <strong>burned into the network card at the factory</strong>. Only meaningful on the <em>local</em> wire — a
+          router strips it and writes a fresh one every hop.</p>
+          <span class="ex"><b>Analogy:</b> your <b>ID card</b> — yours for life, unchanged when you move.</span></div>
+        <div class="card"><h3>IP <span class="tag">which machine, where</span></h3>
+          <p>A logical address the network <strong>assigns</strong> you, like <span class="mono">192.168.1.50</span>. It survives the whole
+          trip end-to-end — it's what routers steer by.</p>
+          <span class="ex"><b>Analogy:</b> your <b>street address</b> — move office, get a new one.</span></div>
+        <div class="card"><h3>Port <span class="tag">which program</span></h3>
+          <p>A number from <strong>1–65,535</strong> picking one <em>program</em> on that machine — <span class="mono">443</span> the web
+          server, <span class="mono">22</span> SSH. Many conversations, one machine.</p>
+          <span class="ex"><b>Analogy:</b> the <b>department</b> at that address — Sales vs Payroll.</span></div>
+      </div>
+      <div class="callout" style="margin-top:.45em"><strong>One sentence to keep:</strong> the <strong>MAC</strong> gets it to the next
+      device on this wire, the <strong>IP</strong> to the right machine anywhere on earth, the <strong>port</strong> to the right program
+      on it. Every attack today targets one of the three.</div>
+      <aside class="notes">The single most load-bearing slide of the day — if they leave with only one thing, make it this. Teach it
+      strictly as three jobs, not three formats: <b>MAC = which device</b> (factory-fixed, local-only, rewritten every hop), <b>IP = which
+      machine and where</b> (assigned, end-to-end, routable), <b>port = which program</b> (1–65535, picks the service). Use the ID-card /
+      street-address / department analogy and repeat it verbatim — it's the one they'll quote back. Point at the diagram and note the
+      nesting: all three ride on the same message, wrapped one inside the other; that picture is literally what the encapsulation player
+      animates in two slides. Then map the day forward: ARP spoofing lies about MAC, subnetting and NAT are about IP reach, and port
+      scanning hunts programs. Check for understanding before moving on — ask which of the three changes when you carry your laptop to a
+      café (the IP). ~2 min; this one is worth the time.</aside>
+    </section>
+
+    <!-- ============ FOUNDATION 4 · PROTOCOLS & THE OSI MODEL ============ -->
+    <section class="primer">
+      <p class="kicker">Act 1 · first principles · the model</p>
+      <h2>The OSI model: one big job, split into seven layers</h2>
+      <div class="callout" style="margin-top:.15em;font-size:.7em;padding:.5em .9em"><strong>A protocol</strong> is an agreed set of rules
+      two machines follow so they understand each other. There are hundreds — so the <strong>OSI model</strong> sorts them into
+      <strong>seven layers</strong>, each solving <em>one</em> problem and trusting the layer below to do its own. It's a
+      <em>map</em>, not a machine.</div>
+      <div class="osi7">
+        <div class="ol l7"><span class="n">7</span><span class="nm">Application</span>
+          <span class="jb">What the program actually wants — <b>“fetch this page”, “log me in”</b>.</span></div>
+        <div class="ol l6"><span class="n">6</span><span class="nm">Presentation</span>
+          <span class="jb">Put it in a form both sides read the same way — formats, compression, <b>encryption</b>.</span></div>
+        <div class="ol l5"><span class="n">5</span><span class="nm">Session</span>
+          <span class="jb">Open, hold and close the conversation — <b>who is talking to whom, and for how long</b>.</span></div>
+        <div class="ol l4"><span class="n">4</span><span class="nm">Transport</span>
+          <span class="jb">Cut it into pieces, deliver them to the right <b>program</b> (the port), and make sure none went missing.</span></div>
+        <div class="ol l3"><span class="n">3</span><span class="nm">Network</span>
+          <span class="jb">Address it <b>end-to-end (the IP)</b> and choose a route across the world, hop by hop.</span></div>
+        <div class="ol l2"><span class="n">2</span><span class="nm">Data link</span>
+          <span class="jb">Hand it to the <b>next device on this wire (the MAC)</b>, and check it arrived undamaged.</span></div>
+        <div class="ol l1"><span class="n">1</span><span class="nm">Physical</span>
+          <span class="jb">The bits themselves — <b>voltage, light, radio</b>. Cables, fibre, Wi&#8209;Fi.</span></div>
+      </div>
+      <div class="callout hot" style="margin-top:.5em"><strong>Notice layers 4, 3 and 2:</strong> they are exactly the port, the IP and the
+      MAC from the last slide. That's not a coincidence — the three addresses <em>are</em> three layers. Next: watch a real message get
+      wrapped, layer by layer.</div>
+      <aside class="notes">The model, defined before it's used. Two definitions, slowly: <b>protocol</b> = agreed rules (call back to the
+      traffic law from the network slide); <b>OSI model</b> = a seven-layer map that splits the job so each layer solves one problem and
+      trusts the one below — the reason you can swap Wi&#8209;Fi for a cable without rewriting the browser. Read the layers <em>downward</em>
+      (7→1) as "the message getting closer to the wire", then say plainly that layers 4-3-2 are the port, IP and MAC they just learned —
+      that's the sentence that makes the model click. Two honest caveats: (1) it is a teaching model, not code — the real internet uses a
+      four-layer TCP/IP stack that folds 5-7 into "the application", which is the slide after next; (2) people say "layer 7 attack" or
+      "layer 2 attack" all day in this industry, which is the practical reason to know the numbers. Mnemonic if you want one, top down:
+      <b>All People Seem To Need Data Processing</b>. ~2 min, then straight into the player.</aside>
+    </section>
+
     <!-- ============ ACT 1 · OSI / ENCAPSULATION (moved from Day 1) ============ -->
     <section>
-      <p class="kicker">Act 1 · the network's language · the 7-layer model</p>
-      <h2>A message is built in layers — each adds its own header</h2>
+      <p class="kicker">Act 1 · the 7-layer model, in motion</p>
+      <h2>Watch it happen: each layer wraps the message in its own header</h2>
       <iframe class="wframe" style="height:470px" src="widgets/osi_encapsulation.html?v=1"
               title="OSI model — encapsulation, layer by layer" scrolling="auto"></iframe>
-      <aside class="notes">The map for "where does each thing live" — and the foundation the whole day stands on. Press Play. The SAME
+      <aside class="notes">The seven layers you just defined, now in motion — this is the picture, the last slide was the map. Press Play. The SAME
       message goes DOWN 7 layers on the sender, each layer wrapping the value in its own header (encapsulation), then UP 7 on the receiver,
       each header stripped in reverse (decapsulation). Watch the PDU grow: L7 the data → L6 encrypts it (TLS) → L5 session → L4 adds a TCP
       header (ports + sequence) making a SEGMENT → L3 adds an IP header (the addresses) making a PACKET → L2 wraps a FRAME (MAC addresses) +
-      an FCS error-check → L1 turns the whole thing into BITS on the wire. The receiver undoes it in exact reverse order. Two honest caveats
-      to say aloud: (1) OSI is a MODEL — the real internet (TCP/IP) folds layers 5–7 into "the app" and adds the concrete headers at 4-3-2,
-      which is what the next slide names; (2) each header is data ABOUT the data, read only by its peer layer on the other side. Tie it forward
+      an FCS error-check → L1 turns the whole thing into BITS on the wire. The receiver undoes it in exact reverse order. Point back at the three
+      addresses slide as the headers appear: the TCP header carries the PORT, the IP header the IP, the frame the MAC — the nested picture they
+      saw drawn is now animating. One caveat to repeat: each header is data ABOUT the data, read only by its peer layer on the other side. Tie it forward
       hard: <b>every attack today abuses one of these layers</b> (ARP at L2, IP/subnets at L3, ports/TCP at L4, DNS/HTTP/TLS at L7), and
       Wireshark — later in this same Act — just opens these exact headers on real traffic.</aside>
     </section>
@@ -169,7 +414,7 @@
     <!-- ================= ACT 1 · PROTOCOL MAP ================= -->
     <section>
       <p class="kicker">Act 1 · the network's language</p>
-      <h2>Those layers have names — here are the real protocols at each</h2>
+      <h2>Those layers, named: the real protocols at each</h2>
       <div class="pstack">
         <div class="player app">
           <div class="lname">Application<small>Layer 7</small></div>
@@ -192,8 +437,8 @@
           <div class="job">The <b>local</b> wire — MAC addresses, one hop at a time.</div>
         </div>
       </div>
-      <div class="callout" style="margin-top:.7em"><strong>You just watched a message get wrapped layer by layer.</strong>
-      Now we open the wrappers by name — and every one of these protocols becomes a door in Act 2.</div>
+      <div class="callout" style="margin-top:.5em;font-size:.74em"><strong>This is the real internet's stack:</strong> OSI's seven layers folded into
+      four. Every protocol here is a mechanism we'll learn — and a door we'll open in Act 2.</div>
       <aside class="notes">The orientation slide — it follows straight on from the encapsulation stepper. Name the real
       protocols and where each lives (this is TCP/IP — layers 5–7 folded into "Application"). Read bottom-up if it helps:
       the frame on the local wire (Ethernet + ARP, MAC addresses) → the packet across networks (IP) → the connection
@@ -220,8 +465,8 @@
 
     <!-- ============ PRIMER · WHAT AN IP ADDRESS IS ============ -->
     <section class="primer">
-      <p class="kicker">Act 1 · addressing · first principles</p>
-      <h2>First: an IP address is just four numbers — and really two things</h2>
+      <p class="kicker">Act 1 · addressing · up close</p>
+      <h2>Open up an IP address: it's four numbers, and really <em>two</em> things</h2>
       <div class="hero">
         <div class="namebar">
           <span class="lab" style="background:var(--petrol);color:#fff;border-color:var(--petrol)">192.168.1<small style="color:#cfe0ef">network · which wire</small></span>
@@ -244,14 +489,15 @@
           <p><span class="mono">192.168.x</span>, <span class="mono">10.x</span>, <span class="mono">172.16–31.x</span> are <strong>private</strong> — reused inside every office. Everything else is <strong>public</strong>.</p>
           <span class="ex"><b>Private</b> can't be reached from the internet directly.</span></div>
       </div>
-      <div class="callout" style="margin-top:.7em"><strong>Two devices move your traffic:</strong> a <strong>switch</strong> shuttles frames
-      <em>within</em> one wire using MAC addresses; a <strong>router</strong> passes packets <em>between</em> wires using IPs. The next slide is a
-      toy — slide the mask and watch machines fall to the far side of the router.</div>
-      <aside class="notes">Pure foundation, no attack yet — the substrate the whole day stands on. Land three things and move on:
-      (1) an IP is 4 octets = 32 bits, nothing mystical; (2) it has a network half and a host half, and the mask is just the movable
-      boundary between them; (3) private ranges are reused everywhere, which is why the internet can't route to them (sets up NAT).
-      Name switch-vs-router here so it's defined before ARP and segmentation use it. Keep it ~90s; the next slide lets them feel the
-      mask by moving it.</aside>
+      <div class="callout" style="margin-top:.7em"><strong>Why the line matters:</strong> same network half = neighbours, and the
+      <strong>switch</strong> delivers between you directly. Different network half = the <strong>router</strong> has to carry it — and a
+      router can log it, filter it, or refuse. The next slide is a toy: drag the mask and watch machines fall to the far side of the router.</div>
+      <aside class="notes">Not the definition of an IP — they have that from the three-addresses slide — this is the anatomy of one.
+      Land three things and move on: (1) an IP is 4 octets = 32 bits, nothing mystical; (2) it has a network half and a host half, and
+      the mask is just the movable boundary between them; (3) private ranges are reused everywhere, which is why the internet can't route
+      to them (sets up NAT). Then connect it straight back to the switch/router slide: which side of the line a machine falls on decides
+      which of the two boxes carries your traffic — and that is the whole idea of segmentation. Keep it ~90s; the next slide lets them
+      feel the mask by moving it.</aside>
     </section>
 
     <!-- ================= ACT 1 · ADDRESSING, SUBNETS, NAT ================= -->
@@ -267,8 +513,8 @@
       <em>directly</em> (that's ARP, next slide). Slide to /25 and /26 and watch db01 and fileserver fall OUT of your subnet —
       still reachable, but only <b>through the router</b>, which can log, filter or refuse. That is <b>segmentation</b>, and
       it's the single most effective defence against the lateral movement we do in Act 2: it shrinks the blast radius of one
-      compromised box. Name the switch/router distinction here: a <b>switch</b> moves frames inside one subnet using MACs; a
-      <b>router</b> moves packets between subnets using IPs. Then flip to <b>Attacker on the internet</b> for the big land:
+      compromised box. Say it in the vocabulary they now have: every machine you push out of the subnet is one the <b>switch</b> can
+      no longer reach directly, so the <b>router</b> gets a say. Then flip to <b>Attacker on the internet</b> for the big land:
       192.168.x.x is a <em>private</em> range — millions of networks use it, so the internet won't route to it. The router does
       <b>NAT</b>, which lets the office out and matches up the replies, but nothing outside can start a conversation in. Ask
       the room the question this answers: "if the office is unreachable, how did we get in on Day 2?" — you didn't knock, you
@@ -277,20 +523,20 @@
 
     <!-- ============ PRIMER · MAC, FRAMES, BROADCAST ============ -->
     <section class="primer">
-      <p class="kicker">Act 1 · the local wire · first principles</p>
-      <h2>Every device carries <em>two</em> addresses — and traffic rides in frames</h2>
+      <p class="kicker">Act 1 · the local wire · up close</p>
+      <h2>On the wire, traffic rides in <em>frames</em> — and one question has no answer yet</h2>
       <div class="hero">
         <div class="devbox"><div class="t">A laptop on the wire</div>
           <div class="kv"><span class="k">IP </span><span class="ip">192.168.1.50</span> &nbsp;·&nbsp; <span class="k">MAC </span><span class="mac">a1:b2:c3:44:55:66</span></div>
         </div>
-        <div class="cue">The <b>IP</b> can change (it's assigned); the <b>MAC</b> is burned into the network card at the
-          factory. Both point at the same machine, for different jobs.</div>
+        <div class="cue">Both addresses, on one machine — as defined earlier. Now the practical problem: to actually
+          <b>put a frame on this wire</b>, which of the two do you need?</div>
       </div>
       <div class="k2 c3" style="margin-top:.55em">
-        <div class="card"><h3>MAC address <span class="tag">hardware</span></h3>
+        <div class="card"><h3>MAC address <span class="tag">recall</span></h3>
           <p>A 48-bit ID fixed to the network card, like <span class="mono">a1:b2:c3:44:55:66</span>. It only means anything on
-          <strong>this local wire</strong> — routers don't carry it across.</p>
-          <span class="ex"><b>IP =</b> the mailing address · <b>MAC =</b> the physical badge.</span></div>
+          <strong>this local wire</strong> — routers strip it and write a fresh one each hop.</p>
+          <span class="ex"><b>IP =</b> the street address · <b>MAC =</b> the ID card.</span></div>
         <div class="card"><h3>Frame wraps packet <span class="tag">nesting</span></h3>
           <p>Day 1's onion: the <strong>IP packet</strong> (with IP addresses) is wrapped in a <strong>frame</strong> (with MAC
           addresses) to cross <em>one hop</em> of wire. New frame each hop.</p>
@@ -303,9 +549,9 @@
       <div class="callout" style="margin-top:.7em"><strong>The gap:</strong> to put a frame on the wire you need the destination's
       <em>MAC</em> — but you usually only know its <em>IP</em>. The protocol that bridges that gap is <strong>ARP</strong>, and it's the
       toy on the next slide. Watch <em>how</em> it asks — because that's also its weakness.</div>
-      <aside class="notes">Foundation for ARP and, later, MITM. Three beats: (1) two addresses per device — IP is assigned and
-      logical, MAC is burned-in and local-only; the who-vs-where framing; (2) frame-wraps-packet is just Day 1's encapsulation named
-      at layer 2 — a fresh frame every hop; (3) broadcast (all-ones MAC) vs unicast, because the ARP request is a broadcast. End on the
+      <aside class="notes">Foundation for ARP and, later, MITM. Three beats: (1) a quick recall of the two addresses — don't re-teach
+      them, just re-anchor which is local (MAC) and which is end-to-end (IP); (2) frame-wraps-packet is the encapsulation player named at
+      layer 2 — a fresh frame every hop; (3) broadcast (all-ones MAC) vs unicast, because the ARP request is a broadcast. End on the
       gap — you know the IP, need the MAC — which is exactly the problem ARP solves next. ~75s.</aside>
     </section>
 
@@ -363,8 +609,8 @@
 
     <!-- ============ PRIMER · PORTS & SERVICES ============ -->
     <section class="primer">
-      <p class="kicker">Act 1 · ports · first principles</p>
-      <h2>One machine runs many programs — a port says which one you want</h2>
+      <p class="kicker">Act 1 · ports · up close</p>
+      <h2>Ports, up close — and the one word that matters: <em>listening</em></h2>
       <div class="hero">
         <div class="flags">
           <span class="flag">22 <small>SSH</small></span>
@@ -377,7 +623,7 @@
           <b>program</b> a packet is meant for.</div>
       </div>
       <div class="k2 c3" style="margin-top:.55em">
-        <div class="card"><h3>Why ports exist</h3>
+        <div class="card"><h3>Why ports exist <span class="tag">recall</span></h3>
           <p>A server runs a web server <em>and</em> a database <em>and</em> SSH at once. They share one IP — the <strong>port
           number</strong> is what keeps their traffic apart.</p>
           <span class="ex"><b>IP</b> finds the machine; <b>port</b> finds the program on it.</span></div>
