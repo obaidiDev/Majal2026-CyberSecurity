@@ -438,35 +438,71 @@
           <div class="job">The <b>local</b> wire — MAC addresses, one hop at a time.</div>
         </div>
       </div>
-      <div class="callout" style="margin-top:.5em;font-size:.74em"><strong>This is the real internet's stack:</strong> OSI's seven layers folded into
-      four. Every protocol here is a mechanism we'll learn — and a door we'll open in Act 2.</div>
+      <div class="callout" style="margin-top:.45em;font-size:.72em"><strong>OSI's seven layers, folded into four — and we <em>climb</em> them
+      from the bottom:</strong> the local wire (2) → addressing (3) → connections (4) → the apps (7). Every rung is a mechanism to learn,
+      and a door to open in Act 2.</div>
       <aside class="notes">The orientation slide — it follows straight on from the encapsulation stepper. Name the real
-      protocols and where each lives (this is TCP/IP — layers 5–7 folded into "Application"). Read bottom-up if it helps:
-      the frame on the local wire (Ethernet + ARP, MAC addresses) → the packet across networks (IP) → the connection
-      (TCP/UDP, where ports live) → what you use (HTTP, DNS, SSH, RDP). Land the promise: each row is both a mechanism
+      protocols and where each lives (this is TCP/IP — layers 5–7 folded into "Application"). Then read it <em>bottom-up</em>, because
+      that is the running order of the rest of Act 1: the frame on the local wire (Ethernet + ARP, MAC addresses) → the packet across
+      networks (IP) → the connection (TCP/UDP, where ports live) → what you use (HTTP, DNS, SSH, RDP). Say that plan out loud — every
+      slide from here carries its layer number in the kicker, so nobody loses their place. Land the promise: each row is both a mechanism
       we'll learn and a door we'll abuse — ARP→spoofing, ports→scanning, TCP→stealth scans, HTTP→cleartext sniffing.
       Keep it ~90 seconds; the depth comes in the next slides.</aside>
     </section>
 
-    <!-- ============ ACT 1 · PACKET JOURNEY (moved from Day 1) ============ -->
+    <!-- ============ PRIMER · MAC, FRAMES, BROADCAST ============ -->
+    <section class="primer">
+      <p class="kicker">Act 1 · layer 2 · the local wire</p>
+      <h2>On the wire, traffic rides in <em>frames</em> — and one question has no answer yet</h2>
+      <div class="hero">
+        <div class="devbox"><div class="t">A laptop on the wire</div>
+          <div class="kv"><span class="k">IP </span><span class="ip">192.168.1.50</span> &nbsp;·&nbsp; <span class="k">MAC </span><span class="mac">a1:b2:c3:44:55:66</span></div>
+        </div>
+        <div class="cue">Both addresses, on one machine — as defined earlier. Now the practical problem: to actually
+          <b>put a frame on this wire</b>, which of the two do you need?</div>
+      </div>
+      <div class="k2 c3" style="margin-top:.55em">
+        <div class="card"><h3>MAC address <span class="tag">recall</span></h3>
+          <p>A 48-bit ID fixed to the network card, like <span class="mono">a1:b2:c3:44:55:66</span>. It only means anything on
+          <strong>this local wire</strong> — routers strip it and write a fresh one each hop.</p>
+          <span class="ex"><b>IP =</b> the street address · <b>MAC =</b> the ID card.</span></div>
+        <div class="card"><h3>Frame wraps packet <span class="tag">nesting</span></h3>
+          <p>Day 1's onion: the <strong>IP packet</strong> (with IP addresses) is wrapped in a <strong>frame</strong> (with MAC
+          addresses) to cross <em>one hop</em> of wire. New frame each hop.</p>
+          <span class="ex"><b>To send a frame you need the destination's MAC.</b></span></div>
+        <div class="card"><h3>Broadcast vs unicast <span class="tag">reach</span></h3>
+          <p><strong>Unicast</strong> = a frame to one MAC. <strong>Broadcast</strong> = destination
+          <span class="mono">ff:ff:ff:ff:ff:ff</span> — <em>every</em> device on the wire receives it.</p>
+          <span class="ex"><b>Broadcast</b> is how you ask a question of the whole room.</span></div>
+      </div>
+      <div class="callout" style="margin-top:.7em"><strong>The gap:</strong> to put a frame on the wire you need the destination's
+      <em>MAC</em> — but you usually only know its <em>IP</em>. The protocol that bridges that gap is <strong>ARP</strong>, and it's the
+      toy on the next slide. Watch <em>how</em> it asks — because that's also its weakness.</div>
+      <aside class="notes">Foundation for ARP and, later, MITM. Three beats: (1) a quick recall of the two addresses — don't re-teach
+      them, just re-anchor which is local (MAC) and which is end-to-end (IP); (2) frame-wraps-packet is the encapsulation player named at
+      layer 2 — a fresh frame every hop; (3) broadcast (all-ones MAC) vs unicast, because the ARP request is a broadcast. End on the
+      gap — you know the IP, need the MAC — which is exactly the problem ARP solves next. ~75s.</aside>
+    </section>
+
+    <!-- ================= ACT 1 · IP vs MAC + ARP ================= -->
     <section>
-      <p class="kicker">Act 1 · how data actually moves</p>
-      <h2>A message travels as packets, not one stream</h2>
-      <iframe class="wframe" style="height:566px" src="widgets/packet_journey.html?v=1"
-              title="Packet journey — split, route, reassemble" scrolling="auto"></iframe>
-      <aside class="notes">The mental model for the whole network. Press Send: "HELLO" is SPLIT into 5 packets, each carrying its own
-      header (from-IP, to-IP, sequence number, TTL). Packets HOP router-to-router — laptop → home router → ISP → a backbone router → server —
-      and DIFFERENT packets take DIFFERENT paths (top vs bottom). They ARRIVE OUT OF ORDER (watch the reassembly strip: 2, 4, 3, 5, 1) and the
-      server REORDERS them by sequence number to recover "HELLO". Point at the inspector: TTL drops by one each hop — that's the "hop limit"
-      that stops packets looping forever, and it's exactly what <b>traceroute</b> abuses in the discovery slide shortly. Then hit "Cut the top link" and
-      Send again: every packet REROUTES through the bottom path — the network routes around damage, which is literally why it was built. Land
-      the picture: addressed packets, independent paths, reassembly by sequence — the header that says <em>where</em> is the IP header from the
-      layer stack you just saw.</aside>
+      <p class="kicker">Act 1 · layer 2 · ARP on the local wire</p>
+      <h2>ARP: the question that turns an IP into a MAC</h2>
+      <iframe class="wframe" style="height:556px"
+              src="widgets/arp_lan.html?v=2"
+              title="ARP resolution on a small LAN" scrolling="no"></iframe>
+      <aside class="notes">The first real mechanism of the day, and the bottom rung of the stack. Restate the gap in one line —
+      you know the destination's IP, you need its MAC to put a frame on this wire — then let the player answer it.
+      Drive the player: (0) you know .5's IP but not its MAC; (1) you BROADCAST "who has .5?" to everyone — dst MAC
+      ff:ff:ff:ff:ff:ff; (2) only .5 replies with its MAC, the rest ignore it; (3) you cache the mapping; (4) now the real
+      data frame goes straight to .5's MAC. The two things to land: (a) IP vs MAC — who vs where-on-this-wire; (b) the
+      trapdoor — ARP is an unauthenticated broadcast: ANY machine can shout "that's me." Hold that; in Act 2 we become the
+      liar (ARP spoofing). Real-world scale: a busy LAN resolves thousands of these a minute, all cached for ~seconds.</aside>
     </section>
 
     <!-- ============ PRIMER · WHAT AN IP ADDRESS IS ============ -->
     <section class="primer">
-      <p class="kicker">Act 1 · addressing · up close</p>
+      <p class="kicker">Act 1 · layer 3 · an address, up close</p>
       <h2>Open up an IP address: it's four numbers, and really <em>two</em> things</h2>
       <div class="hero">
         <div class="namebar">
@@ -503,7 +539,7 @@
 
     <!-- ================= ACT 1 · ADDRESSING, SUBNETS, NAT ================= -->
     <section>
-      <p class="kicker">Act 1 · addressing &amp; reach</p>
+      <p class="kicker">Act 1 · layer 3 · addressing &amp; reach</p>
       <h2>Two halves of an address — and the wall called NAT</h2>
       <iframe class="wframe" style="height:470px"
               src="widgets/subnet_nat.html?v=1"
@@ -511,7 +547,7 @@
       <aside class="notes">The foundation everything else stands on — do this before ARP. An IP address isn't one number,
       it's <b>two</b>: a network part and a host part, and the <b>subnet mask</b> is what says where the split falls. Walk the
       bits: at /24 the first 24 bits are the network, so every 192.168.1.x is on the same wire and you reach them
-      <em>directly</em> (that's ARP, next slide). Slide to /25 and /26 and watch db01 and fileserver fall OUT of your subnet —
+      <em>directly</em> — with the ARP you just watched. Slide to /25 and /26 and watch db01 and fileserver fall OUT of your subnet —
       still reachable, but only <b>through the router</b>, which can log, filter or refuse. That is <b>segmentation</b>, and
       it's the single most effective defence against the lateral movement we do in Act 2: it shrinks the blast radius of one
       compromised box. Say it in the vocabulary they now have: every machine you push out of the subnet is one the <b>switch</b> can
@@ -522,60 +558,25 @@
       got <em>invited</em>, by phishing. Every attack today only works because you're already on the wire.</aside>
     </section>
 
-    <!-- ============ PRIMER · MAC, FRAMES, BROADCAST ============ -->
-    <section class="primer">
-      <p class="kicker">Act 1 · the local wire · up close</p>
-      <h2>On the wire, traffic rides in <em>frames</em> — and one question has no answer yet</h2>
-      <div class="hero">
-        <div class="devbox"><div class="t">A laptop on the wire</div>
-          <div class="kv"><span class="k">IP </span><span class="ip">192.168.1.50</span> &nbsp;·&nbsp; <span class="k">MAC </span><span class="mac">a1:b2:c3:44:55:66</span></div>
-        </div>
-        <div class="cue">Both addresses, on one machine — as defined earlier. Now the practical problem: to actually
-          <b>put a frame on this wire</b>, which of the two do you need?</div>
-      </div>
-      <div class="k2 c3" style="margin-top:.55em">
-        <div class="card"><h3>MAC address <span class="tag">recall</span></h3>
-          <p>A 48-bit ID fixed to the network card, like <span class="mono">a1:b2:c3:44:55:66</span>. It only means anything on
-          <strong>this local wire</strong> — routers strip it and write a fresh one each hop.</p>
-          <span class="ex"><b>IP =</b> the street address · <b>MAC =</b> the ID card.</span></div>
-        <div class="card"><h3>Frame wraps packet <span class="tag">nesting</span></h3>
-          <p>Day 1's onion: the <strong>IP packet</strong> (with IP addresses) is wrapped in a <strong>frame</strong> (with MAC
-          addresses) to cross <em>one hop</em> of wire. New frame each hop.</p>
-          <span class="ex"><b>To send a frame you need the destination's MAC.</b></span></div>
-        <div class="card"><h3>Broadcast vs unicast <span class="tag">reach</span></h3>
-          <p><strong>Unicast</strong> = a frame to one MAC. <strong>Broadcast</strong> = destination
-          <span class="mono">ff:ff:ff:ff:ff:ff</span> — <em>every</em> device on the wire receives it.</p>
-          <span class="ex"><b>Broadcast</b> is how you ask a question of the whole room.</span></div>
-      </div>
-      <div class="callout" style="margin-top:.7em"><strong>The gap:</strong> to put a frame on the wire you need the destination's
-      <em>MAC</em> — but you usually only know its <em>IP</em>. The protocol that bridges that gap is <strong>ARP</strong>, and it's the
-      toy on the next slide. Watch <em>how</em> it asks — because that's also its weakness.</div>
-      <aside class="notes">Foundation for ARP and, later, MITM. Three beats: (1) a quick recall of the two addresses — don't re-teach
-      them, just re-anchor which is local (MAC) and which is end-to-end (IP); (2) frame-wraps-packet is the encapsulation player named at
-      layer 2 — a fresh frame every hop; (3) broadcast (all-ones MAC) vs unicast, because the ARP request is a broadcast. End on the
-      gap — you know the IP, need the MAC — which is exactly the problem ARP solves next. ~75s.</aside>
-    </section>
-
-    <!-- ================= ACT 1 · IP vs MAC + ARP ================= -->
+    <!-- ============ ACT 1 · PACKET JOURNEY (moved from Day 1) ============ -->
     <section>
-      <p class="kicker">Act 1 · addressing on the local wire</p>
-      <h2>Two addresses: IP is <em>who</em>, MAC is <em>where</em></h2>
-      <iframe class="wframe" style="height:556px"
-              src="widgets/arp_lan.html?v=2"
-              title="ARP resolution on a small LAN" scrolling="no"></iframe>
-      <aside class="notes">The first mechanism. Every device carries TWO addresses: an IP (logical, end-to-end — Day 1's
-      packet label) and a MAC (physical, burned into the network card, only meaningful on this local wire). To actually
-      put a frame on the wire you need the destination's MAC — but you usually only know its IP. ARP bridges the gap.
-      Drive the player: (0) you know .5's IP but not its MAC; (1) you BROADCAST "who has .5?" to everyone — dst MAC
-      ff:ff:ff:ff:ff:ff; (2) only .5 replies with its MAC, the rest ignore it; (3) you cache the mapping; (4) now the real
-      data frame goes straight to .5's MAC. The two things to land: (a) IP vs MAC — who vs where-on-this-wire; (b) the
-      trapdoor — ARP is an unauthenticated broadcast: ANY machine can shout "that's me." Hold that; in Act 2 we become the
-      liar (ARP spoofing). Real-world scale: a busy LAN resolves thousands of these a minute, all cached for ~seconds.</aside>
+      <p class="kicker">Act 1 · layer 3 · routing · how data actually moves</p>
+      <h2>A message travels as packets, not one stream</h2>
+      <iframe class="wframe" style="height:566px" src="widgets/packet_journey.html?v=1"
+              title="Packet journey — split, route, reassemble" scrolling="auto"></iframe>
+      <aside class="notes">The mental model for the whole network. Press Send: "HELLO" is SPLIT into 5 packets, each carrying its own
+      header (from-IP, to-IP, sequence number, TTL). Packets HOP router-to-router — laptop → home router → ISP → a backbone router → server —
+      and DIFFERENT packets take DIFFERENT paths (top vs bottom). They ARRIVE OUT OF ORDER (watch the reassembly strip: 2, 4, 3, 5, 1) and the
+      server REORDERS them by sequence number to recover "HELLO". Point at the inspector: TTL drops by one each hop — that's the "hop limit"
+      that stops packets looping forever, and it's exactly what <b>traceroute</b> abuses in the discovery slide shortly. Then hit "Cut the top link" and
+      Send again: every packet REROUTES through the bottom path — the network routes around damage, which is literally why it was built. Land
+      the picture: addressed packets, independent paths, reassembly by sequence — the header that says <em>where</em> is the IP header from the
+      layer stack you just saw.</aside>
     </section>
 
     <!-- ================= ACT 1 · DISCOVERY / THE PLUMBING ================= -->
     <section>
-      <p class="kicker">Act 1 · discovery · the quiet plumbing</p>
+      <p class="kicker">Act 1 · layer 3 · discovery · the quiet plumbing</p>
       <h2>Before you attack a host, you have to find it</h2>
       <div class="k2 c5" style="margin-top:.6em">
         <div class="card"><h3>DHCP <span class="tag">your IP</span></h3>
@@ -610,7 +611,7 @@
 
     <!-- ============ PRIMER · PORTS & SERVICES ============ -->
     <section class="primer">
-      <p class="kicker">Act 1 · ports · up close</p>
+      <p class="kicker">Act 1 · layer 4 · ports, up close</p>
       <h2>Ports, up close — and the one word that matters: <em>listening</em></h2>
       <div class="hero">
         <div class="flags">
@@ -647,7 +648,7 @@
 
     <!-- ================= ACT 1 · PORTS & SERVICES ================= -->
     <section>
-      <p class="kicker">Act 1 · ports &amp; services</p>
+      <p class="kicker">Act 1 · layer 4 · ports &amp; services</p>
       <h2>One IP, many doors — a port scan finds the open ones</h2>
       <iframe class="wframe" style="height:462px"
               src="widgets/port_scan.html?v=1"
@@ -665,7 +666,7 @@
 
     <!-- ============ PRIMER · TCP / UDP / FLAGS ============ -->
     <section class="primer">
-      <p class="kicker">Act 1 · connections · first principles</p>
+      <p class="kicker">Act 1 · layer 4 · connections · first principles</p>
       <h2>Two ways to send data: with a handshake, or without</h2>
       <div class="hero">
         <div class="flags">
@@ -700,7 +701,7 @@
 
     <!-- ================= ACT 1 · TCP vs UDP + SYN SCAN ================= -->
     <section>
-      <p class="kicker">Act 1 · connections</p>
+      <p class="kicker">Act 1 · layer 4 · connections</p>
       <h2>TCP shakes hands before it talks — UDP just fires</h2>
       <iframe class="wframe" style="height:550px"
               src="widgets/tcp_udp.html?v=3"
@@ -716,7 +717,7 @@
 
     <!-- ============ PRIMER · DNS NAMES & HIERARCHY ============ -->
     <section class="primer">
-      <p class="kicker">Act 1 · names → addresses · first principles</p>
+      <p class="kicker">Act 1 · layer 7 · names → addresses · first principles</p>
       <h2>A web name is read right-to-left — like a postal address, biggest last</h2>
       <div class="hero">
         <div class="namebar">
@@ -753,7 +754,7 @@
 
     <!-- ================= ACT 1 · DNS ================= -->
     <section>
-      <p class="kicker">Act 1 · names → addresses</p>
+      <p class="kicker">Act 1 · layer 7 · names → addresses</p>
       <h2>DNS: the internet's phonebook (and who it trusts)</h2>
       <iframe class="wframe" style="height:530px"
               src="widgets/dns_resolve.html?v=3"
@@ -769,7 +770,7 @@
 
     <!-- ============ PRIMER · READING A CAPTURE ============ -->
     <section class="primer">
-      <p class="kicker">Act 1 · reading the wire · first principles</p>
+      <p class="kicker">Act 1 · every layer at once · first principles</p>
       <h2>Before the tool: how you actually read a captured packet</h2>
       <div class="callout" style="margin-top:.3em"><strong>Wireshark</strong> records every packet on the wire and lets you open one
       up. You watched a message get <em>wrapped</em> layer by layer at the start of Act 1; Wireshark simply <em>un-wraps</em> it — and its
@@ -799,7 +800,7 @@
 
     <!-- ================= ACT 1 · WIRESHARK (marquee) ================= -->
     <section>
-      <p class="kicker">Act 1 · open a real packet</p>
+      <p class="kicker">Act 1 · every layer at once · open a real packet</p>
       <h2>Wireshark: one login, every layer you learned</h2>
       <iframe class="wframe" style="height:520px"
               src="widgets/wireshark.html?v=1"
@@ -817,7 +818,7 @@
 
     <!-- ============ PRIMER · CERTIFICATES & TRUST ============ -->
     <section class="primer">
-      <p class="kicker">Act 1 · the padlock · first principles</p>
+      <p class="kicker">Act 1 · layer 7 · the padlock · first principles</p>
       <h2>HTTPS solves <em>two</em> problems — and the second is the hard one</h2>
       <div class="k2 c3" style="margin-top:.5em">
         <div class="card"><h3>Problem 1 · secrecy</h3>
@@ -846,7 +847,7 @@
 
     <!-- ================= ACT 1 · TLS & CERTIFICATES ================= -->
     <section>
-      <p class="kicker">Act 1 · the lock, opened up</p>
+      <p class="kicker">Act 1 · layer 7 · the lock, opened up</p>
       <h2>Why HTTPS beats you: certificates, not just encryption</h2>
       <iframe class="wframe" style="height:518px"
               src="widgets/tls_cert.html?v=2"
@@ -868,7 +869,7 @@
 
     <!-- ============ ACT 1 · WI-FI & THE EVIL TWIN (moved from Day 1) ============ -->
     <section>
-      <p class="kicker">Act 1 · the wireless edge · where you'll sit in Act 2</p>
+      <p class="kicker">Act 1 · back down to layer 1 · the wireless edge</p>
       <h2>Wi-Fi is a shared room, not a private wire</h2>
       <style>
         .wf { display:grid; grid-template-columns:repeat(4,1fr); gap:15px; margin:.5em 0 0; }
@@ -1041,7 +1042,7 @@
           path carries all the interesting stuff — logins, browsing, the lot.</p>
           <span class="ex"><b>Own that path</b> and you own the traffic.</span></div>
         <div class="card"><h3>ARP takes no proof <span class="tag">recall</span></h3>
-          <p>Remember slide 4: ARP believes <em>any</em> machine that claims an IP. So <strong>lie to both sides</strong> — tell the
+          <p>Remember the layer-2 slides: ARP believes <em>any</em> machine that claims an IP. So <strong>lie to both sides</strong> — tell the
           victim &ldquo;I'm the gateway,&rdquo; tell the gateway &ldquo;I'm the victim.&rdquo;</p>
           <span class="ex"><b>Both cache your MAC.</b> Traffic now bends through you.</span></div>
       </div>
@@ -1061,7 +1062,7 @@
       <iframe class="wframe" style="height:502px"
               src="widgets/mitm.html?v=2"
               title="ARP spoofing man-in-the-middle capture" scrolling="no"></iframe>
-      <aside class="notes">The two Act-1 mechanisms fired at once. Remember slide 2: ARP is an unauthenticated broadcast —
+      <aside class="notes">The two Act-1 mechanisms fired at once. Remember the ARP slide: it's an unauthenticated broadcast —
       anyone can lie. Here you do. First press <em>Victim logs in</em> while normal: the traffic goes straight to the gateway,
       your capture pane is empty (a switch only sends frames to their real destination). Now hit <b>Spoof ARP</b>: you send
       forged replies telling the victim "I'm the gateway" and the gateway "I'm the victim" — both cache your MAC, and the
