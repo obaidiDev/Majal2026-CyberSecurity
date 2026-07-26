@@ -47,7 +47,186 @@
 <div class="reveal">
   <div class="slides">
 
-    <!-- ================= TITLE ================= -->
+    <!-- ================= COVER ================= -->
+    <section class="cover">
+      <style>
+        .cover .cov { display:grid; grid-template-columns:auto 1fr; gap:34px; align-items:start; margin-top:1.1em; }
+        .cover .cov-no { font-family:var(--mono); font-size:6.4em; font-weight:800; line-height:.82;
+          color:var(--petrol); letter-spacing:-.06em; }
+        .cover .cov-no i { display:block; font-family:var(--mono); font-style:normal; font-size:.14em;
+          font-weight:700; letter-spacing:.24em; color:var(--muted); margin-top:.9em; }
+        .cover h1 { margin:0; font-size:2.5em; line-height:1.02; }
+        .cover h1::after { display:none; }   /* the three-colour triad bar below is this slide's rule */
+        .cover .lede { margin:.9em 0 0; font-size:.82em; color:var(--slate); max-width:20em; line-height:1.4; }
+        .cover .triad-bar { display:flex; gap:0; margin:1.15em 0 .55em; max-width:24em; }
+        .cover .triad-bar span { flex:1; height:9px; }
+        .cover .triad-bar b { display:none; }
+        .cover .cov-meta { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px;
+          margin-top:1.05em; max-width:23em; }
+        .cover .cov-meta div { background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--teal);
+          border-radius:2px; padding:.45em .8em; }
+        .cover .cov-meta em { display:block; font-family:var(--mono); font-size:.44em; font-weight:700;
+          letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-style:normal; }
+        .cover .cov-meta b { display:block; font-size:.58em; color:var(--petrol); margin-top:.15em; }
+      </style>
+      <p class="kicker">Majal Initiative · Cybersecurity Bootcamp · 2026</p>
+      <div class="cov">
+        <div class="cov-no">01<i>DAY</i></div>
+        <div>
+          <h1>Foundations</h1>
+          <p class="lede">The vocabulary day. Every word the rest of the week is written in —
+            each one shown as a working demo, not a definition to memorise.</p>
+          <div class="triad-bar">
+            <span style="background:var(--turq)"></span>
+            <span style="background:var(--yellow)"></span>
+            <span style="background:var(--teal)"></span>
+          </div>
+          <p class="tiny mono" style="color:var(--muted);letter-spacing:.1em">CONFIDENTIALITY &nbsp;·&nbsp; INTEGRITY &nbsp;·&nbsp; AVAILABILITY</p>
+          <div class="cov-meta">
+            <div><em>Format</em><b>Slides + live simulations</b></div>
+            <div><em>Hands-on</em><b>Lab 1 · Linux CLI · 60–90 min</b></div>
+            <div><em>Environment</em><b>Kali Linux VM</b></div>
+            <div><em>Assumed</em><b>No prior security knowledge</b></div>
+          </div>
+        </div>
+      </div>
+      <aside class="notes">Cover slide — hold it while the room settles. Name the course, the day, and the promise in one breath:
+      today is the vocabulary day, and every word gets a live demo. Point at the three-colour bar: those three words are the spine of
+      the entire day and of the whole week. Say plainly that nothing today assumes prior knowledge, and that they end the day in a
+      terminal, not on slides. Then move to the framing slide.</aside>
+    </section>
+
+    <!-- ================= AGENDA ================= -->
+    <section class="ag-slide">
+      <style>
+        .ag-rail { width:100%; display:block; margin:.15em 0 .35em; }
+        .ag-rail .n   { font-family:var(--mono); font-size:15px; font-weight:800; fill:#fff; }
+        .ag-rail .ttl { font-family:var(--sans); font-size:13.5px; font-weight:800; fill:var(--ink); }
+        .ag-rail .sub { font-family:var(--mono); font-size:10.5px; font-weight:700; fill:#5c7880; letter-spacing:.08em; }
+        .ag-rail .track { stroke:#cfdcde; stroke-width:3; }
+        .ag { display:grid; grid-template-columns:repeat(5,1fr); gap:11px; margin-top:.15em; }
+        .ag .card { padding:.6em .75em; }
+        .ag .card h3 { margin:0 0 .25em; font-size:.62em; color:var(--petrol); }
+        .ag .card p { margin:0; font-size:.5em; color:var(--muted); line-height:1.4; }
+        .ag .card.lab { border-top-color:var(--yellow) !important; background:rgba(242,210,0,.06); }
+        .ag-slide .callout { font-size:.68em; margin-top:.55em; }
+      </style>
+      <p class="kicker">Day 1 · agenda</p>
+      <h2>Five moves — from <em>what the field is</em> to your hands on a terminal</h2>
+      <svg class="ag-rail" viewBox="0 0 1100 96" role="img"
+           aria-label="Day 1 runs in five blocks: the field, the CIA triad, identity, risk vocabulary, and the Linux lab">
+        <line class="track" x1="110" y1="30" x2="990" y2="30"/>
+        <circle cx="110" cy="30" r="19" fill="#00567d"/><text class="n" x="110" y="36" text-anchor="middle">1</text>
+        <circle cx="330" cy="30" r="19" fill="#1F8F89"/><text class="n" x="330" y="36" text-anchor="middle">2</text>
+        <circle cx="550" cy="30" r="19" fill="#00567d"/><text class="n" x="550" y="36" text-anchor="middle">3</text>
+        <circle cx="770" cy="30" r="19" fill="#00567d"/><text class="n" x="770" y="36" text-anchor="middle">4</text>
+        <circle cx="990" cy="30" r="19" fill="#C0871F"/><text class="n" x="990" y="36" text-anchor="middle">5</text>
+        <text class="ttl" x="110" y="70" text-anchor="middle">The field</text>
+        <text class="ttl" x="330" y="70" text-anchor="middle">C · I · A</text>
+        <text class="ttl" x="550" y="70" text-anchor="middle">Identity</text>
+        <text class="ttl" x="770" y="70" text-anchor="middle">Risk</text>
+        <text class="ttl" x="990" y="70" text-anchor="middle">Lab 1</text>
+        <text class="sub" x="110" y="88" text-anchor="middle">WHAT / WHERE</text>
+        <text class="sub" x="330" y="88" text-anchor="middle">THE SPINE</text>
+        <text class="sub" x="550" y="88" text-anchor="middle">WHO / MAY</text>
+        <text class="sub" x="770" y="88" text-anchor="middle">HOW BAD</text>
+        <text class="sub" x="990" y="88" text-anchor="middle">60–90 MIN</text>
+      </svg>
+      <div class="ag">
+        <div class="card"><h3>What the field is</h3>
+          <p>Adversary vs. accident. The layers you defend, and the difference between an attack <em>surface</em> and an attack <em>vector</em>.</p></div>
+        <div class="card" style="border-top-color:#1F8F89 !important"><h3>The triad, one property at a time</h3>
+          <p>The longest block. Build the ciphers, break the hashes, watch a DDoS take real users offline — one live demo per property.</p></div>
+        <div class="card"><h3>Identity</h3>
+          <p>Authentication vs. authorisation, the three factors, MFA — and why attackers log in rather than hack.</p></div>
+        <div class="card"><h3>Risk vocabulary</h3>
+          <p>Threat → exploit → vulnerability → asset → impact. Threat actors, CVE and CVSS, and controls <em>before · during · after</em>.</p></div>
+        <div class="card lab"><h3>Lab 1 · Linux</h3>
+          <p>You leave the slides and open a terminal in the Kali VM. Next slide: exactly what you'll do there.</p></div>
+      </div>
+      <div class="callout"><strong>One question runs through all five:</strong> for anything you're shown today — a mechanism, an attack, a control —
+      ask <em>which of Confidentiality, Integrity, or Availability does this protect or break?</em> That reflex is the actual deliverable of Day 1.</div>
+      <aside class="notes">Set expectations, then get out of the way. Block 2 is the bulk of the day and the one to protect time for — it is where every
+      simulation lives. Blocks 1, 3 and 4 are vocabulary blocks: short, dense, and each one pays off in the lab or later in the week. Tell them the day ends
+      in a terminal so nobody thinks this is a lecture-only day. Do not promise clock times — say "five blocks, one lab" and keep the flexibility. Finally,
+      give them the throughline question in the callout; repeat it every time a demo finishes, and it will be a reflex by the recap.</aside>
+    </section>
+
+    <!-- ================= LAB PREVIEW ================= -->
+    <section class="lb-slide">
+      <style>
+        .lb-slide h2 { margin-bottom:.4em; }
+        .lb-head { display:flex; gap:9px; flex-wrap:wrap; margin:.1em 0 .45em; }
+        .lb-head div { background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--petrol);
+          border-radius:2px; padding:.34em .7em; }
+        .lb-head em { display:block; font-family:var(--mono); font-size:.4em; font-weight:700;
+          letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-style:normal; }
+        .lb-head b { display:block; font-size:.52em; color:var(--petrol); margin-top:.1em; }
+        .lb-grid { display:grid; grid-template-columns:1.22fr 1fr; gap:13px; align-items:start; }
+        .lb-steps { display:grid; gap:7px; }
+        .lb-step { display:grid; grid-template-columns:24px 1fr; gap:9px; align-items:baseline;
+          background:var(--panel); border:1px solid var(--line); border-radius:2px; padding:.36em .62em; }
+        .lb-step .s { font-family:var(--mono); font-size:.48em; font-weight:800; color:#fff; background:var(--petrol);
+          border-radius:2px; text-align:center; padding:.15em 0; }
+        .lb-step b { font-size:.54em; color:var(--petrol); display:block; }
+        .lb-step p { margin:.08em 0 0; font-size:.46em; color:var(--muted); line-height:1.36; }
+        .lb-step.cap { border-left:3px solid var(--yellow); }
+        .lb-step.cap .s { background:#C0871F; }
+        .lb-grid .callout { font-size:.58em; padding:.62em .85em; }
+        .lb-term { background:var(--code-bg); border:1px solid var(--code-line); border-radius:5px;
+          padding:.65em .8em; font-family:var(--mono); font-size:.46em; color:var(--code-ink); line-height:1.6; }
+        .lb-term .p { color:var(--turq); }
+        .lb-term .c { color:#8aa6ad; }
+        .lb-term .o { color:#e8f1f2; }
+        .lb-term .y { color:var(--yellow); }
+      </style>
+      <p class="kicker">Day 1 · lab preview</p>
+      <h2>Lab 1 — what you'll actually do in the terminal</h2>
+      <div class="lb-head">
+        <div><em>Environment</em><b>Kali Linux VM · terminal only</b></div>
+        <div><em>Duration</em><b>60–90 minutes</b></div>
+        <div><em>Format</em><b>Task per exercise, one hint each</b></div>
+        <div><em>Rule</em><b>Derive the command, don't memorise it</b></div>
+      </div>
+      <div class="lb-grid">
+        <div class="lb-steps">
+          <div class="lb-step"><span class="s">A</span><div><b>Move around the box</b>
+            <p>Where am I, what's here, what changed in the last 24 hours — <span class="mono">pwd · ls -la · find · which</span>.</p></div></div>
+          <div class="lb-step"><span class="s">B</span><div><b>Read files &amp; hold privilege</b>
+            <p><span class="mono">tail · less · echo &gt;</span>, then <span class="mono">id · sudo -l · chmod</span> — the same two checks an attacker runs the second they land.</p></div></div>
+          <div class="lb-step"><span class="s">C</span><div><b>Turn 100,000 lines into an answer</b>
+            <p>The SOC power tools, chained: <span class="mono">grep · cut · sort · uniq · awk · sed</span> with pipes, redirection and <span class="mono">xargs</span>.</p></div></div>
+          <div class="lb-step"><span class="s">D</span><div><b>Interrogate a file</b>
+            <p><em>What is it, has it changed, what does it leak?</em> — <span class="mono">file · sha256sum · stat · strings</span>. Today's Integrity block, at the keyboard.</p></div></div>
+          <div class="lb-step cap"><span class="s">★</span><div><b>Capstone · investigate your own trail</b>
+            <p>Every <span class="mono">sudo</span> you ran was logged. Pull the events out of <span class="mono">/var/log/auth.log</span>, build a timeline, and write a three-sentence triage note — a real SOC ticket, in miniature.</p></div></div>
+        </div>
+        <div>
+          <div class="lb-term">
+            <div><span class="p">kali@kali</span>:<span class="o">~$</span> <span class="y">grep sudo /var/log/auth.log | wc -l</span></div>
+            <div class="o">37</div>
+            <div><span class="p">kali@kali</span>:<span class="o">~$</span> <span class="y">grep sudo /var/log/auth.log \</span></div>
+            <div><span class="y">&nbsp;&nbsp;| awk '{print $1, $2, $3}' | tail -n 3</span></div>
+            <div class="o">Jul 26 10:14:02</div>
+            <div class="o">Jul 26 10:22:41</div>
+            <div class="o">Jul 26 10:31:19</div>
+            <div class="c"># that's a timeline. that's the job.</div>
+          </div>
+          <div class="callout" style="margin-top:12px"><strong>Why this lab, on foundations day:</strong> every tool for the rest of the week —
+          scanners, sniffers, exploit frameworks, SIEM queries — prints text into a shell. The people who read that text quickly are
+          the people who find the answer. <span class="sub" style="display:block;margin-top:.3em">Stuck? <span class="mono">man &lt;command&gt;</span> and <span class="mono">&lt;command&gt; --help</span> are always available — and are part of the skill.</span></div>
+        </div>
+      </div>
+      <aside class="notes">Sell the lab before they open it. Four skill blocks then a capstone: navigation, reading files and checking privilege, text
+      processing, file inspection — then they investigate their own sudo trail from the live auth log. Call out the two moments where today's slides become
+      commands: sudo -l is exactly the privilege reconnaissance from the identity block, and sha256sum is the Integrity block at the
+      keyboard. Set the working rule out loud: read the task, build the command yourself, use the hint only after you've tried — the hints are one line each
+      and it is very easy to skim them and learn nothing. Everything runs in the Kali VM, no installs. The written deliverable is the capstone triage note:
+      two or three sentences describing what the timeline shows. That note is the same artefact they will write in Friday's SOC lab, so it is worth doing
+      properly. Lab handout lives at lab1-linux.html next to these slides.</aside>
+    </section>
+
+    <!-- ================= FRAMING / THESIS ================= -->
     <section>
       <p class="kicker">Day 1 · Foundations</p>
       <h1>Security is three properties —<br>and the vocabulary for everything that breaks them.</h1>
