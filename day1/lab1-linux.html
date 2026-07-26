@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab 1 — Linux Command-Line Foundations</title>
+<style>
+:root{
+  --petrol:#00567d; --petrol-d:#003f5e; --teal:#1f8f89; --turq:#33d2cb;
+  --yellow:#f2d200; --ink:#12333d; --slate:#2f4f59; --muted:#5c7880;
+  --bg:#f6f8f8; --bg-2:#eef3f3; --card:#fff; --line:#e0e7e8;
+  --code-bg:#0f2b34; --code-ink:#dff3f2;
+  --sans:"Avenir Next","Avenir","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  --mono:"JetBrains Mono","Cascadia Code","SF Mono",Menlo,Consolas,"DejaVu Sans Mono",monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth; scroll-padding-top:84px}
+body{margin:0; font-family:var(--sans); color:var(--ink); background:var(--bg);
+  -webkit-font-smoothing:antialiased; line-height:1.6}
+
+/* ---- top bar ---- */
+.bar{position:sticky; top:0; z-index:30; background:rgba(246,248,248,.94);
+  backdrop-filter:blur(8px); border-bottom:1px solid var(--line)}
+.bar .in{max-width:1240px; margin:0 auto; padding:10px 26px; display:flex;
+  align-items:center; gap:16px}
+.bar img{height:34px; width:auto; mix-blend-mode:multiply}
+.bar .crumb{font-size:12px; font-weight:800; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--teal)}
+.bar .spacer{flex:1}
+.bar a.back{font-size:13px; font-weight:700; color:var(--petrol); text-decoration:none;
+  border:1px solid var(--line); background:var(--card); padding:.45em 1em; border-radius:2px}
+.bar a.back:hover{border-color:var(--petrol)}
+
+/* ---- hero ---- */
+.hero{max-width:1240px; margin:0 auto; padding:52px 26px 30px}
+.hero .kicker{margin:0 0 12px; font-size:13px; font-weight:800; letter-spacing:.24em;
+  text-transform:uppercase; color:var(--teal)}
+.hero h1{margin:0; font-size:clamp(32px,5vw,54px); line-height:1.05; letter-spacing:-.02em;
+  color:var(--petrol); font-weight:800; max-width:18ch}
+.hero .rule{width:72px; height:6px; border-radius:3px; background:var(--yellow); margin:22px 0 22px}
+.meta{display:flex; flex-wrap:wrap; gap:10px; margin:0; padding:0; list-style:none}
+.meta li{background:var(--card); border:1px solid var(--line); border-left:3px solid var(--turq);
+  padding:.5em .9em; border-radius:2px}
+.meta .k{display:block; font-size:10.5px; font-weight:800; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--muted)}
+.meta .v{font-size:14px; font-weight:700; color:var(--slate)}
+
+/* ---- layout ---- */
+.layout{max-width:1240px; margin:0 auto; padding:14px 26px 80px;
+  display:grid; grid-template-columns:236px minmax(0,1fr); gap:44px; align-items:start}
+.toc{position:sticky; top:78px; max-height:calc(100vh - 100px); overflow-y:auto;
+  border-left:2px solid var(--line); padding-left:16px}
+.toc-h{margin:0 0 10px; font-size:11px; font-weight:800; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--muted)}
+.toc ul{list-style:none; margin:0; padding:0}
+.toc li{margin:0}
+.toc a{display:block; padding:3px 0; font-size:13.5px; line-height:1.35; color:var(--muted);
+  text-decoration:none}
+.toc a:hover{color:var(--petrol)}
+.toc .l1 a{margin-top:12px; font-weight:800; font-size:12px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--petrol)}
+.toc .l2 a{padding-left:2px}
+
+/* ---- content ---- */
+.doc{min-width:0; max-width:78ch}
+.doc h1{margin:56px 0 6px; font-size:clamp(24px,3.2vw,32px); font-weight:800; letter-spacing:-.02em;
+  color:var(--petrol); border-top:4px solid var(--yellow); padding-top:18px}
+.doc h2{margin:44px 0 4px; font-size:clamp(20px,2.6vw,25px); font-weight:800; letter-spacing:-.01em;
+  color:var(--petrol)}
+.doc h3{margin:30px 0 4px; font-size:16px; font-weight:800; letter-spacing:.02em; color:var(--teal)}
+.doc p{margin:.85em 0; color:var(--slate); font-size:16px}
+.doc hr{border:0; border-top:1px solid var(--line); margin:44px 0}
+.doc a{color:var(--petrol)}
+.doc strong{color:var(--ink)}
+.doc em{color:var(--muted)}
+.doc ul,.doc ol{color:var(--slate); font-size:16px}
+
+/* code */
+.doc code{font-family:var(--mono); font-size:.88em; background:var(--bg-2);
+  border:1px solid var(--line); border-radius:3px; padding:.1em .38em; color:var(--petrol-d)}
+.doc pre{background:var(--code-bg); color:var(--code-ink); border-radius:3px;
+  border-left:4px solid var(--turq); padding:16px 18px; overflow-x:auto; margin:1.1em 0}
+.doc pre code{background:none; border:0; padding:0; color:inherit; font-size:13.5px; line-height:1.55}
+
+/* tables */
+.tw{overflow-x:auto; margin:1.2em 0; border:1px solid var(--line); border-radius:2px; background:var(--card)}
+.doc table{border-collapse:collapse; width:100%; font-size:14px}
+.doc th{text-align:left; font-family:var(--mono); font-size:11px; font-weight:700;
+  letter-spacing:.1em; text-transform:uppercase; color:var(--teal);
+  background:var(--bg-2); border-bottom:1px solid var(--line); padding:10px 14px; white-space:nowrap}
+.doc td{border-bottom:1px solid var(--line); padding:10px 14px; color:var(--slate);
+  vertical-align:top; line-height:1.5}
+.doc tbody tr:last-child td{border-bottom:0}
+.doc td:first-child{color:var(--petrol); font-weight:700; white-space:nowrap}
+.doc td code{white-space:nowrap}
+
+/* callouts */
+.callout{background:var(--card); border:1px solid var(--line); border-left:4px solid var(--petrol);
+  border-radius:2px; padding:2px 20px; margin:1.3em 0}
+.callout p{font-size:15px}
+
+/* exercises */
+.doc p.task{position:relative; background:var(--card); border:1px solid var(--line);
+  border-left:4px solid var(--turq); border-radius:2px; padding:14px 18px 14px 74px;
+  margin:1.5em 0 0; font-size:16px; color:var(--ink)}
+.tid{position:absolute; left:16px; top:15px; font-family:var(--mono); font-weight:800; font-size:13px;
+  color:var(--petrol); background:var(--bg-2); border-radius:2px; padding:.25em .55em; letter-spacing:.02em}
+details.hint{margin:0 0 .2em; border:1px solid var(--line); border-top:0; background:var(--bg-2);
+  border-radius:0 0 2px 2px; font-size:14.5px}
+details.hint summary{cursor:pointer; list-style:none; padding:.5em 18px; font-weight:700;
+  font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted)}
+details.hint summary::-webkit-details-marker{display:none}
+details.hint summary::before{content:"▸ "; color:var(--turq)}
+details[open].hint summary::before{content:"▾ "}
+details.hint summary:hover{color:var(--petrol)}
+.hint-body{padding:0 18px .8em; color:var(--slate); font-style:italic}
+p.wrapup{background:rgba(242,210,0,.14); border:1px solid rgba(242,210,0,.5);
+  border-radius:2px; padding:14px 18px; font-size:15.5px; color:var(--ink)}
+
+footer{border-top:1px solid var(--line); background:var(--bg)}
+.foot{max-width:1240px; margin:0 auto; padding:20px 26px; display:flex; gap:16px;
+  flex-wrap:wrap; justify-content:space-between; font-size:13px; color:var(--muted)}
+.foot .slogan{font-weight:700; color:var(--slate)}
+
+@media (max-width:960px){
+  .layout{grid-template-columns:1fr; gap:0}
+  .toc{position:static; max-height:none; border-left:0; border-top:1px solid var(--line);
+    padding:16px 0 24px; margin-bottom:8px}
+  .toc ul{columns:2; column-gap:24px}
+}
+@media print{
+  .bar,.toc{display:none}
+  body{background:#fff}
+  .layout{display:block; padding:0 0 20px}
+  details.hint{background:#fff}
+  details.hint > .hint-body{display:block !important}
+  .doc h1,.doc h2{break-after:avoid}
+  p.task{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="bar">
+  <div class="in">
+    <img src="../MajalLogo.jpg" alt="Majal">
+    <span class="crumb">Day 1 · Lab 1</span>
+    <span class="spacer"></span>
+    <a class="back" href="../index.html">← Course</a>
+  </div>
+</div>
+
+<div class="hero">
+  <p class="kicker">Majal Initiative · Cybersecurity Bootcamp</p>
+  <h1>Lab 1 — Linux Command-Line Foundations</h1>
+  <div class="rule"></div>
+  <ul class="meta"><li><span class="k">Duration</span><span class="v">60–90 minutes</span></li><li><span class="k">Environment</span><span class="v">Kali Linux VM (terminal)</span></li><li><span class="k">Level</span><span class="v">Beginner → Intermediate</span></li><li><span class="k">Format</span><span class="v">Task-style exercises with a hint line each</span></li></ul>
+</div>
+
+<div class="layout">
+<nav class="toc" aria-label="Lab contents"><p class="toc-h">Contents</p><ul>
+<li class="l2"><a href="#objectives">Objectives</a></li>
+<li class="l2"><a href="#setup">Setup</a></li>
+<li class="l2"><a href="#0-anatomy-of-a-command">0. Anatomy of a Command</a></li>
+<li class="l1"><a href="#cheat-sheet-linux-command-reference">Cheat Sheet — Linux Command Reference</a></li>
+<li class="l1"><a href="#lab-exercises">Lab Exercises</a></li>
+<li class="l2"><a href="#1-filesystem-navigation-finding-files">1. Filesystem Navigation &amp; Finding Files</a></li>
+<li class="l2"><a href="#2-reading-editing-files">2. Reading &amp; Editing Files</a></li>
+<li class="l2"><a href="#3-permissions-privilege">3. Permissions &amp; Privilege</a></li>
+<li class="l2"><a href="#4-package-management">4. Package Management</a></li>
+<li class="l2"><a href="#5-text-processing-the-power-tools">5. Text Processing — the Power Tools</a></li>
+<li class="l2"><a href="#6-pipes-redirection-xargs">6. Pipes, Redirection &amp; xargs</a></li>
+<li class="l2"><a href="#7-processes-system">7. Processes &amp; System</a></li>
+<li class="l2"><a href="#8-networking-basics">8. Networking Basics</a></li>
+<li class="l2"><a href="#9-file-inspection-hashes-metadata">9. File Inspection — Hashes &amp; Metadata</a></li>
+<li class="l2"><a href="#capstone-live-log-investigation">Capstone — Live Log Investigation</a></li>
+</ul></nav>
+<main class="doc">
+<h2 id="objectives">Objectives</h2>
+<p>By the end of this lab you can navigate a Linux system confidently, manipulate files and permissions, chain commands into useful pipelines, inspect files for integrity and metadata, and run a small log investigation — the core muscle memory every blue-team analyst relies on daily.</p>
+<h2 id="setup">Setup</h2>
+<p>Open a terminal in your Kali VM. Everything runs from there — no extra installs required. Where a command needs elevated rights, use <code>sudo</code> (Kali's default user has sudo access). If you get stuck, <code>man &lt;command&gt;</code> or <code>&lt;command&gt; --help</code> is always available.</p>
+<div class="callout"><p><strong>How to use this lab:</strong> Skim Section 0 and the cheat sheet first — they're your reference. Then work the exercises: read each task, try to build the command yourself, and check the hint only if you need a nudge. The point is to <em>derive</em> the command, not memorize it.</p></div>
+<hr />
+<h2 id="0-anatomy-of-a-command">0. Anatomy of a Command</h2>
+<p>Almost every Linux command follows the same grammar. Learn the <em>shape</em> once and you can read a command you've never seen before.</p>
+<pre><code class="language-text">  ls   -l -a   --color=auto        /var/log
+  │    │  │    │                   │
+  │    │  │    │                   └─ argument  — what to act on (file, path, target)
+  │    │  │    └─ long option with a value
+  │    │  └─ short option (flag)
+  │    └─ short option (flag)
+  └─ command — the program you're running
+</code></pre>
+<p><strong>General template:</strong></p>
+<pre><code class="language-text">command  [-short]  [--long]  [--option=value]  [argument ...]
+</code></pre>
+<div class="tw"><table>
+<thead>
+<tr>
+  <th>Piece</th>
+  <th>Looks like</th>
+  <th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><strong>Command</strong></td>
+  <td><code>ls</code>, <code>grep</code>, <code>nmap</code></td>
+  <td>The program itself.</td>
+</tr>
+<tr>
+  <td><strong>Short flag</strong></td>
+  <td><code>-l</code>, <code>-a</code>, <code>-r</code></td>
+  <td>Single dash, single letter. <strong>Combinable:</strong> <code>-la</code> = <code>-l -a</code>.</td>
+</tr>
+<tr>
+  <td><strong>Long flag</strong></td>
+  <td><code>--all</code>, <code>--help</code></td>
+  <td>Double dash, a whole word. Self-documenting and easier to read in scripts.</td>
+</tr>
+<tr>
+  <td><strong>Flag with a value</strong></td>
+  <td><code>-n 20</code>, <code>--delimiter=:</code></td>
+  <td>Some flags need input right after them.</td>
+</tr>
+<tr>
+  <td><strong>Argument / operand</strong></td>
+  <td><code>/var/log</code>, <code>file.txt</code></td>
+  <td>The thing the command acts on — often a file, path, or target.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>When you're unsure what a command or flag does:</strong></p>
+<pre><code class="language-text">man &lt;command&gt;        # full manual page (q to quit)
+&lt;command&gt; --help     # quick summary of options
+</code></pre>
+<p><strong>Combining commands</strong> — the real power of the shell comes from wiring commands together:</p>
+<pre><code class="language-text">cmd1 | cmd2       pipe: send cmd1's output into cmd2
+cmd  &gt; file       redirect output to a file (overwrite)
+cmd  &gt;&gt; file      redirect output to a file (append)
+cmd  2&gt; file      redirect only errors (stderr)
+cmd1 &amp;&amp; cmd2      run cmd2 only if cmd1 succeeded
+cmd1 ;  cmd2      run cmd1 then cmd2, regardless
+cmd  &amp;            run cmd in the background
+$(cmd)            substitute a command's output into another command
+</code></pre>
+<hr />
+<h1 id="cheat-sheet-linux-command-reference">Cheat Sheet — Linux Command Reference</h1>
+<p><em>Every command below is used somewhere in this lab. Flags shown are the ones worth memorizing; run <code>man &lt;cmd&gt;</code> for the full list.</em></p>
+<h3>Navigation &amp; files</h3>
+<div class="tw"><table>
+<thead>
+<tr>
+  <th>Command</th>
+  <th>Key flags &amp; arguments</th>
+  <th>What it does</th>
+  <th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>ls</code></td>
+  <td><code>-l</code> long · <code>-a</code> all/hidden · <code>-h</code> human sizes · <code>-S</code> sort by size · <code>-t</code> sort by time · <code>-r</code> reverse · <code>-R</code> recursive</td>
+  <td>List directory contents</td>
+  <td><code>ls -lah /var/log</code></td>
+</tr>
+<tr>
+  <td><code>cd</code></td>
+  <td><code>&lt;path&gt;</code> go there · <code>~</code> home · <code>-</code> previous dir · <code>..</code> up one</td>
+  <td>Change directory</td>
+  <td><code>cd /var/log</code> then <code>cd -</code></td>
+</tr>
+<tr>
+  <td><code>pwd</code></td>
+  <td>—</td>
+  <td>Print current working directory</td>
+  <td><code>pwd</code></td>
+</tr>
+<tr>
+  <td><code>find</code></td>
+  <td><code>&lt;path&gt;</code> start dir · <code>-type f|d</code> · <code>-name '*.log'</code> (<code>-iname</code> = case-insensitive) · <code>-mtime -1</code> · <code>-size +10M</code> · <code>-exec &lt;cmd&gt; {} \;</code></td>
+  <td>Search the filesystem</td>
+  <td><code>find /var/log -type f -name '*.log' -mtime -7</code></td>
+</tr>
+<tr>
+  <td><code>which</code> / <code>whereis</code></td>
+  <td><code>&lt;cmd&gt;</code></td>
+  <td>Locate a program (path / path + man + source)</td>
+  <td><code>which nmap</code></td>
+</tr>
+<tr>
+  <td><code>cp</code> <code>mv</code> <code>rm</code> <code>mkdir</code></td>
+  <td><code>-r</code> recursive · <code>-i</code> prompt · <code>-f</code> force · <code>mkdir -p</code> make parents</td>
+  <td>Copy / move / remove / make dir</td>
+  <td><code>cp -r dir/ backup/</code></td>
+</tr>
+</tbody>
+</table></div>
+<div class="callout"><p>⚠️ <code>rm -rf</code> deletes with no confirmation and no undo.</p></div>
+<h3>Reading &amp; editing</h3>
+<div class="tw"><table>
+<thead>
+<tr>
+  <th>Command</th>
+  <th>Key flags &amp; arguments</th>
+  <th>What it does</th>
+  <th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>cat</code></td>
+  <td><code>-n</code> number lines</td>
+  <td>Print / concatenate files</td>
+  <td><code>cat -n /etc/hostname</code></td>
+</tr>
+<tr>
+  <td><code>less</code></td>
+  <td><code>/pattern</code> search · <code>n</code> next · <code>G</code> end · <code>g</code> top · <code>q</code> quit</td>
+  <td>Scrollable pager</td>
+  <td><code>less /etc/os-release</code></td>
+</tr>
+<tr>
+  <td><code>head</code> / <code>tail</code></td>
+  <td><code>-n &lt;N&gt;</code> line count · <code>tail -f</code> follow live · <code>tail -F</code> follow through rotation</td>
+  <td>Show top / bottom of a file</td>
+  <td><code>tail -n 20 /var/log/syslog</code></td>
+</tr>
+<tr>
+  <td><code>echo</code></td>
+  <td><code>&gt; file</code> write · <code>&gt;&gt; file</code> append</td>
+  <td>Print text</td>
+  <td><code>echo &quot;notes&quot; &gt; notes.txt</code></td>
+</tr>
+<tr>
+  <td><code>nano</code></td>
+  <td><code>Ctrl+O</code> save · <code>Ctrl+X</code> exit</td>
+  <td>Beginner-friendly editor</td>
+  <td><code>nano notes.txt</code></td>
+</tr>
+<tr>
+  <td><code>vim</code></td>
+  <td><code>i</code> insert · <code>Esc</code> · <code>:wq</code> save+quit · <code>:q!</code> quit no save</td>
+  <td>Modal editor</td>
+  <td><code>vim notes.txt</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3>Permissions &amp; privilege</h3>
+<div class="tw"><table>
+<thead>
+<tr>
+  <th>Command</th>
+  <th>Key flags &amp; arguments</th>
+  <th>What it does</th>
+  <th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>whoami</code> / <code>id</code></td>
+  <td>—</td>
+  <td>Current username / uid, gid, groups</td>
+  <td><code>id</code></td>
+</tr>
+<tr>
+  <td><code>sudo</code></td>
+  <td><code>-l</code> list allowed · <code>-u &lt;user&gt;</code> run as user · <code>-i</code> root login shell</td>
+  <td>Run a command as root</td>
+  <td><code>sudo -l</code></td>
+</tr>
+<tr>
+  <td><code>su</code></td>
+  <td><code>&lt;user&gt;</code> switch · <code>-</code> load login environment</td>
+  <td>Switch user</td>
+  <td><code>su - root</code></td>
+</tr>
+<tr>
+  <td><code>chmod</code></td>
+  <td>Octal <code>755</code> · symbolic <code>u+x,go-w</code> · <code>-R</code> recursive</td>
+  <td>Change permissions</td>
+  <td><code>chmod 744 test.sh</code></td>
+</tr>
+<tr>
+  <td><code>chown</code></td>
+  <td><code>user:group</code> · <code>-R</code> recursive</td>
+  <td>Change ownership</td>
+  <td><code>chown kali:kali file</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Octal quick reference</strong></p>
+<div class="tw"><table>
+<thead>
+<tr>
+  <th>Digit</th>
+  <th>Permission</th>
+  <th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>7</code></td>
+  <td><code>rwx</code></td>
+  <td>read + write + execute</td>
+</tr>
+<tr>
+  <td><code>6</code></td>
+  <td><code>rw-</code></td>
+  <td>read + write</td>
+</tr>
+<tr>
+  <td><code>5</code></td>
+  <td><code>r-x</code></td>
+  <td>read + execute</td>
+</tr>
+<tr>
+  <td><code>4</code></td>
+  <td><code>r--</code></td>
+  <td>read only</td>
+</tr>
+</tbody>
+</table></div>
+<p><em>Values add up: <code>r=4  w=2  x=1</code>. Three digits = owner, group, others.</em></p>
+<h3>Package management (apt)</h3>
+<div class="tw"><table>
+<thead>
+<tr>
+  <th>Command</th>
+  <th>Key flags &amp; arguments</th>
+  <th>What it does</th>
+  <th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>apt</code></td>
+  <td><code>update</code> · <code>upgrade</code> · <code>search &lt;term&gt;</code> · <code>show &lt;pkg&gt;</code> · <code>install &lt;pkg&gt;</code> · <code>remove &lt;pkg&gt;</code> · <code>list --installed</code></td>
+  <td>Manage packages</td>
+  <td><code>sudo apt update</code></td>
+</tr>
+<tr>
+  <td><code>dpkg</code></td>
+  <td><code>-l</code> list installed · <code>-L &lt;pkg&gt;</code> files placed · <code>-S &lt;file&gt;</code> owning package</td>
+  <td>Low-level package queries</td>
+  <td><code>dpkg -S /usr/bin/nmap</code></td>
+</tr>
+<tr>
+  <td><code>pip</code> / <code>pip3</code></td>
+  <td><code>list</code> · <code>show &lt;pkg&gt;</code> · <code>install &lt;pkg&gt;</code></td>
+  <td>Manage Python packages</td>
+  <td><code>pip list</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3>Text processing (the SOC power tools)</h3>
+<div class="tw"><table>
+<thead>
+<tr>
+  <th>Command</th>
+  <th>Key flags &amp; arguments</th>
+  <th>What it does</th>
+  <th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>grep</code></td>
+  <td><code>-i</code> ignore case · <code>-c</code> count · <code>-n</code> line numbers · <code>-r</code> recursive · <code>-v</code> invert · <code>-o</code> matched part only · <code>-E</code> extended regex</td>
+  <td>Search text by pattern</td>
+  <td><code>grep -in &quot;failed password&quot; /var/log/auth.log</code></td>
+</tr>
+<tr>
+  <td><code>cut</code></td>
+  <td><code>-d&lt;char&gt;</code> delimiter · <code>-f&lt;N&gt;</code> field(s) e.g. <code>-f1,3</code> · <code>-c&lt;range&gt;</code> by character</td>
+  <td>Extract columns</td>
+  <td><code>cut -d: -f1 /etc/passwd</code></td>
+</tr>
+<tr>
+  <td><code>sort</code></td>
+  <td><code>-n</code> numeric · <code>-r</code> reverse · <code>-u</code> unique · <code>-k&lt;N&gt;</code> by column · <code>-h</code> human-numeric</td>
+  <td>Order lines</td>
+  <td><code>sort -u names.txt</code></td>
+</tr>
+<tr>
+  <td><code>uniq</code></td>
+  <td><code>-c</code> prefix counts · <code>-d</code> only dupes · <code>-u</code> only uniques</td>
+  <td>Collapse <em>adjacent</em> duplicates (sort first!)</td>
+  <td><code>sort ips.txt | uniq -c</code></td>
+</tr>
+<tr>
+  <td><code>wc</code></td>
+  <td><code>-l</code> lines · <code>-w</code> words · <code>-c</code> bytes</td>
+  <td>Count</td>
+  <td><code>wc -l /etc/passwd</code></td>
+</tr>
+<tr>
+  <td><code>awk</code></td>
+  <td><code>-F&lt;sep&gt;</code> field separator · <code>'{print $1,$3}'</code> · <code>'$3&gt;100'</code> filter · <code>'END{print NR}'</code> row count</td>
+  <td>Field-aware text processor</td>
+  <td><code>awk -F: '{print $1, $6}' /etc/passwd</code></td>
+</tr>
+<tr>
+  <td><code>sed</code></td>
+  <td><code>'s/old/new/'</code> first · <code>'s/old/new/g'</code> all · <code>-i</code> edit in place · <code>-n '5,10p'</code> line range</td>
+  <td>Stream editor / find-replace</td>
+  <td><code>sed 's/a/@/g' /etc/hostname</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3>Pipes, redirection &amp; chaining</h3>
+<div class="tw"><table>
+<thead>
+<tr>
+  <th>Symbol</th>
+  <th>What it does</th>
+  <th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>|</code></td>
+  <td>Pipe stdout into the next command</td>
+  <td><code>ps aux | grep bash</code></td>
+</tr>
+<tr>
+  <td><code>&gt;</code> / <code>&gt;&gt;</code></td>
+  <td>Redirect output — overwrite / append</td>
+  <td><code>ip a &gt; netinfo.txt</code></td>
+</tr>
+<tr>
+  <td><code>2&gt;</code></td>
+  <td>Redirect errors only (stderr)</td>
+  <td><code>ls /nope 2&gt; errors.txt</code></td>
+</tr>
+<tr>
+  <td><code>&amp;&gt;</code></td>
+  <td>Redirect stdout <em>and</em> stderr</td>
+  <td><code>cmd &amp;&gt; all.log</code></td>
+</tr>
+<tr>
+  <td><code>&lt;</code></td>
+  <td>Read input from a file</td>
+  <td><code>sort &lt; names.txt</code></td>
+</tr>
+<tr>
+  <td><code>tee</code></td>
+  <td>Write to file <em>and</em> screen (<code>-a</code> append)</td>
+  <td><code>cmd | tee out.txt</code></td>
+</tr>
+<tr>
+  <td><code>xargs</code></td>
+  <td>Turn input lines into arguments (<code>-I{}</code> placeholder · <code>-n1</code> one per run)</td>
+  <td><code>ls /etc/*.conf | xargs file</code></td>
+</tr>
+<tr>
+  <td><code>;</code></td>
+  <td>Run in sequence regardless of result</td>
+  <td><code>cmd1 ; cmd2</code></td>
+</tr>
+<tr>
+  <td><code>&amp;&amp;</code></td>
+  <td>Run next only if previous succeeded</td>
+  <td><code>apt update &amp;&amp; apt upgrade</code></td>
+</tr>
+<tr>
+  <td><code>||</code></td>
+  <td>Run next only if previous failed</td>
+  <td><code>cmd1 || echo &quot;failed&quot;</code></td>
+</tr>
+<tr>
+  <td><code>&amp;</code></td>
+  <td>Run in background</td>
+  <td><code>long-scan &amp;</code></td>
+</tr>
+<tr>
+  <td><code>$(cmd)</code></td>
+  <td>Substitute a command's output</td>
+  <td><code>echo &quot;Host: $(hostname)&quot;</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3>Processes &amp; system</h3>
+<div class="tw"><table>
+<thead>
+<tr>
+  <th>Command</th>
+  <th>Key flags &amp; arguments</th>
+  <th>What it does</th>
+  <th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>ps</code></td>
+  <td><code>aux</code> all w/ user, %cpu, %mem · <code>-ef</code> alternate view</td>
+  <td>Snapshot of running processes</td>
+  <td><code>ps aux | grep ssh</code></td>
+</tr>
+<tr>
+  <td><code>top</code> / <code>htop</code></td>
+  <td><code>q</code> to quit (<code>htop</code> is friendlier)</td>
+  <td>Live process monitor</td>
+  <td><code>htop</code></td>
+</tr>
+<tr>
+  <td><code>kill</code></td>
+  <td><code>&lt;pid&gt;</code> graceful (TERM) · <code>-9 &lt;pid&gt;</code> force (KILL) · <code>pkill &lt;name&gt;</code> by name</td>
+  <td>Terminate a process</td>
+  <td><code>kill -9 1337</code></td>
+</tr>
+<tr>
+  <td><code>df</code></td>
+  <td><code>-h</code> human-readable · <code>-i</code> inodes</td>
+  <td>Disk free per filesystem</td>
+  <td><code>df -h</code></td>
+</tr>
+<tr>
+  <td><code>du</code></td>
+  <td><code>-h</code> sizes · <code>-s</code> summary total</td>
+  <td>Disk usage per file/dir</td>
+  <td><code>du -sh /var/log</code></td>
+</tr>
+<tr>
+  <td><code>systemctl</code></td>
+  <td><code>status</code> · <code>is-active</code> · <code>start</code>/<code>stop</code>/<code>restart</code> · <code>enable</code>/<code>disable</code></td>
+  <td>Manage services</td>
+  <td><code>systemctl status ssh</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3>Networking basics</h3>
+<div class="tw"><table>
+<thead>
+<tr>
+  <th>Command</th>
+  <th>Key flags &amp; arguments</th>
+  <th>What it does</th>
+  <th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>ip</code></td>
+  <td><code>a</code> addresses · <code>r</code> routes · <code>link</code> interfaces</td>
+  <td>Network configuration</td>
+  <td><code>ip a</code></td>
+</tr>
+<tr>
+  <td><code>ss</code></td>
+  <td><code>-t</code> TCP · <code>-u</code> UDP · <code>-l</code> listening · <code>-p</code> process (sudo) · <code>-n</code> numeric</td>
+  <td>Show sockets / open ports</td>
+  <td><code>sudo ss -tulpn</code></td>
+</tr>
+<tr>
+  <td><code>ping</code></td>
+  <td><code>-c &lt;N&gt;</code> send N then stop</td>
+  <td>Reachability test</td>
+  <td><code>ping -c 4 8.8.8.8</code></td>
+</tr>
+<tr>
+  <td><code>dig</code></td>
+  <td><code>+short</code> answer only · <code>MX</code>/<code>TXT</code> record type · <code>-x &lt;ip&gt;</code> reverse</td>
+  <td>DNS lookup</td>
+  <td><code>dig example.com +short</code></td>
+</tr>
+<tr>
+  <td><code>nslookup</code></td>
+  <td><code>&lt;domain&gt;</code></td>
+  <td>Simpler DNS lookup</td>
+  <td><code>nslookup example.com</code></td>
+</tr>
+<tr>
+  <td><code>curl</code></td>
+  <td><code>-I</code> headers only · <code>-o &lt;file&gt;</code> save · <code>-L</code> follow redirects · <code>-s</code> silent · <code>-X &lt;METHOD&gt;</code></td>
+  <td>HTTP client</td>
+  <td><code>curl -I http://example.com</code></td>
+</tr>
+<tr>
+  <td><code>wget</code></td>
+  <td><code>-O &lt;file&gt;</code> save as · <code>-c</code> resume</td>
+  <td>Download files</td>
+  <td><code>wget -O out.zip &lt;url&gt;</code></td>
+</tr>
+<tr>
+  <td><code>ssh</code> / <code>scp</code></td>
+  <td><code>user@host</code> · <code>-p &lt;port&gt;</code> (ssh) · <code>-P &lt;port&gt;</code> (scp)</td>
+  <td>Remote shell / remote copy</td>
+  <td><code>scp file user@host:/tmp</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3>File inspection, hashes &amp; metadata</h3>
+<div class="tw"><table>
+<thead>
+<tr>
+  <th>Command</th>
+  <th>Key flags &amp; arguments</th>
+  <th>What it does</th>
+  <th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>sha256sum</code></td>
+  <td><code>-c &lt;file&gt;</code> verify against stored hashes</td>
+  <td>SHA-256 hash of a file</td>
+  <td><code>sha256sum /bin/ls</code></td>
+</tr>
+<tr>
+  <td><code>md5sum</code></td>
+  <td><code>-c &lt;file&gt;</code> verify</td>
+  <td>MD5 hash (legacy — collision-prone)</td>
+  <td><code>md5sum sample.bin</code></td>
+</tr>
+<tr>
+  <td><code>file</code></td>
+  <td><code>&lt;path&gt;</code></td>
+  <td>Detect true type from magic bytes, not extension</td>
+  <td><code>file /bin/ls</code></td>
+</tr>
+<tr>
+  <td><code>stat</code></td>
+  <td><code>&lt;path&gt;</code></td>
+  <td>Full metadata + Access/Modify/Change (MAC) times</td>
+  <td><code>stat /bin/ls</code></td>
+</tr>
+<tr>
+  <td><code>strings</code></td>
+  <td><code>-n &lt;N&gt;</code> minimum length</td>
+  <td>Printable text inside a binary</td>
+  <td><code>strings -n 6 /bin/ls</code></td>
+</tr>
+<tr>
+  <td><code>exiftool</code></td>
+  <td><code>&lt;file&gt;</code></td>
+  <td>Rich metadata (camera, GPS, author, timestamps)</td>
+  <td><code>exiftool photo.jpg</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3>Archives</h3>
+<div class="tw"><table>
+<thead>
+<tr>
+  <th>Command</th>
+  <th>Key flags &amp; arguments</th>
+  <th>What it does</th>
+  <th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>tar</code></td>
+  <td><code>-c</code> create · <code>-x</code> extract · <code>-z</code> gzip · <code>-v</code> verbose · <code>-f &lt;file&gt;</code> filename · <code>-t</code> list</td>
+  <td>Create/extract archives</td>
+  <td><code>tar -czvf out.tar.gz dir/</code></td>
+</tr>
+<tr>
+  <td><code>zip</code> / <code>unzip</code></td>
+  <td><code>-r</code> recursive (zip) · <code>-l</code> list contents (unzip)</td>
+  <td>Zip archives</td>
+  <td><code>unzip -l file.zip</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3>Handy log helpers</h3>
+<div class="tw"><table>
+<thead>
+<tr>
+  <th>Command</th>
+  <th>Key flags &amp; arguments</th>
+  <th>What it does</th>
+  <th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>journalctl</code></td>
+  <td><code>-u &lt;svc&gt;</code> one service · <code>-f</code> follow · <code>--since &quot;1 hour ago&quot;</code> · <code>-p err</code> by priority</td>
+  <td>systemd journal (alternative to <code>/var/log</code>)</td>
+  <td><code>journalctl -u ssh --since today</code></td>
+</tr>
+<tr>
+  <td><code>history</code></td>
+  <td>—</td>
+  <td>Your command history</td>
+  <td><code>history | grep sudo</code></td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h1 id="lab-exercises">Lab Exercises</h1>
+<h2 id="1-filesystem-navigation-finding-files">1. Filesystem Navigation &amp; Finding Files</h2>
+<p>Knowing where you are and how to move around is step zero for everything else.</p>
+<p class="task"><span class="tid">1.1</span>Print your current working directory, then list everything in it <em>including hidden files</em>, in long format.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body">two commands. Hidden files start with a dot; <code>ls</code> has flags for &quot;all&quot; and &quot;long&quot;.</div></details>
+<p class="task"><span class="tid">1.2</span>Navigate to <code>/var/log</code>, then return to your home directory in a single command (without typing the full path).</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>cd</code> with no argument, or the <code>~</code> shortcut.</div></details>
+<p class="task"><span class="tid">1.3</span>Starting from your home directory, find every file (not directory) modified in the last 24 hours.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>find</code>, with <code>-type</code> and <code>-mtime</code>. A negative number means &quot;within the last N days&quot;.</div></details>
+<p class="task"><span class="tid">1.4</span>Locate the full path of the <code>nmap</code> binary on the system.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>which</code> tells you what runs when you type it; <code>whereis</code> finds related files too.</div></details>
+<hr />
+<h2 id="2-reading-editing-files">2. Reading &amp; Editing Files</h2>
+<p class="task"><span class="tid">2.1</span>Display the last 20 lines of <code>/var/log/syslog</code>.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>tail</code> has a flag for line count.</div></details>
+<p class="task"><span class="tid">2.2</span>Open <code>/etc/os-release</code> in a pager you can scroll and search through, then quit.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>less</code>. Press <code>/</code> to search, <code>q</code> to quit.</div></details>
+<p class="task"><span class="tid">2.3</span>Create a file called <code>notes.txt</code> in your home directory containing a single line of text, without opening an editor.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>echo</code> plus output redirection (<code>&gt;</code>).</div></details>
+<hr />
+<h2 id="3-permissions-privilege">3. Permissions &amp; Privilege</h2>
+<p>Permissions decide who can read, write, or execute a file. Understanding — and checking — privilege is also a real reconnaissance step. <em>(MITRE ATT&amp;CK: T1548 — Abuse Elevation Control Mechanism; T1033 — System Owner/User Discovery.)</em></p>
+<p class="task"><span class="tid">3.1</span>Show your current username, your user/group IDs, and the groups you belong to.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>whoami</code> for the name; <code>id</code> for the full picture.</div></details>
+<p class="task"><span class="tid">3.2</span>List what commands your user is permitted to run via <code>sudo</code> — without actually running anything.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>sudo</code> has an <code>-l</code> (list) flag. This is exactly what an attacker checks after landing on a box.</div></details>
+<p class="task"><span class="tid">3.3</span>Create a script file <code>test.sh</code>, then give it read/write/execute for the owner and read-only for group and others — using octal notation.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>touch</code> to create, then <code>chmod</code> with a three-digit number. Owner rwx = 7.</div></details>
+<hr />
+<h2 id="4-package-management">4. Package Management</h2>
+<p>On Kali (Debian-based), <code>apt</code> installs and manages software.</p>
+<p class="task"><span class="tid">4.1</span>Refresh the package index, then search the repositories for a package related to &quot;exiftool&quot;.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>apt update</code> refreshes; <code>apt search &lt;term&gt;</code> searches.</div></details>
+<p class="task"><span class="tid">4.2</span>Show detailed info about the <code>nmap</code> package (version, description, dependencies) <em>without</em> installing anything.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>apt show &lt;package&gt;</code>.</div></details>
+<p class="task"><span class="tid">4.3</span>List the Python packages currently installed via pip.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>pip list</code> (or <code>pip3 list</code>).</div></details>
+<hr />
+<h2 id="5-text-processing-the-power-tools">5. Text Processing — the Power Tools</h2>
+<p>This is where the command line becomes a superpower. Grep, cut, sort, uniq, awk, and sed are what turn a 100,000-line log into a two-line answer.</p>
+<p class="task"><span class="tid">5.1</span>Count how many lines in <code>/etc/passwd</code> mention <code>/bin/bash</code> as the login shell.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>grep</code> the pattern, then pipe to <code>wc -l</code>. Or use grep's own count flag.</div></details>
+<p class="task"><span class="tid">5.2</span>From <code>/etc/passwd</code>, print <em>only</em> the username (the first field). The file is colon-delimited.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>cut</code> with <code>-d</code> (delimiter) and <code>-f</code> (field).</div></details>
+<p class="task"><span class="tid">5.3</span>Take that list of usernames, sort it alphabetically, and remove duplicates.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>sort</code>, then <code>uniq</code> — or <code>sort -u</code> in one step.</div></details>
+<p class="task"><span class="tid">5.4</span>Using <code>awk</code>, print the username and the user's home directory (fields 1 and 6) from <code>/etc/passwd</code>, separated by a space.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>awk -F: '{print $1, $6}'</code> — <code>-F</code> sets the field separator.</div></details>
+<p class="task"><span class="tid">5.5</span>Use <code>sed</code> to display <code>/etc/hostname</code> with every occurrence of the letter <code>a</code> replaced by <code>@</code> (on screen only — don't modify the file).</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>sed 's/a/@/g'</code>. The <code>g</code> makes it global (all occurrences per line).</div></details>
+<hr />
+<h2 id="6-pipes-redirection-xargs">6. Pipes, Redirection &amp; xargs</h2>
+<p>Small tools, chained together, solve big problems.</p>
+<p class="task"><span class="tid">6.1</span>Redirect the output of <code>ip a</code> into a file called <code>netinfo.txt</code>, then <em>append</em> the output of <code>date</code> to the same file.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>&gt;</code> creates/overwrites, <code>&gt;&gt;</code> appends.</div></details>
+<p class="task"><span class="tid">6.2</span>Run a command that produces an error and send <em>only</em> the error output to a file called <code>errors.txt</code> (e.g. <code>ls /nonexistent</code>).</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body">standard error is file descriptor <code>2</code>. <code>2&gt;</code> redirects it.</div></details>
+<p class="task"><span class="tid">6.3</span>Find every <code>.log</code> file under <code>/var/log</code> and count how many there are, in a single pipeline.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>find … -name '*.log'</code> piped into <code>wc -l</code>.</div></details>
+<p class="task"><span class="tid">6.4</span>Use <code>xargs</code> to run <code>file</code> on every <code>.conf</code> file in <code>/etc</code> (top level only).</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>ls /etc/*.conf | xargs file</code> — <code>xargs</code> turns input lines into arguments.</div></details>
+<hr />
+<h2 id="7-processes-system">7. Processes &amp; System</h2>
+<p class="task"><span class="tid">7.1</span>Show all running processes in full detail, then filter that list down to only lines mentioning your shell.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>ps aux</code> piped into <code>grep</code>.</div></details>
+<p class="task"><span class="tid">7.2</span>Display how much disk space is used and free on all mounted filesystems, in human-readable units.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>df</code> with the <code>-h</code> flag.</div></details>
+<p class="task"><span class="tid">7.3</span>Check whether the <code>ssh</code> service is currently active.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>systemctl status ssh</code> (or <code>is-active</code>).</div></details>
+<hr />
+<h2 id="8-networking-basics">8. Networking Basics</h2>
+<p>A foundation for Lab 3. These four commands answer &quot;what's my address, where does traffic go, what's listening, and can I reach that host?&quot;</p>
+<p class="task"><span class="tid">8.1</span>Show your VM's IP address(es) and its routing table.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>ip a</code> for addresses, <code>ip r</code> for routes.</div></details>
+<p class="task"><span class="tid">8.2</span>List every listening TCP and UDP port on the machine, numerically, with the owning process.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>ss -tulpn</code> (prefix with <code>sudo</code> to see process names). This is a core SOC check — you're asking &quot;what's exposed on this host?&quot;</div></details>
+<p class="task"><span class="tid">8.3</span>Resolve the IP address(es) of <code>example.com</code>.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>dig example.com +short</code> or <code>nslookup example.com</code>.</div></details>
+<p class="task"><span class="tid">8.4</span>Fetch just the HTTP response <em>headers</em> from <code>http://example.com</code>.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>curl -I</code> (capital i) returns headers only.</div></details>
+<hr />
+<h2 id="9-file-inspection-hashes-metadata">9. File Inspection — Hashes &amp; Metadata</h2>
+<p>Analysts constantly ask three questions about a file: <em>what is it, has it changed, and what does it reveal?</em> These commands answer all three. <em>(MITRE ATT&amp;CK: T1036 — Masquerading is often caught exactly this way.)</em></p>
+<p class="task"><span class="tid">9.1</span>Generate the SHA-256 hash of <code>/bin/ls</code>.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>sha256sum &lt;file&gt;</code>.</div></details>
+<p class="task"><span class="tid">9.2</span>Determine the actual file <em>type</em> of <code>/bin/ls</code> (don't trust the extension — trust the content).</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>file &lt;path&gt;</code> reads the file's magic bytes.</div></details>
+<p class="task"><span class="tid">9.3</span>Show the full metadata for <code>/bin/ls</code>, including its access, modify, and change timestamps.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>stat &lt;file&gt;</code> — those MAC times matter in forensics.</div></details>
+<p class="task"><span class="tid">9.4</span>Extract any human-readable text strings of length 6 or more from <code>/bin/ls</code>.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>strings -n 6 &lt;file&gt;</code>.</div></details>
+<hr />
+<h2 id="capstone-live-log-investigation">Capstone — Live Log Investigation</h2>
+<p>You've been running <code>sudo</code> throughout this lab. Every one of those actions was logged. Now investigate your own trail — this is triage in miniature, and it's exactly the workflow of a SOC analyst. Work against the live logs on your Kali box (<code>/var/log/auth.log</code>).</p>
+<div class="callout"><p>If <code>auth.log</code> is empty or missing on your build, try <code>journalctl</code> instead (see cheat sheet).</p></div>
+<p class="task"><span class="tid">C.1</span>Identify which file in <code>/var/log</code> is currently the <em>largest</em>.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>ls -lS /var/log</code> sorts by size; or <code>du -h /var/log/* | sort -h</code>.</div></details>
+<p class="task"><span class="tid">C.2</span>Show every line in <code>/var/log/auth.log</code> that records a <code>sudo</code> command being run.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>grep sudo /var/log/auth.log</code>.</div></details>
+<p class="task"><span class="tid">C.3</span>Count how many times <code>sudo</code> was invoked in that log.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body">pipe the previous result into <code>wc -l</code>, or use <code>grep -c</code>.</div></details>
+<p class="task"><span class="tid">C.4</span>Extract just the timestamps (first three fields) of those sudo events, so you have a clean timeline.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>grep sudo … | awk '{print $1, $2, $3}'</code>.</div></details>
+<p class="task"><span class="tid">C.5</span>Pick any binary you inspected in Section 9, hash it, and note the value. In a real investigation you'd compare this against a known-good source or a threat-intel database to confirm the file hasn't been tampered with.</p>
+<details class="hint"><summary>Hint</summary><div class="hint-body"><code>sha256sum /bin/ls</code> — reflect on why an analyst does this.</div></details>
+<p class="wrapup"><strong>Wrap-up question:</strong> In two or three sentences, describe what your sudo timeline tells you about what happened on this machine during the lab. That short narrative <em>is</em> a triage note — the same thing you'll write in a ticket in the SOC lab.</p>
+<hr />
+<p><em>Majal Initiative — hands-on IT &amp; cybersecurity training.</em></p>
+
+</main>
+</div>
+
+<footer>
+  <div class="foot">
+    <span class="slogan">Majal · Unlocking your tech horizons</span>
+    <span>Cybersecurity 2026</span>
+  </div>
+</footer>
+<script>
+/* Highlight the section you're reading in the contents rail. */
+(function () {
+  var links = {}, heads = [];
+  document.querySelectorAll('.toc a').forEach(function (a) {
+    var el = document.getElementById(decodeURIComponent(a.hash.slice(1)));
+    if (el) { links[el.id] = a; heads.push(el); }
+  });
+  var current = null;
+  function sync() {
+    var best = null;
+    heads.forEach(function (h) {
+      if (h.getBoundingClientRect().top < 140) best = h;
+    });
+    if (best === current) return;
+    if (current) links[current.id].style.color = '';
+    current = best;
+    if (current) links[current.id].style.color = 'var(--petrol)';
+  }
+  addEventListener('scroll', sync, { passive: true });
+  sync();
+})();
+</script>
+</body>
+</html>

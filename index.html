@@ -66,6 +66,22 @@
     .day:nth-child(3){--edge:var(--yellow)} .day:nth-child(4){--edge:var(--teal)}
     .day:nth-child(5){--edge:var(--turq)}
 
+    /* labs */
+    .sect{margin:56px 0 16px; font-size:13px; font-weight:800; letter-spacing:.24em;
+      text-transform:uppercase; color:var(--teal)}
+    .labs{display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:18px}
+    a.lab{position:relative; display:flex; flex-direction:column; gap:8px; text-decoration:none; color:inherit;
+      background:var(--card); border:1px solid var(--line); border-left:4px solid var(--teal);
+      border-radius:2px; padding:20px 22px 22px; box-shadow:0 1px 2px rgba(18,51,61,.04);
+      transition:transform .12s, box-shadow .12s}
+    a.lab:hover{transform:translateY(-3px); box-shadow:0 8px 20px rgba(0,86,125,.12)}
+    a.lab .tag{font-size:11px; font-weight:800; letter-spacing:.16em; text-transform:uppercase; color:var(--muted)}
+    a.lab h2{margin:0; font-size:19px; color:var(--petrol); font-weight:800; letter-spacing:-.01em}
+    a.lab p{margin:0; font-size:14.5px; line-height:1.5; color:var(--muted)}
+    a.lab::after{content:"→"; position:absolute; top:18px; right:22px; color:var(--petrol);
+      font-size:22px; font-weight:800; transition:transform .12s}
+    a.lab:hover::after{transform:translateX(4px)}
+
     footer{position:relative; z-index:1; flex:0 0 auto; border-top:1px solid var(--line); background:var(--bg)}
     .foot{max-width:1080px; margin:0 auto; padding:20px 28px; display:flex; justify-content:space-between;
       align-items:center; gap:16px; flex-wrap:wrap; font-size:13px; color:var(--muted)}
@@ -115,6 +131,17 @@
         <p>Reconstruct the whole week from the alerts you generated.</p>
         <span class="status soon">Coming soon</span>
       </div>
+    </div>
+
+    <p class="sect">Labs</p>
+    <div class="labs">
+      <a class="lab" href="day1/lab1-linux.html">
+        <span class="tag">Day 1 Lab · 60–90 min</span>
+        <h2>Linux Command-Line Foundations</h2>
+        <p>Hands-on terminal work in the Kali VM: navigation, permissions, pipelines, file
+          inspection — then a live investigation of your own sudo trail.</p>
+        <span class="status live">Available</span>
+      </a>
     </div>
   </div>
 

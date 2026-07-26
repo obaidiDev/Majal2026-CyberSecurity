@@ -15,10 +15,25 @@ A five-day, offline Reveal.js course. Every day runs straight from `file://`
 │   ├── index.html       #   links ../shared/… for framework + theme
 │   ├── data/            #   content.js, logs.js
 │   ├── js/              #   state.js engine + widgets/ (day-specific)
+│   ├── lab1-linux.md    #   lab handout, source of truth
+│   ├── lab1-linux.html  #   … rendered by tools/md2lab.py (committed)
 │   └── assets/
 ├── day2/ … day5/        # same shape (added as they're built)
+├── tools/md2lab.py      # lab markdown → standalone offline HTML page
 └── MajalEducationalDeckTemplate.pdf   # brand reference
 ```
+
+## Labs
+
+Lab handouts are written in markdown and rendered to a self-contained,
+brand-matched page linked from the course index:
+
+```
+python3 tools/md2lab.py day1/lab1-linux.md day1/lab1-linux.html "Day 1 · Lab 1"
+```
+
+Edit the `.md`, re-run, commit both. (Needs `mistune`; the output has no
+runtime dependencies and opens from `file://` like the decks.)
 
 ## Adding a new day
 
