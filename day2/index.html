@@ -23,6 +23,10 @@
     .k2 .card .ex b { color: var(--petrol); font-weight: 700; }
     .k2.lev .card { border-top-color: var(--yellow); }
     .k2.lev .card h3 { color: var(--ink); }
+    /* image-OSINT toolkit: denser cards */
+    .k2.tk .card h3 { font-size: .66em; }
+    .k2.tk .card p  { font-size: .55em; line-height: 1.38; }
+    .k2.tk .card .ex { font-size: .5em; margin-top: .45em; padding-top: .4em; }
     /* initial-access vector rows */
     .vecs { margin-top: .4em; }
     .vec { display: grid; grid-template-columns: 210px 1fr; gap: 16px; align-items: baseline;
@@ -281,6 +285,81 @@
       that draws exactly the link-map this widget is teaching). Mention <strong>PimEyes</strong> as a face search
       that exists — don't have them upload their faces. Close on the empowering half: every card has a "shrink it"
       fix. This is the defender's mindset sneaking into the attacker's week.</aside>
+    </section>
+
+    <!-- ================= IMAGE OSINT / GEOLOCATION ================= -->
+    <section>
+      <p class="kicker">Recon · the photo they posted</p>
+      <h2>A photo is a location — long after the GPS is gone</h2>
+      <iframe class="wframe" style="height:516px"
+              src="widgets/photo_geo.html?v=1"
+              title="Geolocate a photo from what is in the frame" scrolling="no"></iframe>
+      <aside class="notes">Run this as a room exercise, not a demo — put the picture up and ask
+      <em>"where was this taken?"</em> before you touch anything. Someone will say "you can't know, there's no GPS":
+      that's the point of the strip banner at the top. Instagram, X, Facebook and WhatsApp all strip EXIF on upload —
+      but the <em>picture itself</em> was never stripped of anything.
+      Then work the markers in the order the room shouts them out. <strong>Script</strong> (1) takes 195 countries to 22.
+      <strong>The driver sits on the left</strong> (2) takes 22 to 21 — say that out loud, because it teaches the real
+      lesson: most clues narrow far less than you hope, and the skill is <em>stacking</em> them.
+      <strong>The shadow</strong> (3) is the one to slow down on: open the ruler and drag latitude until the two shadows
+      match. The sun's noon height depends on nothing but your latitude and the date, so a lamp post is a measuring
+      instrument — this is real chronolocation, and SunCalc does exactly this arithmetic for analysts.
+      <strong>The hillside</strong> (4) is deliberately marked amber: terraced olives and cream limestone are a
+      <em>lead</em>, not a fact, and a good analyst labels their confidence. <strong>The awning</strong> (5) is the payoff —
+      hit <strong>Zoom</strong>, read <code>+962</code>, and 4 countries collapse to 1, because a dialling code is an
+      identifier rather than an impression.
+      Land three things: (1) you did not need the metadata; (2) the answer came from <em>stacking weak clues</em> until
+      only one country survived; (3) a country is <strong>not</strong> a location — the last mile is matching that ridge
+      line and minaret against satellite and street-level imagery until the pixels agree. Close by turning it around:
+      every holiday photo, every "first day at the new office" post, is this exercise run against them.
+      (The image is drawn, not photographed — the method is the real one, and the next slide hands them the real tools.)</aside>
+    </section>
+
+    <!-- ================= IMAGE OSINT TOOLKIT ================= -->
+    <section>
+      <p class="kicker">Recon · image OSINT toolkit</p>
+      <h2>The tools that turn a picture into a place</h2>
+      <div class="k2 c4 tk" style="margin-top:.55em">
+        <div class="card"><h3>Reverse image search</h3>
+          <p>Seen this picture — or this <em>building</em> — before?</p>
+          <span class="ex"><b>Google Lens</b> · <b>Yandex</b> (best on places) · <b>TinEye</b> (oldest copy)</span></div>
+        <div class="card"><h3>Metadata</h3>
+          <p>Always check first: GPS, camera body, serial, timestamp.</p>
+          <span class="ex"><b>ExifTool</b> · <b>Jeffrey's viewer</b> — uploads strip it, sent files keep it</span></div>
+        <div class="card"><h3>Sun &amp; shadow</h3>
+          <p>Shadow + date → latitude and time of day. <em>Chronolocation.</em></p>
+          <span class="ex"><b>SunCalc</b> · <b>Shadowmap</b> · <b>SunEarthTools</b></span></div>
+        <div class="card"><h3>Ground truth</h3>
+          <p>Where you prove it: roof shapes, kerbs, poles, skyline.</p>
+          <span class="ex"><b>Google Earth Pro</b> · <b>Street View</b> · <b>Mapillary</b> · <b>Yandex Maps</b></span></div>
+      </div>
+      <div class="k2 c4 tk" style="margin-top:.5em">
+        <div class="card"><h3>Query the map</h3>
+          <p>Turn a combination of clues into a world-wide search.</p>
+          <span class="ex"><b>Overpass Turbo</b> — &ldquo;minaret + school + water tower&rdquo;</span></div>
+        <div class="card"><h3>Field guides</h3>
+          <p>Bollards, plates, road paint, poles — the tells, by country.</p>
+          <span class="ex"><b>GeoHints</b> · <b>Plonk It</b> · <b>GeoGuessr</b> · <b>Bellingcat toolkit</b></span></div>
+        <div class="card"><h3>Who else was there</h3>
+          <p>Other people's posts from the same spot, same hour.</p>
+          <span class="ex"><b>Instagram place tags</b> · <b>Snap Map</b> · <b>Strava heatmap</b></span></div>
+        <div class="card" style="border-top-color:var(--bad)"><h3>Faces <span class="tag">off limits</span></h3>
+          <p>Face search engines exist and they work. Not on classmates, not on strangers.</p>
+          <span class="ex">Rules of engagement — <b>consent or nothing</b></span></div>
+      </div>
+      <div class="callout hot" style="margin-top:.7em"><strong>In 2018 a fitness app published a heatmap of its users' runs</strong>
+      — and drew the perimeter of military bases nobody had ever mapped. Nobody hacked anything; everyone had simply shared a run.</div>
+      <aside class="notes">Don't read the grid — it's a reference card they'll photograph. Do three things instead.
+      (1) Name the <strong>order</strong> of a real workflow: metadata → reverse image search → clue extraction →
+      sun/shadow → ground truth. Beginners jump straight to Google Lens and stop when it fails; the previous slide is
+      what you do when it fails. (2) Say why <strong>Yandex</strong> keeps appearing in OSINT writeups — it is
+      dramatically better than Google at matching buildings and faces rather than captions. (3) Make
+      <strong>Overpass Turbo</strong> concrete: once you have "minaret + school + a road bend + a water tower", you can
+      query OpenStreetMap for every place on earth that matches, which is how an area search becomes a list of candidates.
+      The Strava story is the one they'll retell — a fitness heatmap outlined bases in Syria and Afghanistan in 2018,
+      including the paths soldiers jogged; it was all published voluntarily, by people who thought they were sharing a run.
+      Close on the ethics card: face search is where this stops being a classroom exercise — link it back to the rules of
+      engagement, and to the self-OSINT slide, where the point was consent.</aside>
     </section>
 
     <!-- ================= WEAPONISE — PAYLOAD TYPES ================= -->

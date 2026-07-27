@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Geolocate the photo</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding: 4px 6px; }
+  .w { padding: 10px; }
+  .top { display: flex; gap: 12px; align-items: flex-start; }
+
+  /* ---------- the photo ---------- */
+  .scene { width: 640px; flex: none; }
+  .exif { display: flex; align-items: center; gap: 8px; background: #F2F5F5; border: 1px solid #E0E7E8;
+          border-bottom: 0; border-radius: 8px 8px 0 0; padding: 5px 10px; font-size: 11px; color: #5C7880; }
+  .exif b { color: #12333D; font-weight: 700; }
+  .exif .strip { margin-left: auto; font-family: "JetBrains Mono", Menlo, Consolas, monospace;
+                 font-size: 10px; color: #D64545; font-weight: 700; letter-spacing: .02em; }
+  #cv { width: 640px; height: 372px; border-radius: 0 0 8px 8px; border: 1px solid #E0E7E8;
+        background: #cfe3ee; display: block; cursor: crosshair; }
+  canvas.gauge { width: 250px; height: 92px; border: 0; border-radius: 6px; background: #F6F8F8; display: block; }
+
+  /* ---------- the funnel rail ---------- */
+  .rail { flex: 1; min-width: 0; display: flex; flex-direction: column; height: 400px; }
+  .count { display: flex; align-items: baseline; gap: 8px; border-bottom: 2px solid #E0E7E8; padding-bottom: 5px; }
+  .count .n { font-size: 30px; font-weight: 800; color: #00567C; line-height: 1;
+              font-family: "JetBrains Mono", Menlo, Consolas, monospace; }
+  .count .lb { font-size: 11px; color: #5C7880; line-height: 1.25; }
+  .count .lb b { display: block; color: #12333D; font-size: 12px; }
+
+  .chips { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px 5px; margin: 7px 0 6px; }
+  .chip { font-size: 10px; padding: 2px 5px; border-radius: 3px; border: 1px solid #E0E7E8;
+          background: #fff; color: #35555F; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+          transition: all 220ms ease; }
+  .chip.out { opacity: .3; text-decoration: line-through; border-color: #EEF2F2; color: #8AA1A8; }
+  .chip.last { background: #1F8F89; border-color: #1F8F89; color: #fff; font-weight: 800; }
+  .chips.hidden { opacity: .25; }
+
+  .log { flex: 1; overflow-y: auto; border-top: 1px solid #E0E7E8; padding-top: 6px; }
+  .log .empty { font-size: 11.5px; color: #8AA1A8; line-height: 1.5; }
+  .li { display: flex; gap: 7px; margin-bottom: 6px; }
+  .li .d { width: 16px; height: 16px; border-radius: 50%; background: #00567C; color: #fff; flex: none;
+           font-size: 9px; font-weight: 800; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+  .li.soft .d { background: #E8A21A; }
+  .li.hit .d { background: #1F8F89; }
+  .li .t { font-size: 11px; color: #5C7880; line-height: 1.4; }
+  .li .t b { color: #12333D; }
+  .li .t i { font-style: normal; color: #00567C; font-weight: 700; }
+  .li .t .cut { color: #D64545; font-weight: 700; }
+
+  /* ---------- sun ruler ---------- */
+  .sun { position: absolute; left: 14px; top: 40px; width: 612px; z-index: 9;
+         background: #fff; border: 1px solid #C8D3D6; border-top: 3px solid #E8A21A; border-radius: 8px;
+         box-shadow: 0 8px 26px rgba(4,48,63,.24); padding: 9px 13px 11px;
+         opacity: 0; transform: translateY(-12px); pointer-events: none; transition: all 180ms ease; }
+  .sun.on { opacity: 1; transform: none; pointer-events: auto; }
+  .sun .h { display: flex; align-items: center; gap: 9px; margin-bottom: 7px; }
+  .sun .h b { font-size: 12px; color: #00567C; }
+  .sun .h span { font-size: 10.5px; color: #5C7880; }
+  .sun .h .x { margin-left: auto; font-size: 15px; color: #8AA1A8; cursor: pointer; line-height: 1; }
+  .sun .body { display: flex; gap: 14px; align-items: center; }
+  .sun .gauge { flex: none; }
+  .sun .rd { flex: 1; font-size: 11px; color: #5C7880; line-height: 1.45; }
+  .sun .rd .big { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 17px;
+                  font-weight: 800; color: #12333D; }
+  .sun .rd .ok { color: #1F8F89; font-weight: 800; }
+  .sun input[type=range] { width: 100%; accent-color: #E8A21A; margin-top: 5px; }
+
+  .stagewrap { position: relative; }
+  .ctl { margin-top: 11px; }
+  .cap { min-height: 32px; margin-top: 9px; }
+  .cap .k { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 13px; color: #00567C; }
+</style>
+</head>
+<body>
+<div class="w">
+  <div class="stagewrap">
+    <div class="top">
+      <div class="scene">
+        <div class="exif">
+          <b>IMG_2287.jpg</b> · posted 18 Feb, 12:07 · 1080×720
+          <span class="strip">EXIF: no GPS — stripped on upload</span>
+        </div>
+        <canvas id="cv" width="640" height="372"></canvas>
+      </div>
+
+      <div class="rail">
+        <div class="count">
+          <span class="n" id="num">195</span>
+          <span class="lb"><b>countries still possible</b>click a clue in the photo to narrow it</span>
+        </div>
+        <div class="chips hidden" id="chips"></div>
+        <div class="log" id="log">
+          <p class="empty">No clue read yet. Five things in this photo each rule out part of the world —
+            and one of them, once you zoom in, ends the search on its own.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="sun" id="sun">
+      <div class="h"><b>Shadow ruler</b>
+        <span>posted 18&nbsp;Feb, 12:07 → near local noon, so this shadow is the shortest it gets that day.
+        Drag the latitude until your shadow matches the photo's.</span>
+        <span class="x" id="sunx">✕</span>
+      </div>
+      <div class="body">
+        <canvas class="gauge" id="gz" width="250" height="92"></canvas>
+        <div class="rd">
+          <span class="big" id="latv">5°N</span> &nbsp;<span id="ratio"></span>
+          <input type="range" id="lat" min="5" max="55" step="0.5" value="5">
+          <div id="sunmsg">The sun's height at noon depends only on your latitude and the date —
+            so a pole and its shadow are a latitude gauge.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ctl">
+    <button id="bZoom">🔍 Zoom: OFF</button>
+    <button id="bAll">Read every clue</button>
+    <button id="bReset">Reset</button>
+  </div>
+
+  <div class="cap" id="cap">
+    The metadata is gone — the platform stripped it. Everything you need is still <em>in the picture</em>.
+    Click the pulsing markers, and turn on <b>Zoom</b> when the detail is too small to read.
+  </div>
+</div>
+
+<script>
+(function () {
+  var cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+  var W = 640, H = 372, DPR = window.devicePixelRatio || 1;
+  cv.width = W * DPR; cv.height = H * DPR; ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+  /* ================= the world model ================= */
+  var LAND = [
+    { n: 'Morocco',      c: '+212', lat: [27, 36], lev: 0 },
+    { n: 'Algeria',      c: '+213', lat: [19, 37], lev: 0 },
+    { n: 'Tunisia',      c: '+216', lat: [30, 37], lev: 0 },
+    { n: 'Libya',        c: '+218', lat: [20, 33], lev: 0 },
+    { n: 'Egypt',        c: '+20',  lat: [22, 31], lev: 0 },
+    { n: 'Sudan',        c: '+249', lat: [8, 22],  lev: 0 },
+    { n: 'Mauritania',   c: '+222', lat: [15, 27], lev: 0 },
+    { n: 'Palestine',    c: '+970', lat: [31, 33], lev: 1 },
+    { n: 'Jordan',       c: '+962', lat: [29, 33], lev: 1 },
+    { n: 'Lebanon',      c: '+961', lat: [33, 34], lev: 1 },
+    { n: 'Syria',        c: '+963', lat: [32, 37], lev: 1 },
+    { n: 'Iraq',         c: '+964', lat: [29, 37], lev: 0 },
+    { n: 'Kuwait',       c: '+965', lat: [28, 30], lev: 0 },
+    { n: 'Saudi Arabia', c: '+966', lat: [16, 32], lev: 0 },
+    { n: 'Yemen',        c: '+967', lat: [12, 19], lev: 0 },
+    { n: 'Oman',         c: '+968', lat: [16, 26], lev: 0 },
+    { n: 'UAE',          c: '+971', lat: [22, 26], lev: 0 },
+    { n: 'Bahrain',      c: '+973', lat: [25, 26], lev: 0 },
+    { n: 'Qatar',        c: '+974', lat: [24, 26], lev: 0 },
+    { n: 'Iran',         c: '+98',  lat: [25, 39], lev: 0 },
+    { n: 'Afghanistan',  c: '+93',  lat: [29, 38], lev: 0 },
+    { n: 'Pakistan',     c: '+92',  lat: [23, 37], lev: 0, left: true }
+  ];
+  var preds = [];                // each read clue contributes one predicate
+  var live = null;               // null = nothing read yet → "the whole world"
+  var done = {};
+
+  /* ================= the scene ================= */
+  var SUN = { x: 104, y: 62 };                         // sun upper-left → shadows fall right
+  var POLE = { x: 158, base: 316, top: 194 };
+  var SHADOW_RATIO = 0.979;                            // = 1/tan(alt) at 32.0degN on 18 Feb
+
+  var noise = document.createElement('canvas'), npat = null;
+  (function () {
+    noise.width = noise.height = 96;
+    var g = noise.getContext('2d'), im = g.createImageData(96, 96);
+    for (var i = 0; i < 96 * 96; i++) {
+      var v = 118 + (Math.random() * 74 | 0);
+      im.data[i*4] = im.data[i*4+1] = im.data[i*4+2] = v; im.data[i*4+3] = 26;
+    }
+    g.putImageData(im, 0, 0); npat = ctx.createPattern(noise, 'repeat');
+  })();
+
+  function sky() {
+    var g = ctx.createLinearGradient(0, 0, 0, 210);
+    g.addColorStop(0, '#7FB6D6'); g.addColorStop(.55, '#B6D2E0'); g.addColorStop(1, '#E9E0C8');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, 210);
+    var gg = ctx.createRadialGradient(SUN.x, SUN.y, 4, SUN.x, SUN.y, 74);
+    gg.addColorStop(0, 'rgba(255,248,220,.95)'); gg.addColorStop(1, 'rgba(255,248,220,0)');
+    ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(SUN.x, SUN.y, 74, 0, 7); ctx.fill();
+    ctx.fillStyle = '#FFF8D8'; ctx.beginPath(); ctx.arc(SUN.x, SUN.y, 12, 0, 7); ctx.fill();
+  }
+  function hills() {
+    // far ridge, hazed
+    ctx.fillStyle = '#A3A8B6'; ctx.beginPath(); ctx.moveTo(-5, 210);
+    [[-5,172],[70,152],[140,168],[215,146],[290,164],[360,150],[440,170],[510,155],[580,172],[645,160]]
+      .forEach(function (p, i) { i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); });
+    ctx.lineTo(645, 250); ctx.lineTo(-5, 250); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(233,224,200,.42)'; ctx.fillRect(0, 140, W, 60);
+    // near hillside: descends left→right, the town sits on it
+    var top = [[-5,192],[80,198],[170,212],[260,222],[350,232],[450,242],[540,250],[645,256]];
+    ctx.fillStyle = '#C0B491'; ctx.beginPath(); ctx.moveTo(-5, 330);
+    top.forEach(function (p) { ctx.lineTo(p[0], p[1]); });
+    ctx.lineTo(645, 330); ctx.closePath(); ctx.fill();
+    function yOn(x) { return 192 + (x + 5) * (256 - 192) / 650; }
+    // dry-stone terrace lines + olive trees
+    for (var r = 0; r < 5; r++) {
+      ctx.strokeStyle = 'rgba(104,88,62,.85)'; ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (var x = -5; x <= 645; x += 10) {
+        var y = yOn(x) + 13 + r * 17 + Math.sin(x / 70 + r * 1.3) * 3.5;
+        x === -5 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+    for (var i = 0; i < 60; i++) {
+      var x = (i * 53) % 660 - 8, r2 = i % 5;
+      var y = yOn(x) + 6 + r2 * 17 + Math.sin(x / 70 + r2 * 1.3) * 3.5;
+      ctx.fillStyle = 'rgba(70,60,44,.28)';
+      ctx.beginPath(); ctx.ellipse(x + 4, y + 4, 6, 2.2, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = i % 3 ? '#57724A' : '#405936';
+      ctx.beginPath(); ctx.ellipse(x, y, 7.4, 5.6, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,.16)';
+      ctx.beginPath(); ctx.ellipse(x - 2, y - 1.6, 3, 2, 0, 0, 7); ctx.fill();
+      ctx.strokeStyle = '#7A6A4E'; ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.moveTo(x, y + 3); ctx.lineTo(x, y + 6); ctx.stroke();
+    }
+  }
+  function windows(x, y, w, h, cols, rows) {
+    var gw = 13, gh = 15, px = (w - cols * gw) / (cols + 1), py = (h - rows * gh) / (rows + 1);
+    for (var r = 0; r < rows; r++) for (var c = 0; c < cols; c++) {
+      var wx = x + px + c * (gw + px), wy = y + py + r * (gh + py);
+      ctx.fillStyle = '#63777D'; ctx.fillRect(wx, wy, gw, gh);
+      ctx.fillStyle = 'rgba(255,255,255,.30)'; ctx.fillRect(wx, wy, gw, 4);
+      ctx.strokeStyle = 'rgba(0,0,0,.20)'; ctx.lineWidth = 1; ctx.strokeRect(wx + .5, wy + .5, gw - 1, gh - 1);
+      ctx.fillStyle = 'rgba(0,0,0,.16)'; ctx.fillRect(wx + gw, wy + 1, 2.5, gh);   // sun from the left
+      if (r < rows - 1) { ctx.fillStyle = 'rgba(70,66,60,.5)'; ctx.fillRect(wx - 2, wy + gh + 2, gw + 4, 2); }
+    }
+  }
+  function tank(x, y, s) {
+    ctx.fillStyle = 'rgba(40,36,30,.25)'; ctx.fillRect(x + 20 * s, y + 6 * s, 9 * s, 7 * s);
+    ctx.fillStyle = '#2C2C2E'; ctx.fillRect(x, y, 20 * s, 13 * s);
+    ctx.fillStyle = '#4A4A4E'; ctx.beginPath(); ctx.ellipse(x + 10 * s, y, 10 * s, 3.2 * s, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = '#8A8A8E'; ctx.fillRect(x + 3 * s, y - 6 * s, 2 * s, 6 * s);
+  }
+  function dish(x, y, s) {
+    ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+    ctx.strokeStyle = '#9AA3A6'; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, 9); ctx.stroke();
+    ctx.fillStyle = '#EDEFEF'; ctx.strokeStyle = '#B9C2C4';
+    ctx.beginPath(); ctx.ellipse(0, 0, 4.6, 8, -0.42, 0, 7); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = '#9AA3A6'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(7, -3.4); ctx.stroke();
+    ctx.fillStyle = '#7E8688'; ctx.beginPath(); ctx.arc(7.6, -3.7, 1.5, 0, 7); ctx.fill();
+    ctx.restore();
+  }
+  function ac(x, y) { ctx.fillStyle = '#D6D9D6'; ctx.fillRect(x, y, 14, 9);
+                      ctx.strokeStyle = '#A8ADAA'; ctx.strokeRect(x + .5, y + .5, 13, 8);
+                      ctx.fillStyle = '#B7BCB9'; ctx.beginPath(); ctx.arc(x + 7, y + 4.5, 3, 0, 7); ctx.fill(); }
+  function block(x, y, w, col) {
+    var h = 316 - y;
+    ctx.fillStyle = 'rgba(60,52,40,.20)'; ctx.fillRect(x + w, y + 8, 10, h - 8);   // cast shadow to the right
+    ctx.fillStyle = col; ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = 'rgba(0,0,0,.10)'; ctx.fillRect(x + w - 9, y, 9, h);
+    ctx.fillStyle = 'rgba(255,255,255,.16)'; ctx.fillRect(x, y, 6, h);
+    ctx.fillStyle = '#EFE8D8'; ctx.fillRect(x - 3, y - 6, w + 6, 6);
+    ctx.fillStyle = 'rgba(0,0,0,.13)'; ctx.fillRect(x - 3, y, w + 6, 3);
+    ctx.strokeStyle = 'rgba(0,0,0,.12)'; ctx.lineWidth = 1; ctx.strokeRect(x + .5, y + .5, w - 1, h);
+  }
+  function minaret(x) {
+    ctx.fillStyle = 'rgba(60,52,40,.20)'; ctx.fillRect(x + 21, 140, 9, 176);
+    ctx.fillStyle = '#EDE6D2'; ctx.fillRect(x, 128, 21, 188);
+    ctx.fillStyle = 'rgba(0,0,0,.11)'; ctx.fillRect(x + 15, 128, 6, 188);
+    ctx.fillStyle = '#E2D9C0'; ctx.fillRect(x - 4, 166, 29, 7);
+    ctx.strokeStyle = '#C3B79A'; ctx.lineWidth = 1;
+    for (var i = 0; i < 6; i++) { ctx.beginPath(); ctx.moveTo(x - 3 + i * 5, 160); ctx.lineTo(x - 3 + i * 5, 166); ctx.stroke(); }
+    ctx.fillStyle = '#3E7D6A'; ctx.beginPath(); ctx.moveTo(x - 2, 128); ctx.quadraticCurveTo(x + 10.5, 100, x + 23, 128); ctx.fill();
+    ctx.strokeStyle = '#3E7D6A'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x + 10.5, 100); ctx.lineTo(x + 10.5, 90); ctx.stroke();
+    ctx.beginPath(); ctx.arc(x + 10.5, 87, 3, 0, 7); ctx.stroke();
+    ctx.fillStyle = '#63777D'; ctx.fillRect(x + 6, 190, 9, 24); ctx.fillRect(x + 6, 232, 9, 24);
+  }
+  function palm(x, base, s) {
+    ctx.fillStyle = 'rgba(60,52,40,.24)';
+    ctx.beginPath(); ctx.ellipse(x + 14 * s, base + 2, 20 * s, 4, 0, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#8A7A5E'; ctx.lineWidth = 4.4 * s; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(x, base); ctx.quadraticCurveTo(x - 3 * s, base - 26 * s, x + 2 * s, base - 48 * s); ctx.stroke();
+    for (var i = 0; i < 9; i++) {
+      var a = -Math.PI / 2 + (i - 4) * 0.36;
+      ctx.strokeStyle = i % 2 ? '#4E7A44' : '#3F6638'; ctx.lineWidth = 3.2 * s;
+      ctx.beginPath(); ctx.moveTo(x + 2 * s, base - 48 * s);
+      ctx.quadraticCurveTo(x + 2 * s + Math.cos(a) * 17 * s, base - 48 * s + Math.sin(a) * 17 * s - 5 * s,
+                           x + 2 * s + Math.cos(a) * 30 * s, base - 48 * s + Math.sin(a) * 30 * s + 6 * s);
+      ctx.stroke();
+    }
+    ctx.lineCap = 'butt';
+  }
+  function car(x, y) {
+    ctx.fillStyle = 'rgba(0,0,0,.26)'; ctx.beginPath(); ctx.ellipse(x + 40, y + 33, 38, 6, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = '#B6BFC4'; ctx.fillRect(x - 1, y + 6, 54, 24);
+    ctx.fillStyle = '#C9D1D5'; ctx.beginPath();
+    ctx.moveTo(x + 6, y + 7); ctx.lineTo(x + 11, y - 11); ctx.lineTo(x + 41, y - 11); ctx.lineTo(x + 46, y + 7); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#3E5A63'; ctx.beginPath();
+    ctx.moveTo(x + 10, y + 4); ctx.lineTo(x + 14, y - 8); ctx.lineTo(x + 38, y - 8); ctx.lineTo(x + 42, y + 4); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#1B333C';                                  // headrest + driver, left seat
+    ctx.fillRect(x + 15, y - 4, 9, 4);
+    ctx.beginPath(); ctx.arc(x + 19.5, y - 1.5, 5, 0, 7); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.20)'; ctx.beginPath(); ctx.arc(x + 33, y - 2, 4.4, 0, 7); ctx.fill();
+    ctx.fillStyle = '#8E979B'; ctx.fillRect(x - 5, y + 9, 6, 8); ctx.fillRect(x + 52, y + 9, 6, 8);
+    ctx.fillStyle = '#C0392B'; ctx.fillRect(x + 1, y + 12, 8, 5); ctx.fillRect(x + 44, y + 12, 8, 5);
+    ctx.fillStyle = '#EDE9DE'; ctx.fillRect(x + 16, y + 20, 22, 8);
+    ctx.strokeStyle = '#9AA0A2'; ctx.lineWidth = 1; ctx.strokeRect(x + 16.5, y + 20.5, 21, 7);
+    ctx.fillStyle = '#2C3E44'; ctx.font = '700 6.5px "Segoe UI", system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('٤٢ ٧٧٣٠', x + 27, y + 26.6);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#1C1C1E'; ctx.fillRect(x - 2, y + 28, 11, 6); ctx.fillRect(x + 45, y + 28, 11, 6);
+  }
+  function shop(x, y, w) {
+    ctx.fillStyle = '#C8B79A'; ctx.fillRect(x, y, w, 316 - y);
+    ctx.fillStyle = 'rgba(255,255,255,.14)'; ctx.fillRect(x, y, 6, 316 - y);
+    ctx.fillStyle = '#20343A'; ctx.fillRect(x + 8, 268, w - 16, 48);
+    ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.fillRect(x + 12, 272, 26, 40);
+    for (var i = 0; i < 7; i++) {
+      ctx.fillStyle = i % 2 ? '#E8E4DA' : '#2F7D5B';
+      ctx.fillRect(x + 4 + i * ((w - 8) / 7), 258, (w - 8) / 7, 11);
+    }
+    ctx.fillStyle = 'rgba(0,0,0,.20)'; ctx.fillRect(x + 4, 269, w - 8, 3);
+    ctx.fillStyle = '#134E5E'; ctx.fillRect(x + 2, 234, w - 4, 22);
+    ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 1; ctx.strokeRect(x + 2.5, 234.5, w - 5, 21);
+    ctx.fillStyle = '#F4EFDF'; ctx.textAlign = 'center'; ctx.direction = 'rtl';
+    ctx.font = '700 14px "Noto Naskh Arabic", "Segoe UI", serif';
+    ctx.fillText('مخبز و حلويات الشام', x + w / 2, 250);
+    ctx.direction = 'ltr';
+    ctx.fillStyle = '#EFE7D2'; ctx.font = '600 7px "Segoe UI", system-ui, sans-serif';
+    ctx.fillText('+962 6 464 2270', x + w / 2, 277.5);          // <- the collapse clue
+    ctx.textAlign = 'left';
+  }
+  function street() {
+    ctx.fillStyle = '#CFC8B7'; ctx.fillRect(0, 316, W, 16);
+    ctx.fillStyle = '#B4AD9C'; ctx.fillRect(0, 330, W, 4);
+    ctx.fillStyle = '#5E5E60'; ctx.fillRect(0, 334, W, H - 334);
+    ctx.fillStyle = 'rgba(255,255,255,.72)';
+    for (var x = 6; x < W; x += 46) ctx.fillRect(x, 354, 26, 3);
+    ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.fillRect(0, 336, W, 2);
+  }
+  function pole() {
+    var h = POLE.base - POLE.top;
+    ctx.fillStyle = 'rgba(30,28,34,.55)';                        // THE shadow — the latitude ruler
+    ctx.beginPath(); ctx.moveTo(POLE.x, POLE.base); ctx.lineTo(POLE.x + h * SHADOW_RATIO, POLE.base + 26);
+    ctx.lineTo(POLE.x + h * SHADOW_RATIO + 8, POLE.base + 30); ctx.lineTo(POLE.x + 6, POLE.base + 4);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#8E969A'; ctx.fillRect(POLE.x - 2.5, POLE.top, 5, h);
+    ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(POLE.x - 2.5, POLE.top, 1.6, h);
+    ctx.fillStyle = '#7A8286'; ctx.fillRect(POLE.x - 5, POLE.base - 4, 10, 4);
+    ctx.beginPath(); ctx.moveTo(POLE.x, POLE.top + 2); ctx.quadraticCurveTo(POLE.x + 14, POLE.top - 6, POLE.x + 26, POLE.top + 3);
+    ctx.lineTo(POLE.x + 26, POLE.top + 6); ctx.quadraticCurveTo(POLE.x + 14, POLE.top - 2, POLE.x, POLE.top + 5); ctx.fill();
+    ctx.fillStyle = '#D9DDD8'; ctx.fillRect(POLE.x + 22, POLE.top + 4, 12, 5);
+  }
+
+  function paint(c) {
+    var o = ctx; ctx = c;
+    sky(); hills();
+    block(150, 214, 92, '#DCCFB4');  windows(150, 214, 92, 102, 3, 3);
+    tank(164, 204, 1); dish(220, 204, 1.1); ac(196, 222);
+    block(248, 232, 54, '#CDBB9C');  windows(248, 232, 54, 84, 2, 2);
+    dish(284, 222, 1); tank(256, 224, .8);
+    minaret(306);
+    block(340, 208, 92, '#E2D6BC');  windows(340, 208, 92, 108, 3, 3);
+    tank(354, 198, 1); ac(392, 216); dish(408, 198, 1.1);
+    block(438, 226, 76, '#D3C3A5');  windows(438, 226, 76, 90, 2, 2);
+    ac(452, 236); dish(492, 216, 1.05);
+    shop(520, 218, 114);             windows(520, 218, 114, 50, 3, 1);
+    dish(608, 208, 1.1); tank(544, 208, .9);
+    ctx.fillStyle = '#C6B99C'; ctx.fillRect(-5, 300, 156, 16);            // retaining wall on the left
+    ctx.fillStyle = 'rgba(0,0,0,.10)'; ctx.fillRect(-5, 300, 156, 4);
+    street(); palm(96, 330, .95); palm(470, 330, .8); pole(); car(404, 336);
+    // photographic finish: haze, vignette, grain
+    var hz = ctx.createLinearGradient(0, 120, 0, 300);
+    hz.addColorStop(0, 'rgba(238,230,208,.20)'); hz.addColorStop(1, 'rgba(238,230,208,0)');
+    ctx.fillStyle = hz; ctx.fillRect(0, 120, W, 180);
+    var vg = ctx.createRadialGradient(W / 2, H / 2, H * .42, W / 2, H / 2, H * 1.05);
+    vg.addColorStop(0, 'rgba(20,26,30,0)'); vg.addColorStop(1, 'rgba(20,26,30,.26)');
+    ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+    if (npat) { ctx.globalAlpha = .5; ctx.fillStyle = npat; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
+    ctx = o;
+  }
+
+  /* ================= clues ================= */
+  var CLUES = [
+    { id: 'script', x: 616, y: 244, r: 15, kind: 'hard',
+      t: 'Signage script is <b>Arabic</b>',
+      d: 'Bakery sign, plate numerals — Arabic script narrows the world to the countries that use it.',
+      p: function () { return true; } },
+    { id: 'traffic', x: 430, y: 350, r: 14, kind: 'hard',
+      t: 'The driver sits on the <b>left</b>',
+      d: 'Left-hand drive → they drive on the <b>right</b>. Cheap to read, and here it only cuts one country — most clues narrow less than you hope.',
+      p: function (k) { return !k.left; } },
+    { id: 'sun', x: 226, y: 331, r: 15, kind: 'sun',
+      t: 'Pole and shadow ≈ <b>equal length</b>',
+      d: '', p: null },
+    { id: 'terrain', x: 52, y: 250, r: 15, kind: 'soft',
+      t: 'Terraced <b>olive</b> hills, cream limestone, black roof tanks',
+      d: 'A regional signature, not a fact — this is a <b>lead</b>, and a good analyst marks it as one.',
+      p: function (k) { return k.lev === 1; } },
+    { id: 'phone', x: 528, y: 277, r: 13, kind: 'hit',
+      t: 'The awning prints <b>+962</b>',
+      d: 'A dialling code is an identifier, not an impression. One string ends the search.',
+      p: function (k) { return k.c === '+962'; } }
+  ];
+
+  /* ================= rail rendering ================= */
+  var elNum = document.getElementById('num'), elChips = document.getElementById('chips'),
+      elLog = document.getElementById('log'), cap = document.getElementById('cap');
+  var logged = 0;
+
+  function drawChips() {
+    elChips.classList.toggle('hidden', !live);
+    if (!elChips.children.length) {
+      LAND.forEach(function (k) {
+        var d = document.createElement('span'); d.className = 'chip'; d.textContent = k.n;
+        d.dataset.n = k.n; elChips.appendChild(d);
+      });
+    }
+    if (!live) return;
+    var only = live.length === 1 ? live[0].n : null;
+    Array.prototype.forEach.call(elChips.children, function (d) {
+      var alive = live.some(function (k) { return k.n === d.dataset.n; });
+      d.classList.toggle('out', !alive);
+      d.classList.toggle('last', alive && !!only);
+    });
+  }
+  function setCount() {
+    var n = live ? live.length : 195;
+    elNum.textContent = n;
+    elNum.style.color = n === 1 ? '#1F8F89' : '#00567C';
+  }
+  function log(cl, title, sub, cut) {
+    if (!logged++) elLog.innerHTML = '';
+    var d = document.createElement('div'); d.className = 'li ' + cl;
+    d.innerHTML = '<span class="d">' + logged + '</span><span class="t"><b>' + title + '</b>' +
+      (cut ? ' <span class="cut">' + cut + '</span>' : '') + (sub ? '<br>' + sub : '') + '</span>';
+    elLog.appendChild(d); elLog.scrollTop = elLog.scrollHeight;
+  }
+  function apply(cl) {
+    if (done[cl.id]) return;
+    done[cl.id] = 1;
+    var before = live ? live.length : 195;
+    preds.push(cl.p);
+    live = LAND.filter(function (k) { return preds.every(function (f) { return f(k); }); });
+    setCount(); drawChips();
+    log(cl.kind === 'soft' ? 'soft' : (cl.kind === 'hit' ? 'hit' : ''), cl.t, cl.d,
+        before + ' → ' + live.length);
+    if (live.length === 1) {
+      cap.innerHTML = 'One country left: <b>' + live[0].n + '</b> — and a country is <em>not</em> a location. ' +
+        'The last mile is confirmation: match that ridge line, the minaret and the street width against satellite ' +
+        'and street-level imagery until the pixels agree. <span class="k">That</span> is what makes it evidence.';
+    }
+    draw();
+  }
+
+  /* ================= sun ruler ================= */
+  var sunPanel = document.getElementById('sun'), gz = document.getElementById('gz').getContext('2d'),
+      slat = document.getElementById('lat'), latv = document.getElementById('latv'),
+      ratioEl = document.getElementById('ratio'), sunmsg = document.getElementById('sunmsg');
+  var DEC = -12.32;                                    // solar declination on 18 February
+  function ratioAt(lat) { return 1 / Math.tan((90 - Math.abs(lat - DEC)) * Math.PI / 180); }
+
+  function drawGauge(lat) {
+    var g = gz, w = 250, h = 92;
+    g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, w, h);
+    g.fillStyle = '#F6F8F8'; g.fillRect(0, 0, w, h);
+    g.strokeStyle = '#E0E7E8'; g.strokeRect(.5, .5, w - 1, h - 1);
+    function row(y, ratio, col, l1, l2) {
+      var ph = 28, x = 78;
+      g.fillStyle = '#5C7880'; g.font = '700 9px "Segoe UI", system-ui, sans-serif'; g.textAlign = 'right';
+      g.fillText(l1, 70, y - 14); g.fillText(l2, 70, y - 4);
+      g.textAlign = 'left';
+      g.fillStyle = 'rgba(40,40,45,.34)';
+      g.beginPath(); g.moveTo(x, y); g.lineTo(x + ph * ratio, y + 5);
+      g.lineTo(x + ph * ratio + 4, y + 7); g.lineTo(x + 4, y + 2); g.closePath(); g.fill();
+      g.fillStyle = col; g.fillRect(x - 1.6, y - ph, 3.2, ph);
+      g.fillStyle = '#8AA1A8'; g.font = '700 9px "JetBrains Mono", Menlo, monospace';
+      g.fillText('x' + ratio.toFixed(2), x + Math.max(ph * ratio, 16) + 9, y + 3);
+    }
+    row(38, SHADOW_RATIO, '#8E969A', 'shadow in', 'the photo');
+    row(84, Math.min(ratioAt(lat), 5.6), '#E8A21A', 'at your', 'latitude');
+  }
+  function sunUpdate() {
+    var lat = +slat.value, r = ratioAt(lat), ok = Math.abs(r - SHADOW_RATIO) / SHADOW_RATIO < 0.03;
+    latv.textContent = lat.toFixed(1) + '°N';
+    ratioEl.innerHTML = ok ? '<span class="ok">— shadows match</span>' : '';
+    drawGauge(lat);
+    if (ok && !done.sun) {
+      sunmsg.innerHTML = 'At <b>' + lat.toFixed(0) + '°N</b> on 18 February the noon sun stands ' +
+        (90 - Math.abs(lat - DEC)).toFixed(0) + '° high — exactly the shadow in the photo.';
+      apply({ id: 'sun', kind: '', t: 'Shadow ruler → <b>≈ ' + lat.toFixed(0) + '°N</b>',
+        d: 'Noon sun height depends only on latitude and date. Same reading works anywhere, with any vertical object.',
+        p: function (k) { return k.lat[1] >= lat - 1.5 && k.lat[0] <= lat + 1.5; } });
+    }
+  }
+  slat.addEventListener('input', sunUpdate);
+  document.getElementById('sunx').addEventListener('click', function () { sunPanel.classList.remove('on'); });
+
+  /* ================= interaction ================= */
+  var mx = -99, my = -99, zoom = false, t0 = performance.now();
+
+  function hit(x, y) {
+    for (var i = 0; i < CLUES.length; i++) {
+      var c = CLUES[i];
+      if (done[c.id]) continue;
+      if ((x - c.x) * (x - c.x) + (y - c.y) * (y - c.y) < (c.r + 7) * (c.r + 7)) return c;
+    }
+    return null;
+  }
+  cv.addEventListener('mousemove', function (e) {
+    var r = cv.getBoundingClientRect();
+    mx = (e.clientX - r.left) * W / r.width; my = (e.clientY - r.top) * H / r.height;
+    cv.style.cursor = hit(mx, my) ? 'pointer' : (zoom ? 'zoom-in' : 'crosshair');
+  });
+  cv.addEventListener('mouseleave', function () { mx = my = -99; });
+  cv.addEventListener('click', function () {
+    var c = hit(mx, my); if (!c) return;
+    if (c.kind === 'sun') { sunPanel.classList.add('on'); sunUpdate(); return; }
+    apply(c);
+  });
+
+  document.getElementById('bZoom').addEventListener('click', function () {
+    zoom = !zoom; this.classList.toggle('on', zoom); this.textContent = '🔍 Zoom: ' + (zoom ? 'ON' : 'OFF');
+  });
+  document.getElementById('bAll').addEventListener('click', function () {
+    var seq = ['script', 'sun', 'traffic', 'terrain', 'phone'], i = 0;
+    (function step() {
+      if (i >= seq.length) return;
+      var id = seq[i++];
+      if (id === 'sun') { if (!done.sun) { slat.value = 32; sunUpdate(); } }
+      else apply(CLUES.filter(function (k) { return k.id === id; })[0]);
+      setTimeout(step, 460);
+    })();
+  });
+  document.getElementById('bReset').addEventListener('click', function () {
+    live = null; preds = []; done = {}; logged = 0; sunPanel.classList.remove('on');
+    slat.value = 5; sunUpdate();
+    elLog.innerHTML = '<p class="empty">No clue read yet. Five things in this photo each rule out part of the ' +
+      'world — and one of them, once you zoom in, ends the search on its own.</p>';
+    cap.innerHTML = 'The metadata is gone — the platform stripped it. Everything you need is still <em>in the ' +
+      'picture</em>. Click the pulsing markers, and turn on <b>Zoom</b> when the detail is too small to read.';
+    setCount(); drawChips(); draw();
+  });
+
+  /* ================= frame ================= */
+  function draw() {
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H);
+    paint(ctx);
+    var t = (performance.now() - t0) / 1000;
+    CLUES.forEach(function (c, i) {
+      if (done[c.id]) {
+        ctx.strokeStyle = 'rgba(31,143,137,.9)'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(c.x, c.y, c.r, 0, 7); ctx.stroke();
+        ctx.fillStyle = 'rgba(31,143,137,.9)'; ctx.beginPath(); ctx.arc(c.x, c.y, c.r, 0, 7); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.font = '800 11px "Segoe UI", system-ui, sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('✓', c.x, c.y + 4); ctx.textAlign = 'left';
+        return;
+      }
+      var p = (Math.sin(t * 2.4 + i * 1.1) + 1) / 2;
+      ctx.strokeStyle = 'rgba(0,86,124,' + (.55 - p * .42) + ')'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(c.x, c.y, c.r + 5 + p * 9, 0, 7); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.strokeStyle = '#00567C'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(c.x, c.y, c.r, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#00567C'; ctx.font = '800 12px "Segoe UI", system-ui, sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(i + 1, c.x, c.y + 4.5); ctx.textAlign = 'left';
+    });
+    if (zoom && mx > -50) {
+      var Z = 3.2, R = 78;
+      ctx.save();
+      ctx.beginPath(); ctx.arc(mx, my, R, 0, 7); ctx.clip();
+      ctx.fillStyle = '#cfe3ee'; ctx.fillRect(mx - R, my - R, R * 2, R * 2);
+      ctx.translate(mx - Z * mx, my - Z * my); ctx.scale(Z, Z);
+      paint(ctx);
+      ctx.restore();
+      ctx.strokeStyle = '#00567C'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(mx, my, R, 0, 7); ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(mx, my, R + 2.4, 0, 7); ctx.stroke();
+    }
+    requestAnimationFrame(draw);
+  }
+
+  setCount(); drawChips(); drawGauge(5); draw();
+
+  /* screenshot hooks */
+  var q = new URLSearchParams(location.search);
+  if (q.get('all')) document.getElementById('bAll').click();
+  if (q.get('sun')) { sunPanel.classList.add('on'); slat.value = q.get('sun'); sunUpdate(); }
+  if (q.get('zoom')) { document.getElementById('bZoom').click(); mx = +q.get('zoom').split(',')[0]; my = +q.get('zoom').split(',')[1]; }
+})();
+</script>
+</body>
+</html>
