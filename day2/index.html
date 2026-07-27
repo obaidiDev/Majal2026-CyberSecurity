@@ -73,6 +73,33 @@
 <div class="reveal">
   <div class="slides">
 
+    <!-- ================= COLD OPEN ================= -->
+    <section>
+      <p class="kicker">Day 2 · cold open</p>
+      <h2>What is wrong with this email?</h2>
+      <iframe class="wframe" style="height:510px"
+              src="widgets/cold_open_mail.html?v=1"
+              title="Cold open: spot what is wrong with this email" scrolling="no"></iframe>
+      <aside class="notes">Open the day cold — no framing, no theory. Put this on screen and ask the room:
+      <em>"what's wrong with this email?"</em> Let them hunt for 60–90 seconds. They will guess the usual suspects:
+      the Nigeria sign-in, the urgency, the button, the footer. Say no to each — <strong>all of that is copied
+      verbatim from the real Microsoft alert</strong>, and a real one genuinely does list a foreign sign-in.
+      Exactly one thing is wrong.
+      Then drive the <strong>magnifier</strong> across the header line and stop on the sender:
+      <code>account-security@rnicrosoft.com</code> — <strong>r + n</strong>, not <strong>m</strong>.
+      Open the <strong>Glyph lab</strong> and drag the size slider from 13&nbsp;px upwards with both addresses stacked:
+      at reading size they are the same shape, and only at ~24&nbsp;px does the pair split apart. Switch the font to
+      <em>Serif</em> and then <em>Mono</em> — in a monospace font the trick dies instantly, because every glyph gets
+      the same width. That's the mechanism: this is not a spelling mistake, it's a <em>typography</em> attack on how
+      we read — we match word shapes, we don't spell-check senders.
+      Land three things before moving on: (1) the display name (&ldquo;Microsoft account team&rdquo;) is attacker-controlled
+      free text and the inbox list never shows the domain at all; (2) the tell was one pixel-level detail in a message
+      that was otherwise perfect — you cannot win this by being careful; (3) so the fix is structural, not vigilance:
+      never act from the message, go to the site yourself. Name the family — <strong>homoglyph / look-alike domain</strong>
+      (rn/m, l/I, 0/O, and Unicode lookalikes like Cyrillic а) — and promise they'll build one of these themselves in the
+      lure sandbox later today.</aside>
+    </section>
+
     <!-- ================= TITLE ================= -->
     <section>
       <p class="kicker">Day 2 · The First Foothold</p>

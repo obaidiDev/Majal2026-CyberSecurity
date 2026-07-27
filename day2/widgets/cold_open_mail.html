@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cold open — one new message</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding: 4px 6px; }
+  .w { padding: 10px; background: #EEF2F3; }
+
+  /* ---------- stage / lens ---------- */
+  .stage { position: relative; }
+  .lens { position: absolute; width: 200px; height: 200px; border-radius: 50%;
+          overflow: hidden; pointer-events: none; opacity: 0; transition: opacity 110ms ease;
+          box-shadow: 0 0 0 3px #00567C, 0 0 0 5px rgba(255,255,255,.9), 0 14px 34px rgba(4,48,63,.38);
+          background: #fff; z-index: 6; }
+  .lens.on { opacity: 1; }
+  .lens .lensin { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+
+  /* ---------- mail client chrome ---------- */
+  .client { border-radius: 8px; overflow: hidden; border: 1px solid #C8D3D6;
+            box-shadow: 0 3px 12px rgba(4,48,63,.10); background: #fff; }
+  .cbar { height: 34px; background: #0F6CBD; display: flex; align-items: center;
+          gap: 10px; padding: 0 10px; color: #fff; }
+  .cbar .ol { font-size: 13px; font-weight: 700; letter-spacing: .01em; display: flex; align-items: center; gap: 6px; }
+  .cbar .ol svg { display: block; }
+  .cbar .search { flex: 1; max-width: 420px; height: 21px; border-radius: 3px; background: rgba(255,255,255,.22);
+                  font-size: 11px; color: rgba(255,255,255,.85); display: flex; align-items: center; padding: 0 8px; }
+  .cbar .rgt { margin-left: auto; display: flex; align-items: center; gap: 9px; font-size: 11px; }
+  .cbar .av { width: 21px; height: 21px; border-radius: 50%; background: #7E3F8F; color: #fff;
+              font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+
+  .split { display: flex; height: 356px; }
+
+  /* ---------- message list ---------- */
+  .list { width: 244px; border-right: 1px solid #E3E9EA; background: #FAFBFB; flex: none; }
+  .list .lhead { padding: 7px 10px 6px; border-bottom: 1px solid #E3E9EA; }
+  .list .lhead b { font-size: 12px; color: #12333D; }
+  .list .lhead span { font-size: 10px; color: #7C949B; margin-left: 6px; }
+  .row { padding: 7px 10px; border-bottom: 1px solid #EDF1F2; border-left: 3px solid transparent; cursor: default; }
+  .row.sel { background: #E8F1F8; border-left-color: #0F6CBD; }
+  .row .r1 { display: flex; align-items: baseline; gap: 6px; }
+  .row .who { font-size: 11.5px; font-weight: 700; color: #12333D; white-space: nowrap;
+              overflow: hidden; text-overflow: ellipsis; }
+  .row .tm { margin-left: auto; font-size: 10px; color: #7C949B; flex: none; }
+  .row .sj { font-size: 11px; color: #35555F; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .pv { font-size: 10.5px; color: #8AA1A8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row.unread .who::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+              background: #0F6CBD; margin-right: 5px; vertical-align: middle; }
+
+  /* ---------- reading pane ---------- */
+  .pane { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .tools { display: flex; gap: 14px; align-items: center; padding: 5px 14px; border-bottom: 1px solid #EDF1F2;
+           font-size: 11px; color: #35555F; }
+  .tools span { display: flex; align-items: center; gap: 4px; }
+  .tools .sep { width: 1px; height: 12px; background: #DDE5E7; }
+  .hdr { padding: 9px 16px 8px; border-bottom: 1px solid #EDF1F2; }
+  .hdr h2 { margin: 0 0 7px; font-size: 15px; font-weight: 700; color: #12333D; letter-spacing: -.01em; }
+  .fromline { display: flex; align-items: flex-start; gap: 9px; }
+  .fromline .ava { width: 30px; height: 30px; border-radius: 50%; background: #fff; border: 1px solid #E3E9EA;
+                   display: flex; align-items: center; justify-content: center; flex: none; }
+  .fromline .who { flex: 1; min-width: 0; }
+  .fromline .n1 { font-size: 12px; color: #12333D; line-height: 1.5; }
+  .fromline .n1 b { font-weight: 700; }
+  .addr { color: #5C7880; }
+  .addr .dom { position: relative; }
+  .fromline .n2 { font-size: 11px; color: #7C949B; line-height: 1.5; }
+  .fromline .dt { font-size: 11px; color: #7C949B; text-align: right; flex: none; line-height: 1.5; }
+
+  .body { flex: 1; padding: 9px 18px 0; overflow: hidden; }
+  .mslogo { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
+  .sq { display: grid; grid-template-columns: 9px 9px; grid-template-rows: 9px 9px; gap: 2px; }
+  .sq i { display: block; }
+  .sq i:nth-child(1) { background: #F25022; } .sq i:nth-child(2) { background: #7FBA00; }
+  .sq i:nth-child(3) { background: #00A4EF; } .sq i:nth-child(4) { background: #FFB900; }
+  .mslogo b { font-size: 14px; font-weight: 600; color: #5E5E5E; letter-spacing: -.01em; }
+  .body h3 { margin: 0 0 4px; font-size: 15px; font-weight: 600; color: #1A1A1A; letter-spacing: -.01em; }
+  .body p { margin: 0 0 5px; font-size: 11.5px; line-height: 1.5; color: #333; max-width: 64em; }
+  .body .lbl { font-size: 12px; font-weight: 700; color: #1A1A1A; margin-bottom: 3px; }
+  .det { border-collapse: collapse; margin: 0 0 6px; }
+  .det td { font-size: 11px; color: #333; padding: 0 26px 0 0; line-height: 1.45; }
+  .det td:first-child { color: #666; width: 118px; }
+  .cta { display: inline-block; background: #0067B8; color: #fff; font-size: 12px; font-weight: 600;
+         padding: 6px 16px; border-radius: 2px; margin: 0 0 4px; }
+  .sig { color: #333; }
+  .foot { border-top: 1px solid #EDEDED; margin-top: 4px; padding-top: 5px;
+          font-size: 10px; color: #8A8A8A; line-height: 1.45; }
+  .foot a { color: #0067B8; text-decoration: none; }
+
+  /* ---------- reveal marks ---------- */
+  .mark { background: transparent; border-radius: 2px; transition: background 160ms ease, box-shadow 160ms ease; }
+  .reveal-on .mark { background: rgba(214,69,69,.20); box-shadow: 0 0 0 1.5px #D64545; color: #B01F1F; font-weight: 700; }
+
+  /* ---------- glyph lab overlay ---------- */
+  .lab { position: absolute; left: 250px; right: 8px; bottom: 8px; z-index: 8;
+         background: #FFFFFF; border: 1px solid #C8D3D6; border-top: 3px solid #D64545; border-radius: 8px;
+         box-shadow: 0 -6px 26px rgba(4,48,63,.22); padding: 10px 14px 11px;
+         opacity: 0; transform: translateY(14px); pointer-events: none; transition: all 180ms ease; }
+  .lab.on { opacity: 1; transform: none; pointer-events: auto; }
+  .lab .labtop { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; }
+  .lab .labtop b { font-size: 12px; color: #00567C; }
+  .lab .labtop .hint { font-size: 11px; color: #5C7880; }
+  .lab .labctl { margin-left: auto; display: flex; align-items: center; gap: 7px; }
+  .lab .labctl label { font-size: 10.5px; color: #5C7880; }
+  .lab input[type=range] { width: 132px; accent-color: #00567C; vertical-align: middle; }
+  .chip { font-size: 10.5px; font-weight: 700; padding: 3px 9px; border-radius: 999px;
+          border: 1px solid #CDD8DA; background: #fff; color: #35555F; cursor: pointer; }
+  .chip.on { background: #00567C; border-color: #00567C; color: #fff; }
+  .glyphs { display: grid; gap: 6px; }
+  .gr { display: flex; align-items: baseline; gap: 12px; min-height: 26px; }
+  .gr .tag { font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+             width: 52px; flex: none; }
+  .gr.fake .tag { color: #D64545; } .gr.real .tag { color: #1F8F89; }
+  .gr .txt { line-height: 1.05; color: #12333D; white-space: nowrap; }
+  .gr .hi { padding: 0 .04em; border-radius: 2px; }
+  .gr.fake .hi { background: rgba(214,69,69,.16); box-shadow: inset 0 -.09em 0 #D64545; }
+  .gr.real .hi { background: rgba(31,143,137,.14); box-shadow: inset 0 -.09em 0 #1F8F89; }
+
+  .ctl { margin-top: 10px; }
+  .cap { min-height: 34px; }
+  .cap .k { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="w">
+  <div class="stage" id="stage">
+
+    <div class="client" id="client">
+      <div class="cbar">
+        <div class="ol">
+          <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><rect x="0" y="2" width="9" height="12" rx="1.5" fill="#fff"/><rect x="9.6" y="3.4" width="6" height="9.2" rx="1" fill="rgba(255,255,255,.55)"/><ellipse cx="4.5" cy="8" rx="2.5" ry="3" fill="#0F6CBD"/></svg>
+          Outlook
+        </div>
+        <div class="search">Search</div>
+        <div class="rgt"><span>Falcon Talent</span><span class="av">LH</span></div>
+      </div>
+
+      <div class="split">
+        <div class="list">
+          <div class="lhead"><b>Inbox</b><span>3 unread</span></div>
+          <div class="row unread">
+            <div class="r1"><span class="who">LinkedIn</span><span class="tm">08:02</span></div>
+            <div class="sj">Layla, 12 new jobs match your profile</div>
+            <div class="pv">Senior Recruiter roles in your area…</div>
+          </div>
+          <div class="row sel unread">
+            <div class="r1"><span class="who">Microsoft account team</span><span class="tm">09:14</span></div>
+            <div class="sj">Microsoft account unusual sign-in activity</div>
+            <div class="pv">We detected something unusual about a recent…</div>
+          </div>
+          <div class="row unread">
+            <div class="r1"><span class="who">Falcon Talent — People Ops</span><span class="tm">Tue</span></div>
+            <div class="sj">Q3 leave calendar — please confirm</div>
+            <div class="pv">Hi all, the shared calendar is now open for…</div>
+          </div>
+          <div class="row">
+            <div class="r1"><span class="who">Slack</span><span class="tm">Tue</span></div>
+            <div class="sj">You have 6 unread messages</div>
+            <div class="pv">#hiring-2026, #general and 2 more…</div>
+          </div>
+          <div class="row">
+            <div class="r1"><span class="who">Adobe Acrobat</span><span class="tm">Mon</span></div>
+            <div class="sj">Your document has been signed</div>
+            <div class="pv">All parties have completed signing…</div>
+          </div>
+        </div>
+
+        <div class="pane">
+          <div class="tools">
+            <span>↩ Reply</span><span>↪ Reply all</span><span>➦ Forward</span>
+            <div class="sep"></div><span>🗑 Delete</span><span>⚑ Flag</span><span>⋯</span>
+          </div>
+
+          <div class="hdr">
+            <h2>Microsoft account unusual sign-in activity</h2>
+            <div class="fromline">
+              <div class="ava"><span class="sq"><i></i><i></i><i></i><i></i></span></div>
+              <div class="who">
+                <div class="n1"><b>Microsoft account team</b>
+                  <span class="addr">&lt;account-security@<span class="dom"><span class="mark" id="mk">rn</span>icrosoft.com</span>&gt;</span>
+                </div>
+                <div class="n2">To: Layla Haddad &lt;l.haddad@falcon-talent.com&gt;</div>
+              </div>
+              <div class="dt">Mon 27/07/2026 09:14</div>
+            </div>
+          </div>
+
+          <div class="body">
+            <div class="mslogo"><span class="sq"><i></i><i></i><i></i><i></i></span><b>Microsoft</b></div>
+            <h3>Unusual sign-in activity</h3>
+            <p>We detected something unusual about a recent sign-in to the Microsoft account
+               <b>l.haddad@falcon-talent.com</b>.</p>
+            <p class="lbl">Sign-in details</p>
+            <table class="det">
+              <tr><td>Country/region</td><td>Nigeria</td></tr>
+              <tr><td>IP address</td><td>197.210.64.32</td></tr>
+              <tr><td>Date</td><td>27/07/2026 09:12 (GMT)</td></tr>
+              <tr><td>Platform</td><td>Windows 10</td></tr>
+            </table>
+            <p>If this was you, you can safely ignore this email. If you're not sure, review your recent activity.</p>
+            <div class="cta">Review recent activity</div>
+            <div class="foot">Microsoft Corporation · One Microsoft Way, Redmond, WA 98052 USA · <a>Privacy Statement</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lens" id="lens"><div class="lensin" id="lensin"></div></div>
+
+    <div class="lab" id="lab">
+      <div class="labtop">
+        <b>Glyph lab</b>
+        <span class="hint">the same two addresses — drag the size, change the font</span>
+        <div class="labctl">
+          <label>size</label><input type="range" id="sz" min="11" max="42" value="13">
+          <button class="chip on" data-f="ui">Segoe&nbsp;UI</button>
+          <button class="chip" data-f="serif">Serif</button>
+          <button class="chip" data-f="mono">Mono</button>
+        </div>
+      </div>
+      <div class="glyphs">
+        <div class="gr fake"><span class="tag">sent</span><span class="txt" id="gf"></span></div>
+        <div class="gr real"><span class="tag">real</span><span class="txt" id="gr"></span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="ctl">
+    <button id="bLens" class="on">🔍 Magnifier: ON</button>
+    <button id="bReveal" class="primary">Reveal the answer</button>
+    <button id="bLab">Glyph lab</button>
+  </div>
+
+  <div class="cap" id="cap">
+    Branding, layout, footer, sign-in table — all of it checks out. <b>Exactly one thing here is wrong.</b>
+    Move the magnifier over the header and find it.
+  </div>
+</div>
+
+<script>
+(function () {
+  var stage = document.getElementById('stage'),
+      client = document.getElementById('client'),
+      lens = document.getElementById('lens'),
+      lensin = document.getElementById('lensin'),
+      lab = document.getElementById('lab'),
+      cap = document.getElementById('cap'),
+      w = document.querySelector('.w');
+
+  var Z = 3.4, R = 100, lensOn = true, revealed = false, labOn = false;
+
+  /* ---- the loupe: a live-cloned copy of the client, scaled ---- */
+  function buildClone() {
+    var c = client.cloneNode(true);
+    c.removeAttribute('id');
+    Array.prototype.forEach.call(c.querySelectorAll('[id]'), function (n) { n.removeAttribute('id'); });
+    var cw = client.getBoundingClientRect().width;
+    c.style.width = cw + 'px';
+    c.style.boxShadow = 'none';
+    lensin.style.width = cw + 'px';
+    lensin.innerHTML = '';
+    lensin.appendChild(c);
+  }
+  buildClone();
+  window.addEventListener('resize', buildClone);
+
+  function showLens(x, y) {
+    lens.classList.add('on');
+    lens.style.left = (x - R) + 'px';
+    lens.style.top = (y - R) + 'px';
+    lensin.style.transform = 'translate(' + (R - x * Z) + 'px,' + (R - y * Z) + 'px) scale(' + Z + ')';
+  }
+  stage.addEventListener('mousemove', function (e) {
+    if (!lensOn || labOn) return;
+    var r = client.getBoundingClientRect();
+    var x = e.clientX - r.left, y = e.clientY - r.top;
+    if (x < 0 || y < 0 || x > r.width || y > r.height) { lens.classList.remove('on'); return; }
+    showLens(x, y);
+  });
+  stage.addEventListener('mouseleave', function () { lens.classList.remove('on'); });
+
+  /* ---- glyph lab ---- */
+  var FONTS = {
+    ui:    '"Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif',
+    serif: 'Georgia, "Times New Roman", Times, serif',
+    mono:  '"JetBrains Mono", "SF Mono", Menlo, Consolas, monospace'
+  };
+  var font = 'ui', size = 13;
+  var gf = document.getElementById('gf'), grr = document.getElementById('gr');
+  function paintLab() {
+    var f = FONTS[font];
+    gf.style.font = '600 ' + size + 'px ' + f;
+    grr.style.font = '600 ' + size + 'px ' + f;
+    gf.innerHTML = 'account-security@<span class="hi">rn</span>icrosoft.com';
+    grr.innerHTML = 'account-security@<span class="hi">m</span>icrosoft.com';
+  }
+  paintLab();
+  document.getElementById('sz').addEventListener('input', function () { size = +this.value; paintLab(); });
+  Array.prototype.forEach.call(document.querySelectorAll('.chip'), function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('.chip').forEach(function (o) { o.classList.remove('on'); });
+      b.classList.add('on'); font = b.dataset.f; paintLab();
+    });
+  });
+
+  /* ---- controls ---- */
+  var bLens = document.getElementById('bLens'),
+      bReveal = document.getElementById('bReveal'),
+      bLab = document.getElementById('bLab');
+
+  bLens.addEventListener('click', function () {
+    lensOn = !lensOn;
+    bLens.classList.toggle('on', lensOn);
+    bLens.textContent = '🔍 Magnifier: ' + (lensOn ? 'ON' : 'OFF');
+    if (!lensOn) lens.classList.remove('on');
+  });
+
+  bReveal.addEventListener('click', function () {
+    revealed = !revealed;
+    w.classList.toggle('reveal-on', revealed);
+    buildClone();
+    bReveal.textContent = revealed ? 'Hide the answer' : 'Reveal the answer';
+    cap.innerHTML = revealed
+      ? 'The sender is <span class="k dngr">rnicrosoft.com</span> — <b>r</b> + <b>n</b>, not <b>m</b>. Nothing else is wrong: ' +
+        'logo, layout, footer and link are copied from the real alert. At 13&nbsp;px two letters fill the space of one — ' +
+        'you read the <em>word shape</em>, not the letters.'
+      : 'Branding, layout, footer, sign-in table — all of it checks out. <b>Exactly one thing here is wrong.</b> ' +
+        'Move the magnifier over the header and find it.';
+  });
+
+  bLab.addEventListener('click', function () {
+    labOn = !labOn;
+    lab.classList.toggle('on', labOn);
+    bLab.classList.toggle('on', labOn);
+    if (labOn) lens.classList.remove('on');
+  });
+
+  /* ---- ?reveal=1 / ?lab=1 / ?probe=x,y — screenshot hooks ---- */
+  var q = new URLSearchParams(location.search);
+  if (q.get('reveal')) bReveal.click();
+  if (q.get('lab')) bLab.click();
+  if (q.get('sz')) { var s = document.getElementById('sz'); s.value = q.get('sz'); size = +s.value; paintLab(); }
+  if (q.get('font')) { font = q.get('font'); paintLab(); }
+  if (q.get('probe')) { var p = q.get('probe').split(','); showLens(+p[0], +p[1]); }
+})();
+</script>
+</body>
+</html>
