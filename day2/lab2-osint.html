@@ -201,35 +201,12 @@ body{margin:0; font-family:var(--sans); color:var(--ink); background:var(--bg);
 .payoff .land{padding:14px 18px; background:#fff; font-size:13.5px; color:var(--slate); border-top:1px solid var(--line)}
 .payoff .land b{color:var(--bad-d)}
 
-/* ---- debrief ---- */
-.debrief{margin-top:34px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px 24px}
-.debrief h2{margin:0 0 4px; color:var(--petrol); font-size:22px}
-.debrief .sub{font-size:14px; color:var(--muted); margin:0 0 16px}
-.controls{display:grid; grid-template-columns:1fr 1fr; gap:12px}
-.ctrl{border:1px solid var(--line); border-radius:10px; padding:13px 15px; background:#fbfdfd}
-.ctrl .top{display:flex; align-items:center; justify-content:space-between; gap:10px}
-.ctrl .cn{font-weight:800; color:var(--petrol-d); font-size:14.5px}
-.ctrl p{margin:7px 0 0; font-size:12.8px; color:var(--slate); line-height:1.45}
-.ctrl .brk{margin-top:8px; font-size:12.5px; font-weight:700; color:var(--bad-d); display:none}
-.ctrl.on{border-color:var(--good); box-shadow:0 2px 10px rgba(31,143,137,.12)}
-.ctrl.on .brk{display:block; color:var(--good)}
-.sw{position:relative; width:44px; height:24px; flex:0 0 auto; cursor:pointer}
-.sw input{opacity:0; width:0; height:0; position:absolute}
-.sw .slot{position:absolute; inset:0; background:var(--soft); border-radius:999px; transition:.2s}
-.sw .knob{position:absolute; top:3px; left:3px; width:18px; height:18px; background:#fff; border-radius:50%; transition:.2s}
-.sw input:checked + .slot{background:var(--good)}
-.sw input:checked + .slot + .knob{transform:translateX(20px)}
-.verdict{margin-top:16px; border-radius:10px; padding:13px 16px; font-size:13.5px; line-height:1.5;
-  background:rgba(214,69,69,.08); border:1px solid rgba(214,69,69,.3); color:var(--bad-d)}
-.verdict.safe{background:rgba(31,143,137,.09); border-color:rgba(31,143,137,.32); color:#146d68}
-.verdict b{font-weight:800}
-
 .foot{border-top:1px solid var(--line); background:var(--bg); margin-top:30px}
 .foot .in{max-width:1300px; margin:0 auto; padding:20px 26px; display:flex; gap:16px;
   flex-wrap:wrap; justify-content:space-between; font-size:13px; color:var(--muted)}
 .foot .slogan{font-weight:700; color:var(--slate)}
 
-@media (max-width:1080px){ .app{grid-template-columns:1fr} .controls{grid-template-columns:1fr} }
+@media (max-width:1080px){ .app{grid-template-columns:1fr} }
 </style>
 </head>
 <body>
@@ -359,43 +336,8 @@ body{margin:0; font-family:var(--sans); color:var(--ink); background:var(--bg);
     <div class="land">
       One reused password opened all of this. The <b>VPN certificate</b> and the <b>"same password as everything"</b> note
       are the foothold that shows up in the attacker console later in the day — the recon you just did is where that attack
-      actually begins. <b>Scroll down</b> to see which single change would have stopped you cold.
+      actually begins. The password was never stolen; it was <b>reasoned</b> out of what Omar posted himself.
     </div>
-  </div>
-
-  <!-- ============ DEBRIEF ============ -->
-  <div class="debrief">
-    <h2>Debrief — break your own chain</h2>
-    <p class="sub">You needed <em>every</em> link: a reused handle to pivot, a public dog, a guessable recipe, a password that
-    matched it. Flip on any one control and re-read the verdict — most of these are things Omar could have done in five minutes.</p>
-    <div class="controls">
-      <div class="ctrl" data-c="pwmgr">
-        <div class="top"><span class="cn">Password manager · unique random password</span>
-          <label class="sw"><input type="checkbox"><span class="slot"></span><span class="knob"></span></label></div>
-        <p>Every account gets a different 20-character random string. His public life no longer predicts anything.</p>
-        <div class="brk">✗ Chain broken: <b>Rex2019!</b> is now worthless — the password has no relationship to Rex, 2019, or anything you can find.</div>
-      </div>
-      <div class="ctrl" data-c="handle">
-        <div class="top"><span class="cn">A different handle per site</span>
-          <label class="sw"><input type="checkbox"><span class="slot"></span><span class="knob"></span></label></div>
-        <p>The blog, the code host and the forum share no username, so nothing ties them to the same person.</p>
-        <div class="brk">✗ Chain broken: you never pivot from his blog to the forum rant, so the <b>password recipe</b> stays hidden.</div>
-      </div>
-      <div class="ctrl" data-c="private">
-        <div class="top"><span class="cn">Private photos · no personal details</span>
-          <label class="sw"><input type="checkbox"><span class="slot"></span><span class="knob"></span></label></div>
-        <p>The dog, the "gotcha day", the city — none of it is posted publicly.</p>
-        <div class="brk">✗ Chain broken: no <b>Rex</b> and no <b>2019</b> means there are no ingredients to assemble, recipe or not.</div>
-      </div>
-      <div class="ctrl" data-c="mfa">
-        <div class="top"><span class="cn">Passphrase + MFA on the mailbox</span>
-          <label class="sw"><input type="checkbox"><span class="slot"></span><span class="knob"></span></label></div>
-        <p>A long random passphrase no recipe produces, plus a second factor from his phone.</p>
-        <div class="brk">✗ Chain broken: even a leaked password fails — the recipe can't produce a passphrase, and MFA stops what's left.</div>
-      </div>
-    </div>
-    <div class="verdict" id="verdict"><b>Chain intact.</b> With everything Omar left public, a stranger reasons out
-      <b>Rex2019!</b> and walks into his mailbox. Flip a control above to cut a link.</div>
   </div>
 
 </div>
@@ -651,27 +593,6 @@ body{margin:0; font-family:var(--sans); color:var(--ink); background:var(--bg);
   function setAtt(msg,bad){ var a=$("#att"); a.textContent=msg; a.classList.toggle("bad",!!bad); }
   $("#login").addEventListener("click",doLogin);
   $("#pass").addEventListener("keydown",function(e){ if(e.key==="Enter") doLogin(); });
-
-  // ---------- debrief ----------
-  var ctrls=$$(".ctrl");
-  function updateVerdict(){
-    var on=ctrls.filter(function(c){return c.classList.contains("on");});
-    var v=$("#verdict");
-    if(on.length===0){
-      v.className="verdict";
-      v.innerHTML="<b>Chain intact.</b> With everything Omar left public, a stranger reasons out <b>Rex2019!</b> and walks into his mailbox. Flip a control above to cut a link.";
-    } else {
-      v.className="verdict safe";
-      var names=on.map(function(c){return c.querySelector(".cn").textContent;});
-      v.innerHTML="<b>Attack stopped.</b> "+names.join(" · ")+
-        " — any single one of these severs the chain, and the reasoned password <b>Rex2019!</b> no longer gets anyone in. "+
-        "Defence in depth means he didn't need all four; one good habit was enough.";
-    }
-  }
-  ctrls.forEach(function(c){
-    var box=c.querySelector('input[type=checkbox]');
-    box.addEventListener("change",function(){ c.classList.toggle("on",box.checked); updateVerdict(); });
-  });
 })();
 </script>
 </body></html>
