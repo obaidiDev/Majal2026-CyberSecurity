@@ -247,24 +247,6 @@
       every card has a "shrink it" fix. This is the defender's mindset sneaking into the attacker's week.</aside>
     </section>
 
-    <!-- ================= EMAIL IDENTITY (SPF/DKIM/DMARC) ================= -->
-    <section>
-      <p class="kicker">Deliver · the foundation</p>
-      <h2>How email proves who sent it — and what it can't</h2>
-      <iframe class="wframe" style="height:566px"
-              src="widgets/email_identity.html?v=1"
-              title="Email identity: SPF, DKIM, DMARC" scrolling="auto"></iframe>
-      <aside class="notes">Before they build a lure, they need to know why the con is even possible. Three names on one message:
-      the <strong>envelope sender</strong> (SPF checks it, the human never sees it), the <strong>DKIM signature</strong> (proves a
-      domain's key signed the mail), and the <strong>From header</strong> — the only line a human reads. <strong>DMARC</strong> is the
-      rule that ties them together: the visible domain must match what SPF or DKIM actually authenticated.
-      Run all three modes. (1) Spoofing the real domain fails every check — set the policy to <em>p=reject</em> and it never arrives.
-      That is the one attack this machinery stops. Then the payoff: (2) a <strong>look-alike domain the attacker owns</strong> passes
-      all three, honestly, and lands in the inbox — authentication proved the mail came from falcon-ta1ent.com, it never claimed that
-      domain is Falcon Talent. (3) Free webmail passes too; the only lie is the display name, which no protocol checks at all.
-      Land it: SPF/DKIM/DMARC stop <em>impersonation of a domain</em>, not <em>deception of a person</em>.</aside>
-    </section>
-
     <!-- ================= WEAPONISE — PAYLOAD TYPES ================= -->
     <section>
       <p class="kicker">Weaponise · build the payload</p>
@@ -496,7 +478,7 @@
       <div class="fix" style="margin-top:.5em">
         <div>
           <div class="r"><span class="a">Data leaking into public sources</span><span class="c">Audit your own DNS, certificates and repos. <b>Scan for secrets</b> before you commit.</span></div>
-          <div class="r"><span class="a">Someone spoofing your domain</span><span class="c">Publish SPF + DKIM, then <b>DMARC at p=reject</b>. Nothing else stops it.</span></div>
+          <div class="r"><span class="a">Someone spoofing your domain</span><span class="c">Publish your domain's <b>email-authentication records</b> so mail providers reject fakes.</span></div>
           <div class="r"><span class="a">A look-alike domain</span><span class="c">You can't block it — build the <b>call-back habit</b> and a one-click report button.</span></div>
           <div class="r"><span class="a">Malicious attachment</span><span class="c"><b>Block macros by policy.</b> The whole class of attack dies.</span></div>
           <div class="r"><span class="a">Credential stuffing</span><span class="c">A <b>unique password per site</b> — which means a password manager.</span></div>
