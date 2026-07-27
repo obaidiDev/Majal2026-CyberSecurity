@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab 2 — OSINT: Find the Password</title>
+<style>
+:root{
+  --petrol:#00567d; --petrol-d:#003f5e; --teal:#1f8f89; --turq:#33d2cb;
+  --yellow:#f2d200; --ink:#12333d; --slate:#2f4f59; --muted:#5c7880;
+  --bg:#f6f8f8; --bg-2:#eef3f3; --card:#fff; --line:#e0e7e8; --soft:#cdd8da;
+  --bad:#d64545; --bad-d:#c1403f; --good:#1f8f89;
+  --code-bg:#0f2b34; --code-ink:#dff3f2;
+  --sans:"Avenir Next","Avenir","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  --mono:"JetBrains Mono","Cascadia Code","SF Mono",Menlo,Consolas,"DejaVu Sans Mono",monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth; scroll-padding-top:74px}
+body{margin:0; font-family:var(--sans); color:var(--ink); background:var(--bg);
+  -webkit-font-smoothing:antialiased; line-height:1.6}
+
+/* ---- top bar ---- */
+.bar{position:sticky; top:0; z-index:60; background:rgba(246,248,248,.94);
+  backdrop-filter:blur(8px); border-bottom:1px solid var(--line)}
+.bar .in{max-width:1300px; margin:0 auto; padding:10px 26px; display:flex; align-items:center; gap:16px}
+.bar img{height:34px; width:auto; mix-blend-mode:multiply}
+.bar .crumb{font-size:12px; font-weight:800; letter-spacing:.18em; text-transform:uppercase; color:var(--teal)}
+.bar .spacer{flex:1}
+.bar a.back{font-size:13px; font-weight:700; color:var(--petrol); text-decoration:none;
+  border:1px solid var(--line); background:var(--card); padding:.45em 1em; border-radius:2px}
+.bar a.back:hover{border-color:var(--petrol)}
+
+/* ---- hero ---- */
+.hero{max-width:1300px; margin:0 auto; padding:40px 26px 8px}
+.hero .kicker{margin:0 0 12px; font-size:13px; font-weight:800; letter-spacing:.24em;
+  text-transform:uppercase; color:var(--teal)}
+.hero h1{margin:0; font-size:clamp(30px,4.6vw,50px); line-height:1.05; letter-spacing:-.02em;
+  color:var(--petrol); font-weight:800; max-width:20ch}
+.hero .rule{width:72px; height:6px; border-radius:3px; background:var(--yellow); margin:20px 0}
+.meta{display:flex; flex-wrap:wrap; gap:10px; margin:0; padding:0; list-style:none}
+.meta li{background:var(--card); border:1px solid var(--line); border-left:3px solid var(--turq);
+  padding:.5em .9em; border-radius:2px}
+.meta .k{display:block; font-size:10.5px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--muted)}
+.meta .v{font-size:14px; font-weight:700; color:var(--slate)}
+
+.wrap{max-width:1300px; margin:0 auto; padding:8px 26px 70px}
+
+/* ---- briefing ---- */
+.brief{background:var(--card); border:1px solid var(--line); border-left:4px solid var(--petrol);
+  border-radius:3px; padding:16px 22px; margin:22px 0}
+.brief h2{margin:0 0 6px; font-size:19px; color:var(--petrol)}
+.brief p{margin:.5em 0; font-size:15px; color:var(--slate)}
+.brief .legal{font-size:12.5px; color:var(--muted); font-style:italic; margin-top:10px}
+.objx{display:flex; flex-wrap:wrap; gap:8px; margin-top:12px}
+.objx span{font-size:12.5px; font-weight:700; color:var(--petrol-d); background:var(--bg-2);
+  border:1px solid var(--line); border-radius:999px; padding:5px 13px}
+.objx b{color:var(--teal)}
+
+/* ---- app grid ---- */
+.app{display:grid; grid-template-columns:340px minmax(0,1fr) 300px; gap:16px; align-items:start; margin-top:8px}
+.panel{background:var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden}
+.phd{font-size:11px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--muted);
+  padding:12px 15px 0}
+.pbody{padding:12px 15px 15px}
+
+/* ---- search engine ---- */
+.searchbox{display:flex; gap:8px; margin-bottom:10px}
+.searchbox input{flex:1; font-family:inherit; font-size:14px; color:var(--ink);
+  border:1px solid var(--soft); border-radius:999px; padding:9px 15px; background:#fff}
+.searchbox input:focus{outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(31,143,137,.13)}
+.searchbox button{border:0; background:var(--teal); color:#fff; font-weight:800; border-radius:999px;
+  padding:0 16px; cursor:pointer; font-family:inherit; font-size:14px}
+.searchbox button:hover{background:var(--turq)}
+.chips{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px}
+.chips .lbl{font-size:11px; font-weight:700; color:var(--muted); align-self:center; margin-right:2px}
+.chips button{border:1px solid var(--soft); background:#fff; color:var(--petrol); font-family:var(--mono);
+  font-size:12px; font-weight:700; border-radius:6px; padding:4px 9px; cursor:pointer}
+.chips button:hover{border-color:var(--teal); background:var(--bg-2)}
+.hits{font-size:11.5px; color:var(--muted); margin:2px 0 8px}
+.results{display:flex; flex-direction:column; gap:9px; max-height:430px; overflow-y:auto}
+.res{border:1px solid var(--line); border-radius:9px; padding:9px 11px; cursor:pointer;
+  transition:border-color .12s, box-shadow .12s; background:#fbfdfd}
+.res:hover{border-color:var(--teal); box-shadow:0 3px 10px rgba(0,86,124,.08)}
+.res.seen{background:#fff}
+.res .u{display:flex; align-items:center; gap:7px; font-size:11.5px; color:var(--good); font-weight:700}
+.res .u .fav{font-size:14px}
+.res .u .dom{font-family:var(--mono); color:var(--muted); font-weight:600}
+.res .rt{font-size:14.5px; font-weight:700; color:var(--petrol-d); margin:2px 0 1px; line-height:1.3}
+.res .rs{font-size:12.5px; color:var(--slate); line-height:1.4}
+.res .seenmark{float:right; font-size:10.5px; color:var(--muted); font-weight:700}
+.nores{font-size:13px; color:var(--muted); font-style:italic; padding:14px 4px}
+
+/* ---- browser / page viewer ---- */
+.viewer{min-height:520px; display:flex; flex-direction:column}
+.chrome{display:flex; align-items:center; gap:8px; padding:9px 12px; background:var(--bg-2);
+  border-bottom:1px solid var(--line)}
+.dots{display:flex; gap:5px}
+.dots i{width:11px; height:11px; border-radius:50%; display:block}
+.dots i:nth-child(1){background:#f0776a} .dots i:nth-child(2){background:#f2c94c} .dots i:nth-child(3){background:#59c98a}
+.addr{flex:1; font-family:var(--mono); font-size:12px; color:var(--slate); background:#fff;
+  border:1px solid var(--soft); border-radius:999px; padding:5px 12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.pageview{padding:0; overflow-y:auto; max-height:560px; flex:1; background:#fff}
+.pv-inner{padding:22px 26px}
+.pv-empty{display:flex; flex-direction:column; align-items:center; justify-content:center; height:520px;
+  color:var(--muted); text-align:center; padding:0 40px; gap:10px}
+.pv-empty svg{opacity:.4}
+.pv-empty p{font-size:14px; margin:0}
+
+/* rendered fake pages */
+.fp{font-size:14px; color:var(--slate); line-height:1.6}
+.fp h1{font-size:26px; color:var(--ink); margin:0 0 4px}
+.fp h2{font-size:18px; color:var(--petrol); margin:22px 0 6px}
+.fp .lede{font-size:15px; color:var(--muted); margin:0 0 14px}
+.fp .post{border-top:1px solid var(--line); padding-top:14px; margin-top:16px}
+.fp .date{font-family:var(--mono); font-size:11.5px; color:var(--muted); letter-spacing:.03em}
+.fp a.x{color:var(--petrol); text-decoration:underline; cursor:default}
+.fp .photo{border:1px solid var(--line); border-radius:10px; overflow:hidden; margin:12px 0; max-width:360px}
+.fp .photo .img{height:190px; display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(135deg,#cfe6e4,#a7cfcb)}
+.fp .photo .cap{padding:8px 12px; font-size:12.5px; color:var(--slate); background:#fbfdfd; border-top:1px solid var(--line)}
+.fp .exif{font-family:var(--mono); font-size:11.5px; color:var(--muted); background:var(--bg-2);
+  border-top:1px dashed var(--soft); padding:7px 12px}
+.fp .exif b{color:var(--petrol-d)}
+
+/* social profile */
+.tw-hd{display:flex; align-items:center; gap:12px; margin-bottom:6px}
+.tw-av{width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg,var(--teal),var(--petrol));
+  display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:22px; flex:0 0 auto}
+.tw-name b{font-size:17px; color:var(--ink)} .tw-name .h{font-size:13px; color:var(--muted)}
+.tw-bio{font-size:14px; margin:4px 0 10px}
+.tweet{border-top:1px solid var(--line); padding:11px 0; font-size:14px}
+.tweet .date{margin-top:3px}
+
+/* code host */
+.gh-repo{border:1px solid var(--line); border-radius:8px; padding:10px 13px; margin:8px 0; background:#fbfdfd}
+.gh-repo .n{font-weight:800; color:var(--petrol); font-size:14px}
+.gh-repo .d{font-size:12.5px; color:var(--slate)}
+.codeblk{background:var(--code-bg); color:var(--code-ink); border-radius:8px; padding:13px 15px;
+  font-family:var(--mono); font-size:12.5px; line-height:1.65; overflow-x:auto; margin:10px 0}
+.codeblk .c{color:#7fb9b4} .codeblk .k{color:#7fd0ff} .codeblk .leak{color:#ffd27f; font-weight:700}
+.forum-q{background:var(--bg-2); border-left:3px solid var(--turq); border-radius:2px; padding:12px 16px; margin:8px 0}
+.forum-q .who{font-family:var(--mono); font-size:12px; color:var(--teal); font-weight:700}
+
+/* clip button on facts */
+.clip{display:inline-flex; align-items:center; gap:4px; font-family:var(--sans); font-size:11px; font-weight:800;
+  color:#fff; background:var(--petrol); border:0; border-radius:999px; padding:3px 9px; cursor:pointer;
+  vertical-align:middle; margin-left:6px; letter-spacing:.02em}
+.clip:hover{background:var(--petrol-d)}
+.clip.done{background:var(--good); pointer-events:none}
+.clue{background:rgba(242,210,0,.22); border-radius:3px; padding:0 3px; box-decoration-break:clone}
+
+/* ---- right rail: evidence board + login ---- */
+.board{display:flex; flex-direction:column; gap:7px; min-height:40px}
+.ev{display:flex; align-items:flex-start; gap:8px; border:1px solid var(--line); border-radius:8px;
+  padding:7px 10px; background:#fbfdfd; opacity:.45; filter:grayscale(.6); transition:.2s}
+.ev.on{opacity:1; filter:none; box-shadow:0 2px 8px rgba(0,86,124,.09)}
+.ev .pin{font-size:13px; flex:0 0 auto; margin-top:1px}
+.ev .txt{font-size:12.3px; line-height:1.35}
+.ev .txt b{color:var(--petrol-d)}
+.ev.key.on{border-color:var(--yellow); background:rgba(242,210,0,.09)}
+.ev-empty{font-size:12.5px; color:var(--muted); font-style:italic; padding:6px 2px}
+.assemble{margin-top:10px; border-radius:9px; padding:10px 12px; background:rgba(31,143,137,.09);
+  border:1px solid rgba(31,143,137,.32); display:none}
+.assemble.show{display:block}
+.assemble .h{font-weight:800; color:var(--good); font-size:12.5px; letter-spacing:.02em}
+.assemble p{margin:4px 0 0; font-size:12.3px; color:var(--slate)}
+
+/* login terminal */
+.login{margin-top:14px}
+.term{background:var(--code-bg); border-radius:10px; padding:15px 16px; color:var(--code-ink); font-family:var(--mono)}
+.term .thd{font-size:12px; color:var(--turq); letter-spacing:.12em; text-transform:uppercase; margin-bottom:10px}
+.term .frow{margin-bottom:9px}
+.term label{display:block; font-size:11px; color:#9fc6c2; margin-bottom:3px}
+.term input{width:100%; font-family:var(--mono); font-size:13.5px; color:#eafffe; background:#0a2129;
+  border:1px solid #24515c; border-radius:6px; padding:8px 10px}
+.term input:focus{outline:none; border-color:var(--turq)}
+.term .go{width:100%; margin-top:4px; border:0; background:var(--teal); color:#fff; font-family:var(--sans);
+  font-weight:800; font-size:13.5px; border-radius:7px; padding:9px; cursor:pointer}
+.term .go:hover{background:var(--turq)}
+.term .att{font-size:11px; color:#7fb9b4; margin-top:8px; min-height:15px; line-height:1.4}
+.term .att.bad{color:#ff9b8f}
+.nudge{margin-top:9px; font-size:11.5px}
+.nudge summary{cursor:pointer; color:var(--turq); font-weight:700}
+.nudge .nb{color:#bfe0dc; margin-top:6px; line-height:1.5; font-family:var(--sans); font-size:12px}
+
+/* ---- success payoff (webmail) ---- */
+.payoff{display:none; margin-top:24px; border:2px solid var(--good); border-radius:12px; overflow:hidden}
+.payoff.show{display:block; animation:pop .4s ease}
+@keyframes pop{from{transform:scale(.98); opacity:0} to{transform:scale(1); opacity:1}}
+.payoff .banner{background:var(--good); color:#fff; padding:12px 18px; font-weight:800; font-size:16px;
+  display:flex; align-items:center; gap:10px}
+.mailtop{display:flex; align-items:center; gap:10px; padding:11px 18px; background:var(--bg-2); border-bottom:1px solid var(--line)}
+.mailtop .who{font-weight:800; color:var(--petrol)} .mailtop .em{font-family:var(--mono); font-size:12px; color:var(--muted)}
+.inbox{padding:6px 0}
+.mail{display:flex; gap:12px; padding:11px 18px; border-bottom:1px solid var(--line)}
+.mail:last-child{border-bottom:0}
+.mail .f{font-weight:700; color:var(--ink); font-size:13.5px; flex:0 0 160px}
+.mail .s b{color:var(--petrol-d)} .mail .s{font-size:13.5px; color:var(--slate)}
+.mail.hot{background:rgba(214,69,69,.06)}
+.mail .tag{font-size:10.5px; font-weight:800; color:#fff; background:var(--bad); border-radius:4px; padding:2px 6px; margin-left:6px}
+.payoff .land{padding:14px 18px; background:#fff; font-size:13.5px; color:var(--slate); border-top:1px solid var(--line)}
+.payoff .land b{color:var(--bad-d)}
+
+/* ---- debrief ---- */
+.debrief{margin-top:34px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px 24px}
+.debrief h2{margin:0 0 4px; color:var(--petrol); font-size:22px}
+.debrief .sub{font-size:14px; color:var(--muted); margin:0 0 16px}
+.controls{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+.ctrl{border:1px solid var(--line); border-radius:10px; padding:13px 15px; background:#fbfdfd}
+.ctrl .top{display:flex; align-items:center; justify-content:space-between; gap:10px}
+.ctrl .cn{font-weight:800; color:var(--petrol-d); font-size:14.5px}
+.ctrl p{margin:7px 0 0; font-size:12.8px; color:var(--slate); line-height:1.45}
+.ctrl .brk{margin-top:8px; font-size:12.5px; font-weight:700; color:var(--bad-d); display:none}
+.ctrl.on{border-color:var(--good); box-shadow:0 2px 10px rgba(31,143,137,.12)}
+.ctrl.on .brk{display:block; color:var(--good)}
+.sw{position:relative; width:44px; height:24px; flex:0 0 auto; cursor:pointer}
+.sw input{opacity:0; width:0; height:0; position:absolute}
+.sw .slot{position:absolute; inset:0; background:var(--soft); border-radius:999px; transition:.2s}
+.sw .knob{position:absolute; top:3px; left:3px; width:18px; height:18px; background:#fff; border-radius:50%; transition:.2s}
+.sw input:checked + .slot{background:var(--good)}
+.sw input:checked + .slot + .knob{transform:translateX(20px)}
+.verdict{margin-top:16px; border-radius:10px; padding:13px 16px; font-size:13.5px; line-height:1.5;
+  background:rgba(214,69,69,.08); border:1px solid rgba(214,69,69,.3); color:var(--bad-d)}
+.verdict.safe{background:rgba(31,143,137,.09); border-color:rgba(31,143,137,.32); color:#146d68}
+.verdict b{font-weight:800}
+
+.foot{border-top:1px solid var(--line); background:var(--bg); margin-top:30px}
+.foot .in{max-width:1300px; margin:0 auto; padding:20px 26px; display:flex; gap:16px;
+  flex-wrap:wrap; justify-content:space-between; font-size:13px; color:var(--muted)}
+.foot .slogan{font-weight:700; color:var(--slate)}
+
+@media (max-width:1080px){ .app{grid-template-columns:1fr} .controls{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="bar">
+  <div class="in">
+    <img src="../MajalLogo.jpg" alt="Majal">
+    <span class="crumb">Day 2 · Lab 2</span>
+    <span class="spacer"></span>
+    <a class="back" href="index.html">← Course</a>
+  </div>
+</div>
+
+<div class="hero">
+  <p class="kicker">Majal Initiative · Cybersecurity Bootcamp</p>
+  <h1>Lab 2 — OSINT: Find the Password</h1>
+  <div class="rule"></div>
+  <ul class="meta">
+    <li><span class="k">Duration</span><span class="v">20–30 minutes</span></li>
+    <li><span class="k">Environment</span><span class="v">This page · fully offline</span></li>
+    <li><span class="k">Level</span><span class="v">Beginner OSINT</span></li>
+    <li><span class="k">Deliverable</span><span class="v">Reach the target's mailbox</span></li>
+  </ul>
+</div>
+
+<div class="wrap">
+
+  <div class="brief">
+    <h2>Your mission</h2>
+    <p>Falcon Talent hired your red team to test <b>one employee</b>: a junior developer named
+    <b>Omar Nasser</b>. You have no inside access — only what Omar has left lying around the open internet.
+    Search him, open what you find, and <b>reason out the password</b> he reuses everywhere. Then prove you can
+    log into his staff mailbox with it.</p>
+    <p>Nobody wrote his password down. You will have to <em>build</em> it from three separate facts scattered across
+    his own pages — exactly how a real attacker turns a person's public life into a credential.</p>
+    <div class="objx">
+      <span>1 · <b>Search</b> Omar and pivot to the handle he reuses</span>
+      <span>2 · <b>Clip</b> the three facts that build his password</span>
+      <span>3 · <b>Log in</b> to the staff mail portal</span>
+    </div>
+    <p class="legal">Everything here is a self-contained simulation — a fake internet rendered inside this page.
+    No real person, no real accounts, nothing leaves your browser. In the real world, logging into an account that
+    isn't yours is a crime; the skill you are practising is <em>defensive</em> — seeing what your own footprint gives away.</p>
+  </div>
+
+  <div class="app">
+    <!-- ============ SEARCH ============ -->
+    <div class="panel">
+      <div class="phd">🔎 Search the open web</div>
+      <div class="pbody">
+        <div class="searchbox">
+          <input id="q" placeholder="Search a name, handle, anything…" autocomplete="off">
+          <button id="goq">Search</button>
+        </div>
+        <div class="chips">
+          <span class="lbl">Try:</span>
+          <button data-q="Omar Nasser Falcon Talent">Omar Nasser</button>
+          <button data-q="omarn_codes">omarn_codes</button>
+          <button data-q="omarn_codes password">handle + password</button>
+          <button data-q="Rex">Rex</button>
+        </div>
+        <div class="hits" id="hits"></div>
+        <div class="results" id="results"></div>
+      </div>
+    </div>
+
+    <!-- ============ VIEWER ============ -->
+    <div class="panel viewer">
+      <div class="chrome">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="addr" id="addr">about:blank</span>
+      </div>
+      <div class="pageview" id="pageview">
+        <div class="pv-empty" id="pvempty">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#8AA1A8" stroke-width="1.5">
+            <circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+          <p><b>Open a search result</b> to read the page.<br>Watch for facts worth clipping — they light up yellow.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ EVIDENCE + LOGIN ============ -->
+    <div class="panel">
+      <div class="phd">📌 Evidence board</div>
+      <div class="pbody">
+        <div class="board" id="board"></div>
+        <div class="assemble" id="assemble">
+          <div class="h">✓ You have the recipe and both ingredients</div>
+          <p>Combine them the way Omar described, then try the login below. Passwords are <b>case-sensitive</b>.</p>
+        </div>
+
+        <div class="login">
+          <div class="term">
+            <div class="thd">Falcon Talent · Staff Mail</div>
+            <div class="frow">
+              <label>Username</label>
+              <input id="user" placeholder="find it in his code…" autocomplete="off" spellcheck="false">
+            </div>
+            <div class="frow">
+              <label>Password</label>
+              <input id="pass" placeholder="build it from the evidence…" autocomplete="off" spellcheck="false">
+            </div>
+            <button class="go" id="login">Sign in →</button>
+            <div class="att" id="att">Awaiting credentials.</div>
+            <details class="nudge" id="nudge" style="display:none">
+              <summary>Stuck? Reveal a nudge</summary>
+              <div class="nb" id="nudgebody"></div>
+            </details>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PAYOFF ============ -->
+  <div class="payoff" id="payoff">
+    <div class="banner">✓ Access granted — you are inside Omar's mailbox</div>
+    <div class="mailtop">
+      <span class="who">Omar Nasser</span>
+      <span class="em">omar.nasser@falcontalent.com</span>
+    </div>
+    <div class="inbox">
+      <div class="mail hot"><div class="f">IT Service Desk</div><div class="s"><b>VPN access — your certificate &amp; one-time password</b> <span class="tag">CREDENTIALS</span> — attach and import to reach internal systems…</div></div>
+      <div class="mail hot"><div class="f">Finance</div><div class="s"><b>Q3 offer letters — candidate salaries (confidential)</b> <span class="tag">SENSITIVE</span> — spreadsheet attached, do not forward…</div></div>
+      <div class="mail"><div class="f">Jira · internal</div><div class="s"><b>[JIRA-1187] Password reset link</b> — click to set a new password for jira-internal.falcontalent.com…</div></div>
+      <div class="mail"><div class="f">Omar (Sent)</div><div class="s"><b>Re: server creds</b> — "here's the login for the 8080 box, same password as everything else 🙈"…</div></div>
+    </div>
+    <div class="land">
+      One reused password opened all of this. The <b>VPN certificate</b> and the <b>"same password as everything"</b> note
+      are the foothold that shows up in the attacker console later in the day — the recon you just did is where that attack
+      actually begins. <b>Scroll down</b> to see which single change would have stopped you cold.
+    </div>
+  </div>
+
+  <!-- ============ DEBRIEF ============ -->
+  <div class="debrief">
+    <h2>Debrief — break your own chain</h2>
+    <p class="sub">You needed <em>every</em> link: a reused handle to pivot, a public dog, a guessable recipe, a password that
+    matched it. Flip on any one control and re-read the verdict — most of these are things Omar could have done in five minutes.</p>
+    <div class="controls">
+      <div class="ctrl" data-c="pwmgr">
+        <div class="top"><span class="cn">Password manager · unique random password</span>
+          <label class="sw"><input type="checkbox"><span class="slot"></span><span class="knob"></span></label></div>
+        <p>Every account gets a different 20-character random string. His public life no longer predicts anything.</p>
+        <div class="brk">✗ Chain broken: <b>Rex2019!</b> is now worthless — the password has no relationship to Rex, 2019, or anything you can find.</div>
+      </div>
+      <div class="ctrl" data-c="handle">
+        <div class="top"><span class="cn">A different handle per site</span>
+          <label class="sw"><input type="checkbox"><span class="slot"></span><span class="knob"></span></label></div>
+        <p>The blog, the code host and the forum share no username, so nothing ties them to the same person.</p>
+        <div class="brk">✗ Chain broken: you never pivot from his blog to the forum rant, so the <b>password recipe</b> stays hidden.</div>
+      </div>
+      <div class="ctrl" data-c="private">
+        <div class="top"><span class="cn">Private photos · no personal details</span>
+          <label class="sw"><input type="checkbox"><span class="slot"></span><span class="knob"></span></label></div>
+        <p>The dog, the "gotcha day", the city — none of it is posted publicly.</p>
+        <div class="brk">✗ Chain broken: no <b>Rex</b> and no <b>2019</b> means there are no ingredients to assemble, recipe or not.</div>
+      </div>
+      <div class="ctrl" data-c="mfa">
+        <div class="top"><span class="cn">Passphrase + MFA on the mailbox</span>
+          <label class="sw"><input type="checkbox"><span class="slot"></span><span class="knob"></span></label></div>
+        <p>A long random passphrase no recipe produces, plus a second factor from his phone.</p>
+        <div class="brk">✗ Chain broken: even a leaked password fails — the recipe can't produce a passphrase, and MFA stops what's left.</div>
+      </div>
+    </div>
+    <div class="verdict" id="verdict"><b>Chain intact.</b> With everything Omar left public, a stranger reasons out
+      <b>Rex2019!</b> and walks into his mailbox. Flip a control above to cut a link.</div>
+  </div>
+
+</div>
+
+<footer class="foot">
+  <div class="in">
+    <span class="slogan">Majal · Cybersecurity Bootcamp — Day 2</span>
+    <span>The password was never stolen. It was <em>reasoned</em>. That is why your footprint is the attack surface.</span>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var $=function(s,r){return (r||document).querySelector(s);};
+  var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));};
+
+  var ANSWER="Rex2019!";
+  var USER="omar.nasser";
+
+  // ---------- evidence definitions ----------
+  var EV={
+    name:   {t:"Full name: <b>Omar Nasser</b>", key:false},
+    employer:{t:"Works at <b>Falcon Talent</b>, Riyadh", key:false},
+    handle: {t:"Reuses the handle <b>omarn_codes</b>", key:false},
+    dog:    {t:"Ingredient — dog's name: <b>Rex</b>", key:true},
+    year:   {t:"Ingredient — adopted Rex in <b>2019</b>", key:true},
+    recipe: {t:"Recipe — <b>Capital(dog) + year + !</b>", key:true},
+    user:   {t:"Login: <b>omar.nasser@falcontalent.com</b>", key:false},
+    portal: {t:"Target: <b>mail.falcontalent.com</b>", key:false}
+  };
+  var pinned={};
+  var boardEl=$("#board");
+  function renderBoard(){
+    var keys=Object.keys(EV);
+    var any=keys.some(function(k){return pinned[k];});
+    boardEl.innerHTML = any ? "" : '<div class="ev-empty">Nothing clipped yet. Open a page and clip the facts that light up.</div>';
+    keys.forEach(function(k){
+      if(!pinned[k]) return;
+      var e=EV[k];
+      var d=document.createElement("div");
+      d.className="ev on"+(e.key?" key":"");
+      d.innerHTML='<span class="pin">'+(e.key?"🔑":"📍")+'</span><span class="txt">'+e.t+'</span>';
+      boardEl.appendChild(d);
+    });
+    var ready=!!(pinned.dog&&pinned.year&&pinned.recipe);
+    $("#assemble").classList.toggle("show",ready);
+    if(pinned.user && !$("#user").value) $("#user").value=USER;
+  }
+  function clip(k){ pinned[k]=true; renderBoard(); }
+
+  // ---------- fake pages ----------
+  // each fact worth clipping is wrapped: <span class="clue">…</span><button class="clip" data-ev="key">
+  function clipBtn(ev){ return '<button class="clip" data-ev="'+ev+'">📌 Clip</button>'; }
+
+  var PAGES={
+    blog:{
+      dom:"omar-nasser.dev", fav:"📝", addr:"https://omar-nasser.dev/about",
+      html:
+        '<div class="fp">'+
+        '<h1>Omar Nasser</h1>'+
+        '<p class="lede"><span class="clue">Software Engineer @ Falcon Talent</span> '+clipBtn("employer")+' · Riyadh · coffee, containers &amp; one very good dog.</p>'+
+        '<p>Hi, I\'m <span class="clue">Omar Nasser</span>'+clipBtn("name")+'. I build backend services and break them for fun. '+
+        'You can find me most places as <a class="x">@omarn_codes</a>.</p>'+
+        '<div class="photo"><div class="img">🐕</div>'+
+          '<div class="cap">This is <span class="clue">Rex</span>'+clipBtn("dog")+', my rescue and the best rubber-duck debugger a dev could ask for.</div>'+
+          '<div class="exif">EXIF · Camera: Pixel 7 · <b>File: rex_gotchaday_2019.jpg</b> · GPS: 24.71, 46.67 (Riyadh)</div>'+
+        '</div>'+
+        '<div class="post"><div class="date">Posted March 2024</div>'+
+          '<h2>Five years with the goodest boy</h2>'+
+          '<p>Hard to believe it\'s been <span class="clue">five years since I adopted Rex</span>'+clipBtn("year")+'. '+
+          'Half a decade of him stealing my chair the second I stand up. Best decision I ever made.</p>'+
+          '<p style="font-size:12.5px;color:#8AA1A8">(5 years before a 2024 post → do the math for the year.)</p></div>'+
+        '</div>'
+    },
+    twitter:{
+      dom:"chirp.social/omarn_codes", fav:"🐦", addr:"https://chirp.social/omarn_codes",
+      html:
+        '<div class="fp">'+
+        '<div class="tw-hd"><div class="tw-av">ON</div>'+
+          '<div class="tw-name"><b>Omar Nasser</b><div class="h">@omarn_codes</div></div></div>'+
+        '<div class="tw-bio">Dev <a class="x">@FalconTalent</a> · Riyadh 🇸🇦 · dog dad to <span class="clue">Rex</span>'+clipBtn("dog")+' 🐕 · '+
+          'reuse this handle <span class="clue">omarn_codes</span>'+clipBtn("handle")+' literally everywhere</div>'+
+        '<div class="tweet">Ship it Friday, regret it Monday. <div class="date">2d</div></div>'+
+        '<div class="tweet">Coffee #4. The build is still red. <div class="date">Jan 2024</div></div>'+
+        '<div class="tweet">Happy <span class="clue">#gotchaday2019</span>'+clipBtn("year")+' to my favourite colleague. He does 0% of the work and gets 100% of the treats. 🐾 <div class="date">Mar 2019</div></div>'+
+        '</div>'
+    },
+    github:{
+      dom:"codehub.io/omarn_codes", fav:"💻", addr:"https://codehub.io/omarn_codes/dotfiles",
+      html:
+        '<div class="fp">'+
+        '<div class="tw-hd"><div class="tw-av" style="border-radius:8px">&lt;/&gt;</div>'+
+          '<div class="tw-name"><b>omarn_codes</b><div class="h">Omar Nasser · 12 repositories</div></div></div>'+
+        '<div class="gh-repo"><div class="n">dotfiles</div><div class="d">My shell + app config. Don\'t judge the commit messages.</div></div>'+
+        '<p style="font-size:13px;color:#8AA1A8">config/mail.env &nbsp;·&nbsp; committed 8 months ago</p>'+
+        '<div class="codeblk">'+
+          '<span class="c"># staff mail — Falcon Talent</span>\n'+
+          '<span class="k">SMTP_HOST</span>=<span class="clue">mail.falcontalent.com</span>'+clipBtn("portal")+'\n'+
+          '<span class="k">SMTP_USER</span>=<span class="clue leak">omar.nasser@falcontalent.com</span>'+clipBtn("user")+'\n'+
+          '<span class="k">SMTP_PASS</span>=<span class="c"># TODO: move to secrets manager 🙈</span>\n'+
+        '</div>'+
+        '<p style="font-size:12.5px;color:#8AA1A8">Committing the username is already a gift — now find how he builds the password.</p>'+
+        '</div>'
+    },
+    forum:{
+      dom:"devoverflow.com/q/88412", fav:"💬", addr:"https://devoverflow.com/questions/88412",
+      html:
+        '<div class="fp">'+
+        '<h2 style="margin-top:0">Corporate password policy is driving me insane</h2>'+
+        '<div class="forum-q"><div class="who">asked by omarn_codes · 2 years ago</div>'+
+          '<p>New policy at work: every password needs a capital letter, a number and a symbol. '+
+          'I have like 40 logins. So I gave up being clever — '+
+          '<span class="clue">I take my dog\'s name with a capital first letter, then the year I got him, then a "!" on the end because the system forces a symbol.</span>'+clipBtn("recipe")+' '+
+          'Same formula on everything so I never forget. Is that really so bad?</p></div>'+
+        '<div class="forum-q" style="border-left-color:#d64545"><div class="who" style="color:#c1403f">top answer</div>'+
+          '<p>…yes. That is textbook. Anyone who finds your dog and one date owns every account you have. Use a password manager.</p></div>'+
+        '<p style="font-size:12.5px;color:#8AA1A8">He told you the recipe. You already know the dog and the year. Assemble it.</p>'+
+        '</div>'
+    },
+    // ---- decoys ----
+    musician:{
+      dom:"omarnasseroud.com", fav:"🎵", addr:"https://omarnasseroud.com",
+      html:'<div class="fp"><h1>Omar Nasser</h1><p class="lede">Oud player · Cairo · albums &amp; tour dates</p>'+
+        '<p>Booking enquiries for the ensemble welcome. This is a different Omar Nasser — a musician, no connection to any tech company.</p>'+
+        '<p style="font-size:12.5px;color:#8AA1A8">Disambiguation matters: not every match is your target. Nothing to clip here.</p></div>'
+    },
+    careers:{
+      dom:"falcontalent.com/careers", fav:"🏢", addr:"https://falcontalent.com/careers",
+      html:'<div class="fp"><h1>Careers at Falcon Talent</h1><p class="lede">Recruitment &amp; staffing · Riyadh</p>'+
+        '<p>We\'re hiring engineers, recruiters and account managers. Corporate email follows the pattern '+
+        '<b>first.last@falcontalent.com</b> — a small detail worth remembering when you have a name.</p>'+
+        '<p style="font-size:12.5px;color:#8AA1A8">Company page: useful for the email format, but the person\'s secrets aren\'t here.</p></div>'
+    }
+  };
+
+  // ---------- search index ----------
+  var INDEX=[
+    {id:"blog", title:"Omar Nasser — developer, Riyadh (personal site)",
+     snip:"Software Engineer @ Falcon Talent · coffee, containers &amp; one very good dog named Rex…",
+     tags:"omar nasser falcon talent developer riyadh rex dog blog about personal site"},
+    {id:"twitter", title:"Omar Nasser (@omarn_codes) · chirp.social",
+     snip:"Dev @FalconTalent · Riyadh · dog dad to Rex · reuse this handle omarn_codes everywhere…",
+     tags:"omar nasser omarn_codes chirp social twitter handle rex dog gotchaday 2019 falcon talent"},
+    {id:"github", title:"omarn_codes / dotfiles · codehub.io",
+     snip:"My shell + app config. config/mail.env — SMTP_USER, SMTP_HOST for staff mail…",
+     tags:"omarn_codes codehub github dotfiles config mail env password smtp falcon talent leak credentials username"},
+    {id:"forum", title:"Corporate password policy is driving me insane — devoverflow",
+     snip:"asked by omarn_codes: I take my dog's name, a capital, the year I got him, and a !…",
+     tags:"omarn_codes devoverflow password policy dog year symbol recipe forum help"},
+    {id:"musician", title:"Omar Nasser — Oud player (official site)",
+     snip:"Oud player · Cairo · albums &amp; tour dates. Booking enquiries welcome…",
+     tags:"omar nasser oud music musician cairo albums tour"},
+    {id:"careers", title:"Careers at Falcon Talent",
+     snip:"We're hiring. Corporate email follows first.last@falcontalent.com…",
+     tags:"falcon talent careers jobs recruitment email format company"}
+  ];
+  var seen={};
+
+  function search(raw){
+    var q=(raw||"").toLowerCase().trim();
+    var site=null;
+    q=q.replace(/site:(\S+)/g,function(_,d){site=d;return "";}).trim();
+    var terms=q.split(/\s+/).filter(Boolean);
+    var out=INDEX.filter(function(r){
+      var hay=(r.title+" "+r.snip+" "+r.tags).toLowerCase();
+      if(site && hay.indexOf(site)===-1 && r.id.indexOf(site)===-1) {
+        // site: matches the domain of the page
+        if((PAGES[r.id].dom||"").toLowerCase().indexOf(site)===-1) return false;
+      }
+      if(terms.length===0) return !!site;
+      return terms.every(function(t){return hay.indexOf(t)!==-1;});
+    });
+    renderResults(out, raw);
+  }
+
+  function renderResults(list, raw){
+    var box=$("#results"), hits=$("#hits");
+    if(!raw || !raw.trim()){ hits.textContent=""; box.innerHTML='<div class="nores">Type a query or tap a suggestion above to begin.</div>'; return; }
+    hits.textContent = list.length+" result"+(list.length===1?"":"s")+' for "'+raw.trim()+'"';
+    if(!list.length){ box.innerHTML='<div class="nores">No results. Try a broader term, or pivot to a handle you found.</div>'; return; }
+    box.innerHTML="";
+    list.forEach(function(r){
+      var p=PAGES[r.id];
+      var el=document.createElement("div");
+      el.className="res"+(seen[r.id]?" seen":"");
+      el.innerHTML='<div class="u"><span class="fav">'+p.fav+'</span><span class="dom">'+p.dom+'</span>'+
+        (seen[r.id]?'<span class="seenmark">visited</span>':'')+'</div>'+
+        '<div class="rt">'+r.title+'</div><div class="rs">'+r.snip+'</div>';
+      el.addEventListener("click",function(){ openPage(r.id); });
+      box.appendChild(el);
+    });
+  }
+
+  function openPage(id){
+    var p=PAGES[id]; if(!p) return;
+    seen[id]=true;
+    $("#addr").textContent=p.addr;
+    $("#pageview").innerHTML='<div class="pv-inner">'+p.html+'</div>';
+    $("#pageview").innerHTML='<div class="pv-inner">'+p.html+'</div>';
+    // wire clip buttons
+    $$(".clip",$("#pageview")).forEach(function(b){
+      var ev=b.getAttribute("data-ev");
+      if(pinned[ev]){ b.classList.add("done"); b.textContent="✓ Clipped"; }
+      b.addEventListener("click",function(e){
+        e.stopPropagation();
+        clip(ev); b.classList.add("done"); b.textContent="✓ Clipped";
+      });
+    });
+  }
+
+  // ---------- search events ----------
+  $("#goq").addEventListener("click",function(){ search($("#q").value); });
+  $("#q").addEventListener("keydown",function(e){ if(e.key==="Enter") search($("#q").value); });
+  $$(".chips button").forEach(function(b){
+    b.addEventListener("click",function(){ var q=b.getAttribute("data-q"); $("#q").value=q; search(q); });
+  });
+  renderResults(null,"");
+  renderBoard();
+
+  // ---------- login ----------
+  var attempts=0;
+  function feedback(u,pw){
+    var okUser = (u===USER || u===USER+"@falcontalent.com");
+    if(!okUser) return {ok:false, msg:"Unknown user. Find his exact work login in his committed config.", bad:true};
+    if(pw===ANSWER) return {ok:true};
+    if(pw.toLowerCase()==="rex2019!") return {ok:false, msg:"Denied. Passwords are case-sensitive — check what he capitalises.", bad:true};
+    if(pw.replace(/[!.]/g,"").toLowerCase()==="rex2019") return {ok:false, msg:"Denied. The policy forced a symbol — did you end it the way he said?", bad:true};
+    if(/rex/i.test(pw) && /2019/.test(pw)) return {ok:false, msg:"Denied. Right ingredients, wrong assembly — re-read exactly how he builds it.", bad:true};
+    if(/rex/i.test(pw) && /201\d|20\d\d/.test(pw)) return {ok:false, msg:"Denied. Right dog — but check the year he adopted him.", bad:true};
+    return {ok:false, msg:"Access denied.", bad:true};
+  }
+  function doLogin(){
+    var u=$("#user").value.trim(), pw=$("#pass").value;
+    if(!u || !pw){ setAtt("Enter both a username and a password.",true); return; }
+    var r=feedback(u,pw);
+    if(r.ok){
+      setAtt("Authenticating… ✓ granted.",false);
+      $("#payoff").classList.add("show");
+      $("#login").disabled=true;
+      setTimeout(function(){ $("#payoff").scrollIntoView({behavior:"smooth",block:"start"}); }, 200);
+      return;
+    }
+    attempts++;
+    setAtt(r.msg+"  ("+attempts+" attempt"+(attempts===1?"":"s")+")", true);
+    if(attempts>=4){
+      var n=$("#nudge"); n.style.display="block";
+      $("#nudgebody").innerHTML="You need three things from three pages: the <b>dog's name</b> (his blog photo), "+
+        "the <b>year he adopted it</b> (\"5 years\" before his 2024 post, or the #gotchaday hashtag), and the "+
+        "<b>recipe</b> (his forum rant). Assemble them: capitalised dog name, then the year, then <b>!</b>.";
+    }
+  }
+  function setAtt(msg,bad){ var a=$("#att"); a.textContent=msg; a.classList.toggle("bad",!!bad); }
+  $("#login").addEventListener("click",doLogin);
+  $("#pass").addEventListener("keydown",function(e){ if(e.key==="Enter") doLogin(); });
+
+  // ---------- debrief ----------
+  var ctrls=$$(".ctrl");
+  function updateVerdict(){
+    var on=ctrls.filter(function(c){return c.classList.contains("on");});
+    var v=$("#verdict");
+    if(on.length===0){
+      v.className="verdict";
+      v.innerHTML="<b>Chain intact.</b> With everything Omar left public, a stranger reasons out <b>Rex2019!</b> and walks into his mailbox. Flip a control above to cut a link.";
+    } else {
+      v.className="verdict safe";
+      var names=on.map(function(c){return c.querySelector(".cn").textContent;});
+      v.innerHTML="<b>Attack stopped.</b> "+names.join(" · ")+
+        " — any single one of these severs the chain, and the reasoned password <b>Rex2019!</b> no longer gets anyone in. "+
+        "Defence in depth means he didn't need all four; one good habit was enough.";
+    }
+  }
+  ctrls.forEach(function(c){
+    var box=c.querySelector('input[type=checkbox]');
+    box.addEventListener("change",function(){ c.classList.toggle("on",box.checked); updateVerdict(); });
+  });
+})();
+</script>
+</body></html>

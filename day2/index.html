@@ -247,6 +247,84 @@
       every card has a "shrink it" fix. This is the defender's mindset sneaking into the attacker's week.</aside>
     </section>
 
+    <!-- ================= LAB 2 PREVIEW — OSINT ================= -->
+    <section class="lb-slide">
+      <style>
+        .lb-slide h2 { margin-bottom:.35em; }
+        .lb-head { display:flex; gap:9px; flex-wrap:wrap; margin:.1em 0 .5em; }
+        .lb-head div { background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--petrol);
+          border-radius:2px; padding:.34em .7em; }
+        .lb-head em { display:block; font-family:var(--mono); font-size:.4em; font-weight:700;
+          letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-style:normal; }
+        .lb-head b { display:block; font-size:.52em; color:var(--petrol); margin-top:.1em; }
+        .lb-grid { display:grid; grid-template-columns:1.15fr 1fr; gap:14px; align-items:start; }
+        .lb-steps { display:grid; gap:8px; }
+        .lb-step { display:grid; grid-template-columns:24px 1fr; gap:9px; align-items:baseline;
+          background:var(--panel); border:1px solid var(--line); border-radius:2px; padding:.4em .64em; }
+        .lb-step .s { font-family:var(--mono); font-size:.48em; font-weight:800; color:#fff; background:var(--petrol);
+          border-radius:2px; text-align:center; padding:.15em 0; }
+        .lb-step b { font-size:.54em; color:var(--petrol); display:block; }
+        .lb-step p { margin:.08em 0 0; font-size:.46em; color:var(--muted); line-height:1.36; }
+        .lb-step.cap { border-left:3px solid var(--yellow); }
+        .lb-step.cap .s { background:#C0871F; }
+        .lb-chain { background:var(--code-bg); border:1px solid var(--code-line); border-radius:6px;
+          padding:.7em .85em; color:var(--code-ink); }
+        .lb-chain .ct { font-family:var(--mono); font-size:.42em; letter-spacing:.13em; text-transform:uppercase;
+          color:var(--turq); margin-bottom:.55em; }
+        .lb-fact { display:flex; align-items:center; gap:.5em; font-size:.5em; margin:.32em 0; }
+        .lb-fact .src { font-family:var(--mono); font-size:.82em; color:#8aa6ad; }
+        .lb-fact .arr { color:var(--turq); }
+        .lb-fact b { color:#ffd27f; }
+        .lb-eq { margin-top:.6em; padding-top:.55em; border-top:1px dashed var(--code-line);
+          font-size:.56em; color:#e8f1f2; }
+        .lb-eq .pw { font-family:var(--mono); font-weight:800; color:#7fd3cd; }
+        .lb-cta { display:inline-flex; align-items:center; gap:.5em; margin-top:.15em;
+          background:var(--teal); color:#fff; text-decoration:none; font-weight:800; font-size:.56em;
+          border-radius:3px; padding:.5em 1em; }
+        .lb-cta:hover { background:var(--turq); }
+        .lb-grid .callout { font-size:.56em; padding:.6em .85em; }
+      </style>
+      <p class="kicker">Day 2 · lab preview</p>
+      <h2>Lab 2 — reason out a stranger's password from his own posts</h2>
+      <div class="lb-head">
+        <div><em>Environment</em><b>In the browser · fully offline</b></div>
+        <div><em>Duration</em><b>20–30 minutes</b></div>
+        <div><em>Format</em><b>Search → clip evidence → log in</b></div>
+        <div><em>Deliverable</em><b>Reach the target's mailbox</b></div>
+      </div>
+      <div class="lb-grid">
+        <div class="lb-steps">
+          <div class="lb-step"><span class="s">A</span><div><b>Search &amp; pivot</b>
+            <p>Search the target, find the <span class="mono">handle</span> he reuses, and follow it across a blog, a code host and a forum — the dork skills from earlier, aimed at one person.</p></div></div>
+          <div class="lb-step"><span class="s">B</span><div><b>Clip the three facts</b>
+            <p>No page holds the password. Pin the <em>dog's name</em>, the <em>year</em> he adopted it, and the <em>recipe</em> he confesses in a forum rant.</p></div></div>
+          <div class="lb-step"><span class="s">C</span><div><b>Assemble &amp; log in</b>
+            <p>Combine them the way he described and sign into the staff mailbox — the reused password becomes the foothold.</p></div></div>
+          <div class="lb-step cap"><span class="s">★</span><div><b>Debrief · break your own chain</b>
+            <p>Flip on one control — a password manager, a private profile — and watch the whole attack collapse.</p></div></div>
+        </div>
+        <div>
+          <div class="lb-chain">
+            <div class="ct">Three facts → one password</div>
+            <div class="lb-fact"><span class="src">blog photo</span><span class="arr">→</span> dog = <b>Rex</b></div>
+            <div class="lb-fact"><span class="src">"5 yrs" post</span><span class="arr">→</span> adopted <b>2019</b></div>
+            <div class="lb-fact"><span class="src">forum rant</span><span class="arr">→</span> <b>Capital + year + !</b></div>
+            <div class="lb-eq">= <span class="pw">Rex2019!</span> — never written down, only reasoned.</div>
+          </div>
+          <div class="callout" style="margin-top:12px"><strong>Why this lab:</strong> the footprint you just mapped on <em>yourself</em> is the exact ammunition here — turned on someone else. It ends on the defender's side: which single habit would have stopped you.</div>
+          <a class="lb-cta" href="lab2-osint.html" target="_blank" rel="noopener">Open Lab 2 →</a>
+        </div>
+      </div>
+      <aside class="notes">Sell the lab, then hand it over. This is the recon block's capstone: everything from dorking, infra-recon and the
+      self-OSINT footprint now converges on ONE fictional employee of Falcon Talent — the same company from the phishing and
+      infra widgets, so the day stays one story. The trick they must feel: <em>nobody wrote the password down</em>. It only exists
+      when you combine the dog (a photo caption), the year (reasoning: "five years" before a 2024 post), and the recipe (his own
+      forum confession). Let them struggle a little before the nudge unlocks. Everything is a simulated internet inside the page —
+      nothing leaves the browser, no real accounts, and say the ethics line out loud: finding public info is legal, logging into an
+      account that isn't yours is a crime; the skill is defensive. Land the debrief: any one control severs the chain, which is why
+      "unique password + manager" is the single highest-value habit they'll take home. Lab lives at lab2-osint.html next to these slides.</aside>
+    </section>
+
     <!-- ================= WEAPONISE — PAYLOAD TYPES ================= -->
     <section>
       <p class="kicker">Weaponise · build the payload</p>
