@@ -3,12 +3,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="_shared.css?v=1">
 <style>
-  body { padding: 6px; }
-  .wrap { display: flex; flex-direction: column; gap: 8px; }
+  body { padding: 4px 6px; }
+  .wrap { display: flex; flex-direction: column; gap: 6px; }
 
   .privacy { display: flex; align-items: center; gap: 9px; font-size: 12.9px; line-height: 1.35;
     color: #146d68; background: rgba(31,143,137,.09); border: 1px solid rgba(31,143,137,.3);
-    border-radius: 9px; padding: 8px 12px; }
+    border-radius: 9px; padding: 7px 12px; }
   .privacy b { color: #12333D; }
   .privacy svg { flex: 0 0 auto; }
 
@@ -51,9 +51,12 @@
     color: #46707A; margin-top: 1px; min-height: 14px; word-break: break-all; }
   .card .att { font-size: 12.9px; color: #42606A; line-height: 1.34; margin: 5px 0 6px; }
   .card .checks { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
-  .card .checks a { font-family: inherit; font-size: 12.9px; font-weight: 700; text-decoration: none;
-    border-radius: 999px; padding: 5px 11px; background: #1F8F89; color: #fff; border: 1px solid #1F8F89; }
+  .card .checks a { font-family: inherit; font-size: 12.3px; font-weight: 700; text-decoration: none;
+    border-radius: 999px; padding: 5px 9px; background: #1F8F89; color: #fff; border: 1px solid #1F8F89; }
   .card .checks a.alt { background: #fff; color: #00567C; border-color: #CDD8DA; }
+  .card .checks a.ext { background: #fff; color: #46707A; border-color: #D3E1E1; border-style: dashed; }
+  .card .checks a.ext::after { content: "signup"; margin-left: 5px; font-size: 10px; font-weight: 800;
+    letter-spacing: .06em; text-transform: uppercase; color: #B08200; }
   .card .checks a:hover { filter: brightness(1.06); }
   .card .tip { font-size: 12.3px; color: #146d68; line-height: 1.35; }
   .card .tip b { color: #12333D; }
@@ -61,7 +64,7 @@
   .card .ghost { font-size: 12.9px; color: #9BB0B6; margin-top: 7px; line-height: 1.35; }
   .card.on .ghost { display: none; }
 
-  .cascade { display: none; margin-top: 2px; border-radius: 10px; padding: 8px 12px;
+  .cascade { display: none; border-radius: 10px; padding: 7px 12px;
     background: rgba(214,69,69,.09); border: 1px solid rgba(214,69,69,.34); }
   .cascade.show { display: block; }
   .cascade .h { font-weight: 800; color: #C1403f; font-size: 14px; letter-spacing: .03em; }
@@ -73,8 +76,9 @@
   <div class="privacy">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1F8F89" stroke-width="2">
       <rect x="4" y="10" width="16" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>
-    <span><b>Runs entirely in your browser — offline.</b> What you type is never sent anywhere. The
-    “Check live →” links are your choice: a Google check puts that term in your search; Have I Been Pwned only sees what you paste there.</span>
+    <span><b>Runs in your browser — offline.</b> What you type here is never sent anywhere. The check links do
+    leave this page: Google sees your search term; the dashed <b>signup</b> ones (Epieos) are real OSINT services
+    that log whatever you look up.</span>
   </div>
 
   <div class="lab">
@@ -125,22 +129,28 @@
     { k:"name", sev:"md", title:"People-search & data brokers",
       att:"Address history, relatives, employer and photos — packaged by data-broker sites and indexed by Google.",
       ghost:"Add your name to see what's public about you.",
-      checks:function(v){ return [["Google you", gdork('"'+v+'"')], ["Image search", gimg(v), true]]; },
+      checks:function(v){ return [["Google you", gdork('"'+v+'"')], ["Image search", gimg(v), "alt"],
+                                  ["LinkedIn", gdork('site:linkedin.com/in "'+v+'"'), "alt"]]; },
       tip:"<b>Shrink it:</b> search “&lt;broker&gt; opt out” and remove yourself; lock down social-profile privacy." },
     { k:"email", sev:"hi", title:"Breaches & password reuse",
-      att:"Which breaches leaked this email — and the password you may have reused on other sites.",
+      att:"Which breaches leaked it, which services it's registered on — and the password you may have reused.",
       ghost:"Add your email to check breach exposure.",
-      checks:function(v){ return [["Have I Been Pwned", "https://haveibeenpwned.com/"], ["Google it", gdork('"'+v+'"'), true]]; },
+      checks:function(v){ return [["Have I Been Pwned", "https://haveibeenpwned.com/"],
+                                  ["Epieos", "https://epieos.com/", "ext"],
+                                  ["Google it", gdork('"'+v+'"'), "alt"]]; },
       tip:"<b>Shrink it:</b> a unique password per site + a password manager; turn on 2-factor everywhere." },
     { k:"username", sev:"hi", title:"Cross-site accounts",
       att:"One handle maps every profile you own — old forums, accounts and opinions you forgot were public.",
       ghost:"Add a handle you reuse to trace your accounts.",
-      checks:function(v){ return [["WhatsMyName", "https://whatsmyname.app/"], ["Google it", gdork('"'+v+'"'), true]]; },
+      checks:function(v){ return [["WhatsMyName", "https://whatsmyname.app/"],
+                                  ["GitHub", "https://github.com/" + enc(v), "alt"],
+                                  ["Google it", gdork('"'+v+'"'), "alt"]]; },
       tip:"<b>Shrink it:</b> use a different handle for sensitive or private accounts." },
     { k:"phone", sev:"md", title:"Reverse lookup & chat apps",
       att:"Reverse-lookup your name from the number, and probe messaging apps that reveal you by phone.",
       ghost:"Add your phone to see what it exposes.",
-      checks:function(v){ return [["Google the number", gdork('"'+v+'"')]]; },
+      checks:function(v){ return [["Google the number", gdork('"'+v+'"')],
+                                  ["Epieos", "https://epieos.com/", "ext"]]; },
       tip:"<b>Shrink it:</b> use a separate number for sign-ups; disable “find me by number” in chat apps." }
   ];
 
@@ -175,7 +185,7 @@
       $(".cval", c.el).textContent = on ? v : "";
       if (on) {
         $(".checks", c.el).innerHTML = c.checks(v).map(function (ch) {
-          return '<a target="_blank" rel="noopener" class="' + (ch[2] ? "alt" : "") + '" href="' + ch[1] + '">' + ch[0] + ' ↗</a>';
+          return '<a target="_blank" rel="noopener" class="' + (ch[2] || "") + '" href="' + ch[1] + '">' + ch[0] + ' ↗</a>';
         }).join("");
       }
     });
