@@ -16,7 +16,7 @@ network speaks; this afternoon you learn to *abuse* it. The three labs below are
 one continuous operation, run against the same target range:
 
 > **Lab 1 — Listen.** Read traffic off the wire and reconstruct what happened.
-> **Lab 2 — Map.** Scan the target and build a picture of what it's running.
+> **Lab 2 — Map.** Get fluent with Nmap by scanning the lab network.
 > **Lab 3 — Break in.** Turn one weakness into a shell, and capture the flag.
 
 Each lab feeds the next. Pay attention in the early ones — details you notice now
@@ -168,17 +168,16 @@ view down to the protocol or host you care about, then read only what's left.
 
 ## The Situation
 
-You have a foothold on the network — a whole subnet in front of you, not just
-one machine. Before you can do anything to a specific target, you need to
-**know the ground**: which hosts are alive, which ports are open, and *what
-software* is answering on each one. This is reconnaissance, and it's the step
-amateurs rush and professionals never skip.
+This lab has one goal: get you **fluent with Nmap**. You have a foothold on the
+lab network — a whole subnet in front of you. Before you can attack anything on
+a network, you need to know how to look at it: which hosts are alive, which
+ports are open, and *what software* is answering on each one. This is
+reconnaissance, and it's the step amateurs rush and professionals never skip.
 
 Nmap is the standard tool for this. The rest of this lab teaches you its most
-important options; the tasks at the end put them to work — first across the
-whole network, then digging into individual hosts. (Your actual `TARGET_IP`
-for Lab 3 is one specific host on this network. You'll pin it down for real,
-with a full scan of its own, at the start of Lab 3.)
+important options; the tasks at the end put them to work, one command at a
+time. There's no fixed target here and nothing to carry forward — just you,
+the network, and the scanner.
 
 ## Understanding Nmap
 
@@ -241,46 +240,51 @@ is running *this exact software, this exact version*."
 
 ## Your Objectives
 
-Put the flags above to work. This time you're not scanning one fixed box —
-you're mapping a network, then choosing what to dig into.
+Work through these one at a time. Each task is one nmap invocation — the point
+is to get the command right and read what it hands back.
 
-1. **Map the network.** Run a ping sweep across the lab subnet and see which
-   hosts answer. This is host discovery — the first move on any network you
-   don't already know.
-2. **Pick a host, port scan it.** Choose one live IP from your sweep and
+1. **Task 1 — Scan the local network.** Run a ping sweep across the lab
+   subnet and see which hosts answer. This is host discovery — the first
+   move on any network you don't already know.
+2. **Task 2 — Port scan a specific IP.** Pick one live IP from your sweep and
    enumerate its open ports. Don't assume the defaults are enough — consider
    scanning beyond the top 1,000.
-3. **Pick a different host, service & version scan it.** Choose another live
-   IP and identify the **service and exact version number** behind each of its
-   open ports. This is the single most valuable thing recon gives you — write
-   the versions down precisely.
+3. **Task 3 — Service & version scan that same IP.** Take the IP from Task 2
+   and identify the **service and exact version number** behind each open
+   port you found. This is the single most valuable thing recon gives you —
+   write the versions down precisely.
 
-### Bonus — go further
+### Optional — go further
 
-4. **Go deeper on one service.** Pick an interesting open port from either
-   host and run an appropriate NSE script against it to learn more than a
+4. **Task 4 — Go deeper on one service.** Pick an interesting open port from
+   Task 3 and run an appropriate NSE script against it to learn more than a
    basic scan reveals.
-5. **Save your work.** Output your findings to a file (`-oN` / `-oG`). A saved
-   scan is a habit that pays off the moment you need to check something again
-   — including in Lab 3.
+5. **Task 5 — Save your work.** Output a scan to a file (`-oN` / `-oG`) instead
+   of just the terminal. A saved scan is a habit worth building early.
+6. **Task 6 — OS fingerprint.** Run OS detection (`-O`) against your chosen IP
+   and compare its guess against what you already inferred from the open
+   ports and versions.
+
+> 🧭 **Want more reps?** [TryHackMe's Nmap room](https://tryhackme.com/room/nmap02)
+> is a solid next stop for extra practice once you're comfortable with the
+> tasks above.
 
 ## Deliverable — Recon Notes
 
-Fill this in. You'll want it on hand for the next lab, especially once
-`TARGET_IP` turns out to be one of the hosts you've already touched.
+Fill this in as you go.
 
-**Host A — port scan**
+**Task 1 — live hosts found**
 
-| IP | Open ports |
-|----|------------|
-|    |            |
+| IP | Notes |
+|----|-------|
+|    |       |
 
-**Host B — service & version scan**
+**Tasks 2–3 — chosen IP, ports & versions**
 
-| IP | Port | Protocol | Service | **Version** |
-|----|------|----------|---------|-------------|
-|    |      |          |         |             |
-|    |      |          |         |             |
+| Port | Protocol | Service | **Version** |
+|------|----------|---------|-------------|
+|      |          |         |             |
+|      |          |         |             |
 
 > 🔎 Look hard at those **version numbers**. Old software is old for a reason,
 > and a version string is often the single most valuable thing recon gives you.

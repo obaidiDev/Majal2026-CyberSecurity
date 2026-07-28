@@ -193,7 +193,7 @@ footer{border-top:1px solid var(--line); background:var(--bg)}
 network speaks; this afternoon you learn to <em>abuse</em> it. The three labs below are
 one continuous operation, run against the same target range:</p>
 <div class="callout"><p><strong>Lab 1 — Listen.</strong> Read traffic off the wire and reconstruct what happened.
-<strong>Lab 2 — Map.</strong> Scan the target and build a picture of what it's running.
+<strong>Lab 2 — Map.</strong> Get fluent with Nmap by scanning the lab network.
 <strong>Lab 3 — Break in.</strong> Turn one weakness into a shell, and capture the flag.</p></div>
 <p>Each lab feeds the next. Pay attention in the early ones — details you notice now
 become weapons later. That's exactly how real intrusions work.</p>
@@ -303,16 +303,15 @@ view down to the protocol or host you care about, then read only what's left.</p
 <h1 id="lab-2-mapping-the-target-with-nmap">Lab 2 — Mapping the Target with Nmap 🗺️</h1>
 <p><strong>Duration:</strong> ~45 min · <strong>Tool:</strong> Nmap</p>
 <h2 id="the-situation">The Situation</h2>
-<p>You have a foothold on the network — a whole subnet in front of you, not just
-one machine. Before you can do anything to a specific target, you need to
-<strong>know the ground</strong>: which hosts are alive, which ports are open, and <em>what
-software</em> is answering on each one. This is reconnaissance, and it's the step
-amateurs rush and professionals never skip.</p>
+<p>This lab has one goal: get you <strong>fluent with Nmap</strong>. You have a foothold on the
+lab network — a whole subnet in front of you. Before you can attack anything on
+a network, you need to know how to look at it: which hosts are alive, which
+ports are open, and <em>what software</em> is answering on each one. This is
+reconnaissance, and it's the step amateurs rush and professionals never skip.</p>
 <p>Nmap is the standard tool for this. The rest of this lab teaches you its most
-important options; the tasks at the end put them to work — first across the
-whole network, then digging into individual hosts. (Your actual <code>TARGET_IP</code>
-for Lab 3 is one specific host on this network. You'll pin it down for real,
-with a full scan of its own, at the start of Lab 3.)</p>
+important options; the tasks at the end put them to work, one command at a
+time. There's no fixed target here and nothing to carry forward — just you,
+the network, and the scanner.</p>
 <h2 id="understanding-nmap">Understanding Nmap</h2>
 <p>At its simplest, Nmap takes a target and reports which ports are <strong>open</strong>,
 <strong>closed</strong>, or <strong>filtered</strong>, and — with the right options — what's running behind
@@ -454,38 +453,42 @@ is running <em>this exact software, this exact version</em>.&quot;</p>
 </tbody>
 </table></div>
 <h2 id="your-objectives">Your Objectives</h2>
-<p>Put the flags above to work. This time you're not scanning one fixed box —
-you're mapping a network, then choosing what to dig into.</p>
+<p>Work through these one at a time. Each task is one nmap invocation — the point
+is to get the command right and read what it hands back.</p>
 <ol>
-<li><strong>Map the network.</strong> Run a ping sweep across the lab subnet and see which
-hosts answer. This is host discovery — the first move on any network you
-don't already know.</li>
-<li><strong>Pick a host, port scan it.</strong> Choose one live IP from your sweep and
+<li><strong>Task 1 — Scan the local network.</strong> Run a ping sweep across the lab
+subnet and see which hosts answer. This is host discovery — the first
+move on any network you don't already know.</li>
+<li><strong>Task 2 — Port scan a specific IP.</strong> Pick one live IP from your sweep and
 enumerate its open ports. Don't assume the defaults are enough — consider
 scanning beyond the top 1,000.</li>
-<li><strong>Pick a different host, service &amp; version scan it.</strong> Choose another live
-IP and identify the <strong>service and exact version number</strong> behind each of its
-open ports. This is the single most valuable thing recon gives you — write
-the versions down precisely.</li>
+<li><strong>Task 3 — Service &amp; version scan that same IP.</strong> Take the IP from Task 2
+and identify the <strong>service and exact version number</strong> behind each open
+port you found. This is the single most valuable thing recon gives you —
+write the versions down precisely.</li>
 </ol>
-<h3>Bonus — go further</h3>
+<h3>Optional — go further</h3>
 <ol start="4">
-<li><strong>Go deeper on one service.</strong> Pick an interesting open port from either
-host and run an appropriate NSE script against it to learn more than a
+<li><strong>Task 4 — Go deeper on one service.</strong> Pick an interesting open port from
+Task 3 and run an appropriate NSE script against it to learn more than a
 basic scan reveals.</li>
-<li><strong>Save your work.</strong> Output your findings to a file (<code>-oN</code> / <code>-oG</code>). A saved
-scan is a habit that pays off the moment you need to check something again
-— including in Lab 3.</li>
+<li><strong>Task 5 — Save your work.</strong> Output a scan to a file (<code>-oN</code> / <code>-oG</code>) instead
+of just the terminal. A saved scan is a habit worth building early.</li>
+<li><strong>Task 6 — OS fingerprint.</strong> Run OS detection (<code>-O</code>) against your chosen IP
+and compare its guess against what you already inferred from the open
+ports and versions.</li>
 </ol>
+<div class="callout"><p>🧭 <strong>Want more reps?</strong> <a href="https://tryhackme.com/room/nmap02">TryHackMe's Nmap room</a>
+is a solid next stop for extra practice once you're comfortable with the
+tasks above.</p></div>
 <h2 id="deliverable-recon-notes">Deliverable — Recon Notes</h2>
-<p>Fill this in. You'll want it on hand for the next lab, especially once
-<code>TARGET_IP</code> turns out to be one of the hosts you've already touched.</p>
-<p><strong>Host A — port scan</strong></p>
+<p>Fill this in as you go.</p>
+<p><strong>Task 1 — live hosts found</strong></p>
 <div class="tw"><table>
 <thead>
 <tr>
   <th>IP</th>
-  <th>Open ports</th>
+  <th>Notes</th>
 </tr>
 </thead>
 <tbody>
@@ -495,11 +498,10 @@ scan is a habit that pays off the moment you need to check something again
 </tr>
 </tbody>
 </table></div>
-<p><strong>Host B — service &amp; version scan</strong></p>
+<p><strong>Tasks 2–3 — chosen IP, ports &amp; versions</strong></p>
 <div class="tw"><table>
 <thead>
 <tr>
-  <th>IP</th>
   <th>Port</th>
   <th>Protocol</th>
   <th>Service</th>
@@ -512,10 +514,8 @@ scan is a habit that pays off the moment you need to check something again
   <td></td>
   <td></td>
   <td></td>
-  <td></td>
 </tr>
 <tr>
-  <td></td>
   <td></td>
   <td></td>
   <td></td>
