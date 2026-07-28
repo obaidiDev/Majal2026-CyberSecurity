@@ -962,35 +962,6 @@
     </section>
 
     <!-- ================= ACT 2 · THE INSIDE LOOP ================= -->
-    <section>
-      <p class="kicker">Act 2 · moving through</p>
-      <h2>Inside now — one shell becomes the whole domain</h2>
-      <div class="loop goal">
-        <div class="stg"><div class="n">01</div><h4>Orient</h4><p>Where am I? Who am I? What's reachable?</p><span class="tool">scan · enumerate</span></div>
-        <span class="arr">›</span>
-        <div class="stg"><div class="n">02</div><h4>Escalate</h4><p>Low-priv user → admin / root on this box.</p><span class="tool">privilege escalation</span></div>
-        <span class="arr">›</span>
-        <div class="stg"><div class="n">03</div><h4>Loot</h4><p>Steal passwords, hashes, tokens, keys.</p><span class="tool">credential access</span></div>
-        <span class="arr">›</span>
-        <div class="stg"><div class="n">04</div><h4>Move</h4><p>Use the loot to log into the next box.</p><span class="tool">lateral movement</span></div>
-        <span class="arr">↺</span>
-        <div class="stg"><div class="n">GOAL</div><h4>Own the domain</h4><p>Repeat until you hold the crown jewels.</p><span class="tool">exfiltrate</span></div>
-      </div>
-      <div class="callout" style="margin-top:.6em"><strong>The terrain:</strong> your foothold <span class="mono">web01</span> is a
-      <strong>Linux</strong> server in the DMZ; behind it is the office — a <strong>Windows domain</strong>. You root the Linux
-      box, loot its credentials, then walk them into the Windows network.</div>
-      <div class="callout hot" style="margin-top:.45em"><strong>It's a loop, not a straight line.</strong> Each box you land on
-      restarts the cycle — orient, escalate, loot, move — every turn powered by a protocol from Act 1.</div>
-      <div class="callout" style="margin-top:.45em"><strong>Say it once, plainly:</strong> everything from here is a <em>crime</em>
-      on a network you don't own — inside, there is no "passive." It's legal in exactly two places: <strong>a lab you built</strong>,
-      or <strong>an engagement you have written authorisation for</strong>.</div>
-      <aside class="notes">The map for Act 2. Yesterday ended at a single low-privilege shell; today is the loop that turns it
-      into the whole network. Walk the five stages: <b>orient</b> (situational awareness — the port/service skills from Act 1),
-      <b>escalate</b> (become admin/root on this box), <b>loot</b> (harvest credentials), <b>move</b> (reuse that loot to log
-      into the next machine) — then the ↺: you're on a new box, so you start over. Land the two through-lines: (1) it's
-      iterative — attackers pivot machine to machine, each hop widening access toward domain admin; (2) none of it is movie
-      hacking — it's scanning, logging in, and reusing credentials. Each following slide drills one stage of this loop.</aside>
-    </section>
 
     <!-- ============ PRIMER · FIREWALLS & SHELLS ============ -->
     <section class="primer">
@@ -1068,6 +1039,38 @@
       The tell is not the content but the <b>rhythm</b> — human browsing is bursty and irregular, a beacon is metronomic, and
       that timing signature is exactly what a defender hunts for on Thursday. Real tools: Cobalt Strike, Sliver, Mythic; the
       "beacon" name comes from this behaviour.</aside>
+    </section>
+
+    <!-- ================= ACT 2 · THE LOOP MAP ================= -->
+    <section>
+      <p class="kicker">Act 2 · moving through</p>
+      <h2>Inside now — one shell becomes the whole domain</h2>
+      <div class="loop goal">
+        <div class="stg"><div class="n">01</div><h4>Orient</h4><p>Where am I? Who am I? What's reachable?</p><span class="tool">scan · enumerate</span></div>
+        <span class="arr">›</span>
+        <div class="stg"><div class="n">02</div><h4>Escalate</h4><p>Low-priv user → admin / root on this box.</p><span class="tool">privilege escalation</span></div>
+        <span class="arr">›</span>
+        <div class="stg"><div class="n">03</div><h4>Loot</h4><p>Steal passwords, hashes, tokens, keys.</p><span class="tool">credential access</span></div>
+        <span class="arr">›</span>
+        <div class="stg"><div class="n">04</div><h4>Move</h4><p>Use the loot to log into the next box.</p><span class="tool">lateral movement</span></div>
+        <span class="arr">↺</span>
+        <div class="stg"><div class="n">GOAL</div><h4>Own the domain</h4><p>Repeat until you hold the crown jewels.</p><span class="tool">exfiltrate</span></div>
+      </div>
+      <div class="callout" style="margin-top:.6em"><strong>The terrain:</strong> your foothold <span class="mono">web01</span> is a
+      <strong>Linux</strong> server in the DMZ; behind it is the office — a <strong>Windows domain</strong>. You root the Linux
+      box, loot its credentials, then walk them into the Windows network.</div>
+      <div class="callout hot" style="margin-top:.45em"><strong>It's a loop, not a straight line.</strong> Each box you land on
+      restarts the cycle — orient, escalate, loot, move — every turn powered by a protocol from Act 1.</div>
+      <div class="callout" style="margin-top:.45em"><strong>Say it once, plainly:</strong> everything from here is a <em>crime</em>
+      on a network you don't own — inside, there is no "passive." It's legal in exactly two places: <strong>a lab you built</strong>,
+      or <strong>an engagement you have written authorisation for</strong>.</div>
+      <aside class="notes">The map for Act 2, placed right where the loop actually starts. The shell is up and staying up (last
+      three slides); now here's what you <em>do</em> with it. Walk the five stages: <b>orient</b> (situational awareness — the
+      port/service skills from Act 1), <b>escalate</b> (become admin/root on this box), <b>loot</b> (harvest credentials),
+      <b>move</b> (reuse that loot to log into the next machine) — then the ↺: you're on a new box, so you start over. Land the
+      two through-lines: (1) it's iterative — attackers pivot machine to machine, each hop widening access toward domain admin;
+      (2) none of it is movie hacking — it's scanning, logging in, and reusing credentials. Then go straight into stage 01 on the
+      next slide: every following slide drills one stage of this loop.</aside>
     </section>
 
     <!-- ================= ACT 2 · ENUMERATION (orient) ================= -->
