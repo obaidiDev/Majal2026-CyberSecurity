@@ -997,7 +997,7 @@
       <b>C2 over HTTPS</b>: beacon out on 443 wrapped in TLS, at intervals. The firewall must allow 443, and the content is
       encrypted — note the irony out loud: <em>the same TLS that protected alice two slides ago is now hiding the attacker.</em>
       The tell is not the content but the <b>rhythm</b> — human browsing is bursty and irregular, a beacon is metronomic, and
-      that timing signature is exactly what a defender hunts for on Friday. Real tools: Cobalt Strike, Sliver, Mythic; the
+      that timing signature is exactly what a defender hunts for on Thursday. Real tools: Cobalt Strike, Sliver, Mythic; the
       "beacon" name comes from this behaviour.</aside>
     </section>
 
@@ -1228,7 +1228,7 @@
       break into the domain, they <em>authenticate</em> to it — the pass-the-hash from the last slide is the key, and the next
       slide is the lock. Mention that Linux/macOS shops have equivalents (LDAP, Kerberos realms, SSO/Entra ID) and the logic is
       identical: centralised identity is a huge security win <em>and</em> a huge single point of failure. Defences arrive
-      Friday — tiered admin, separate admin accounts, and never letting a domain admin log into an ordinary workstation.</aside>
+      Thursday — tiered admin, separate admin accounts, and never letting a domain admin log into an ordinary workstation.</aside>
     </section>
 
     <!-- ================= ACT 2 · LATERAL MOVEMENT (marquee) ================= -->
@@ -1298,7 +1298,7 @@
       <div class="k2 c5" style="margin-top:.6em">
         <div class="card"><h3>SIEM <span class="tag">the console</span></h3>
           <p>The central screen that <strong>collects every alert</strong> from all the sensors below into one place.</p>
-          <span class="ex"><b>Friday's chair</b> — where the week gets reconstructed.</span></div>
+          <span class="ex"><b>Thursday's chair</b> — where the week gets reconstructed.</span></div>
         <div class="card"><h3>IDS <span class="tag">network</span></h3>
           <p>Watches <strong>traffic</strong> for known-bad patterns — like one host probing a thousand ports.</p>
           <span class="ex"><b>Catches:</b> the internal port scan.</span></div>
@@ -1316,7 +1316,7 @@
       files or cracking hashes on your <em>own</em> laptop. Work that never touches the network or the target is invisible — which is
       exactly why some of your moves screamed and others left nothing. Replay them on the next slide.</div>
       <aside class="notes">Foundation that makes the SIEM payoff land instead of washing over them. Define the five sensor types by
-      <em>where</em> each looks: SIEM = the aggregator (the console they'll sit at Friday); IDS = network patterns; EDR = host behaviour;
+      <em>where</em> each looks: SIEM = the aggregator (the console they'll sit at Thursday); IDS = network patterns; EDR = host behaviour;
       arpwatch = MAC changes on the wire; DLP = data egress. Pre-map each to the move it will catch so the next slide is recognition, not
       new information. Then plant the punchline — nothing watches your own laptop, so local/offline work (enumeration, cracking) is
       silent. That asymmetry is the whole bridge to Day 5. ~70s.</aside>
@@ -1335,7 +1335,7 @@
       (IDS), the ARP spoof (arpwatch sees the gateway's MAC change), the privilege escalation (EDR), the pass-the-hash login
       to the DC (identity analytics — anomalous auth), and the exfil (DLP). Land it: an attacker inside is <em>loud</em> the
       instant they act on the network — which is the defender's whole opportunity. Ties back to Day 2's passive/active
-      asymmetry, and forward to Friday, when they sit at this exact console and reconstruct the entire week from these alerts.
+      asymmetry, and forward to Thursday, when they sit at this exact console and reconstruct the entire week from these alerts.
       Ask the room: which single alert would you want to catch first?</aside>
     </section>
 
@@ -1358,7 +1358,7 @@
       the lesson: defenders and attackers study the exact same mechanisms. Recap the arc verbally: from one shell to the whole
       domain, powered by ARP, ports, TCP, HTTP/TLS, and hashes. Then point forward: Day 4 leaves the network layer and attacks
       the application (injection, auth flaws, the web). And remind them of the closing beat from the last slide — everything
-      loud they did is waiting for them on Friday, from the defender's chair. Good moment to take questions on the full chain.</aside>
+      loud they did is waiting for them on Thursday, from the defender's chair. Good moment to take questions on the full chain.</aside>
     </section>
 
   </div>
