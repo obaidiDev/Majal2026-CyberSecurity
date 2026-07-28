@@ -6,34 +6,69 @@
   .w { padding: 11px 13px; }
   .lay { display: grid; grid-template-columns: 1fr 322px; gap: 13px; align-items: start; }
 
-  /* ---------- left: the conversation ---------- */
-  .flow { border: 1px solid #E0E7E8; border-radius: 10px; background: #fff; padding: 10px 12px 11px; }
-  .actors { display: grid; gap: 8px; margin-bottom: 9px; }
-  .actors.m2 { grid-template-columns: 1fr 1fr; }
-  .actors.m3 { grid-template-columns: 1fr 1fr 1fr; }
-  .ac { border: 1px solid #E6ECEC; border-radius: 8px; background: #F4F7F7; padding: 6px 8px; text-align: center; }
-  .ac .nm { font-size: 11px; font-weight: 800; color: #12333D; }
-  .ac .sub { font-family: var(--mono,monospace); font-size: 9px; color: #93a4aa; margin-top: 1px; }
-  .ac.cli { border-color: #9fd4cf; background: rgba(31,143,137,.10); } .ac.cli .nm { color: #167a75; }
-  .ac.srv { border-color: #b9d2e0; background: rgba(0,86,124,.08); } .ac.srv .nm { color: #00567C; }
-  .ac.atk { border-color: #E9C4C4; background: #FDF4F4; } .ac.atk .nm { color: #C1403f; }
+  /* ---------- left: the wire ---------- */
+  .flow { border: 1px solid #E0E7E8; border-radius: 10px; background: #fff; padding: 11px 12px 12px; }
 
-  .msgs { display: flex; flex-direction: column; gap: 6px; min-height: 236px; }
-  .msg { border: 1px solid #E6ECEC; border-radius: 7px; background: #F8FAFA; padding: 6px 9px;
-    animation: pop .26s ease both; }
-  @keyframes pop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
-  .msg .hd { display: flex; align-items: baseline; gap: 7px; }
-  .msg .ar { font-family: var(--mono,monospace); font-size: 11px; font-weight: 800; color: #8AA1A8; letter-spacing: -.04em; }
-  .msg .ti { font-family: var(--mono,monospace); font-size: 11.5px; font-weight: 800; color: #00567C; }
-  .msg .dt { display: block; margin-top: 2px; font-size: 10.5px; color: #7a8f96; line-height: 1.38; }
-  .msg.c2s { border-left: 3px solid #1F8F89; } .msg.s2c { border-left: 3px solid #00567C; }
-  .msg.evil { border-left: 3px solid #D64545; background: #FDF6F6; } .msg.evil .ti { color: #C1403f; }
-  .msg.sealed { border-left: 3px solid #1F8F89; background: rgba(31,143,137,.07); }
-  .msg .cipher { display: block; margin-top: 3px; font-family: var(--mono,monospace); font-size: 9.5px;
+  .stage { display: grid; grid-template-columns: 126px 1fr 126px; border: 1px solid #E6ECEC;
+    border-radius: 9px; overflow: hidden; background: #FCFDFD; }
+  .nd { padding: 8px 6px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px; text-align: center; background: #F4F7F7; transition: background 200ms ease, box-shadow 200ms ease; }
+  .nd svg { display: block; }
+  .nd .nm { font-size: 11.5px; font-weight: 800; color: #12333D; line-height: 1.1; }
+  .nd .sub { font-family: var(--mono,monospace); font-size: 9px; color: #93a4aa; line-height: 1.1; }
+  .nd.cli { background: rgba(31,143,137,.09); border-right: 1px solid #E0EAEA; } .nd.cli .nm { color: #167a75; }
+  .nd.srv { background: rgba(0,86,124,.075); border-left: 1px solid #E0EAEA; } .nd.srv .nm { color: #00567C; }
+  .nd.busy { box-shadow: inset 0 0 0 2px #9fd4cf; }
+  .nd.alert { background: #FDF1F1; box-shadow: inset 0 0 0 2px #E9C4C4; }
+  .nd.alert .nm { color: #C1403f; }
+
+  /* the wire itself */
+  .lane { position: relative; padding: 7px 0; min-height: 249px; }   /* same height in both modes */
+  .row { position: relative; height: 47px; }
+  .row .wire { position: absolute; left: 0; right: 0; top: 50%; border-top: 1.5px dashed #E4EBEC; }
+  .row.on .wire { border-top-color: #C9D8DA; }
+
+  .chip { position: absolute; top: 50%; margin-top: -13px; height: 26px; display: inline-flex; align-items: center;
+    gap: 5px; padding: 0 9px; border-radius: 7px; font-size: 11px; font-weight: 800; color: #fff;
+    white-space: nowrap; box-shadow: 0 2px 6px rgba(18,51,61,.26); z-index: 2;
+    transition: transform 950ms cubic-bezier(.34,.02,.24,1), opacity 300ms ease; }
+  .chip .g { font-family: var(--mono,monospace); font-size: 12px; opacity: .8; }
+  .chip.c2s { background: #1F8F89; } .chip.s2c { background: #00567C; }
+  .chip.evil { background: #C1403f; } .chip.sealed { background: #12706B; }
+  .chip.noanim { transition: none; }
+  .chip.done { opacity: .38; box-shadow: none; }
+  .chip.mark { background: #fff; color: #00567C; border: 1.5px dashed #B9CDD3; box-shadow: none; }
+  .chip.mark.bad { color: #C1403f; border-color: #E9C4C4; background: #FFF9F9; }
+  .chip.pulse { animation: chippulse 1.1s ease-in-out 2; }
+  @keyframes chippulse { 0%,100% { transform: translateX(var(--x)) scale(1); }
+    50% { transform: translateX(var(--x)) scale(1.045); } }
+
+  /* the attacker, straddling the wire */
+  .tap { position: absolute; top: 3px; bottom: 3px; left: 58%; width: 96px; margin-left: -48px; z-index: 4;
+    border: 1.5px solid #E9C4C4; border-radius: 9px; background: #FDF4F4;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    box-shadow: 0 0 0 4px rgba(214,69,69,.05); }
+  .tap .nm { font-size: 11px; font-weight: 800; color: #C1403f; }
+  .tap .sub { font-family: var(--mono,monospace); font-size: 8.5px; color: #cf9a9a; }
+  .tap.hot { animation: tapflash .55s ease 1; }
+  @keyframes tapflash { 0%,100% { background: #FDF4F4; } 45% { background: #F5CFCF; } }
+
+  /* current-step detail, under the wire */
+  .det { margin-top: 10px; border: 1px solid #E6ECEC; border-left: 3px solid #CDD8DA; border-radius: 8px;
+    background: #F8FAFA; padding: 7px 10px; min-height: 62px; animation: pop .26s ease both; }
+  @keyframes pop { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
+  .det.c2s { border-left-color: #1F8F89; } .det.s2c { border-left-color: #00567C; }
+  .det.evil { border-left-color: #D64545; background: #FDF6F6; } .det.evil .ti { color: #C1403f; }
+  .det.sealed { border-left-color: #1F8F89; background: rgba(31,143,137,.07); }
+  .det .hd { display: flex; align-items: baseline; gap: 7px; }
+  .det .ar { font-family: var(--mono,monospace); font-size: 11px; font-weight: 800; color: #8AA1A8; letter-spacing: -.04em; }
+  .det .ti { font-family: var(--mono,monospace); font-size: 11.5px; font-weight: 800; color: #00567C; }
+  .det .dt { display: block; margin-top: 2px; font-size: 10.5px; color: #7a8f96; line-height: 1.4; }
+  .det .cipher { display: block; margin-top: 3px; font-family: var(--mono,monospace); font-size: 9.5px;
     color: #9db3ba; word-break: break-all; line-height: 1.3; }
-  .msg .clear { display: block; margin-top: 3px; font-family: var(--mono,monospace); font-size: 10.5px;
+  .det .clear { display: block; margin-top: 3px; font-family: var(--mono,monospace); font-size: 10.5px;
     font-weight: 700; color: #C1403f; }
-  .empty { color: #a8b6bb; font-style: italic; font-size: 12px; padding: 16px 0; text-align: center; }
+  .det .idle { font-size: 11.5px; color: #a8b6bb; font-style: italic; line-height: 1.5; }
 
   /* ---------- right: certificate / warning ---------- */
   .panel { border: 1px solid #E0E7E8; border-radius: 10px; background: #fff; overflow: hidden; min-height: 292px; }
@@ -76,12 +111,40 @@
 <div class="w">
   <div class="lay">
     <div class="flow">
-      <div class="actors m2" id="actors"></div>
-      <div class="msgs" id="msgs"><div class="empty">Press <b>Play</b> to open a secure connection to majal.sa</div></div>
+      <div class="stage">
+        <div class="nd cli" id="ndcli">
+          <svg width="40" height="30" viewBox="0 0 40 30" aria-hidden="true">
+            <rect x="2.5" y="2.5" width="35" height="23" rx="3" fill="#fff" stroke="#1F8F89" stroke-width="1.6"/>
+            <path d="M2.5 9.5h35" stroke="#1F8F89" stroke-width="1.4"/>
+            <circle cx="6.6" cy="6" r="1.1" fill="#9fd4cf"/><circle cx="10.2" cy="6" r="1.1" fill="#9fd4cf"/>
+            <rect x="14" y="4.2" width="20" height="3.6" rx="1.8" fill="#E6F2F1"/>
+            <path d="M8 14h12M8 18h17M8 22h9" stroke="#B7D8D5" stroke-width="1.6" stroke-linecap="round"/>
+            <path d="M27.5 27.5h-15" stroke="#1F8F89" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+          <span class="nm">Browser</span><span class="sub">alice · 192.168.1.20</span>
+        </div>
+
+        <div class="lane" id="lane"></div>
+
+        <div class="nd srv" id="ndsrv">
+          <svg width="34" height="32" viewBox="0 0 34 32" aria-hidden="true">
+            <rect x="2.5" y="2.5" width="29" height="8.5" rx="2" fill="#fff" stroke="#00567C" stroke-width="1.6"/>
+            <rect x="2.5" y="12.8" width="29" height="8.5" rx="2" fill="#fff" stroke="#00567C" stroke-width="1.6"/>
+            <rect x="2.5" y="23.1" width="29" height="6.4" rx="2" fill="#EAF2F6" stroke="#00567C" stroke-width="1.6"/>
+            <circle cx="7" cy="6.8" r="1.3" fill="#1F8F89"/><circle cx="7" cy="17.1" r="1.3" fill="#1F8F89"/>
+            <path d="M11 6.8h16M11 17.1h16" stroke="#BBD3E0" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <span class="nm">majal.sa</span><span class="sub">the real server</span>
+        </div>
+      </div>
+
+      <div class="det" id="det"><span class="idle">Press <b>Play</b> — watch each message actually cross the wire between
+        alice's browser and majal.sa.</span></div>
     </div>
+
     <div class="panel" id="panel">
-      <div class="ph" id="ph">The server's certificate</div>
-      <div class="pb" id="pb"><div class="waiting">The browser hasn't been handed a certificate yet.<br>Step through the handshake.</div></div>
+      <div class="ph">The server's certificate</div>
+      <div class="pb"><div class="waiting">The browser hasn't been handed a certificate yet.<br>Step through the handshake.</div></div>
     </div>
   </div>
 
@@ -124,35 +187,133 @@
   };
 
   // step kinds: msg | verify | warn | sealed | pwned
+  // from/to are wire endpoints: cli · atk · srv   (lbl = what rides on the wire)
   var REAL = [
-    { k: "msg", cls: "c2s", ar: "→", ti: "ClientHello", dt: "TLS 1.3 · the cipher suites I support · a random number" },
-    { k: "msg", cls: "s2c", ar: "←", ti: "ServerHello + Certificate", dt: "the chosen cipher, another random — and the server's certificate" },
+    { k: "msg", cls: "c2s", from: "cli", to: "srv", lbl: "ClientHello", ar: "→", ti: "ClientHello",
+      dt: "TLS 1.3 · the cipher suites I support · a random number" },
+    { k: "msg", cls: "s2c", from: "srv", to: "cli", lbl: "ServerHello + Cert", ar: "←", ti: "ServerHello + Certificate",
+      dt: "the chosen cipher, another random — and the server's certificate" },
     { k: "verify", cert: CERT_GOOD },
-    { k: "msg", cls: "c2s", ar: "⇄", ti: "Key exchange", dt: "both sides derive the <b>same session key</b> — Day 1's Diffie–Hellman. The key itself never crosses the wire." },
-    { k: "sealed" }
+    { k: "msg", cls: "c2s", from: "cli", to: "srv", both: 1, lbl: "Key share", ar: "⇄", ti: "Key exchange",
+      dt: "both sides derive the <b>same session key</b> — Day 1's Diffie–Hellman. The key itself never crosses the wire." },
+    { k: "sealed", from: "cli", to: "srv" }
   ];
   var MITM = [
-    { k: "msg", cls: "c2s", ar: "→", ti: "ClientHello", dt: "…but you ARP-spoofed the LAN, so it reaches the attacker, not the server" },
-    { k: "msg", cls: "evil", ar: "←", ti: "ServerHello + Certificate", dt: "the attacker must present <b>some</b> certificate for majal.sa — so they make their own" },
+    { k: "msg", cls: "c2s", from: "cli", to: "atk", lbl: "ClientHello", ar: "→", ti: "ClientHello",
+      dt: "…but you ARP-spoofed the LAN, so it reaches the attacker, not the server" },
+    { k: "msg", cls: "evil", from: "atk", to: "cli", lbl: "ServerHello + Cert", ar: "←", ti: "ServerHello + Certificate",
+      dt: "the attacker must present <b>some</b> certificate for majal.sa — so they make their own" },
     { k: "verify", cert: CERT_BAD },
     { k: "warn" }
   ];
 
-  var mode = "real", steps = REAL, cur = 0, playing = null;
+  var mode = "real", steps = REAL, cur = 0, playing = null, timers = [];
 
-  function drawActors() {
-    var a = $("#actors");
-    if (mode === "real") {
-      a.className = "actors m2";
-      a.innerHTML = '<div class="ac cli"><div class="nm">Browser</div><div class="sub">alice · 192.168.1.20</div></div>' +
-        '<div class="ac srv"><div class="nm">majal.sa</div><div class="sub">the real server</div></div>';
-    } else {
-      a.className = "actors m3";
-      a.innerHTML = '<div class="ac cli"><div class="nm">Browser</div><div class="sub">alice · 192.168.1.20</div></div>' +
-        '<div class="ac atk"><div class="nm">You</div><div class="sub">in the middle</div></div>' +
-        '<div class="ac srv"><div class="nm">majal.sa</div><div class="sub">the real server</div></div>';
+  function clearTimers() { timers.forEach(clearTimeout); timers = []; }
+  function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+
+  /* ---------------- the wire ---------------- */
+
+  var TAP_AT = 0.58, TAP_HALF = 50;   // attacker card sits at 58% of the lane, 96px wide + a hair of clearance
+
+  function xFor(node, other, w) {
+    var W = $("#lane").getBoundingClientRect().width;
+    if (node === "cli") return 0;
+    if (node === "srv") return W - w;
+    // the attacker: dock on whichever side the other endpoint is
+    return other === "cli" ? (W * TAP_AT - TAP_HALF - w) : (W * TAP_AT + TAP_HALF);
+  }
+
+  // o: { row, cls, lbl, from, to, animate, offset, delay, onArrive }
+  function fly(o) {
+    var c = document.createElement("div");
+    c.className = "chip " + o.cls + (o.animate ? "" : " noanim done");
+    c.innerHTML = (o.to === "cli" ? '<span class="g">◂</span>' : "") + o.lbl +
+      (o.to === "cli" ? "" : '<span class="g">▸</span>');
+    if (o.offset) c.style.marginTop = (-13 + o.offset) + "px";
+    o.row.appendChild(c);
+    var w = c.offsetWidth;
+    var x0 = xFor(o.from, o.to, w), x1 = xFor(o.to, o.from, w);
+    if (!o.animate) { c.style.transform = "translateX(" + x1 + "px)"; return c; }
+    c.style.transform = "translateX(" + x0 + "px)";
+    void c.offsetWidth;                       // commit the start position before transitioning
+    later(function () { c.style.transform = "translateX(" + x1 + "px)"; }, o.delay || 40);
+    if (o.onArrive) later(o.onArrive, (o.delay || 40) + 980);
+    return c;
+  }
+
+  // a chip that doesn't travel — it just appears at one end (verification, warning)
+  function park(row, cls, lbl, at, animate) {
+    var c = document.createElement("div");
+    c.className = "chip " + cls + " noanim" + (animate ? "" : " done");
+    c.innerHTML = lbl;
+    row.appendChild(c);
+    c.style.transform = "translateX(" + xFor(at, at === "cli" ? "srv" : "cli", c.offsetWidth) + "px)";
+    if (animate) { c.style.setProperty("--x", xFor(at, at === "cli" ? "srv" : "cli", c.offsetWidth) + "px"); c.classList.add("pulse"); }
+    return c;
+  }
+
+  function buildLane() {
+    var lane = $("#lane");
+    lane.innerHTML = "";
+    for (var i = 0; i < steps.length; i++) {
+      var r = document.createElement("div");
+      r.className = "row" + (i < cur ? " on" : "");
+      r.innerHTML = '<div class="wire"></div>';
+      lane.appendChild(r);
+    }
+    if (mode === "mitm") {
+      var t = document.createElement("div");
+      t.className = "tap"; t.id = "tap";
+      t.innerHTML = '<svg width="30" height="28" viewBox="0 0 30 28" aria-hidden="true">' +
+        '<path d="M2.8 26.5c0-5.6 5.5-9 12.2-9s12.2 3.4 12.2 9z" fill="#FBE7E7" stroke="#C1403f" stroke-width="1.5" stroke-linejoin="round"/>' +
+        '<circle cx="15" cy="9.6" r="6.9" fill="#fff" stroke="#C1403f" stroke-width="1.5"/>' +
+        '<path d="M8.4 8.2h13.2v2.6a2.6 2.6 0 0 1-2.6 2.6h-8a2.6 2.6 0 0 1-2.6-2.6z" fill="#C1403f"/>' +
+        '<circle cx="11.6" cy="10" r="1.15" fill="#fff"/><circle cx="18.4" cy="10" r="1.15" fill="#fff"/></svg>' +
+        '<span class="nm">You</span><span class="sub">in the middle</span>';
+      lane.appendChild(t);
+    }
+    return lane;
+  }
+
+  function rowEl(i) { return $("#lane").children[i]; }
+
+  function drawStep(i, animate) {
+    var s = steps[i], row = rowEl(i);
+    if (!row) return;
+    if (s.k === "msg") {
+      var first = fly({ row: row, cls: s.cls, lbl: s.lbl, from: s.from, to: s.to, animate: animate,
+            onArrive: (animate && s.to === "atk") ? function () { flashTap(); } : null });
+      if (s.both) {                                   // a two-way exchange: the chips cross on the wire
+        first.style.marginTop = "-26px";
+        fly({ row: row, cls: "s2c", lbl: "Key share", from: s.to, to: s.from,
+              animate: animate, offset: 13, delay: 260 });
+      }
+    } else if (s.k === "verify") {
+      park(row, "mark" + (s.cert.bad ? " bad" : ""),
+        (s.cert.bad ? "✕" : "✓") + " browser checks the certificate", "cli", animate);
+      if (animate) {
+        var n = $("#ndcli"); n.classList.add("busy");
+        later(function () { n.classList.remove("busy"); }, 1400);
+      }
+    } else if (s.k === "warn") {
+      park(row, "mark bad", "⚠ blocked — untrusted certificate", "cli", animate);
+    } else if (s.k === "sealed") {
+      fly({ row: row, cls: "sealed", lbl: "🔒 Application Data", from: s.from, to: s.to, animate: animate });
+    } else if (s.k === "pwned") {
+      // browser → attacker (sealed to the wrong key), opened, then re-sealed on to the real server
+      fly({ row: row, cls: "sealed", lbl: "🔒 POST /login", from: "cli", to: "atk", animate: animate,
+            onArrive: animate ? function () { flashTap(); } : null });
+      fly({ row: row, cls: "evil", lbl: "🔒 POST /login", from: "atk", to: "srv", animate: animate, delay: 1250 });
     }
   }
+
+  function flashTap() {
+    var t = $("#tap"); if (!t) return;
+    t.classList.remove("hot"); void t.offsetWidth; t.classList.add("hot");
+  }
+
+  /* ---------------- panels, captions, plumbing ---------------- */
 
   function certHTML(c) {
     var h = '<div class="fld"><span class="k">Issued to</span><span class="v">' + c.cn + '</span></div>' +
@@ -165,72 +326,83 @@
     return h + "</div>";
   }
 
-  function render() {
-    var box = $("#msgs"); box.innerHTML = "";
-    if (!cur) {
-      box.innerHTML = '<div class="empty">Press <b>Play</b> to open a secure connection to majal.sa</div>';
-      $("#ph").textContent = "The server's certificate";
-      $("#panel").innerHTML = '<div class="ph" id="ph">The server\'s certificate</div>' +
-        '<div class="pb"><div class="waiting">The browser hasn\'t been handed a certificate yet.<br>Step through the handshake.</div></div>';
-      setCap();
-      drawDots();
+  function setDetail(s) {
+    var d = $("#det");
+    if (!s) {
+      d.className = "det";
+      d.innerHTML = '<span class="idle">Press <b>Play</b> — watch each message actually cross the wire between ' +
+        'alice\'s browser and majal.sa.</span>';
       return;
     }
+    if (s.k === "msg") {
+      d.className = "det " + s.cls;
+      d.innerHTML = '<div class="hd"><span class="ar">' + s.ar + '</span><span class="ti">' + s.ti + '</span></div>' +
+        '<span class="dt">' + s.dt + "</span>";
+    } else if (s.k === "verify") {
+      d.className = "det " + (s.cert.bad ? "evil" : "s2c");
+      d.innerHTML = '<div class="hd"><span class="ar">⧗</span><span class="ti">Browser verifies the certificate</span></div>' +
+        '<span class="dt">' + (s.cert.bad
+          ? "checking the signature chain… <b>no trusted CA vouches for this</b>"
+          : "name, signature chain and dates all check out") + "</span>";
+    } else if (s.k === "warn") {
+      d.className = "det evil";
+      d.innerHTML = '<div class="hd"><span class="ar">⚠</span><span class="ti">Handshake refused</span></div>' +
+        '<span class="dt">the browser will not encrypt to a certificate nobody vouches for — it stops and shows the ' +
+        'warning on the right</span>';
+    } else if (s.k === "sealed") {
+      d.className = "det sealed";
+      d.innerHTML = '<div class="hd"><span class="ar">🔒</span><span class="ti">Application Data</span></div>' +
+        '<span class="dt">the login now travels sealed with the session key — this is all an eavesdropper sees:</span>' +
+        '<span class="cipher">17 03 03 00 6a 8f 2c d1 4b e0 91 7a c3 5f 88 12 a4 9e 6b 30 db f7 1c 55 a0 …</span>';
+    } else if (s.k === "pwned") {
+      d.className = "det evil";
+      d.innerHTML = '<div class="hd"><span class="ar">🔓</span><span class="ti">Application Data — through you</span></div>' +
+        '<span class="dt">alice clicked through. Her browser trusts <b>your</b> certificate, so it encrypts to <b>you</b> — ' +
+        'you decrypt, read, and re-encrypt on to the real server. She still sees a padlock.</span>' +
+        '<span class="clear">POST /login &nbsp; username=alice&amp;password=Summer2026!</span>';
+    }
+  }
+
+  function render(animateLast) {
+    clearTimers();
+    buildLane();
+    $("#ndcli").classList.remove("alert", "busy");
+
     var shownCert = null, warn = false, sealed = false, pwned = false;
     for (var i = 0; i < cur && i < steps.length; i++) {
       var s = steps[i];
-      if (s.k === "msg") {
-        var d = document.createElement("div");
-        d.className = "msg " + s.cls;
-        d.innerHTML = '<div class="hd"><span class="ar">' + s.ar + '</span><span class="ti">' + s.ti + '</span></div>' +
-          '<span class="dt">' + s.dt + "</span>";
-        box.appendChild(d);
-      } else if (s.k === "verify") {
-        shownCert = s.cert;
-        var v = document.createElement("div");
-        v.className = "msg " + (s.cert.bad ? "evil" : "s2c");
-        v.innerHTML = '<div class="hd"><span class="ar">⧗</span><span class="ti">Browser verifies the certificate</span></div>' +
-          '<span class="dt">' + (s.cert.bad
-            ? "checking the signature chain… <b>no trusted CA vouches for this</b>"
-            : "name, signature chain and dates all check out") + "</span>";
-        box.appendChild(v);
-      } else if (s.k === "warn") { warn = true; }
-      else if (s.k === "sealed") {
-        sealed = true;
-        var e = document.createElement("div");
-        e.className = "msg sealed";
-        e.innerHTML = '<div class="hd"><span class="ar">🔒</span><span class="ti">Application Data</span></div>' +
-          '<span class="dt">the login now travels sealed with the session key — this is all an eavesdropper sees:</span>' +
-          '<span class="cipher">17 03 03 00 6a 8f 2c d1 4b e0 91 7a c3 5f 88 12 a4 9e 6b 30 db f7 1c 55 a0 …</span>';
-        box.appendChild(e);
-      } else if (s.k === "pwned") {
-        pwned = true;
-        var p = document.createElement("div");
-        p.className = "msg evil";
-        p.innerHTML = '<div class="hd"><span class="ar">🔓</span><span class="ti">Application Data — through you</span></div>' +
-          '<span class="dt">alice clicked through. Her browser trusts <b>your</b> certificate, so it encrypts to <b>you</b> — ' +
-          'you decrypt, read, and re-encrypt to the real server. She still sees a padlock.</span>' +
-          '<span class="clear">POST /login &nbsp; username=alice&amp;password=Summer2026!</span>';
-        box.appendChild(p);
-      }
+      if (s.k === "verify") shownCert = s.cert;
+      if (s.k === "warn") warn = true;
+      if (s.k === "sealed") sealed = true;
+      if (s.k === "pwned") pwned = true;
+      drawStep(i, animateLast !== false && i === cur - 1);
     }
-    box.scrollTop = box.scrollHeight;
+    if (warn && !pwned) $("#ndcli").classList.add("alert");
 
-    if (warn) {
+    setDetail(cur ? steps[cur - 1] : null);
+
+    if (pwned) {
+      $("#panel").innerHTML = '<div class="ph">The certificate alice accepted</div><div class="pb">' +
+        certHTML(CERT_BAD) +
+        '<div class="chk no" style="margin-top:8px"><span class="ic">🔓</span><span class="t">She clicked through — her ' +
+        'browser now shows a padlock, and the tunnel ends at <b>you</b>, not at majal.sa</span></div></div>';
+    } else if (warn) {
       $("#panel").innerHTML = '<div class="warn"><div class="ico">⚠</div>' +
         '<h5>Your connection is not private</h5>' +
         '<p>Attackers might be trying to steal your information from <b>majal.sa</b> — for example passwords or credit cards.</p>' +
         '<p class="code">NET::ERR_CERT_AUTHORITY_INVALID</p>' +
         '<div class="btns"><button class="safe" id="wback">← Back to safety</button>' +
         '<button id="wgo">Advanced ▸ Proceed anyway</button></div></div>';
-      $("#wback").onclick = function () { mode = "real"; setMode("real"); cur = steps.length; render(); };
-      $("#wgo").onclick = function () { steps = MITM.concat([{ k: "pwned" }]); cur = steps.length; render(); };
+      $("#wback").onclick = function () { setMode("real"); cur = steps.length; render(false); };
+      $("#wgo").onclick = function () { steps = MITM.concat([{ k: "pwned" }]); cur = steps.length; render(true); };
     } else if (shownCert) {
       $("#panel").innerHTML = '<div class="ph">' + (shownCert.bad ? "The certificate you were handed" : "The server's certificate") +
         '</div><div class="pb">' + certHTML(shownCert) + "</div>";
     } else {
       $("#panel").innerHTML = '<div class="ph">The server\'s certificate</div>' +
-        '<div class="pb"><div class="waiting">Not handed over yet — it arrives with the ServerHello.</div></div>';
+        '<div class="pb"><div class="waiting">' + (cur
+          ? "Nothing to show yet — the certificate rides in with the ServerHello, and the browser opens it on the next step."
+          : "The browser hasn't been handed a certificate yet.<br>Step through the handshake.") + "</div></div>";
     }
     setCap(warn, sealed, pwned);
     drawDots();
@@ -268,15 +440,18 @@
         : "This is the step that actually protects you. Encryption is easy — <b>knowing who you encrypted to</b> is the hard " +
           "part, and that's what the certificate and its CA signature buy.";
     } else if (s && s.k === "msg" && cur === 1) {
-      c.innerHTML = "The browser opens with what it can do. Note it hasn't sent <em>anything</em> secret yet — no password, " +
-        "no key. Everything so far is in the clear.";
+      c.innerHTML = mode === "mitm"
+        ? "Watch where it lands: alice addressed the server, but the ARP spoof means the packet stops at <b>you</b>. " +
+          "Nothing secret has crossed yet — everything so far is in the clear."
+        : "The browser opens with what it can do. Note it hasn't sent <em>anything</em> secret yet — no password, " +
+          "no key. Everything so far is in the clear.";
     } else if (s && s.k === "msg" && cur === 2) {
       c.innerHTML = mode === "mitm"
         ? "To read alice's traffic you must terminate the TLS yourself — which means <b>you</b> have to hand her a certificate."
         : "The server proves who it is by handing over a <b>certificate</b>: its name, its public key, and a signature from a CA.";
     } else if (s && s.k === "msg") {
       c.innerHTML = "Now both sides agree a shared secret without ever transmitting it — exactly Day 1's key exchange, " +
-        "running for real.";
+        "running for real. Note both directions: each side sends its half, neither sends the key.";
     }
   }
 
@@ -288,37 +463,40 @@
   }
 
   function stop() { if (playing) { clearInterval(playing); playing = null; $("#play").textContent = "▶ Play"; } }
-  function next() { if (cur < steps.length) { cur++; render(); } if (cur >= steps.length) stop(); }
+  function next() { if (cur < steps.length) { cur++; render(true); } if (cur >= steps.length) stop(); }
 
   $("#play").onclick = function () {
     if (playing) { stop(); return; }
-    if (cur >= steps.length) { cur = 0; render(); }
+    if (cur >= steps.length) { cur = 0; render(false); }
     $("#play").textContent = "❚❚ Pause";
-    playing = setInterval(next, 3200);   // long enough to read the message + caption before the next one
+    playing = setInterval(next, 3400);   // long enough for the packet to land and the caption to be read
     next();
   };
   $("#next").onclick = function () { stop(); next(); };
-  $("#reset").onclick = function () { stop(); steps = (mode === "real" ? REAL : MITM); cur = 0; render(); };
+  $("#reset").onclick = function () { stop(); steps = (mode === "real" ? REAL : MITM); cur = 0; render(false); };
 
   function setMode(m) {
     mode = m; stop(); steps = (m === "real" ? REAL : MITM); cur = 0;
     [].forEach.call($("#segmode").querySelectorAll("button"), function (x) {
       x.classList.toggle("on", x.getAttribute("data-m") === m); });
-    drawActors(); render();
+    render(false);
   }
   $("#segmode").addEventListener("click", function (e) {
     var b = e.target.closest("button"); if (!b) return; setMode(b.getAttribute("data-m"));
   });
 
-  // hooks: ?mode=mitm&step=4  (step beyond length in mitm shows the pwned state)
+  // re-park every chip if the frame is resized (positions are measured in px)
+  window.addEventListener("resize", function () { render(false); });
+
+  // hooks: ?mode=mitm&step=4 · ?pwned=1
   var q = new URLSearchParams(location.search);
-  var m0 = q.get("mode") === "mitm" ? "mitm" : "real";
+  var m0 = (q.get("mode") === "mitm" || q.get("pwned") === "1") ? "mitm" : "real";
   mode = m0; steps = (m0 === "real" ? REAL : MITM);
   [].forEach.call($("#segmode").querySelectorAll("button"), function (x) {
     x.classList.toggle("on", x.getAttribute("data-m") === m0); });
   if (q.get("pwned") === "1") { steps = MITM.concat([{ k: "pwned" }]); cur = steps.length; }
   else if (q.get("step")) { cur = Math.max(0, Math.min(steps.length, +q.get("step"))); }
-  drawActors(); render();
+  render(false);
 })();
 </script>
 </body></html>
