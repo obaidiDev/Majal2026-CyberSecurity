@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding: 4px 6px; }
+  .w { padding: 10px 12px; }
+  canvas.scene { width: 100%; height: 232px; border: 1px solid #E0E7E8; border-radius: 10px; background: #fff; }
+  .panes { display: grid; grid-template-columns: 1.5fr 1fr; gap: 12px; margin-top: 9px; align-items: start; }
+  .pane { background: #fff; border: 1px solid #E0E7E8; border-radius: 9px; padding: 7px 9px; }
+  .ph { font-size: 11.5px; font-weight: 800; color: #00567C; letter-spacing: .04em; text-transform: uppercase;
+        margin-bottom: 6px; display: flex; align-items: baseline; gap: 7px; }
+  .ph small { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 9.5px; font-weight: 700;
+        color: #7a8f96; letter-spacing: 0; text-transform: none; }
+  .rules { display: flex; flex-direction: column; gap: 4px; }
+  .rule { display: grid; grid-template-columns: 16px 66px 58px 80px 80px 100px 68px; gap: 5px; align-items: center;
+        justify-content: start;
+        background: #F6F8F8; border: 1px solid #E0E7E8; border-left: 4px solid #CDD8DA; border-radius: 6px; padding: 3px 6px; }
+  .rule.allow { border-left-color: #1F8F89; } .rule.deny { border-left-color: #D64545; }
+  .rule.hit { background: #FFF9D6; border-color: #F2D200; box-shadow: 0 0 0 2px rgba(242,210,0,.45); }
+  .rule .n { font-family: "JetBrains Mono", Menlo, monospace; font-size: 10.5px; font-weight: 800; color: #7a8f96; }
+  .rule select { width: 100%; font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 10.5px;
+        font-weight: 700; color: #12333D; border: 1px solid #CDD8DA; border-radius: 5px; padding: 2px 3px; background: #fff; }
+  .rule .ops { display: flex; gap: 3px; justify-content: flex-end; }
+  .mini { padding: 1px 5px; font-size: 10px; border-radius: 5px; line-height: 1.5; }
+  .rowb { display: flex; align-items: center; gap: 8px; margin-top: 7px; flex-wrap: wrap; }
+  .def { font-size: 11.5px; color: #5C7880; font-weight: 700; }
+  .def select { font-family: "JetBrains Mono", Menlo, monospace; font-size: 10.5px; font-weight: 700;
+        border: 1px solid #CDD8DA; border-radius: 5px; padding: 2px 4px; background: #fff; color: #12333D; }
+  .send { display: grid; grid-template-columns: 34px 1fr; gap: 5px 7px; align-items: center; font-size: 11.5px;
+        color: #5C7880; font-weight: 700; }
+  .send select { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 11px; font-weight: 700;
+        border: 1px solid #CDD8DA; border-radius: 5px; padding: 3px 4px; background: #fff; color: #12333D; width: 100%; }
+  .presets { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  .presets button { padding: 3px 8px; font-size: 10.5px; border-radius: 999px; }
+  .cap { min-height: 38px; margin-top: 8px; font-size: 13.5px; }
+  .cap .tag { font-family: "JetBrains Mono", Menlo, monospace; font-size: 11.5px; background: #EEF3F3;
+        border: 1px solid #CDD8DA; border-radius: 4px; padding: 1px 5px; }
+</style>
+</head><body>
+<div class="w">
+  <canvas class="scene" id="cv"></canvas>
+  <div class="panes">
+    <div class="pane">
+      <div class="ph">Firewall rules <small>checked top → bottom, first match wins</small></div>
+      <div class="rules" id="rules"></div>
+      <div class="rowb">
+        <button class="mini" id="add">+ Add rule</button>
+        <span class="def">no match →
+          <select id="defpol"><option value="deny">DENY (default)</option><option value="allow">ALLOW</option></select>
+        </span>
+      </div>
+    </div>
+    <div class="pane">
+      <div class="ph">Send traffic</div>
+      <div class="send">
+        <label for="src">from</label><select id="src"></select>
+        <label for="dst">to</label><select id="dst"></select>
+        <label for="port">port</label><select id="port"></select>
+      </div>
+      <div class="rowb"><button class="primary" id="fire">▶ Send packet</button><button class="mini" id="reset">↺ Reset rules</button></div>
+      <div class="presets" id="presets"></div>
+    </div>
+  </div>
+  <div class="cap" id="cap"></div>
+</div>
+<script>
+// ---------- the world: one perimeter firewall, one attacker outside, two boxes inside ----------
+var HOSTS = {
+  attacker: { nm:"Attacker",  ip:"203.0.113.9",  role:"on the internet", side:"out", col:"#D64545" },
+  web01:    { nm:"web01",     ip:"192.168.1.50", role:"web server",      side:"in",  col:"#1F8F89" },
+  db01:     { nm:"db01",      ip:"192.168.1.60", role:"database",        side:"in",  col:"#00567C" }
+};
+var PORTS = [22, 80, 443, 445, 3306, 4444];
+var PORTNM = {22:"SSH", 80:"HTTP", 443:"HTTPS", 445:"SMB", 3306:"MySQL", 4444:"shell"};
+var DEFAULT_RULES = [
+  { a:"allow", dir:"in",  src:"any", dst:"web01", port:"443" },
+  { a:"deny",  dir:"in",  src:"any", dst:"any",   port:"any" },
+  { a:"allow", dir:"out", src:"any", dst:"any",   port:"any" }
+];
+var PRESETS = [
+  { t:"Web visitor",     s:"attacker", d:"web01",    p:443  },
+  { t:"DB probe",        s:"attacker", d:"db01",     p:3306 },
+  { t:"Reverse shell",   s:"web01",    d:"attacker", p:4444 },
+  { t:"C2 over HTTPS",   s:"web01",    d:"attacker", p:443  },
+  { t:"Inside → inside", s:"web01",    d:"db01",     p:3306 }
+];
+var rules = DEFAULT_RULES.map(function(r){ return {a:r.a,dir:r.dir,src:r.src,dst:r.dst,port:r.port}; });
+
+// ---------- rule evaluation: real first-match-wins semantics ----------
+function dirOf(s,d){
+  if(HOSTS[s].side==="out" && HOSTS[d].side==="in") return "in";
+  if(HOSTS[s].side==="in" && HOSTS[d].side==="out") return "out";
+  return "local";                       // both inside — never crosses the perimeter
+}
+function hostMatch(pat, key){
+  if(pat==="any") return true;
+  if(pat==="outside") return HOSTS[key].side==="out";
+  if(pat==="inside")  return HOSTS[key].side==="in";
+  return pat===key;
+}
+function evaluate(f){                   // f = {src,dst,port,dir}
+  if(f.dir==="local") return { verdict:"local", idx:-1 };
+  for(var i=0;i<rules.length;i++){ var r=rules[i];
+    if(r.dir!=="any" && r.dir!==f.dir) continue;
+    if(!hostMatch(r.src,f.src)) continue;
+    if(!hostMatch(r.dst,f.dst)) continue;
+    if(r.port!=="any" && +r.port!==f.port) continue;
+    return { verdict:r.a, idx:i };
+  }
+  return { verdict:document.getElementById("defpol").value, idx:-1 };
+}
+function ruleText(r){ return r.a.toUpperCase()+" "+r.dir+" "+r.src+" → "+r.dst+" :"+r.port; }
+
+// ---------- rule editor ----------
+var HOSTOPTS = [["any","any"],["outside","internet"],["inside","inside"],["web01","web01"],["db01","db01"]];
+function sel(val, opts, on){
+  var s=document.createElement("select");
+  opts.forEach(function(o){ var v=o[0], t=o[1]; var e=document.createElement("option");
+    e.value=v; e.textContent=t; if(String(v)===String(val)) e.selected=true; s.appendChild(e); });
+  s.onchange=function(){ on(s.value); }; return s;
+}
+function drawRules(hit){
+  var box=document.getElementById("rules"); box.innerHTML="";
+  rules.forEach(function(r,i){
+    var row=document.createElement("div");
+    row.className="rule "+r.a+(hit===i?" hit":"");
+    var n=document.createElement("span"); n.className="n"; n.textContent=(i+1); row.appendChild(n);
+    row.appendChild(sel(r.a,   [["allow","ALLOW"],["deny","DENY"]],            function(v){ r.a=v;   drawRules(); }));
+    row.appendChild(sel(r.dir, [["in","in ↓"],["out","out ↑"],["any","any"]],  function(v){ r.dir=v; drawRules(); }));
+    row.appendChild(sel(r.src, HOSTOPTS,                                       function(v){ r.src=v; drawRules(); }));
+    row.appendChild(sel(r.dst, HOSTOPTS,                                       function(v){ r.dst=v; drawRules(); }));
+    var po=[["any","any port"]]; PORTS.forEach(function(p){ po.push([p,p+" "+PORTNM[p]]); });
+    row.appendChild(sel(r.port, po,                                            function(v){ r.port=v; drawRules(); }));
+    var ops=document.createElement("span"); ops.className="ops";
+    ops.appendChild(btn("▲", function(){ if(i>0){ rules.splice(i-1,0,rules.splice(i,1)[0]); drawRules(); } }));
+    ops.appendChild(btn("▼", function(){ if(i<rules.length-1){ rules.splice(i+1,0,rules.splice(i,1)[0]); drawRules(); } }));
+    ops.appendChild(btn("✕", function(){ rules.splice(i,1); drawRules(); }));
+    row.appendChild(ops); box.appendChild(row);
+  });
+}
+function btn(t,fn){ var b=document.createElement("button"); b.className="mini"; b.textContent=t; b.onclick=fn; return b; }
+
+// ---------- scene ----------
+var cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+var W=900, H=232, DPR=1, L={};
+function fit(){ var cssW=cv.clientWidth||W; DPR=window.devicePixelRatio||1;
+  cv.width=cssW*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); W=cssW; layout(); draw(); }
+window.addEventListener("resize", fit);
+function layout(){
+  var top=32, bot=H-42, cx=Math.round(W*0.5);
+  L={ top:top, bot:bot, cx:cx, wall:{x:cx-24,w:48,y:top,h:bot-top},
+      out:{x:12,w:Math.max(150,cx-120)}, inn:{x:cx+72,w:W-12-(cx+72)} };
+  L.pos = {
+    attacker:{ x:L.out.x+L.out.w/2, y:(top+bot)/2 },
+    web01:   { x:L.inn.x+L.inn.w/2, y:top+(bot-top)*0.26 },
+    db01:    { x:L.inn.x+L.inn.w/2, y:top+(bot-top)*0.76 }
+  };
+}
+function roundRect(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function zone(x,w,label,tint){
+  roundRect(x,L.top,w,L.bot-L.top,10); ctx.fillStyle=tint; ctx.fill();
+  ctx.setLineDash([5,4]); ctx.strokeStyle="#CDD8DA"; ctx.lineWidth=1.4; ctx.stroke(); ctx.setLineDash([]);
+  ctx.font="800 10px 'JetBrains Mono',Menlo,monospace"; ctx.fillStyle="#7a8f96"; ctx.textAlign="left";
+  ctx.fillText(label, x+4, L.top-8);
+}
+function node(k, dim){
+  var p=L.pos[k], h=HOSTS[k], w=136, hh=50, x=p.x-w/2, y=p.y-hh/2;
+  ctx.globalAlpha = dim?0.45:1;
+  roundRect(x,y,w,hh,8); ctx.fillStyle="#fff"; ctx.fill();
+  ctx.strokeStyle=h.col; ctx.lineWidth=2; ctx.stroke();
+  roundRect(x,y,w,16,8); ctx.fillStyle=h.col; ctx.fill(); ctx.fillRect(x,y+8,w,8);
+  ctx.textAlign="center"; ctx.fillStyle="#fff"; ctx.font="800 10.5px 'Avenir Next',system-ui,sans-serif";
+  ctx.fillText(h.nm.toUpperCase(), p.x, y+12);
+  ctx.fillStyle="#12333D"; ctx.font="700 11.5px 'JetBrains Mono',Menlo,monospace";
+  ctx.fillText(h.ip, p.x, y+31);
+  ctx.fillStyle="#7a8f96"; ctx.font="10px 'Avenir Next',system-ui,sans-serif";
+  ctx.fillText(h.role, p.x, y+44);
+  ctx.globalAlpha=1;
+}
+function wall(gapY, state){
+  var w=L.wall, parts=[[w.y,w.h]];
+  if(gapY!=null) parts=[[w.y, gapY-20-w.y],[gapY+20, w.y+w.h-(gapY+20)]];
+  parts.forEach(function(p){ if(p[1]<=0) return;
+    roundRect(w.x,p[0],w.w,p[1],5);
+    ctx.fillStyle = state==="deny" ? "#B23A3A" : (state==="check" ? "#8a6d00" : "#00567C"); ctx.fill();
+    // brickwork
+    ctx.save(); ctx.beginPath(); roundRect(w.x,p[0],w.w,p[1],5); ctx.clip();
+    ctx.strokeStyle="rgba(255,255,255,.18)"; ctx.lineWidth=1;
+    for(var y=p[0]+11; y<p[0]+p[1]; y+=11){ ctx.beginPath(); ctx.moveTo(w.x,y); ctx.lineTo(w.x+w.w,y); ctx.stroke(); }
+    var row=0;
+    for(var y2=p[0]; y2<p[0]+p[1]; y2+=11){ var off=(row%2)?w.w/2:0; row++;
+      ctx.beginPath(); ctx.moveTo(w.x+off+w.w/4,y2); ctx.lineTo(w.x+off+w.w/4,y2+11); ctx.stroke(); }
+    ctx.restore();
+  });
+  ctx.textAlign="center"; ctx.font="800 10px 'JetBrains Mono',Menlo,monospace"; ctx.fillStyle="#00567C";
+  ctx.fillText("FIREWALL", L.cx, L.top-8);
+}
+function chip(x,y,txt,fill,stroke){
+  ctx.font="700 11px 'JetBrains Mono',Menlo,monospace";
+  var w=ctx.measureText(txt).width+16, h=22;
+  roundRect(x-w/2,y-h/2,w,h,6); ctx.fillStyle=fill; ctx.fill();
+  ctx.lineWidth=1.5; ctx.strokeStyle=stroke; ctx.stroke();
+  ctx.fillStyle="#fff"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(txt,x,y+0.5);
+  ctx.textBaseline="alphabetic";
+}
+function badge(txt, col){
+  ctx.font="800 12.5px 'Avenir Next',system-ui,sans-serif";
+  var w=ctx.measureText(txt).width+26, x=L.cx-w/2, y=H-32;
+  roundRect(x,y,w,25,12); ctx.fillStyle=col; ctx.fill();
+  ctx.fillStyle="#fff"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(txt, L.cx, y+13);
+  ctx.textBaseline="alphabetic";
+}
+function burst(x,y,r){
+  ctx.strokeStyle="#D64545"; ctx.lineWidth=3;
+  for(var i=0;i<8;i++){ var a=i*Math.PI/4;
+    ctx.beginPath(); ctx.moveTo(x+Math.cos(a)*r*0.45, y+Math.sin(a)*r*0.45);
+    ctx.lineTo(x+Math.cos(a)*r, y+Math.sin(a)*r); ctx.stroke(); }
+}
+
+// ---------- the packet run ----------
+var run=null, raf=null, t0=0;
+var T_WALL=850, T_CHECK=1450, T_END=2250, T_REPLY=3050;   // ms milestones
+function packetLabel(f){ return "TCP → "+HOSTS[f.dst].ip+":"+f.port; }
+function chipW(txt){ ctx.font="700 11px 'JetBrains Mono',Menlo,monospace"; return ctx.measureText(txt).width+16; }
+// stop the chip clear of the machine it is flying at, so the label never covers the box
+function restAt(k, txt){ var p=L.pos[k], off=68+10+chipW(txt)/2;
+  return { x: p.x + (HOSTS[k].side==="out" ? off : -off), y:p.y }; }
+function edgeOf(k){ var p=L.pos[k]; return { x: p.x + (HOSTS[k].side==="out" ? 68 : -68), y:p.y }; }
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  var f=run, t=f? f.t : 0;
+  var gapY=null, wstate="idle";
+  if(f && f.dir!=="local"){
+    if(t>=T_WALL && t<T_CHECK) wstate="check";
+    if(t>=T_CHECK && f.res.verdict==="deny") wstate="deny";
+    if(t>=T_CHECK && f.res.verdict==="allow") gapY=f.crossY;
+  }
+  zone(L.out.x, L.out.w, "INTERNET · outside", "#FBF3F3");
+  zone(L.inn.x, L.inn.w, "OFFICE LAN · 192.168.1.0/24 · inside", "#F1F7F6");
+  wall(gapY, wstate);
+  ["attacker","web01","db01"].forEach(function(k){ node(k, false); });
+
+  if(!f) return;
+  var A=L.pos[f.src], B=L.pos[f.dst], lbl=packetLabel(f), RPL="reply ✓ (stateful)";
+  var start=restAt(f.src, lbl), end=restAt(f.dst, lbl);
+  var col = HOSTS[f.src].col, dark = f.src==="attacker" ? "#8f2f2f" : "#0b3d4f";
+  function trail(x1,y1,x2,y2,c){ ctx.setLineDash([6,5]); ctx.strokeStyle=c; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); ctx.setLineDash([]); }
+
+  if(f.dir==="local"){                                  // never touches the firewall
+    var lane=Math.max((L.wall.x+L.wall.w + (B.x-68))/2, L.inn.x+chipW(lbl)/2+6),
+        eA=edgeOf(f.src), eB=edgeOf(f.dst);
+    ctx.setLineDash([6,5]); ctx.strokeStyle="#93a6ab"; ctx.lineWidth=2; ctx.beginPath();
+    ctx.moveTo(eA.x,eA.y); ctx.lineTo(lane,eA.y); ctx.lineTo(lane,eB.y); ctx.lineTo(eB.x,eB.y);
+    ctx.stroke(); ctx.setLineDash([]);
+    var tl=Math.min(1, t/(T_END-200));
+    chip(lane, lerp(eA.y, eB.y, tl), lbl, col, dark);
+    if(t>=T_END-200) badge("NEVER INSPECTED — inside the perimeter", "#7a8f96");
+    return;
+  }
+  var wallPt={ x:L.cx, y:f.crossY };
+  trail(start.x,start.y, wallPt.x,wallPt.y, "#C7D5D8");
+  var pos, alpha=1;
+  if(t<T_WALL){ var t1=t/T_WALL; pos={x:lerp(start.x,wallPt.x,t1), y:lerp(start.y,wallPt.y,t1)}; }
+  else if(t<T_CHECK){ pos=wallPt; }
+  else if(f.res.verdict==="allow"){
+    var t2=Math.min(1,(t-T_CHECK)/(T_END-T_CHECK));
+    trail(wallPt.x,wallPt.y, edgeOf(f.dst).x,edgeOf(f.dst).y, "#C7D5D8");
+    pos={x:lerp(wallPt.x,end.x,t2), y:lerp(wallPt.y,end.y,t2)};
+    if(t>=T_END){
+      var rs=restAt(f.dst,RPL), re=restAt(f.src,RPL); rs.y+=19; re.y+=19;   // reply rides just below
+      alpha=Math.max(0.16, 1-(t-T_END)/300);          // the delivered packet dims so the reply reads clean
+      trail(rs.x,rs.y, re.x,re.y, "#9ED3CF");
+      var t3=Math.min(1,(t-T_END)/(T_REPLY-T_END));
+      chip(lerp(rs.x,re.x,t3), lerp(rs.y,re.y,t3), RPL, "#1F8F89", "#17726d");
+    }
+  }
+  else { pos=wallPt; alpha=Math.max(0, 1-(t-T_CHECK)/420); }
+
+  if(f.res.verdict==="deny" && t>=T_CHECK) burst(wallPt.x, wallPt.y, 26+Math.min(12,(t-T_CHECK)/22));
+  ctx.globalAlpha=alpha; chip(pos.x,pos.y, packetLabel(f), col, dark); ctx.globalAlpha=1;
+
+  if(t>=T_CHECK){
+    if(f.res.verdict==="allow") badge("ALLOWED"+(f.res.idx>=0? " by rule "+(f.res.idx+1) : " by default policy"), "#1F8F89");
+    else badge("BLOCKED"+(f.res.idx>=0? " by rule "+(f.res.idx+1) : " by default policy"), "#D64545");
+  } else if(t>=T_WALL){ badge("checking rules…", "#8a6d00"); }
+}
+function lerp(a,b,t){ return a+(b-a)*t; }
+
+function tick(ts){
+  if(!t0) t0=ts; run.t=ts-t0; draw();
+  var done = run.dir==="local" ? T_END : (run.res.verdict==="allow" ? T_REPLY : T_END);
+  if(run.t<done){ raf=requestAnimationFrame(tick); return; }
+  run.t=done; draw(); raf=null;
+}
+function fire(){
+  var s=document.getElementById("src").value, d=document.getElementById("dst").value,
+      p=+document.getElementById("port").value;
+  if(s===d){ cap('<span class="dngr">Pick two different machines.</span>'); return; }
+  var f={ src:s, dst:d, port:p, dir:dirOf(s,d) };
+  f.res=evaluate(f);
+  f.crossY=(L.pos[s].y+L.pos[d].y)/2;
+  f.t=0; run=f; t0=0;
+  drawRules(f.res.idx>=0? f.res.idx : null);
+  if(raf) cancelAnimationFrame(raf); raf=requestAnimationFrame(tick);
+  explain(f);
+}
+function cap(html){ document.getElementById("cap").innerHTML=html; }
+function explain(f){
+  var line='<span class="tag">'+HOSTS[f.src].ip+' → '+HOSTS[f.dst].ip+':'+f.port+'</span> ';
+  if(f.dir==="local"){
+    cap(line+'both machines are <b>inside</b>, so this traffic never reaches the perimeter firewall — '+
+        '<span class="dngr">no rule you write here can stop it.</span> Stopping it needs <em>segmentation</em>: another firewall between them.');
+    return;
+  }
+  var dirTxt = f.dir==="in" ? "<b>inbound</b> (internet → office)" : "<b>outbound</b> (office → internet)";
+  if(f.res.idx>=0){
+    var r=rules[f.res.idx];
+    cap(line+dirTxt+' matched rule <b>#'+(f.res.idx+1)+'</b> — <span class="tag">'+ruleText(r)+'</span> → '+
+      (f.res.verdict==="allow"
+        ? '<em>allowed through</em>. The reply comes back automatically: a firewall is <em>stateful</em>.'
+        : '<span class="dngr">dropped at the wall</span>. Nothing reaches the destination.'));
+  } else {
+    cap(line+dirTxt+' matched <b>no rule</b>, so the default policy applies → '+
+      (f.res.verdict==="allow" ? '<em>allowed</em>.' : '<span class="dngr">dropped</span>.'));
+  }
+}
+
+// ---------- wiring ----------
+function fillHosts(){
+  ["src","dst"].forEach(function(id){
+    var s=document.getElementById(id); s.innerHTML="";
+    Object.keys(HOSTS).forEach(function(k){ var o=document.createElement("option");
+      o.value=k; o.textContent=HOSTS[k].nm+"  "+HOSTS[k].ip; s.appendChild(o); });
+  });
+  document.getElementById("src").value="attacker";
+  document.getElementById("dst").value="web01";
+  var p=document.getElementById("port"); p.innerHTML="";
+  PORTS.forEach(function(n){ var o=document.createElement("option"); o.value=n; o.textContent=n+"  "+PORTNM[n]; p.appendChild(o); });
+  p.value=443;
+}
+function fillPresets(){
+  var box=document.getElementById("presets");
+  PRESETS.forEach(function(pr){ var b=document.createElement("button"); b.textContent=pr.t;
+    b.onclick=function(){ document.getElementById("src").value=pr.s; document.getElementById("dst").value=pr.d;
+      document.getElementById("port").value=pr.p; fire(); };
+    box.appendChild(b); });
+}
+document.getElementById("fire").onclick=fire;
+document.getElementById("add").onclick=function(){
+  rules.push({a:"deny",dir:"out",src:"any",dst:"any",port:"4444"}); drawRules(); };
+document.getElementById("reset").onclick=function(){
+  rules=DEFAULT_RULES.map(function(r){ return {a:r.a,dir:r.dir,src:r.src,dst:r.dst,port:r.port}; });
+  document.getElementById("defpol").value="deny";
+  run=null; if(raf)cancelAnimationFrame(raf); raf=null; drawRules(); draw(); intro(); };
+function intro(){ cap('Write a policy on the left, then fire a packet on the right. Rules are read <b>top to bottom</b> and the '+
+  '<b>first one that matches decides</b> — so the order you put them in is part of the policy.'); }
+
+fillHosts(); fillPresets(); drawRules(); fit(); intro();
+// hook: ?fire=src,dst,port for screenshots
+var q=(location.search.match(/fire=([a-z0-9]+),([a-z0-9]+),(\d+)/i)||[]);
+if(q[1]){ document.getElementById("src").value=q[1]; document.getElementById("dst").value=q[2];
+  document.getElementById("port").value=q[3]; fire(); }
+</script>
+</body></html>
