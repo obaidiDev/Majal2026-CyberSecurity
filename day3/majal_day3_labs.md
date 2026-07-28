@@ -42,7 +42,7 @@ You'll work from **Kali Linux**. The tools you need are:
 - **netcat (`nc`)** — raw TCP connection tool (Lab 3)
 - **telnet** — interactive TCP client (Lab 3)
 
-Most ship by default. `telnet` occasionally doesn't, so make sure it's present:
+Most ship by default on Kali. `telnet` occasionally doesn't, so make sure it's present:
 
 ```bash
 sudo apt update && sudo apt install -y telnet
@@ -52,6 +52,49 @@ Confirm the rest are available:
 
 ```bash
 which wireshark nmap nc telnet
+```
+
+> Working from your own **Windows** or **Mac** machine instead of (or alongside)
+> the Kali VM? Use the equivalent commands below to get set up.
+
+### macOS
+
+Install with [Homebrew](https://brew.sh):
+
+```bash
+brew install wireshark nmap netcat telnet
+```
+
+Confirm:
+
+```bash
+which wireshark nmap nc telnet
+```
+
+### Windows
+
+Install with [winget](https://learn.microsoft.com/windows/package-manager/winget/)
+(or grab installers straight from wireshark.org and nmap.org):
+
+```powershell
+winget install WiresharkFoundation.Wireshark
+winget install Insecure.Nmap
+```
+
+`nc` and `telnet` aren't built in on modern Windows:
+
+- Nmap's installer already bundles **`ncat`** — a drop-in `nc` replacement.
+  Wherever this lab says `nc`, use `ncat` instead.
+- The Telnet client is a Windows feature you enable, not a package:
+
+```powershell
+dism /online /Enable-Feature /FeatureName:TelnetClient /All
+```
+
+Confirm what's on your PATH:
+
+```powershell
+where.exe wireshark nmap ncat telnet
 ```
 
 ---
@@ -125,14 +168,17 @@ view down to the protocol or host you care about, then read only what's left.
 
 ## The Situation
 
-You have a foothold on the network and a single target in front of you at
-`TARGET_IP`. Before you can do anything to it, you need to **know it** — which
-hosts are alive, which ports are open, and *what software* is answering on each
-one. This is reconnaissance, and it's the step amateurs rush and professionals
-never skip.
+You have a foothold on the network — a whole subnet in front of you, not just
+one machine. Before you can do anything to a specific target, you need to
+**know the ground**: which hosts are alive, which ports are open, and *what
+software* is answering on each one. This is reconnaissance, and it's the step
+amateurs rush and professionals never skip.
 
 Nmap is the standard tool for this. The rest of this lab teaches you its most
-important options; the tasks at the end put them to work.
+important options; the tasks at the end put them to work — first across the
+whole network, then digging into individual hosts. (Your actual `TARGET_IP`
+for Lab 3 is one specific host on this network. You'll pin it down for real,
+with a full scan of its own, at the start of Lab 3.)
 
 ## Understanding Nmap
 
@@ -195,29 +241,46 @@ is running *this exact software, this exact version*."
 
 ## Your Objectives
 
-Scan `TARGET_IP` and build a complete profile of it. Use the flags above to
-answer each item — choose the right tool for each question.
+Put the flags above to work. This time you're not scanning one fixed box —
+you're mapping a network, then choosing what to dig into.
 
-1. **Is it alive?** Confirm the target is up.
-2. **What's open?** Enumerate the open ports. Don't assume the defaults are
-   enough — consider scanning beyond the top 1,000.
-3. **What's running?** For **every** open port, identify the **service and its
-   exact version number**. This is the most important part of the lab — be
-   thorough and write the versions down precisely.
-4. **Go deeper on one service.** Pick an interesting service and run an
-   appropriate NSE script against it to learn more than a basic scan reveals.
-5. **Save your work.** Output your findings to a file so you can refer back to
-   them in Lab 3.
+1. **Map the network.** Run a ping sweep across the lab subnet and see which
+   hosts answer. This is host discovery — the first move on any network you
+   don't already know.
+2. **Pick a host, port scan it.** Choose one live IP from your sweep and
+   enumerate its open ports. Don't assume the defaults are enough — consider
+   scanning beyond the top 1,000.
+3. **Pick a different host, service & version scan it.** Choose another live
+   IP and identify the **service and exact version number** behind each of its
+   open ports. This is the single most valuable thing recon gives you — write
+   the versions down precisely.
 
-## Deliverable — Recon Table
+### Bonus — go further
 
-Fill this in. You'll need it for the next lab.
+4. **Go deeper on one service.** Pick an interesting open port from either
+   host and run an appropriate NSE script against it to learn more than a
+   basic scan reveals.
+5. **Save your work.** Output your findings to a file (`-oN` / `-oG`). A saved
+   scan is a habit that pays off the moment you need to check something again
+   — including in Lab 3.
 
-| Port | Protocol | Service | **Version** | Notes |
-|------|----------|---------|-------------|-------|
-|      |          |         |             |       |
-|      |          |         |             |       |
-|      |          |         |             |       |
+## Deliverable — Recon Notes
+
+Fill this in. You'll want it on hand for the next lab, especially once
+`TARGET_IP` turns out to be one of the hosts you've already touched.
+
+**Host A — port scan**
+
+| IP | Open ports |
+|----|------------|
+|    |            |
+
+**Host B — service & version scan**
+
+| IP | Port | Protocol | Service | **Version** |
+|----|------|----------|---------|-------------|
+|    |      |          |         |             |
+|    |      |          |         |             |
 
 > 🔎 Look hard at those **version numbers**. Old software is old for a reason,
 > and a version string is often the single most valuable thing recon gives you.
@@ -308,7 +371,8 @@ If there's a shell listening on that port, `nc` drops you straight into it —
 anything you type is run on the remote machine, and its output comes back to you.
 That makes it the tool of choice for interacting with a shell once one becomes
 available to you. (`nc` can also *listen* for incoming connections with `-l` —
-worth remembering; which direction you need depends on the situation.)
+worth remembering; which direction you need depends on the situation.) On
+Windows, use `ncat` in place of `nc` — same idea, same flags.
 
 Once you have a shell, confirm who you are with:
 

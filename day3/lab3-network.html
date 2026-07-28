@@ -177,7 +177,7 @@ footer{border-top:1px solid var(--line); background:var(--bg)}
 <li class="l2"><a href="#the-situation">The Situation</a></li>
 <li class="l2"><a href="#understanding-nmap">Understanding Nmap</a></li>
 <li class="l2"><a href="#your-objectives">Your Objectives</a></li>
-<li class="l2"><a href="#deliverable-recon-table">Deliverable — Recon Table</a></li>
+<li class="l2"><a href="#deliverable-recon-notes">Deliverable — Recon Notes</a></li>
 <li class="l1"><a href="#lab-3-pop-the-box">Lab 3 — Pop the Box 💥</a></li>
 <li class="l2"><a href="#the-objective">The Objective</a></li>
 <li class="l2"><a href="#step-1-point-your-recon-at-the-target">Step 1 — Point Your Recon at the Target</a></li>
@@ -213,11 +213,37 @@ deliberately vulnerable target on an isolated lab network. Keep it there.</p></d
 <li><strong>netcat (<code>nc</code>)</strong> — raw TCP connection tool (Lab 3)</li>
 <li><strong>telnet</strong> — interactive TCP client (Lab 3)</li>
 </ul>
-<p>Most ship by default. <code>telnet</code> occasionally doesn't, so make sure it's present:</p>
+<p>Most ship by default on Kali. <code>telnet</code> occasionally doesn't, so make sure it's present:</p>
 <pre><code class="language-bash">sudo apt update &amp;&amp; sudo apt install -y telnet
 </code></pre>
 <p>Confirm the rest are available:</p>
 <pre><code class="language-bash">which wireshark nmap nc telnet
+</code></pre>
+<div class="callout"><p>Working from your own <strong>Windows</strong> or <strong>Mac</strong> machine instead of (or alongside)
+the Kali VM? Use the equivalent commands below to get set up.</p></div>
+<h3>macOS</h3>
+<p>Install with <a href="https://brew.sh">Homebrew</a>:</p>
+<pre><code class="language-bash">brew install wireshark nmap netcat telnet
+</code></pre>
+<p>Confirm:</p>
+<pre><code class="language-bash">which wireshark nmap nc telnet
+</code></pre>
+<h3>Windows</h3>
+<p>Install with <a href="https://learn.microsoft.com/windows/package-manager/winget/">winget</a>
+(or grab installers straight from wireshark.org and nmap.org):</p>
+<pre><code class="language-powershell">winget install WiresharkFoundation.Wireshark
+winget install Insecure.Nmap
+</code></pre>
+<p><code>nc</code> and <code>telnet</code> aren't built in on modern Windows:</p>
+<ul>
+<li>Nmap's installer already bundles <strong><code>ncat</code></strong> — a drop-in <code>nc</code> replacement.
+Wherever this lab says <code>nc</code>, use <code>ncat</code> instead.</li>
+<li>The Telnet client is a Windows feature you enable, not a package:</li>
+</ul>
+<pre><code class="language-powershell">dism /online /Enable-Feature /FeatureName:TelnetClient /All
+</code></pre>
+<p>Confirm what's on your PATH:</p>
+<pre><code class="language-powershell">where.exe wireshark nmap ncat telnet
 </code></pre>
 <hr />
 <hr />
@@ -277,13 +303,16 @@ view down to the protocol or host you care about, then read only what's left.</p
 <h1 id="lab-2-mapping-the-target-with-nmap">Lab 2 — Mapping the Target with Nmap 🗺️</h1>
 <p><strong>Duration:</strong> ~45 min · <strong>Tool:</strong> Nmap</p>
 <h2 id="the-situation">The Situation</h2>
-<p>You have a foothold on the network and a single target in front of you at
-<code>TARGET_IP</code>. Before you can do anything to it, you need to <strong>know it</strong> — which
-hosts are alive, which ports are open, and <em>what software</em> is answering on each
-one. This is reconnaissance, and it's the step amateurs rush and professionals
-never skip.</p>
+<p>You have a foothold on the network — a whole subnet in front of you, not just
+one machine. Before you can do anything to a specific target, you need to
+<strong>know the ground</strong>: which hosts are alive, which ports are open, and <em>what
+software</em> is answering on each one. This is reconnaissance, and it's the step
+amateurs rush and professionals never skip.</p>
 <p>Nmap is the standard tool for this. The rest of this lab teaches you its most
-important options; the tasks at the end put them to work.</p>
+important options; the tasks at the end put them to work — first across the
+whole network, then digging into individual hosts. (Your actual <code>TARGET_IP</code>
+for Lab 3 is one specific host on this network. You'll pin it down for real,
+with a full scan of its own, at the start of Lab 3.)</p>
 <h2 id="understanding-nmap">Understanding Nmap</h2>
 <p>At its simplest, Nmap takes a target and reports which ports are <strong>open</strong>,
 <strong>closed</strong>, or <strong>filtered</strong>, and — with the right options — what's running behind
@@ -425,40 +454,59 @@ is running <em>this exact software, this exact version</em>.&quot;</p>
 </tbody>
 </table></div>
 <h2 id="your-objectives">Your Objectives</h2>
-<p>Scan <code>TARGET_IP</code> and build a complete profile of it. Use the flags above to
-answer each item — choose the right tool for each question.</p>
+<p>Put the flags above to work. This time you're not scanning one fixed box —
+you're mapping a network, then choosing what to dig into.</p>
 <ol>
-<li><strong>Is it alive?</strong> Confirm the target is up.</li>
-<li><strong>What's open?</strong> Enumerate the open ports. Don't assume the defaults are
-enough — consider scanning beyond the top 1,000.</li>
-<li><strong>What's running?</strong> For <strong>every</strong> open port, identify the <strong>service and its
-exact version number</strong>. This is the most important part of the lab — be
-thorough and write the versions down precisely.</li>
-<li><strong>Go deeper on one service.</strong> Pick an interesting service and run an
-appropriate NSE script against it to learn more than a basic scan reveals.</li>
-<li><strong>Save your work.</strong> Output your findings to a file so you can refer back to
-them in Lab 3.</li>
+<li><strong>Map the network.</strong> Run a ping sweep across the lab subnet and see which
+hosts answer. This is host discovery — the first move on any network you
+don't already know.</li>
+<li><strong>Pick a host, port scan it.</strong> Choose one live IP from your sweep and
+enumerate its open ports. Don't assume the defaults are enough — consider
+scanning beyond the top 1,000.</li>
+<li><strong>Pick a different host, service &amp; version scan it.</strong> Choose another live
+IP and identify the <strong>service and exact version number</strong> behind each of its
+open ports. This is the single most valuable thing recon gives you — write
+the versions down precisely.</li>
 </ol>
-<h2 id="deliverable-recon-table">Deliverable — Recon Table</h2>
-<p>Fill this in. You'll need it for the next lab.</p>
+<h3>Bonus — go further</h3>
+<ol start="4">
+<li><strong>Go deeper on one service.</strong> Pick an interesting open port from either
+host and run an appropriate NSE script against it to learn more than a
+basic scan reveals.</li>
+<li><strong>Save your work.</strong> Output your findings to a file (<code>-oN</code> / <code>-oG</code>). A saved
+scan is a habit that pays off the moment you need to check something again
+— including in Lab 3.</li>
+</ol>
+<h2 id="deliverable-recon-notes">Deliverable — Recon Notes</h2>
+<p>Fill this in. You'll want it on hand for the next lab, especially once
+<code>TARGET_IP</code> turns out to be one of the hosts you've already touched.</p>
+<p><strong>Host A — port scan</strong></p>
 <div class="tw"><table>
 <thead>
 <tr>
-  <th>Port</th>
-  <th>Protocol</th>
-  <th>Service</th>
-  <th><strong>Version</strong></th>
-  <th>Notes</th>
+  <th>IP</th>
+  <th>Open ports</th>
 </tr>
 </thead>
 <tbody>
 <tr>
   <td></td>
   <td></td>
-  <td></td>
-  <td></td>
-  <td></td>
 </tr>
+</tbody>
+</table></div>
+<p><strong>Host B — service &amp; version scan</strong></p>
+<div class="tw"><table>
+<thead>
+<tr>
+  <th>IP</th>
+  <th>Port</th>
+  <th>Protocol</th>
+  <th>Service</th>
+  <th><strong>Version</strong></th>
+</tr>
+</thead>
+<tbody>
 <tr>
   <td></td>
   <td></td>
@@ -540,7 +588,8 @@ with whatever is on the other end:</p>
 anything you type is run on the remote machine, and its output comes back to you.
 That makes it the tool of choice for interacting with a shell once one becomes
 available to you. (<code>nc</code> can also <em>listen</em> for incoming connections with <code>-l</code> —
-worth remembering; which direction you need depends on the situation.)</p>
+worth remembering; which direction you need depends on the situation.) On
+Windows, use <code>ncat</code> in place of <code>nc</code> — same idea, same flags.</p>
 <p>Once you have a shell, confirm who you are with:</p>
 <pre><code class="language-bash">whoami
 id
