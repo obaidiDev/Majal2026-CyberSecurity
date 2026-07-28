@@ -256,12 +256,9 @@ is to get the command right and read what it hands back.
 
 ### Optional — go further
 
-4. **Task 4 — Go deeper on one service.** Pick an interesting open port from
-   Task 3 and run an appropriate NSE script against it to learn more than a
-   basic scan reveals.
-5. **Task 5 — Save your work.** Output a scan to a file (`-oN` / `-oG`) instead
+4. **Task 4 — Save your work.** Output a scan to a file (`-oN` / `-oG`) instead
    of just the terminal. A saved scan is a habit worth building early.
-6. **Task 6 — OS fingerprint.** Run OS detection (`-O`) against your chosen IP
+5. **Task 5 — OS fingerprint.** Run OS detection (`-O`) against your chosen IP
    and compare its guess against what you already inferred from the open
    ports and versions.
 
