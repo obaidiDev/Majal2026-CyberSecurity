@@ -1287,8 +1287,9 @@
       <div class="callout hot" style="margin-top:.9em">This is why the loop ends at the Domain Controller. Every hop you make is
       really a hunt for <strong>one credential the whole domain trusts</strong> — and once you hold it, you stop hacking and
       simply <em>log in</em>.</div>
-      <aside class="notes">A definition slide, deliberately not a toy — and it must come before lateral movement, because until
-      now "domain admin" has been an undefined goal. Same discipline as Act 1: teach the mechanism before you weaponise it.
+      <aside class="notes">A definition slide — the vocabulary; the next slide is the live simulation of the same three ideas, and both
+      must come before lateral movement, because until now "domain admin" has been an undefined goal. Same discipline as Act 1: teach the
+      mechanism before you weaponise it.
       Explain it from the IT side first so it doesn't sound sinister: managing hundreds of machines with local accounts is
       impossible, so Windows networks centralise identity in Active Directory. Then turn each convenience into leverage —
       (1) one credential works everywhere, so one stolen credential works everywhere; (2) the DC must know every hash in order
@@ -1298,6 +1299,37 @@
       slide is the lock. Mention that Linux/macOS shops have equivalents (LDAP, Kerberos realms, SSO/Entra ID) and the logic is
       identical: centralised identity is a huge security win <em>and</em> a huge single point of failure. Defences arrive
       Thursday — tiered admin, separate admin accounts, and never letting a domain admin log into an ordinary workstation.</aside>
+    </section>
+
+    <!-- ============ ACT 2 · THE DOMAIN, LIVE ============ -->
+    <section>
+      <p class="kicker">Act 2 · the target · the domain, working</p>
+      <h2>Inside one domain login: who actually decides</h2>
+      <iframe class="wframe" style="height:515px"
+              src="widgets/domain_ad.html?v=1"
+              title="Active Directory and the domain controller: login, ticket, access" scrolling="no"></iframe>
+      <aside class="notes">The mechanism behind the definitions you just gave. Frame the two halves: <b>left is Active Directory
+      itself</b> — the database of user, computer and group objects — and <b>right is the network</b>. Say it plainly: dev-pc holds no
+      company accounts at all.
+      <b>(1)</b> As alice, open <span class="mono">\\fileserver\Finance</span> and press <b>Sign in &amp; open</b>. Narrate the four beats:
+      the workstation <em>cannot</em> check the password, so it forwards proof to dc01 → the DC opens AD, finds CN=alice and compares the
+      stored <b>NT hash</b> (really computed — the same hashes as the credential slide two back; every account in the company is in that
+      database) → it issues a <b>ticket stamped with her groups</b> → the <b>fileserver</b> grants access by reading the ticket. Land the
+      core sentence: <b>authentication happens once, at the DC; authorisation happens at each resource, off group membership</b> — the file
+      server never saw her password and keeps no account list of its own.
+      <b>(2)</b> Without signing out, switch to <span class="mono">\\fileserver\IT-Tools</span> and run again — no re-authentication (the
+      ticket is cached, which is exactly why one login opens every machine), and it is <b>DENIED</b>. What stopped her was not a password
+      but a <em>group</em>.
+      <b>(3)</b> The punchline: tick <b>Domain Admins</b> on alice. Note the ticket goes <b>⚠ stale</b> (real behaviour — Windows makes you
+      log off after a group change). <b>Sign out</b>, then <b>log on to dc01</b> → granted. <em>One checkbox in a database just made her
+      administrator of every machine in the company</em> — that is what an attacker is hunting, and why Domain Admin ends the game.
+      <b>(4)</b> If time: click the <b>Domain Admins</b> group row (membership is the whole game); un-join <b>dev-pc</b> to show the world
+      <em>without</em> a domain — alice is simply unknown, i.e. a separate account on every machine; and type a <b>wrong password</b> to show
+      the <b>DC</b> refusing, not the workstation — one server decides for the whole company, so it can lock, log and demand MFA everywhere
+      at once (and is equally the single point of failure).
+      Honest-at-toy-scale line: the hashes and the comparison are real; Kerberos is simplified (one exchange instead of AS/TGS, no crypto
+      drawn on the ticket). Bridge to the next slide: that directory holds every hash in the building, and Domain Admin is what the
+      lateral-movement chain is climbing towards.</aside>
     </section>
 
     <!-- ================= ACT 2 · LATERAL MOVEMENT (marquee) ================= -->

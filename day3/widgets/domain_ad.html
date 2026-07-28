@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding: 4px 6px; }
+  .w { padding: 10px 12px; }
+  .grid { display: grid; grid-template-columns: 268px 1fr; gap: 10px; align-items: stretch; }
+  .pane { background: #fff; border: 1px solid #E0E7E8; border-radius: 9px; padding: 7px 9px; }
+  .ph { font-size: 11px; font-weight: 800; color: #00567C; letter-spacing: .04em; text-transform: uppercase;
+        margin-bottom: 5px; display: flex; align-items: baseline; gap: 6px; }
+  .ph small { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 9.5px; font-weight: 700;
+        color: #7a8f96; letter-spacing: 0; text-transform: none; }
+  canvas.scene { width: 100%; height: 244px; border: 1px solid #E0E7E8; border-radius: 10px; background: #fff; }
+  .row2 { display: grid; grid-template-columns: 1.15fr 1fr; gap: 10px; margin-top: 9px; }
+
+  /* ---- directory tree ---- */
+  .tnode { font-size: 11.5px; line-height: 1.5; }
+  .thead { font-family: "JetBrains Mono", Menlo, monospace; font-size: 10px; font-weight: 800; color: #7a8f96;
+        padding: 3px 4px 1px; letter-spacing: .02em; }
+  .trow { display: flex; align-items: center; gap: 5px; padding: 2px 5px; border-radius: 5px;
+        border: 1.5px solid transparent; margin-left: 10px; }
+  .trow .ico { width: 13px; text-align: center; font-size: 10.5px; opacity: .85; }
+  .trow .cn { font-family: "JetBrains Mono", Menlo, monospace; font-weight: 700; color: #12333D; }
+  .trow .sub { color: #8b9ea4; font-size: 10px; margin-left: auto; white-space: nowrap; }
+  .trow.pick { cursor: pointer; }
+  .trow.pick:hover { background: #EEF3F3; }
+  .trow.sel { background: #E2F1F0; border-color: #1F8F89; }
+  .trow.mem { background: #FFF9D6; border-color: #F2D200; }
+  .trow.hit { background: #FFF9D6; border-color: #F2D200; box-shadow: 0 0 0 2px rgba(242,210,0,.45); }
+  .trow.da .cn { color: #D64545; }
+  .trow.off { opacity: .5; }
+  .trow.off .cn { text-decoration: line-through; }
+  .jbtn { font-family: inherit; font-size: 9.5px; font-weight: 800; border-radius: 999px; padding: 0 6px;
+        border: 1px solid #1F8F89; background: #E2F1F0; color: #17726d; cursor: pointer; margin-left: auto; }
+  .jbtn.no { border-color: #D64545; background: #FBECEC; color: #b3261e; }
+
+  /* ---- session / action panes ---- */
+  .fld { display: grid; grid-template-columns: 62px 1fr; gap: 4px 7px; align-items: center;
+        font-size: 11px; color: #5C7880; font-weight: 700; }
+  .fld input, .fld select { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 11px;
+        font-weight: 700; border: 1px solid #CDD8DA; border-radius: 5px; padding: 3px 5px; background: #fff;
+        color: #12333D; width: 100%; }
+  .fld input.bad { border-color: #D64545; background: #FFF6F6; }
+  .gchips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+  .gc { font-size: 10px; font-weight: 800; border-radius: 999px; padding: 2px 7px; cursor: pointer;
+        border: 1px solid #CDD8DA; background: #fff; color: #8b9ea4; }
+  .gc.in { background: #00567C; border-color: #00567C; color: #fff; }
+  .gc.in.da { background: #D64545; border-color: #D64545; }
+  .gc.lock { cursor: default; background: #EEF3F3; border-color: #CDD8DA; color: #5C7880; }
+  .hashline { font-family: "JetBrains Mono", Menlo, monospace; font-size: 9.5px; color: #93a4aa; margin-top: 6px; }
+  .hashline b { color: #5C7880; }
+  .ctlrow { display: flex; gap: 6px; margin-top: 7px; flex-wrap: wrap; align-items: center; }
+  .ctlrow button { padding: 5px 11px; font-size: 11.5px; }
+  .mini { padding: 2px 7px !important; font-size: 10px !important; }
+  .wallet { margin-top: 7px; font-size: 10.5px; font-weight: 700; color: #8b9ea4;
+        border-top: 1px dashed #E0E7E8; padding-top: 5px; }
+  .wallet .tk { color: #8a6d00; }
+  .wallet .stale { color: #b3261e; }
+  .cap { min-height: 40px; margin-top: 9px; font-size: 13.5px; }
+  .cap .tag { font-family: "JetBrains Mono", Menlo, monospace; font-size: 11.5px; background: #EEF3F3;
+        border: 1px solid #CDD8DA; border-radius: 4px; padding: 1px 5px; }
+</style>
+</head><body>
+<div class="w">
+  <div class="grid">
+    <!-- ============ THE DIRECTORY ITSELF ============ -->
+    <div class="pane">
+      <div class="ph">Active Directory <small>majal.local</small></div>
+      <div class="tnode" id="tree"></div>
+    </div>
+
+    <!-- ============ THE NETWORK + THE CHECKS ============ -->
+    <div>
+      <canvas class="scene" id="cv"></canvas>
+      <div class="row2">
+        <div class="pane">
+          <div class="ph">Who you are <small id="who">alice</small></div>
+          <div class="fld">
+            <label for="pw">password</label><input id="pw" value="Summer2026!" spellcheck="false">
+          </div>
+          <div class="gchips" id="gchips"></div>
+          <div class="hashline" id="hl"></div>
+        </div>
+        <div class="pane">
+          <div class="ph">What you want</div>
+          <div class="fld"><label for="res">open</label><select id="res"></select></div>
+          <div class="ctlrow">
+            <button class="primary" id="go">▶ Sign in &amp; open</button>
+            <button class="mini" id="out">sign out</button>
+            <button class="mini" id="rst">↺ reset</button>
+          </div>
+          <div class="wallet" id="wallet"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="cap" id="cap"></div>
+</div>
+<script>
+/* ---------------------------------------------------------------------------
+   Domain Controller / Active Directory — the mechanism, at toy scale.
+
+   Real bits: the NT hashes are computed live (MD4 of the UTF-16LE password, the
+   same function Day 3's credential slide uses), so "the DC compares your proof
+   to the stored hash" is a real comparison of real hashes. The ticket carries
+   group memberships and the resource server authorises off THAT list without
+   ever seeing a password — which is why editing memberOf in the directory
+   changes what doors open, and why an already-issued ticket goes stale.
+   Simplified: one DC, no AS/TGS split, no crypto on the ticket itself.
+   --------------------------------------------------------------------------- */
+
+/* ---------- real NTLM (MD4 over UTF-16LE) ---------- */
+function md4(bytes){
+  function rol(x,n){ return ((x<<n)|(x>>>(32-n)))>>>0; }
+  var msg=bytes.slice(), bitLen=bytes.length*8;
+  msg.push(0x80); while(msg.length%64!==56) msg.push(0);
+  var lo=bitLen>>>0, hi=Math.floor(bitLen/4294967296);
+  msg.push(lo&255,(lo>>>8)&255,(lo>>>16)&255,(lo>>>24)&255,hi&255,(hi>>>8)&255,(hi>>>16)&255,(hi>>>24)&255);
+  var A=0x67452301,B=0xefcdab89,C=0x98badcfe,D=0x10325476;
+  var F=function(x,y,z){return (x&y)|(~x&z);}, G=function(x,y,z){return (x&y)|(x&z)|(y&z);}, H=function(x,y,z){return x^y^z;};
+  var S1=[3,7,11,19], S2=[3,5,9,13], S3=[3,9,11,15];
+  var O2=[0,4,8,12,1,5,9,13,2,6,10,14,3,7,11,15], O3=[0,8,4,12,2,10,6,14,1,9,5,13,3,11,7,15];
+  for(var off=0; off<msg.length; off+=64){
+    var X=[],i;
+    for(i=0;i<16;i++) X[i]=(msg[off+i*4]|(msg[off+i*4+1]<<8)|(msg[off+i*4+2]<<16)|(msg[off+i*4+3]<<24))>>>0;
+    var a=A,b=B,c=C,d=D,s;
+    for(i=0;i<16;i++){ s=S1[i%4];
+      if(i%4===0) a=rol((a+F(b,c,d)+X[i])>>>0,s); else if(i%4===1) d=rol((d+F(a,b,c)+X[i])>>>0,s);
+      else if(i%4===2) c=rol((c+F(d,a,b)+X[i])>>>0,s); else b=rol((b+F(c,d,a)+X[i])>>>0,s); }
+    for(i=0;i<16;i++){ s=S2[i%4];
+      if(i%4===0) a=rol((a+G(b,c,d)+X[O2[i]]+0x5a827999)>>>0,s); else if(i%4===1) d=rol((d+G(a,b,c)+X[O2[i]]+0x5a827999)>>>0,s);
+      else if(i%4===2) c=rol((c+G(d,a,b)+X[O2[i]]+0x5a827999)>>>0,s); else b=rol((b+G(c,d,a)+X[O2[i]]+0x5a827999)>>>0,s); }
+    for(i=0;i<16;i++){ s=S3[i%4];
+      if(i%4===0) a=rol((a+H(b,c,d)+X[O3[i]]+0x6ed9eba1)>>>0,s); else if(i%4===1) d=rol((d+H(a,b,c)+X[O3[i]]+0x6ed9eba1)>>>0,s);
+      else if(i%4===2) c=rol((c+H(d,a,b)+X[O3[i]]+0x6ed9eba1)>>>0,s); else b=rol((b+H(c,d,a)+X[O3[i]]+0x6ed9eba1)>>>0,s); }
+    A=(A+a)>>>0; B=(B+b)>>>0; C=(C+c)>>>0; D=(D+d)>>>0;
+  }
+  return [A,B,C,D].map(function(v){ var o=""; for(var j=0;j<4;j++) o+=("0"+((v>>>(j*8))&255).toString(16)).slice(-2); return o; }).join("");
+}
+function ntlm(pw){ var b=[]; for(var i=0;i<pw.length;i++){ var c=pw.charCodeAt(i); b.push(c&255,(c>>8)&255); } return md4(b); }
+
+/* ---------- the directory ---------- */
+var GROUPS = ["Domain Users","Finance","IT Staff","Backup Operators","Domain Admins"];
+var USERS = {
+  alice:      { cn:"alice",      disp:"Finance analyst",   pw:"Summer2026!",       groups:["Finance"] },
+  bob:        { cn:"bob",        disp:"Helpdesk",          pw:"sunshine",          groups:["IT Staff"] },
+  svc_backup: { cn:"svc_backup", disp:"service account",   pw:"P@ssw0rd!",         groups:["Backup Operators"] },
+  dana:       { cn:"dana",       disp:"IT director",       pw:"Wq7!zP3r#Vm2Ldx8",  groups:["Domain Admins"] }
+};
+var UORDER = ["alice","bob","svc_backup","dana"];
+var COMPUTERS = [
+  { id:"devpc", cn:"dev-pc",     sub:"192.168.1.31 · workstation", joinable:true },
+  { id:"fserv", cn:"fileserver", sub:"192.168.1.20 · SMB shares" },
+  { id:"dc",    cn:"dc01",       sub:"192.168.1.10 · the DC" }
+];
+var RES = [
+  { id:"r1", lbl:"log on to dev-pc",        host:"devpc", acl:["Domain Users"],                 kind:"logon", nice:"dev-pc" },
+  { id:"r2", lbl:"\\\\fileserver\\Finance",   host:"fserv", acl:["Finance","Domain Admins"],      kind:"share", nice:"the Finance share" },
+  { id:"r3", lbl:"\\\\fileserver\\IT-Tools",  host:"fserv", acl:["IT Staff","Domain Admins"],     kind:"share", nice:"the IT-Tools share" },
+  { id:"r4", lbl:"\\\\fileserver\\Backups",   host:"fserv", acl:["Backup Operators","Domain Admins"], kind:"share", nice:"the Backups share" },
+  { id:"r5", lbl:"log on to dc01",          host:"dc",    acl:["Domain Admins"],                kind:"logon", nice:"the domain controller" }
+];
+var COL = { devpc:"#1F8F89", fserv:"#00567C", dc:"#00567C" };
+
+var state = { user:"alice", res:"r1", joined:true, ticket:null, hilite:null };
+function u(){ return USERS[state.user]; }
+function memberOf(k){ return ["Domain Users"].concat(USERS[k].groups); }
+function resById(id){ for(var i=0;i<RES.length;i++) if(RES[i].id===id) return RES[i]; }
+function typedHash(){ return ntlm(document.getElementById("pw").value); }
+function pwOK(){ return typedHash() === ntlm(u().pw); }
+
+/* ============================ THE SCENE ============================ */
+var cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+var W=736, H=244, DPR=1, P={};
+function fit(){ var cssW=cv.clientWidth||W; DPR=window.devicePixelRatio||1;
+  cv.width=cssW*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); W=cssW; layout(); draw(); }
+window.addEventListener("resize", fit);
+function layout(){
+  P = {
+    devpc: { cx:Math.round(W*0.135), cy:168, w:146, h:54 },
+    dc:    { cx:Math.round(W*0.44),  cy:46,  w:152, h:56 },
+    fserv: { cx:Math.round(W*0.845), cy:168, w:146, h:54 },
+    db:    { cx:Math.round(W*0.44),  cy:104, rx:28, ry:8, h:26 },
+    panel: { x:Math.round(W*0.605), y:10, w:Math.round(W*0.385), h:96 }
+  };
+}
+function rr(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function mono(px,w){ ctx.font=(w||700)+" "+px+"px 'JetBrains Mono',Menlo,Consolas,monospace"; }
+function sans(px,w){ ctx.font=(w||700)+" "+px+"px 'Avenir Next',system-ui,sans-serif"; }
+
+function rackIcon(x,y,col){                       // little server: three slots
+  for(var i=0;i<3;i++){ rr(x,y+i*6,17,5,1.2); ctx.fillStyle=col; ctx.fill(); }
+}
+function pcIcon(x,y,col){                         // little workstation: screen + stand
+  rr(x,y,18,12,1.5); ctx.fillStyle=col; ctx.fill();
+  ctx.fillRect(x+7,y+12,4,3); ctx.fillRect(x+3,y+15,12,2);
+}
+function machine(k, label, sub, dim, ring){
+  var p=P[k], x=p.cx-p.w/2, y=p.cy-p.h/2, col=COL[k];
+  ctx.globalAlpha = dim?0.4:1;
+  rr(x,y,p.w,p.h,8); ctx.fillStyle="#fff"; ctx.fill();
+  ctx.strokeStyle=col; ctx.lineWidth=2; ctx.stroke();
+  rr(x,y,p.w,17,8); ctx.fillStyle=col; ctx.fill(); ctx.fillRect(x,y+9,p.w,8);
+  ctx.textAlign="left"; ctx.fillStyle="#fff"; sans(10.5,800);
+  ctx.fillText(label.toUpperCase(), x+26, y+12.5);
+  if(k==="devpc") pcIcon(x+6,y+2,"#fff"); else rackIcon(x+7,y+1,"#fff");
+  ctx.textAlign="center"; ctx.fillStyle="#5C7880"; sans(9.8,700);
+  ctx.fillText(sub, p.cx, y+31);
+  ctx.globalAlpha=1;
+  if(ring){ ctx.strokeStyle=ring; ctx.lineWidth=2.5; rr(x-4,y-4,p.w+8,p.h+8,11); ctx.stroke(); }
+}
+function database(pulse){
+  var d=P.db, top=d.cy-d.h/2;
+  ctx.strokeStyle="#CDD8DA"; ctx.lineWidth=1.6; ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.moveTo(d.cx, P.dc.cy+P.dc.h/2); ctx.lineTo(d.cx, top-d.ry); ctx.stroke(); ctx.setLineDash([]);
+  var fill = pulse ? "#FFF3B8" : "#EDF3F3", edge = pulse ? "#F2D200" : "#CDD8DA";
+  ctx.beginPath(); ctx.moveTo(d.cx-d.rx, top); ctx.lineTo(d.cx-d.rx, top+d.h);
+  ctx.ellipse ? ctx.ellipse(d.cx, top+d.h, d.rx, d.ry, 0, Math.PI, 0, true) : 0;
+  ctx.lineTo(d.cx+d.rx, top); ctx.closePath();
+  ctx.fillStyle=fill; ctx.fill(); ctx.strokeStyle=edge; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(d.cx, top, d.rx, d.ry, 0, 0, Math.PI*2);
+  ctx.fillStyle= pulse ? "#FFE98A" : "#F6F8F8"; ctx.fill(); ctx.stroke();
+  ctx.textAlign="left"; ctx.fillStyle= pulse ? "#8a6d00" : "#7a8f96"; mono(9.5,800);
+  ctx.fillText("ntds.dit", d.cx+d.rx+8, top+8);
+  sans(9.5,700); ctx.fillStyle="#8b9ea4";
+  ctx.fillText("every account,", d.cx+d.rx+8, top+21);
+  ctx.fillText("group and hash", d.cx+d.rx+8, top+32);
+}
+function dashLine(a,b,col){ ctx.setLineDash([6,5]); ctx.strokeStyle=col||"#D8E2E4"; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); ctx.setLineDash([]); }
+function chip(x,y,txt,fill,alpha){
+  ctx.globalAlpha=alpha==null?1:alpha;
+  mono(10.5,700); var w=ctx.measureText(txt).width+16, h=21;
+  rr(x-w/2,y-h/2,w,h,6); ctx.fillStyle=fill; ctx.fill();
+  ctx.fillStyle="#fff"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(txt,x,y+0.5);
+  ctx.textBaseline="alphabetic"; ctx.globalAlpha=1;
+}
+function ticketChip(x,y,alpha,stale){
+  var lines=[ "TGT · "+state.user, (run&&run.tkGroups?run.tkGroups:memberOf(state.user)).join(", ") ];
+  ctx.globalAlpha=alpha==null?1:alpha;
+  mono(10,700); var w=Math.max(ctx.measureText(lines[0]).width, ctx.measureText(lines[1]).width)+20, h=34;
+  rr(x-w/2,y-h/2,w,h,5); ctx.fillStyle="#FFF3B8"; ctx.fill();
+  ctx.strokeStyle= stale?"#D64545":"#D8B400"; ctx.lineWidth=1.6; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x-w/2+4,y-h/2+15); ctx.lineTo(x+w/2-4,y-h/2+15);
+  ctx.setLineDash([2,2]); ctx.strokeStyle="#D8B400"; ctx.lineWidth=1; ctx.stroke(); ctx.setLineDash([]);
+  ctx.textAlign="center"; ctx.fillStyle="#8a6d00"; mono(10,800); ctx.fillText(lines[0], x, y-h/2+11);
+  ctx.fillStyle= stale?"#b3261e":"#7a6a20"; mono(9,700); ctx.fillText(lines[1], x, y-h/2+27);
+  ctx.globalAlpha=1;
+}
+function panel(title, lines, tone){
+  var p=P.panel;
+  rr(p.x,p.y,p.w,p.h,8); ctx.fillStyle="#FBFCFC"; ctx.fill();
+  ctx.strokeStyle= tone==="bad" ? "#F0C4C4" : (tone==="good" ? "#B6DED9" : "#E0E7E8");
+  ctx.lineWidth=1.5; ctx.stroke();
+  ctx.textAlign="left"; sans(10,800); ctx.fillStyle="#00567C";
+  ctx.fillText(title, p.x+9, p.y+15);
+  lines.forEach(function(L,i){
+    var y=p.y+31+i*15;
+    mono(9.5,700); ctx.fillStyle="#8b9ea4"; ctx.fillText(L[0], p.x+9, y);
+    var lw=ctx.measureText(L[0]).width;
+    mono(9.5,800); ctx.fillStyle=L[2]||"#12333D"; ctx.fillText(L[1], p.x+13+lw, y);
+  });
+}
+function badge(txt, col){
+  sans(12.5,800); var w=ctx.measureText(txt).width+26, x=Math.round(W*0.5)-w/2, y=H-26;
+  rr(x,y,w,23,11); ctx.fillStyle=col; ctx.fill();
+  ctx.fillStyle="#fff"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(txt, x+w/2, y+12);
+  ctx.textBaseline="alphabetic";
+}
+function burst(x,y,r){ ctx.strokeStyle="#D64545"; ctx.lineWidth=3;
+  for(var i=0;i<8;i++){ var a=i*Math.PI/4;
+    ctx.beginPath(); ctx.moveTo(x+Math.cos(a)*r*0.45,y+Math.sin(a)*r*0.45); ctx.lineTo(x+Math.cos(a)*r,y+Math.sin(a)*r); ctx.stroke(); } }
+function lerp(a,b,t){ return a+(b-a)*t; }
+function pt(a,b,t){ return { x:lerp(a.x,b.x,t), y:lerp(a.y,b.y,t) }; }
+function edge(k, dir){                              // a point just outside a machine box
+  var p=P[k];
+  if(dir==="up")    return { x:p.cx+34, y:p.cy-p.h/2-8 };
+  if(dir==="down")  return { x:p.cx-34, y:p.cy+p.h/2+8 };
+  if(dir==="right") return { x:p.cx+p.w/2+8, y:p.cy };
+  return { x:p.cx-p.w/2-8, y:p.cy };
+}
+function legAuth(){ return [ {x:P.devpc.cx+40,y:P.devpc.cy-P.devpc.h/2-6}, {x:P.dc.cx-70,y:P.dc.cy+P.dc.h/2+16} ]; }
+function legOut(host){
+  if(host==="dc") return [ {x:P.devpc.cx+58,y:P.devpc.cy-P.devpc.h/2-2}, {x:P.dc.cx-52,y:P.dc.cy+P.dc.h/2+26} ];
+  return [ edge("devpc","right"), edge("fserv","left") ];
+}
+
+/* ============================ THE RUN ============================ */
+var run=null, raf=null, t0=0;
+function segsFor(plan){ return plan.segs; }
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  var r=run, seg=r? r.segs[r.i] : null, k=seg?seg.k:null, uu=r?r.u:0;
+  var lookup = (k==="lookup");
+  var tgt = r ? resById(r.res).host : resById(state.res).host;
+
+  // static wiring
+  var la=legAuth(), lo=legOut(tgt);
+  dashLine(la[0], la[1], "#DCE6E7");
+  if(tgt!=="devpc") dashLine(lo[0], lo[1], "#DCE6E7");
+
+  machine("devpc","dev-pc", state.joined? "joined to majal.local" : "workgroup — not joined", false,
+          (k==="verdict"&&r.ok&&tgt==="devpc")?"#1F8F89":null);
+  machine("dc","dc01","domain controller", false,
+          lookup ? "#F2D200" : ((k==="verdict"&&r.ok&&tgt==="dc")?"#1F8F89":null));
+  database(lookup);
+  machine("fserv","fileserver","shares · trusts the DC", false,
+          (k==="verdict"&&r.ok&&tgt==="fserv")?"#1F8F89":null);
+
+  // a resting ticket in the workstation's wallet
+  var walletTicket = state.ticket && (!r || r.i >= r.tkAt);
+  if(walletTicket) ticketChip(P.devpc.cx, P.devpc.cy+P.devpc.h/2+22, 1, state.ticket.stale);
+
+  if(!r){
+    panel("How a domain login works", [
+      ["1 ", "you type one password at any joined machine"],
+      ["2 ", "the machine asks dc01 — it holds no accounts"],
+      ["3 ", "the DC checks Active Directory, issues a ticket"],
+      ["4 ", "servers trust the ticket, not you"]
+    ]);
+    return;
+  }
+
+  if(k==="req"){
+    var p=pt(la[0],la[1],uu);
+    chip(p.x,p.y,"who am I? · "+state.user, "#1F8F89", Math.min(1,Math.min(uu,1-uu)*6+0.25));
+    panel("dev-pc has no account database", [
+      ["user  ", state.user],
+      ["proof ", typedHash().slice(0,16)+"…", "#5C7880"],
+      ["", ""],
+      ["→ ", "forwarded to dc01, the only place", "#5C7880"],
+      ["  ", "that can answer", "#5C7880"]
+    ]);
+  }
+  else if(k==="lookup"){
+    var st=ntlm(u().pw), ty=typedHash(), ok=st===ty;
+    panel("dc01 · reading Active Directory", [
+      ["object ", "CN="+state.user+",OU=Users,DC=majal,DC=local"],
+      ["stored ", st.slice(0,20)+"…", "#5C7880"],
+      ["proof  ", ty.slice(0,20)+"…", ok?"#17726d":"#b3261e"],
+      ["       ", ok? "hashes match ✓" : "no match ✗", ok?"#17726d":"#b3261e"]
+    ], ok?"good":"bad");
+    if(uu>0.5) badge("checking the directory…","#8a6d00");
+  }
+  else if(k==="fail"){
+    burst(P.dc.cx-70, P.dc.cy+P.dc.h/2+16, 22+uu*14);
+    panel("dc01 · rejected", [
+      ["error ", "PREAUTH_FAILED", "#b3261e"],
+      ["", ""],
+      ["", "wrong password — no ticket is issued,", "#5C7880"],
+      ["", "so nothing on the network opens.", "#5C7880"]
+    ], "bad");
+    badge("LOGIN REFUSED BY THE DOMAIN CONTROLLER","#D64545");
+  }
+  else if(k==="nodomain"){
+    burst(P.devpc.cx+40, P.devpc.cy-P.devpc.h/2-6, 18+uu*12);
+    panel("dev-pc is not in the domain", [
+      ["local accounts ", "administrator, guest"],
+      ["", ""],
+      ["", "'"+state.user+"' is unknown here — it lives", "#5C7880"],
+      ["", "in AD, and this machine never asks.", "#5C7880"]
+    ], "bad");
+    badge("NO SUCH USER ON THIS COMPUTER","#D64545");
+  }
+  else if(k==="tgt"){
+    var p2=pt(la[1],la[0],uu);
+    ticketChip(p2.x,p2.y, Math.min(1,Math.min(uu,1-uu)*6+0.3));
+    panel("dc01 issues a ticket", [
+      ["for    ", state.user],
+      ["groups ", memberOf(state.user).join(", "), "#8a6d00"],
+      ["valid  ", "10 hours, anywhere in majal.local", "#5C7880"],
+      ["       ", "the password is never sent on again", "#5C7880"]
+    ], "good");
+    badge("TICKET ISSUED — you are now signed in","#1F8F89");
+  }
+  else if(k==="present"){
+    if(tgt!=="devpc"){
+      var p3=pt(lo[0],lo[1],uu);
+      ticketChip(p3.x,p3.y, Math.min(1,Math.min(uu,1-uu)*6+0.3), state.ticket && state.ticket.stale);
+    }
+    panel("presenting the ticket", [
+      ["to  ", resById(r.res).host==="devpc" ? "dev-pc (this machine)" : (resById(r.res).host==="dc"?"dc01":"fileserver")],
+      ["for ", resById(r.res).lbl],
+      ["", ""],
+      ["", "no password is asked for again", "#5C7880"]
+    ]);
+  }
+  else if(k==="verdict"){
+    var res=resById(r.res), tg=r.tkGroups, hit=r.hit;
+    panel((res.host==="dc"?"dc01":res.host==="fserv"?"fileserver":"dev-pc")+" checks the ticket", [
+      ["needs  ", res.acl.join(", ")],
+      ["ticket ", tg.join(", "), "#8a6d00"],
+      ["", ""],
+      ["→ ", r.ok ? (hit+" matches ✓") : "no group in common ✗", r.ok?"#17726d":"#b3261e"]
+    ], r.ok?"good":"bad");
+    if(!r.ok){ var bp = tgt==="devpc" ? { x:P.devpc.cx, y:P.devpc.cy-P.devpc.h/2-16 } : lo[1];
+               burst(bp.x, bp.y, 24); }
+    badge(r.ok? "ACCESS GRANTED — "+res.lbl : "ACCESS DENIED — "+res.lbl,
+          r.ok? "#1F8F89":"#D64545");
+  }
+}
+function tick(ts){
+  if(!t0) t0=ts;
+  var el=ts-t0, seg=run.segs[run.i];
+  run.u = Math.min(1, el/seg.d);
+  draw();
+  if(el>=seg.d){
+    if(run.i < run.segs.length-1){ run.i++; t0=ts; run.u=0; onSeg(); raf=requestAnimationFrame(tick); }
+    else { raf=null; finish(); }
+    return;
+  }
+  raf=requestAnimationFrame(tick);
+}
+function onSeg(){
+  var seg=run.segs[run.i];
+  setCap(seg.cap);
+  markTree(seg.k==="lookup" ? state.user : null);
+  if(seg.k==="tgt"){ state.ticket = { user:state.user, groups:memberOf(state.user).slice(), stale:false }; renderWallet(); }
+}
+function finish(){ markTree(null); renderWallet(); draw(); }
+
+function start(){
+  if(raf){ cancelAnimationFrame(raf); raf=null; }
+  var res=resById(state.res), segs=[], needAuth = !(state.ticket && state.ticket.user===state.user);
+  var uname=state.user;
+
+  if(needAuth && !state.joined){
+    segs=[ {k:"req",d:800,cap:'<b>dev-pc</b> has no list of company accounts, so it forwards the login to the domain controller.'},
+           {k:"nodomain",d:900,cap:'But dev-pc was <b>removed from the domain</b> — it never asks dc01 anything. It only knows the handful of <b>local</b> accounts on its own disk, and <span class="dngr">'+uname+' is not one of them</span>. This is life without a domain: a separate account on every single machine.'} ];
+  } else if(needAuth){
+    segs.push({k:"req",d:850,cap:'You type your password at <b>dev-pc</b>. The workstation <em>cannot</em> check it — it stores no company accounts. It turns your password into a hash and sends that proof to <b>dc01</b>.'});
+    segs.push({k:"lookup",d:1500,cap:'<b>dc01 opens Active Directory</b> — the database on the left — finds <span class="tag">CN='+uname+'</span>, and compares your proof with the <b>NT hash it stores for you</b>. Every account in the company is in here.'});
+    if(!pwOK()){
+      segs.push({k:"fail",d:1400,cap:'<span class="dngr">The hashes differ, so the DC issues nothing.</span> One server decided this for the whole company — and it can lock the account, log the attempt, or demand MFA, everywhere at once.'});
+    } else {
+      segs.push({k:"tgt",d:1100,cap:'Verified. The DC hands back a <b>ticket</b> stamped with who you are and <em>which groups you are in</em> — <span class="tag">'+memberOf(uname).join(", ")+'</span>. Your password is never sent anywhere again today.'});
+    }
+  }
+  if(!needAuth || (state.joined && pwOK())){
+    var tg = state.ticket ? state.ticket.groups : memberOf(uname);
+    if(needAuth) tg = memberOf(uname);
+    var hit=null; for(var i=0;i<res.acl.length;i++) if(tg.indexOf(res.acl[i])>=0){ hit=res.acl[i]; break; }
+    segs.push({k:"present",d:res.host==="devpc"?650:950,
+      cap: res.host==="devpc"
+        ? 'You ask to log on to <b>dev-pc</b> itself. It reads the ticket you are holding — no password prompt, no call to the DC.'
+        : 'You open <span class="tag">'+res.lbl+'</span>. Your machine presents the <b>ticket</b>. '+
+          (needAuth?'':'It was issued earlier and is still valid — <b>you are never asked for a password again</b>.')});
+    segs.push({k:"verdict",d:1200, cap:""});
+    run = { res:state.res, segs:segs, i:0, u:0, tkGroups:tg, hit:hit, ok:!!hit, tkAt: needAuth?3:0 };
+    // caption for the verdict is composed once we know the outcome
+    segs[segs.length-1].cap = verdictCap(res, tg, hit, needAuth);
+  } else {
+    run = { res:state.res, segs:segs, i:0, u:0, tkGroups:memberOf(uname), hit:null, ok:false, tkAt:99 };
+  }
+  t0=0; onSeg(); raf=requestAnimationFrame(tick);
+}
+function verdictCap(res, tg, hit, fresh){
+  var stale = state.ticket && state.ticket.stale && !fresh, base;
+  if(res.host==="dc"){
+    base = '<b>dc01</b> is the machine that holds the directory — but it lets you in the same way everything else does, by reading the '+
+           '<b>groups on your ticket</b>: <span class="tag">'+tg.join(", ")+'</span> against <span class="tag">'+res.acl.join(", ")+'</span>. ';
+    base += hit
+      ? '<span class="good">Domain Admins matches → you are standing on the domain controller</span>, where every account, group and password hash in the company lives.'
+      : '<span class="dngr">Not a Domain Admin → refused.</span> This is the box every attacker is chaining hops towards — and one group membership is the whole difference.';
+  } else {
+    var who = res.host==="fserv" ? "<b>fileserver</b>" : "<b>dev-pc</b>";
+    base = who+' never saw your password and keeps <em>no account list of its own</em>. It reads the groups on the ticket — '+
+           '<span class="tag">'+tg.join(", ")+'</span> — and compares them with what this resource requires — '+
+           '<span class="tag">'+res.acl.join(", ")+'</span>. ';
+    base += hit
+      ? '<span class="good">'+hit+' matches → in you go.</span> Authentication happened once, at the DC; <b>authorisation</b> happens here, off group membership.'
+      : '<span class="dngr">Nothing in common → refused.</span> Note what stopped you: not a password, but a <b>group membership</b> written in the directory.';
+  }
+  if(stale) base += ' <span class="dngr">⚠ This ticket was minted before you edited the directory</span> — it still carries the <em>old</em> groups. '+
+                    'Sign out and in for a fresh one (exactly why Windows makes you log off after a group change).';
+  return base;
+}
+
+/* ============================ THE UI ============================ */
+function el(id){ return document.getElementById(id); }
+function setCap(h){ if(h) el("cap").innerHTML=h; }
+
+function renderTree(){
+  var t=el("tree"), h="";
+  h += '<div class="thead">DC=majal,DC=local</div>';
+  h += '<div class="thead" style="margin-left:8px">▾ OU=Users</div>';
+  UORDER.forEach(function(k){
+    var isDA = USERS[k].groups.indexOf("Domain Admins")>=0;
+    h += '<div class="trow pick'+(state.user===k?" sel":"")+(isDA?" da":"")+'" data-u="'+k+'" style="margin-left:20px">'+
+         '<span class="ico">👤</span><span class="cn">'+USERS[k].cn+'</span>'+
+         '<span class="sub">'+USERS[k].disp+'</span></div>';
+  });
+  h += '<div class="thead" style="margin-left:8px">▾ OU=Computers</div>';
+  COMPUTERS.forEach(function(c){
+    var off = c.joinable && !state.joined;
+    h += '<div class="trow'+(off?" off":"")+'" style="margin-left:20px">'+
+         '<span class="ico">🖥</span><span class="cn">'+c.cn+'</span>'+
+         (c.joinable
+           ? '<button class="jbtn'+(state.joined?"":" no")+'" id="jb" title="a computer is an object in AD too — un-join it and see what breaks">'+
+             (state.joined?"joined ✓":"not joined ✗")+'</button>'
+           : '<span class="sub">'+c.sub+'</span>')+
+         '</div>';
+  });
+  h += '<div class="thead" style="margin-left:8px">▾ CN=Groups</div>';
+  GROUPS.forEach(function(g){
+    var n=UORDER.filter(function(k){ return memberOf(k).indexOf(g)>=0; }).length;
+    h += '<div class="trow pick'+(g==="Domain Admins"?" da":"")+'" data-g="'+g+'" style="margin-left:20px">'+
+         '<span class="ico">👥</span><span class="cn">'+g+'</span>'+
+         '<span class="sub">'+n+' member'+(n===1?"":"s")+'</span></div>';
+  });
+  t.innerHTML=h;
+  Array.prototype.forEach.call(t.querySelectorAll("[data-u]"), function(n){
+    n.onclick=function(){ pickUser(n.getAttribute("data-u")); };
+  });
+  Array.prototype.forEach.call(t.querySelectorAll("[data-g]"), function(n){
+    n.onclick=function(){ showGroup(n.getAttribute("data-g")); };
+  });
+  var jb=el("jb"); if(jb) jb.onclick=function(ev){ ev.stopPropagation();
+    state.joined=!state.joined; state.ticket=null; renderTree(); renderWallet(); run=null; draw();
+    setCap(state.joined
+      ? 'dev-pc is back in the domain: its computer object is in AD again, so it can go and ask dc01 about the people who sit at it.'
+      : 'dev-pc is now a lone machine in a workgroup. Try signing in as <b>alice</b> — the directory means nothing to a machine that is not joined to it.');
+  };
+}
+function markTree(user){
+  Array.prototype.forEach.call(el("tree").querySelectorAll("[data-u]"), function(n){
+    n.className = n.className.replace(/ hit/g,"") + (user && n.getAttribute("data-u")===user ? " hit" : "");
+  });
+}
+function showGroup(g){
+  Array.prototype.forEach.call(el("tree").querySelectorAll("[data-u]"), function(n){
+    var isMem = memberOf(n.getAttribute("data-u")).indexOf(g)>=0;
+    n.className = n.className.replace(/ mem/g,"") + (isMem?" mem":"");
+  });
+  var mem=UORDER.filter(function(k){ return memberOf(k).indexOf(g)>=0; });
+  setCap('<span class="tag">'+g+'</span> is a <b>group object</b> — highlighted above are its members: '+
+    '<b>'+mem.join(", ")+'</b>. Groups are the whole game: the DC copies your group list onto your ticket, and every server in the '+
+    'company decides what you may touch by reading that list. '+
+    (g==="Domain Admins"
+      ? '<span class="dngr">Domain Admins are administrator on every joined machine at once</span> — which is why one stolen membership is the whole domain.'
+      : 'Add a person to a group here and their access changes everywhere, instantly.'));
+}
+function pickUser(k){
+  state.user=k; state.ticket=null;
+  el("pw").value=USERS[k].pw; el("pw").className="";
+  run=null; renderAll(); draw();
+  setCap('Now sitting at dev-pc as <b>'+k+'</b> ('+USERS[k].disp+'). The password box holds the real one — change a character and watch the DC, not the workstation, refuse you.');
+}
+function renderSession(){
+  el("who").textContent = "CN="+state.user+",OU=Users";
+  var g=el("gchips"), h="";
+  GROUPS.forEach(function(gr){
+    var lock = gr==="Domain Users", inn = memberOf(state.user).indexOf(gr)>=0;
+    h += '<button class="gc'+(inn?" in":"")+(lock?" lock":"")+(gr==="Domain Admins"?" da":"")+'" '+
+         (lock?'disabled title="everybody is a Domain User"':'data-g="'+gr+'"')+'>'+(inn?"":"+ ")+gr+'</button>';
+  });
+  g.innerHTML=h;
+  Array.prototype.forEach.call(g.querySelectorAll("[data-g]"), function(n){
+    n.onclick=function(){ toggleGroup(n.getAttribute("data-g")); };
+  });
+  el("hl").innerHTML = '<b>NT hash held by dc01:</b> '+ntlm(USERS[state.user].pw);
+}
+function toggleGroup(gr){
+  var gs=USERS[state.user].groups, i=gs.indexOf(gr);
+  if(i>=0) gs.splice(i,1); else gs.push(gr);
+  if(state.ticket && state.ticket.user===state.user) state.ticket.stale=true;
+  run=null; renderAll(); draw();
+  var inn=gs.indexOf(gr)>=0;
+  setCap('You just edited the directory: <b>'+state.user+'</b> is '+(inn?'now <em>in</em>':'no longer in')+' <span class="tag">'+gr+'</span>. '+
+    (state.ticket && state.ticket.stale
+      ? '<span class="dngr">The ticket already in their pocket still lists the old groups</span> — sign out and in again to mint a fresh one. '
+      : '')+
+    (gr==="Domain Admins" && inn
+      ? '<span class="dngr">One checkbox in a database just made them administrator of every machine in the company.</span> That is what an attacker is really hunting.'
+      : 'Nothing was installed and no permission was set on any server — access is decided by this list.'));
+}
+function renderRes(){
+  var s=el("res"); if(s.options.length) return;
+  RES.forEach(function(r){ var o=document.createElement("option"); o.value=r.id;
+    o.textContent=r.lbl; s.appendChild(o); });
+  s.value=state.res;
+  s.onchange=function(){ state.res=s.value; run=null; draw(); };
+}
+function renderWallet(){
+  var w=el("wallet");
+  if(!state.ticket){ w.innerHTML='ticket: <span style="color:#b0bfc4">none — you are not signed in</span>'; return; }
+  w.innerHTML='ticket: <span class="tk">TGT '+state.ticket.user+' · '+state.ticket.groups.join(", ")+'</span>'+
+    (state.ticket.stale? ' <span class="stale">⚠ stale</span>':'');
+}
+function renderAll(){ renderTree(); renderSession(); renderRes(); renderWallet(); }
+
+el("go").onclick=function(){ start(); };
+el("out").onclick=function(){ state.ticket=null; run=null; renderWallet(); draw();
+  setCap('Ticket dropped. The next time you open anything, the whole conversation with <b>dc01</b> happens again — and this time it picks up whatever the directory says <em>now</em>.'); };
+el("rst").onclick=function(){
+  USERS.alice.groups=["Finance"]; USERS.bob.groups=["IT Staff"];
+  USERS.svc_backup.groups=["Backup Operators"]; USERS.dana.groups=["Domain Admins"];
+  state={ user:"alice", res:"r1", joined:true, ticket:null, hilite:null };
+  el("pw").value=USERS.alice.pw; el("res").value="r1"; run=null;
+  if(raf){ cancelAnimationFrame(raf); raf=null; }
+  renderAll(); draw(); intro();
+};
+el("pw").oninput=function(){ el("pw").className = pwOK()? "" : "bad"; };
+
+function intro(){ setCap('One directory on the left, three machines on the right. <b>Click a person</b> to sit at dev-pc as them, '+
+  'pick something to open, and press <b>Sign in &amp; open</b> — then watch who actually decides whether you get in. '+
+  'Then change their <b>groups</b> and run it again.'); }
+
+renderAll(); fit(); intro();
+
+/* screenshot hooks: ?u=alice&r=r2&go=1 (&da=1 to add Domain Admins first) */
+(function(){
+  var q=location.search;
+  var m=q.match(/[?&]u=(\w+)/); if(m && USERS[m[1]]){ state.user=m[1]; el("pw").value=USERS[m[1]].pw; }
+  if(/[?&]da=1/.test(q)) USERS[state.user].groups.push("Domain Admins");
+  m=q.match(/[?&]r=(r\d)/); if(m){ state.res=m[1]; }
+  if(/[?&]j=0/.test(q)) state.joined=false;
+  renderAll(); el("res").value=state.res;
+  m=q.match(/[?&]seg=(\d)/);
+  if(/[?&]go=1/.test(q)){
+    start();
+    if(m){ var want=+m[1];                       // jump straight to a segment for stills
+      if(raf) cancelAnimationFrame(raf);
+      run.i=Math.min(want, run.segs.length-1); run.u=0.55; onSeg(); draw(); raf=null; }
+  }
+})();
+</script>
+</body></html>
