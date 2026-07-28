@@ -404,6 +404,6 @@ id
 
 Everything you just did left tracks — an odd interaction with a service, a
 connection to an unusual port, a shell spawned by a process that had no business
-spawning one. On Friday you switch sides and become the defender. Ask
+spawning one. On Thursday you switch sides and become the defender. Ask
 yourself now: **what would this attack have looked like in the logs?** Hold that
 thought.
