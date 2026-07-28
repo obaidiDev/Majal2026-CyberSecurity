@@ -171,17 +171,20 @@
     <!-- ================= TITLE ================= -->
     <section>
       <p class="kicker">Day 3 · Moving Through</p>
-      <h1>One foothold isn't the prize —<br>the network is.</h1>
-      <p class="sub" style="margin-top:1.2em;max-width:25em">Yesterday you landed a single shell. Today you turn it into
-      control of everything reachable. But first you have to speak the network's <em>language</em> — starting from
+      <h1>The lure landed. That's a door —<br>the network is the prize.</h1>
+      <p class="sub" style="margin-top:1.2em;max-width:25em">Yesterday you chose a target, learned it, and built a lure that
+      landed. Today that one click becomes a foothold on one machine — and you turn <em>that</em> into control of everything
+      reachable. But first you have to speak the network's <em>language</em> — starting from
       <em>what a network even is</em>, and building up to the real protocols. <strong>Learn the mechanism, then watch each one
       become a way through.</strong></p>
-      <aside class="notes">Frame the two acts. ACT 1: the network's language — four foundation slides from absolute zero (what a
-      network is, switch vs router, the three addresses, the OSI model), then the concrete protocols (ARP, ports/TCP/UDP,
-      DNS, HTTP/TLS). Assume nobody in the room has ever had this explained; nothing today survives a shaky foundation here.
-      ACT 2: moving through — every attack today weaponises a
-      protocol they just learned. The spine of the day: learn the mechanism, then abuse it. They are still the attacker
-      (Day 2's role), now inside the network with one low-privilege shell, aiming for the whole domain.</aside>
+      <aside class="notes">Pick up exactly where Day 2 actually stopped: they picked a target, ran recon on it, and built a lure that
+      landed — a click, not a shell. Say that out loud so nobody thinks they missed a step. Today is what that click buys you:
+      one foothold on one machine, low privilege, inside the network. Then frame the two acts. ACT 1: the network's language — four
+      foundation slides from absolute zero (what a network is, the three addresses, switch vs router, the OSI model), then the
+      concrete protocols (ARP, ports/TCP/UDP, DNS, HTTP/TLS). Assume nobody in the room has ever had this explained; nothing today
+      survives a shaky foundation here. ACT 2: moving through — every attack today weaponises a protocol they just learned. The
+      spine of the day: learn the mechanism, then abuse it. They are still the attacker (Day 2's role), now on the inside with one
+      low-privilege foothold, aiming for the whole domain.</aside>
     </section>
 
     <!-- ============ FOUNDATION 1 · WHAT A NETWORK IS ============ -->
@@ -259,20 +262,63 @@
     <section class="primer">
       <p class="kicker">Act 1 · first principles · the three addresses</p>
       <h2>Three addresses, three jobs: MAC, IP and port</h2>
-      <svg class="dgm" viewBox="0 0 940 178" role="img"
-           aria-label="One outgoing message drawn as nested wrappers: the frame carries MAC addresses, the packet carries IP addresses, the segment carries the port, and the data sits inside">
-        <rect x="16" y="22" width="908" height="140" rx="9" fill="#fff" stroke="#5c7880" stroke-width="1.5"/>
-        <text class="lbl" x="30" y="15">frame · one hop of wire</text>
-        <text class="m" x="908" y="43" text-anchor="end" fill="#1f8f89">to MAC a1:b2:c3:44:55:66</text>
-        <rect x="44" y="52" width="852" height="98" rx="8" fill="#f6f8f8" stroke="#7a5cc4" stroke-width="1.5"/>
-        <text class="lbl" x="58" y="46" fill="#7a5cc4">packet · end to end</text>
-        <text class="m" x="880" y="72" text-anchor="end" fill="#7a5cc4">to IP 142.250.0.14</text>
-        <rect x="72" y="80" width="796" height="60" rx="7" fill="#fff" stroke="#00567d" stroke-width="1.5"/>
-        <text class="lbl" x="86" y="74" fill="#00567d">segment · which program</text>
-        <text class="m" x="852" y="100" text-anchor="end">to port 443</text>
-        <rect x="100" y="106" width="724" height="26" rx="5" fill="#eef3f3" stroke="#c3d2d5" stroke-width="1.5"/>
-        <text class="t" x="462" y="124" text-anchor="middle">your actual message</text>
-        <text class="cap" x="470" y="173" text-anchor="middle">every message you send carries all three, wrapped one inside the other</text>
+      <svg class="dgm" viewBox="0 0 940 190" role="img"
+           aria-label="Three analogies side by side: the MAC address drawn as an identity card, the IP address as a house with a street sign and number, and the port as a department listed on an office directory board">
+        <!-- ===== MAC · the ID card ===== -->
+        <rect x="6" y="16" width="294" height="158" rx="10" fill="#fbfcfc" stroke="#e3eaec" stroke-width="1.5"/>
+        <text class="lbl" x="18" y="11" fill="#1f8f89">MAC · your ID card</text>
+        <rect x="63" y="34" width="180" height="80" rx="8" fill="#fff" stroke="#1f8f89" stroke-width="1.8"/>
+        <rect x="63" y="34" width="180" height="18" rx="8" fill="#1f8f89"/>
+        <rect x="63" y="44" width="180" height="8" fill="#1f8f89"/>
+        <text class="tws" x="73" y="47">IDENTITY CARD</text>
+        <rect x="75" y="58" width="42" height="48" rx="4" fill="#eef3f3" stroke="#c3d2d5" stroke-width="1.2"/>
+        <circle cx="96" cy="76" r="9.5" fill="#bcccd0"/>
+        <path d="M81 106 q15 -20 30 0 z" fill="#bcccd0"/>
+        <rect x="128" y="60" width="104" height="8" rx="4" fill="#dbe4e6"/>
+        <rect x="128" y="74" width="78" height="8" rx="4" fill="#dbe4e6"/>
+        <rect x="128" y="88" width="92" height="8" rx="4" fill="#dbe4e6"/>
+        <line x1="22" y1="126" x2="284" y2="126" stroke="#e3eaec" stroke-width="1.5"/>
+        <text class="m" x="153" y="144" text-anchor="middle" fill="#1f8f89">a1:b2:c3:44:55:66</text>
+        <text class="cap" x="153" y="164" text-anchor="middle">who you are — never changes</text>
+
+        <!-- ===== IP · the street address ===== -->
+        <rect x="320" y="16" width="294" height="158" rx="10" fill="#fbfcfc" stroke="#e3eaec" stroke-width="1.5"/>
+        <text class="lbl" x="332" y="11" fill="#7a5cc4">IP · your street address</text>
+        <line x1="344" y1="114" x2="592" y2="114" stroke="#c3d2d5" stroke-width="2"/>
+        <line x1="376" y1="114" x2="376" y2="54" stroke="#93a6ab" stroke-width="3"/>
+        <rect x="344" y="36" width="72" height="20" rx="3" fill="#fff" stroke="#93a6ab" stroke-width="1.5"/>
+        <text class="mg" x="380" y="50" text-anchor="middle">192.168.1</text>
+        <path d="M436 64 L500 30 L564 64 Z" fill="#7a5cc4"/>
+        <rect x="444" y="64" width="112" height="50" fill="#fff" stroke="#7a5cc4" stroke-width="1.8"/>
+        <rect x="456" y="76" width="18" height="16" fill="#eef3f3" stroke="#c3d2d5" stroke-width="1.2"/>
+        <rect x="482" y="88" width="26" height="26" rx="2" fill="#eef3f3" stroke="#c3d2d5" stroke-width="1.2"/>
+        <rect x="518" y="76" width="32" height="16" rx="3" fill="#fff" stroke="#7a5cc4" stroke-width="1.2"/>
+        <text class="mg" x="534" y="88" text-anchor="middle" fill="#7a5cc4">.50</text>
+        <line x1="336" y1="126" x2="598" y2="126" stroke="#e3eaec" stroke-width="1.5"/>
+        <text class="m" x="467" y="144" text-anchor="middle" fill="#7a5cc4">192.168.1.50</text>
+        <text class="cap" x="467" y="164" text-anchor="middle">where you live — changes if you move</text>
+
+        <!-- ===== PORT · the department at that address ===== -->
+        <rect x="634" y="16" width="294" height="158" rx="10" fill="#fbfcfc" stroke="#e3eaec" stroke-width="1.5"/>
+        <text class="lbl" x="646" y="11" fill="#00567d">PORT · the department inside</text>
+        <line x1="644" y1="114" x2="920" y2="114" stroke="#c3d2d5" stroke-width="2"/>
+        <rect x="652" y="36" width="80" height="78" fill="#fff" stroke="#00567d" stroke-width="1.8"/>
+        <rect x="662" y="46" width="14" height="12" fill="#dbe4e6"/><rect x="682" y="46" width="14" height="12" fill="#dbe4e6"/><rect x="702" y="46" width="14" height="12" fill="#dbe4e6"/>
+        <rect x="662" y="64" width="14" height="12" fill="#dbe4e6"/><rect x="682" y="64" width="14" height="12" fill="#dbe4e6"/><rect x="702" y="64" width="14" height="12" fill="#dbe4e6"/>
+        <rect x="662" y="82" width="14" height="12" fill="#dbe4e6"/><rect x="702" y="82" width="14" height="12" fill="#dbe4e6"/>
+        <rect x="684" y="98" width="16" height="16" fill="#eef3f3" stroke="#c3d2d5" stroke-width="1.2"/>
+        <rect x="752" y="36" width="164" height="72" rx="6" fill="#fff" stroke="#00567d" stroke-width="1.5"/>
+        <rect x="752" y="36" width="164" height="17" rx="6" fill="#00567d"/>
+        <rect x="752" y="46" width="164" height="7" fill="#00567d"/>
+        <text class="tws" x="762" y="49">DIRECTORY</text>
+        <text class="t" x="764" y="72">Web desk</text><text class="m" x="904" y="72" text-anchor="end">443</text>
+        <text class="t" x="764" y="88">SSH office</text><text class="m" x="904" y="88" text-anchor="end">22</text>
+        <text class="t" x="764" y="104">Mail room</text><text class="m" x="904" y="104" text-anchor="end">25</text>
+        <line x1="650" y1="126" x2="912" y2="126" stroke="#e3eaec" stroke-width="1.5"/>
+        <text class="m" x="781" y="144" text-anchor="middle">192.168.1.50 : 443</text>
+        <text class="cap" x="781" y="164" text-anchor="middle">which desk inside — one of 65,535</text>
+
+        <text class="cap" x="470" y="186" text-anchor="middle">one message carries <tspan class="capb">all three</tspan> — the ID card, the address, and the department</text>
       </svg>
       <div class="k2 c3" style="margin-top:.4em">
         <div class="card"><h3>MAC <span class="tag">which device</span></h3>
@@ -294,9 +340,12 @@
       <aside class="notes">The single most load-bearing slide of the day — if they leave with only one thing, make it this. Teach it
       strictly as three jobs, not three formats: <b>MAC = which device</b> (factory-fixed, local-only, rewritten every hop), <b>IP = which
       machine and where</b> (assigned, end-to-end, routable), <b>port = which program</b> (1–65535, picks the service). Use the ID-card /
-      street-address / department analogy and repeat it verbatim — it's the one they'll quote back. Point at the diagram and note the
-      nesting: all three ride on the same message, wrapped one inside the other; that picture is literally what the encapsulation player
-      animates shortly. Then map the day forward: ARP spoofing lies about MAC, subnetting and NAT are about IP reach, and port
+      street-address / department analogy and repeat it verbatim — it's the one they'll quote back. Walk the three pictures left to right and
+      read the real value under each: the ID card is <span class="mono">a1:b2:c3:44:55:66</span>, the house on that street is
+      <span class="mono">192.168.1.50</span>, the desk inside it is <span class="mono">:443</span> — analogy, then the actual thing, every
+      time. Push the house analogy one step: the street sign is the network half, the number on the door is the host half (that's the next
+      slide but one). Close on the line under the panels — one message carries all three at once — and promise the picture of <em>how</em>
+      they're wrapped together: that's exactly what the encapsulation player animates shortly. Then map the day forward: ARP spoofing lies about MAC, subnetting and NAT are about IP reach, and port
       scanning hunts programs. Check for understanding before moving on — ask which of the three changes when you carry your laptop to a
       café (the IP). ~2 min; this one is worth the time. It has to land <em>before</em> the next slide, which is built entirely on MAC
       vs IP.</aside>
