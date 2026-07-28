@@ -75,7 +75,10 @@ function fit(){ var cssW=cv.clientWidth||W; DPR=window.devicePixelRatio||1;
   cv.width=cssW*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); W=cssW; draw(); }
 window.addEventListener("resize", fit);
 
-var mode="tcp", cur=0, prog=1, playing=false, raf=null, t0=0;
+// cur = messages already settled on screen. prog = flight progress of message[cur]:
+// 0 means nothing in flight (idle/holding), 0<prog<1 means it is on its way.
+var mode="tcp", cur=0, prog=0, playing=false, raf=null, t0=0;
+function inFlight(){ return prog>0 && prog<1; }
 function M(){ return MODES[mode]; }
 function clientColor(){ return M().role==="attacker" ? "#D64545" : "#00567C"; }
 
@@ -113,7 +116,7 @@ function drawMsg(i, frac){ // frac 1 = fully drawn; <1 animate packet
   // label above the line
   ctx.font="700 11.5px 'JetBrains Mono',monospace"; ctx.textAlign="center";
   ctx.fillStyle= (m.kind==="data"||m.kind==="atk"||m.kind==="lost"||m.kind==="open"||m.kind==="closed")? col : "#42606A";
-  if(frac>=1) ctx.fillText(m.label, (CX+SX())/2, y-7);
+  ctx.fillText(m.label, (CX+SX())/2, y-7);   // label is readable from the moment it launches
   if(m.kind==="lost"){
     // packet dies mid-way
     var midX = fromX + (toX-fromX)*0.55;
@@ -147,8 +150,8 @@ function draw(){
   ctx.setLineDash([]);
   // settled messages
   for(var i=0;i<cur;i++) drawMsg(i,1);
-  // current message (animating or settled)
-  if(cur<m.msgs.length) drawMsg(cur, prog);
+  // the message in flight, if any — nothing is drawn ahead of the caption
+  if(prog>0 && cur<m.msgs.length) drawMsg(cur, prog);
   // actor boxes + current states — show state after the last completed message
   var li = Math.min(cur-1, m.msgs.length-1);
   var cs="", ss="";
@@ -162,40 +165,36 @@ function draw(){
 
 function setDots(){ var d=document.getElementById("dots"); d.innerHTML="";
   M().msgs.forEach(function(_,i){ var s=document.createElement("span"); s.className="dot";
-    s.style.cssText="width:8px;height:8px;border-radius:50%;background:"+(i<cur?"#1F8F89":(i===cur&&prog<1?"#00567C":"#CDD8DA"));
+    s.style.cssText="width:8px;height:8px;border-radius:50%;background:"+(i<cur?"#1F8F89":(i===cur&&inFlight()?"#00567C":"#CDD8DA"));
     d.appendChild(s); }); }
 function setCap(){
   var c=document.getElementById("cap"), m=M();
+  if(inFlight() && cur<m.msgs.length){ c.innerHTML=m.msgs[cur].note; return; }  // the one on its way
   if(cur>=m.msgs.length){ c.innerHTML=m.capEnd; return; }
-  if(cur===0 && prog<1){ c.innerHTML=m.cap0; return; }
-  var i = prog<1 ? cur : cur-1;   // in-flight message, else the one just settled
-  if(i<0){ c.innerHTML=m.cap0; return; }
-  c.innerHTML = m.msgs[Math.min(i,m.msgs.length-1)].note;
+  if(cur===0){ c.innerHTML=m.cap0; return; }
+  c.innerHTML = m.msgs[cur-1].note;   // the one on screen, held until the next launches
 }
 function render(){ draw(); setDots(); setCap();
   document.getElementById("next").disabled = cur>=M().msgs.length;
-  document.getElementById("back").disabled = cur===0 && prog>=1;
+  document.getElementById("back").disabled = cur===0 && prog===0;
 }
 var DUR=1100, HOLD=2000, holdTimer=null;
 function clearHold(){ if(holdTimer){ clearTimeout(holdTimer); holdTimer=null; } }
-function animate(ts){ if(!t0)t0=ts; prog=Math.min(1,(ts-t0)/DUR); draw(); setDots();
+function animate(ts){ if(!t0)t0=ts; prog=Math.max(0.001,Math.min(1,(ts-t0)/DUR)); draw(); setDots();
   if(prog<1){ raf=requestAnimationFrame(animate); return; }
-  cur++; setCap();
+  cur++; prog=0; render();   // it has landed: it stays on screen, nothing new is drawn yet
   if(playing){
-    // pause on the settled message so its caption is readable before the next one flies
-    render();
+    // hold on the settled message so its caption is readable before the next one flies
     if(cur<M().msgs.length){
-      clearHold(); holdTimer=setTimeout(function(){ holdTimer=null; if(!playing) return;
-        prog=0; t0=0; setCap(); raf=requestAnimationFrame(animate); }, HOLD);
+      clearHold(); holdTimer=setTimeout(function(){ holdTimer=null; if(!playing) return; step(); }, HOLD);
     }
-    else { playing=false; document.getElementById("play").textContent="▶ Play"; prog=1; render(); }
+    else { playing=false; document.getElementById("play").textContent="▶ Play"; render(); }
   }
-  else { render(); }
 }
-function step(){ prog=0; t0=0; if(raf)cancelAnimationFrame(raf); setCap(); setDots(); raf=requestAnimationFrame(animate); }
+function step(){ prog=0.001; t0=0; if(raf)cancelAnimationFrame(raf); setCap(); setDots(); raf=requestAnimationFrame(animate); }
 
 function setMode(mm){
-  mode=mm; cur=0; prog=1; playing=false;
+  mode=mm; cur=0; prog=0; playing=false;
   document.getElementById("play").textContent="▶ Play";
   ["tcp","udp","synscan"].forEach(function(k){ var b=document.getElementById("m-"+(k==="synscan"?"syn":k));
     b.classList.toggle("on", k===mm); b.classList.toggle("primary", k===mm); });
@@ -203,13 +202,17 @@ function setMode(mm){
 }
 document.querySelectorAll(".modes button[data-m]").forEach(function(b){ b.onclick=function(){ setMode(b.dataset.m); }; });
 document.getElementById("play").onclick=function(){
-  if(playing){ playing=false; this.textContent="▶ Play"; clearHold(); if(raf)cancelAnimationFrame(raf); prog=1; render(); return; }
+  if(playing){ playing=false; this.textContent="▶ Play"; clearHold(); if(raf)cancelAnimationFrame(raf);
+    if(inFlight()) cur++;            // land the packet that was mid-air, don't leave it hanging
+    prog=0; render(); return; }
   playing=true; this.textContent="⏸ Pause";
-  if(cur>=M().msgs.length){ cur=0; } prog=0; step();
+  if(cur>=M().msgs.length){ cur=0; } step();
 };
-document.getElementById("next").onclick=function(){ if(playing)return; clearHold(); if(cur<M().msgs.length){ step(); } };
-document.getElementById("back").onclick=function(){ if(playing)return; clearHold();
-  if(prog<1){ prog=1; render(); return; } if(cur>0){ cur--; prog=1; render(); } };
+document.getElementById("next").onclick=function(){ if(playing)return; clearHold();
+  if(inFlight()){ if(raf)cancelAnimationFrame(raf); cur++; prog=0; render(); return; }
+  if(cur<M().msgs.length){ step(); } };
+document.getElementById("back").onclick=function(){ if(playing)return; clearHold(); if(raf)cancelAnimationFrame(raf);
+  if(inFlight()){ prog=0; render(); return; } if(cur>0){ cur--; prog=0; render(); } };
 document.getElementById("reset").onclick=function(){ setMode(mode); };
 
 // hooks: ?mode=tcp|udp|synscan & ?step=N (settled state)
@@ -217,6 +220,6 @@ var mm=(location.search.match(/mode=(tcp|udp|synscan)/)||[])[1];
 var sp=(location.search.match(/step=(\d+)/)||[])[1];
 fit();
 setMode(mm||"tcp");
-if(sp!=null){ cur=Math.max(0,Math.min(M().msgs.length, +sp)); prog=1; render(); }
+if(sp!=null){ cur=Math.max(0,Math.min(M().msgs.length, +sp)); prog=0; render(); }
 </script>
 </body></html>

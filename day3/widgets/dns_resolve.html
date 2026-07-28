@@ -50,7 +50,18 @@ function fit(){ var cssW=cv.clientWidth||W; DPR=window.devicePixelRatio||1;
   cv.width=cssW*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); W=cssW; draw(); }
 window.addEventListener("resize", fit);
 
-var cur=0, prog=1, playing=false, raf=null, t0=0, cached=false, cacheAnim=false;
+// cur = the step being shown. settled = that step has landed and stays parked on screen
+// (messages never vanish until the NEXT step launches). prog = flight progress, 0 = idle.
+var cur=0, prog=0, settled=false, playing=false, raf=null, t0=0, cached=false, cacheAnim=false;
+function flying(){ return !cacheAnim && prog>0 && prog<1; }
+function doneCount(){ return cur + (settled?1:0); }
+function atEnd(){ return settled && cur>=STEPS.length-1; }
+// where a message rests once it arrives: beside the right-hand servers, above the left-hand ones
+function chipW(txt){ ctx.font="700 10.5px 'JetBrains Mono',monospace"; return ctx.measureText(txt).width+16; }
+function park(n, txt){
+  if(n.x < 400) return {x:n.x, y:n.y-46};
+  return {x:Math.min(n.x+34+chipW(txt)/2, W-6-chipW(txt)/2), y:n.y};
+}
 function roundRect(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y);
   ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
 function lerp(a,b,t){return a+(b-a)*t;}
@@ -88,82 +99,108 @@ function edge(a,b){ ctx.strokeStyle="#E2E9E9"; ctx.lineWidth=2; ctx.beginPath();
 function draw(){
   ctx.clearRect(0,0,W,H);
   edge("you","res"); ["root","tld","auth"].forEach(function(k){ edge("res",k); });
+  var s = STEPS[Math.min(cur,STEPS.length-1)], live = !cacheAnim && (flying()||settled);
+  // the hop in play stays highlighted for as long as its messages are on screen
+  if(live){ ctx.strokeStyle="#BBD6E4"; ctx.lineWidth=3.5; ctx.beginPath();
+    ctx.moveTo(N[s.from].x,N[s.from].y); ctx.lineTo(N[s.to].x,N[s.to].y); ctx.stroke(); }
   // a small tick on each authority server already visited, so progress accumulates
-  for(var i=1;i<Math.min(cur,4);i++){ var t=N[STEPS[i].to];
+  for(var i=1;i<Math.min(doneCount(),4);i++){ var t=N[STEPS[i].to];
     ctx.fillStyle="#1F8F89"; ctx.font="700 12px 'Avenir Next',sans-serif"; ctx.textAlign="left";
     ctx.fillText("✓", t.x+30, t.y-18); }
-  var glowK = (cur<STEPS.length)? STEPS[cur].glow : "you";
-  if(prog<1 && cur<STEPS.length) glowK = STEPS[cur].to; // glow target while querying
+  var glowK = cacheAnim ? "res" : (settled ? s.glow : (flying() ? s.to : "you"));
   ["you","res","root","tld","auth"].forEach(function(k){ node(k, k===glowK); });
-  if(cached){ chip(N.res.x, N.res.y-44, "cached ✓", "#1F8F89", "#17726d"); }
+  if(cached){ chip(N.res.x, N.res.y+74, "cached ✓", "#1F8F89", "#17726d"); }
 
-  // in-flight packet
+  // replay from cache
   if(cacheAnim){
     var pth = prog<0.5 ? [N.you,N.res] : [N.res,N.you];
-    var t = prog<0.5? prog/0.5 : (prog-0.5)/0.5;
-    var p={x:lerp(pth[0].x,pth[1].x,t), y:lerp(pth[0].y,pth[1].y,t)};
+    var tc = prog<0.5? prog/0.5 : (prog-0.5)/0.5;
+    var p={x:lerp(pth[0].x,pth[1].x,tc), y:lerp(pth[0].y,pth[1].y,tc)};
     chip(p.x,p.y, prog<0.5?"majal.sa?":"93.184.216.34 (cache)", "#1F8F89", "#17726d");
     return;
   }
-  if(cur<STEPS.length){
-    var s=STEPS[cur], from=N[s.from], to=N[s.to];
-    if(prog<1){
-      // query out (0..0.6), answer back (0.6..1) if a
-      if(s.a && prog>0.6){ var t=(prog-0.6)/0.4; var p={x:lerp(to.x,from.x,t),y:lerp(to.y,from.y,t)};
-        chip(p.x,p.y, s.a, "#1F8F89", "#17726d"); }
-      else { var t2=Math.min(1,prog/0.6); var p2={x:lerp(from.x,to.x,t2),y:lerp(from.y,to.y,t2)};
-        chip(p2.x,p2.y, s.q||s.a, "#00567C", "#003f5e"); }
-    }
+  if(!live) return;
+  var from=N[s.from], to=N[s.to], qPark=park(to, s.q||s.a), aPark=park(from, s.a);
+  var isAnswerOnly = !s.q;                       // the last hop: the resolver hands the IP back
+  var qCol = isAnswerOnly ? ["#1F8F89","#17726d"] : ["#00567C","#003f5e"];
+  var retLeg = s.q && s.a;                       // a question that gets an answer back
+  if(settled){
+    // parked: both messages of this hop stay readable until the next hop launches
+    chip(qPark.x, qPark.y, s.q||s.a, qCol[0], qCol[1]);
+    if(retLeg) chip(aPark.x, aPark.y, s.a, "#1F8F89", "#17726d");
+    return;
   }
+  // in flight: query out (0..0.6) landing on its parking spot, then the answer back (0.6..1)
+  var onReturn = retLeg && prog>0.6;
+  var t2=Math.min(1,prog/0.6);
+  var qp = onReturn ? qPark : {x:lerp(from.x,qPark.x,t2), y:lerp(from.y,qPark.y,t2)};
+  chip(qp.x, qp.y, s.q||s.a, qCol[0], qCol[1]);
+  if(onReturn){ var t=(prog-0.6)/0.4;
+    chip(lerp(qPark.x,aPark.x,t), lerp(qPark.y,aPark.y,t), s.a, "#1F8F89", "#17726d"); }
 }
 function setDots(){ var d=document.getElementById("dots"); d.innerHTML="";
   STEPS.forEach(function(_,i){ var s=document.createElement("span");
-    s.style.cssText="width:8px;height:8px;border-radius:50%;background:"+(i<cur?"#1F8F89":(i===cur&&prog<1?"#00567C":"#CDD8DA")); d.appendChild(s); }); }
+    s.style.cssText="width:8px;height:8px;border-radius:50%;background:"+(i<doneCount()?"#1F8F89":(i===cur&&flying()?"#00567C":"#CDD8DA")); d.appendChild(s); }); }
 function setCap(){ var c=document.getElementById("cap");
   if(cacheAnim){ c.innerHTML='<b>Served straight from the resolver&rsquo;s cache</b> — instant, no walk up the tree. Cache entries expire after their TTL (seconds to hours).'; return; }
-  if(cur>=STEPS.length){ c.innerHTML=STEPS[STEPS.length-1].cap; return; }
-  c.innerHTML = (cur===0 && prog>=1) ? 'DNS turns a <b>name</b> you can remember into an <b>IP address</b> the network can route to. Press Resolve.' : STEPS[Math.min(cur,STEPS.length-1)].cap;
+  if(!settled && !flying()){ c.innerHTML='DNS turns a <b>name</b> you can remember into an <b>IP address</b> the network can route to. Press Resolve.'; return; }
+  c.innerHTML = STEPS[Math.min(cur,STEPS.length-1)].cap;   // stays put while its messages are parked
 }
 function render(){ draw(); setDots(); setCap();
-  document.getElementById("next").disabled = cur>=STEPS.length;
-  document.getElementById("back").disabled = cur===0 && prog>=1;
-  document.getElementById("again").style.display = (cur>=STEPS.length)? "inline-block":"none";
+  document.getElementById("next").disabled = atEnd();
+  document.getElementById("back").disabled = cur===0 && !settled && !flying();
+  document.getElementById("again").style.display = atEnd()? "inline-block":"none";
 }
 var DUR=1400, HOLD=2600, holdTimer=null;
 function clearHold(){ if(holdTimer){ clearTimeout(holdTimer); holdTimer=null; } }
-// advance to the next referral (or finish)
-function advance(){
-  cur++; if(cur>=STEPS.length){ cached=true; }
-  setDots();
-  if(playing && cur<STEPS.length){ prog=0; t0=0; setCap(); raf=requestAnimationFrame(animate); }
-  else { playing=false; document.getElementById("play").textContent="▶ Resolve majal.sa"; prog=1; render(); }
+// the hop has landed: park it, and leave it on screen
+function settleNow(){
+  settled=true; prog=1;
+  if(cur>=STEPS.length-1) cached=true;
+  render();
 }
-function animate(ts){ if(!t0)t0=ts; prog=Math.min(1,(ts-t0)/DUR); draw();
+// launch the next hop (or the first one)
+function step(){
+  if(settled){ if(cur>=STEPS.length-1) return; cur++; }
+  settled=false; prog=0.001; t0=0; if(raf)cancelAnimationFrame(raf);
+  setCap(); setDots(); raf=requestAnimationFrame(animate);
+}
+function animate(ts){ if(!t0)t0=ts; prog=Math.max(0.001,Math.min(1,(ts-t0)/DUR)); draw();
   if(prog<1){ raf=requestAnimationFrame(animate); return; }
   if(cacheAnim){ cacheAnim=false; render(); return; }
-  // the hop has landed — hold here so its caption can actually be read before moving on
-  if(playing){ clearHold(); holdTimer=setTimeout(function(){ holdTimer=null; advance(); }, HOLD); }
-  else advance();
+  settleNow();
+  // hold on the parked messages so they can actually be read before the next hop launches
+  if(playing){
+    if(!atEnd()){ clearHold(); holdTimer=setTimeout(function(){ holdTimer=null; if(!playing)return; step(); }, HOLD); }
+    else { playing=false; document.getElementById("play").textContent="▶ Resolve majal.sa"; render(); }
+  }
 }
-function step(){ prog=0; t0=0; if(raf)cancelAnimationFrame(raf); setCap(); setDots(); raf=requestAnimationFrame(animate); }
 
 document.getElementById("play").onclick=function(){
-  if(playing){ playing=false; this.textContent="▶ Resolve majal.sa"; clearHold(); if(raf)cancelAnimationFrame(raf); prog=1; render(); return; }
-  if(cur>=STEPS.length){ cur=0; cached=false; }
+  if(playing){ playing=false; this.textContent="▶ Resolve majal.sa"; clearHold(); if(raf)cancelAnimationFrame(raf);
+    if(flying()) settleNow(); else render(); return; }
+  if(atEnd()){ cur=0; settled=false; cached=false; }
   playing=true; this.textContent="⏸ Pause"; step();
 };
-document.getElementById("next").onclick=function(){ if(playing)return; clearHold(); if(cur<STEPS.length){ step(); } };
-document.getElementById("back").onclick=function(){ if(playing)return; clearHold();
-  if(prog<1){ prog=1; render(); return; } if(cur>0){ cur--; cached=false; prog=1; render(); } };
+document.getElementById("next").onclick=function(){ if(playing)return; clearHold();
+  if(flying()){ if(raf)cancelAnimationFrame(raf); settleNow(); return; }   // land it first
+  if(!atEnd()) step(); };
+document.getElementById("back").onclick=function(){ if(playing)return; clearHold(); if(raf)cancelAnimationFrame(raf);
+  if(flying()){ prog=0; settled=false; render(); return; }
+  cached=false;
+  if(settled && cur>0){ cur--; settled=true; prog=1; }
+  else { settled=false; prog=0; }
+  render(); };
 document.getElementById("again").onclick=function(){ if(playing||cacheAnim)return; cacheAnim=true; prog=0; t0=0;
   clearHold(); if(raf)cancelAnimationFrame(raf); setCap(); raf=requestAnimationFrame(animate); };
-document.getElementById("reset").onclick=function(){ playing=false; cacheAnim=false; cached=false;
-  document.getElementById("play").textContent="▶ Resolve majal.sa"; clearHold(); if(raf)cancelAnimationFrame(raf); cur=0; prog=1; render(); };
+document.getElementById("reset").onclick=function(){ playing=false; cacheAnim=false; cached=false; settled=false;
+  document.getElementById("play").textContent="▶ Resolve majal.sa"; clearHold(); if(raf)cancelAnimationFrame(raf); cur=0; prog=0; render(); };
 
 var sp=(location.search.match(/step=(\d+)/)||[])[1];
 loadImgs(function(){ fit();
-  if(sp!=null){ cur=Math.max(0,Math.min(STEPS.length,+sp)); prog=1; if(cur>=STEPS.length)cached=true; render(); }
-  else render();
+  if(sp!=null){ var n=Math.max(0,Math.min(STEPS.length,+sp));   // n = hops already completed
+    cur=Math.max(0,n-1); settled=n>0; prog=settled?1:0; if(n>=STEPS.length)cached=true; }
+  render();
 });
 </script>
 </body></html>
