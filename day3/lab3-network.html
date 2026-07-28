@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 3 — Moving Through the Network</title>
+<style>
+:root{
+  --petrol:#00567d; --petrol-d:#003f5e; --teal:#1f8f89; --turq:#33d2cb;
+  --yellow:#f2d200; --ink:#12333d; --slate:#2f4f59; --muted:#5c7880;
+  --bg:#f6f8f8; --bg-2:#eef3f3; --card:#fff; --line:#e0e7e8;
+  --code-bg:#0f2b34; --code-ink:#dff3f2;
+  --sans:"Avenir Next","Avenir","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  --mono:"JetBrains Mono","Cascadia Code","SF Mono",Menlo,Consolas,"DejaVu Sans Mono",monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth; scroll-padding-top:84px}
+body{margin:0; font-family:var(--sans); color:var(--ink); background:var(--bg);
+  -webkit-font-smoothing:antialiased; line-height:1.6}
+
+/* ---- top bar ---- */
+.bar{position:sticky; top:0; z-index:30; background:rgba(246,248,248,.94);
+  backdrop-filter:blur(8px); border-bottom:1px solid var(--line)}
+.bar .in{max-width:1240px; margin:0 auto; padding:10px 26px; display:flex;
+  align-items:center; gap:16px}
+.bar img{height:34px; width:auto; mix-blend-mode:multiply}
+.bar .crumb{font-size:12px; font-weight:800; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--teal)}
+.bar .spacer{flex:1}
+.bar a.back{font-size:13px; font-weight:700; color:var(--petrol); text-decoration:none;
+  border:1px solid var(--line); background:var(--card); padding:.45em 1em; border-radius:2px}
+.bar a.back:hover{border-color:var(--petrol)}
+
+/* ---- hero ---- */
+.hero{max-width:1240px; margin:0 auto; padding:52px 26px 30px}
+.hero .kicker{margin:0 0 12px; font-size:13px; font-weight:800; letter-spacing:.24em;
+  text-transform:uppercase; color:var(--teal)}
+.hero h1{margin:0; font-size:clamp(32px,5vw,54px); line-height:1.05; letter-spacing:-.02em;
+  color:var(--petrol); font-weight:800; max-width:18ch}
+.hero .rule{width:72px; height:6px; border-radius:3px; background:var(--yellow); margin:22px 0 22px}
+.meta{display:flex; flex-wrap:wrap; gap:10px; margin:0; padding:0; list-style:none}
+.meta li{background:var(--card); border:1px solid var(--line); border-left:3px solid var(--turq);
+  padding:.5em .9em; border-radius:2px}
+.meta .k{display:block; font-size:10.5px; font-weight:800; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--muted)}
+.meta .v{font-size:14px; font-weight:700; color:var(--slate)}
+
+/* ---- layout ---- */
+.layout{max-width:1240px; margin:0 auto; padding:14px 26px 80px;
+  display:grid; grid-template-columns:236px minmax(0,1fr); gap:44px; align-items:start}
+.toc{position:sticky; top:78px; max-height:calc(100vh - 100px); overflow-y:auto;
+  border-left:2px solid var(--line); padding-left:16px}
+.toc-h{margin:0 0 10px; font-size:11px; font-weight:800; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--muted)}
+.toc ul{list-style:none; margin:0; padding:0}
+.toc li{margin:0}
+.toc a{display:block; padding:3px 0; font-size:13.5px; line-height:1.35; color:var(--muted);
+  text-decoration:none}
+.toc a:hover{color:var(--petrol)}
+.toc .l1 a{margin-top:12px; font-weight:800; font-size:12px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--petrol)}
+.toc .l2 a{padding-left:2px}
+
+/* ---- content ---- */
+.doc{min-width:0; max-width:78ch}
+.doc h1{margin:56px 0 6px; font-size:clamp(24px,3.2vw,32px); font-weight:800; letter-spacing:-.02em;
+  color:var(--petrol); border-top:4px solid var(--yellow); padding-top:18px}
+.doc h2{margin:44px 0 4px; font-size:clamp(20px,2.6vw,25px); font-weight:800; letter-spacing:-.01em;
+  color:var(--petrol)}
+.doc h3{margin:30px 0 4px; font-size:16px; font-weight:800; letter-spacing:.02em; color:var(--teal)}
+.doc p{margin:.85em 0; color:var(--slate); font-size:16px}
+.doc hr{border:0; border-top:1px solid var(--line); margin:44px 0}
+.doc a{color:var(--petrol)}
+.doc strong{color:var(--ink)}
+.doc em{color:var(--muted)}
+.doc ul,.doc ol{color:var(--slate); font-size:16px}
+
+/* code */
+.doc code{font-family:var(--mono); font-size:.88em; background:var(--bg-2);
+  border:1px solid var(--line); border-radius:3px; padding:.1em .38em; color:var(--petrol-d)}
+.doc pre{background:var(--code-bg); color:var(--code-ink); border-radius:3px;
+  border-left:4px solid var(--turq); padding:16px 18px; overflow-x:auto; margin:1.1em 0}
+.doc pre code{background:none; border:0; padding:0; color:inherit; font-size:13.5px; line-height:1.55}
+
+/* tables */
+.tw{overflow-x:auto; margin:1.2em 0; border:1px solid var(--line); border-radius:2px; background:var(--card)}
+.doc table{border-collapse:collapse; width:100%; font-size:14px}
+.doc th{text-align:left; font-family:var(--mono); font-size:11px; font-weight:700;
+  letter-spacing:.1em; text-transform:uppercase; color:var(--teal);
+  background:var(--bg-2); border-bottom:1px solid var(--line); padding:10px 14px; white-space:nowrap}
+.doc td{border-bottom:1px solid var(--line); padding:10px 14px; color:var(--slate);
+  vertical-align:top; line-height:1.5}
+.doc tbody tr:last-child td{border-bottom:0}
+.doc td:first-child{color:var(--petrol); font-weight:700; white-space:nowrap}
+.doc td code{white-space:nowrap}
+
+/* callouts */
+.callout{background:var(--card); border:1px solid var(--line); border-left:4px solid var(--petrol);
+  border-radius:2px; padding:2px 20px; margin:1.3em 0}
+.callout p{font-size:15px}
+
+/* downloadable file button */
+.doc p:has(> a.dl:only-child){margin:.6em 0 1.4em}
+a.dl{display:inline-flex; align-items:center; gap:8px; text-decoration:none; font-weight:800;
+  font-size:14.5px; color:#fff; background:var(--petrol); border-radius:4px; padding:.7em 1.3em;
+  box-shadow:0 2px 8px rgba(0,86,125,.18)}
+a.dl:hover{background:var(--petrol-d)}
+
+/* exercises */
+.doc p.task{position:relative; background:var(--card); border:1px solid var(--line);
+  border-left:4px solid var(--turq); border-radius:2px; padding:14px 18px 14px 74px;
+  margin:1.5em 0 0; font-size:16px; color:var(--ink)}
+.tid{position:absolute; left:16px; top:15px; font-family:var(--mono); font-weight:800; font-size:13px;
+  color:var(--petrol); background:var(--bg-2); border-radius:2px; padding:.25em .55em; letter-spacing:.02em}
+details.hint{margin:0 0 .2em; border:1px solid var(--line); border-top:0; background:var(--bg-2);
+  border-radius:0 0 2px 2px; font-size:14.5px}
+details.hint summary{cursor:pointer; list-style:none; padding:.5em 18px; font-weight:700;
+  font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted)}
+details.hint summary::-webkit-details-marker{display:none}
+details.hint summary::before{content:"▸ "; color:var(--turq)}
+details[open].hint summary::before{content:"▾ "}
+details.hint summary:hover{color:var(--petrol)}
+.hint-body{padding:0 18px .8em; color:var(--slate); font-style:italic}
+p.wrapup{background:rgba(242,210,0,.14); border:1px solid rgba(242,210,0,.5);
+  border-radius:2px; padding:14px 18px; font-size:15.5px; color:var(--ink)}
+
+footer{border-top:1px solid var(--line); background:var(--bg)}
+.foot{max-width:1240px; margin:0 auto; padding:20px 26px; display:flex; gap:16px;
+  flex-wrap:wrap; justify-content:space-between; font-size:13px; color:var(--muted)}
+.foot .slogan{font-weight:700; color:var(--slate)}
+
+@media (max-width:960px){
+  .layout{grid-template-columns:1fr; gap:0}
+  .toc{position:static; max-height:none; border-left:0; border-top:1px solid var(--line);
+    padding:16px 0 24px; margin-bottom:8px}
+  .toc ul{columns:2; column-gap:24px}
+}
+@media print{
+  .bar,.toc{display:none}
+  body{background:#fff}
+  .layout{display:block; padding:0 0 20px}
+  details.hint{background:#fff}
+  details.hint > .hint-body{display:block !important}
+  .doc h1,.doc h2{break-after:avoid}
+  p.task{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="bar">
+  <div class="in">
+    <img src="../MajalLogo.jpg" alt="Majal">
+    <span class="crumb">Day 3 · Labs</span>
+    <span class="spacer"></span>
+    <a class="back" href="../index.html">← Course</a>
+  </div>
+</div>
+
+<div class="hero">
+  <p class="kicker">Majal Initiative · Cybersecurity Bootcamp</p>
+  <h1>Day 3 — Moving Through the Network</h1>
+  <div class="rule"></div>
+  <ul class="meta"><li><span class="k">Duration</span><span class="v">~2.5 hours (three linked labs)</span></li><li><span class="k">Environment</span><span class="v">Kali Linux VM</span></li><li><span class="k">Level</span><span class="v">Intermediate</span></li><li><span class="k">Format</span><span class="v">Capture analysis → network recon → exploitation</span></li></ul>
+</div>
+
+<div class="layout">
+<nav class="toc" aria-label="Lab contents"><p class="toc-h">Contents</p><ul>
+<li class="l2"><a href="#overview">Overview</a></li>
+<li class="l2"><a href="#rules-of-engagement">Rules of Engagement</a></li>
+<li class="l2"><a href="#before-you-start-prerequisites">Before You Start — Prerequisites</a></li>
+<li class="l1"><a href="#lab-1-packet-detective">Lab 1 — Packet Detective 🕵️</a></li>
+<li class="l2"><a href="#the-situation">The Situation</a></li>
+<li class="l2"><a href="#your-objectives">Your Objectives</a></li>
+<li class="l2"><a href="#deliverables">Deliverables</a></li>
+<li class="l2"><a href="#analyst-s-habit">Analyst&#x27;s Habit</a></li>
+<li class="l1"><a href="#lab-2-mapping-the-target-with-nmap">Lab 2 — Mapping the Target with Nmap 🗺️</a></li>
+<li class="l2"><a href="#the-situation">The Situation</a></li>
+<li class="l2"><a href="#understanding-nmap">Understanding Nmap</a></li>
+<li class="l2"><a href="#your-objectives">Your Objectives</a></li>
+<li class="l2"><a href="#deliverable-recon-table">Deliverable — Recon Table</a></li>
+<li class="l1"><a href="#lab-3-pop-the-box">Lab 3 — Pop the Box 💥</a></li>
+<li class="l2"><a href="#the-objective">The Objective</a></li>
+<li class="l2"><a href="#step-1-point-your-recon-at-the-target">Step 1 — Point Your Recon at the Target</a></li>
+<li class="l2"><a href="#step-2-investigate-what-you-found">Step 2 — Investigate What You Found</a></li>
+<li class="l2"><a href="#step-3-the-tools-you-ll-use">Step 3 — The Tools You&#x27;ll Use</a></li>
+<li class="l2"><a href="#your-objectives">Your Objectives</a></li>
+<li class="l2"><a href="#deliverable">Deliverable</a></li>
+<li class="l2"><a href="#something-to-carry-into-day-5">Something to Carry Into Day 5</a></li>
+</ul></nav>
+<main class="doc">
+<h2 id="overview">Overview</h2>
+<p>Today you stop being an outsider. This morning you learned the language the
+network speaks; this afternoon you learn to <em>abuse</em> it. The three labs below are
+one continuous operation, run against the same target range:</p>
+<div class="callout"><p><strong>Lab 1 — Listen.</strong> Read traffic off the wire and reconstruct what happened.
+<strong>Lab 2 — Map.</strong> Scan the target and build a picture of what it's running.
+<strong>Lab 3 — Break in.</strong> Turn one weakness into a shell, and capture the flag.</p></div>
+<p>Each lab feeds the next. Pay attention in the early ones — details you notice now
+become weapons later. That's exactly how real intrusions work.</p>
+<hr />
+<h2 id="rules-of-engagement">Rules of Engagement</h2>
+<div class="callout"><p>⚠️ <strong>Only touch the lab target your instructor gives you.</strong>
+The tools in this room are the real thing. Scanning, connecting to, or
+attacking any machine other than the assigned target — a classmate's laptop,
+the instructor's box, anything on the wider network — is out of bounds and
+ends your session. Everything here is legal <em>because</em> it's confined to a
+deliberately vulnerable target on an isolated lab network. Keep it there.</p></div>
+<h2 id="before-you-start-prerequisites">Before You Start — Prerequisites</h2>
+<p>You'll work from <strong>Kali Linux</strong>. The tools you need are:</p>
+<ul>
+<li><strong>Wireshark</strong> — graphical packet analysis (Lab 1)</li>
+<li><strong>Nmap</strong> — network scanner (Lab 2 &amp; 3)</li>
+<li><strong>netcat (<code>nc</code>)</strong> — raw TCP connection tool (Lab 3)</li>
+<li><strong>telnet</strong> — interactive TCP client (Lab 3)</li>
+</ul>
+<p>Most ship by default. <code>telnet</code> occasionally doesn't, so make sure it's present:</p>
+<pre><code class="language-bash">sudo apt update &amp;&amp; sudo apt install -y telnet
+</code></pre>
+<p>Confirm the rest are available:</p>
+<pre><code class="language-bash">which wireshark nmap nc telnet
+</code></pre>
+<hr />
+<hr />
+<h1 id="lab-1-packet-detective">Lab 1 — Packet Detective 🕵️</h1>
+<p><strong>Duration:</strong> ~45 min · <strong>Tool:</strong> Wireshark · <strong>File:</strong> <code>majal_day3_lab1.pcap</code></p>
+<p><a class="dl" href="majal_day3_lab1.pcap" download>⬇ Download the packet capture — majal_day3_lab1.pcap (35 KB)</a></p>
+
+<h2 id="the-situation">The Situation</h2>
+<p>Something leaked. A confidential file left the network in the clear, and we have
+a packet capture of the traffic from around that time. The capture is <strong>busy</strong> —
+normal browsing, downloads, background chatter, and encrypted sessions are all
+mixed in. Your evidence is buried in that noise.</p>
+<p>Your job is to open the capture, filter out the noise, and reconstruct exactly
+what happened — then recover the proof.</p>
+<h2 id="your-objectives">Your Objectives</h2>
+<p>Work through the capture and produce answers to each of the following. Every
+answer is <em>in the file</em> — you don't need anything outside Wireshark.</p>
+<ol>
+<li><p><strong>Get oriented.</strong> Survey the hosts talking on this network and the mix of
+protocols in use. Which protocols carry readable content, and which are
+encrypted? Form a first impression of who's on the wire.</p>
+</li>
+<li><p><strong>Find the odd connection.</strong> Among all the name lookups in the capture, one
+destination does not belong on a corporate network — it has the shape of a
+malicious site. Identify it, and identify <strong>which host on the network reached
+out to it.</strong> That host is your prime suspect.</p>
+</li>
+<li><p><strong>Catch a credential.</strong> The suspect logged into an internal service over an
+<strong>unencrypted</strong> protocol. Locate that login and recover the <strong>username and
+password</strong> that were sent — in plain text — across the network.</p>
+</li>
+<li><p><strong>Recover the leaked file.</strong> A confidential document was transferred over the
+same unencrypted protocol. Extract that file straight out of the captured
+traffic, open it, and read it. It contains a <strong><code>MAJAL{...}</code> token</strong> — that
+token is your Lab 1 flag.</p>
+</li>
+<li><p><strong>Bonus — spot what doesn't fit.</strong> The suspect also touched an older service
+on the network and did something unusual during that exchange. Take note of
+anything odd you see there. You may not understand its significance yet —
+write it down anyway. It will matter this afternoon.</p>
+</li>
+</ol>
+<h2 id="deliverables">Deliverables</h2>
+<p>Record and be ready to submit:</p>
+<ul>
+<li>[ ] The suspicious destination and the suspect host's IP</li>
+<li>[ ] The recovered username and password</li>
+<li>[ ] The <strong><code>MAJAL{...}</code></strong> flag from the leaked file</li>
+<li>[ ] (Bonus) A note on the odd exchange from Objective 5</li>
+</ul>
+<h2 id="analyst-s-habit">Analyst's Habit</h2>
+<p>Real analysts never scroll through every packet — they <strong>filter</strong>. If you find
+yourself lost in thousands of frames, you're doing it the hard way. Narrow the
+view down to the protocol or host you care about, then read only what's left.</p>
+<hr />
+<hr />
+<h1 id="lab-2-mapping-the-target-with-nmap">Lab 2 — Mapping the Target with Nmap 🗺️</h1>
+<p><strong>Duration:</strong> ~45 min · <strong>Tool:</strong> Nmap</p>
+<h2 id="the-situation">The Situation</h2>
+<p>You have a foothold on the network and a single target in front of you at
+<code>TARGET_IP</code>. Before you can do anything to it, you need to <strong>know it</strong> — which
+hosts are alive, which ports are open, and <em>what software</em> is answering on each
+one. This is reconnaissance, and it's the step amateurs rush and professionals
+never skip.</p>
+<p>Nmap is the standard tool for this. The rest of this lab teaches you its most
+important options; the tasks at the end put them to work.</p>
+<h2 id="understanding-nmap">Understanding Nmap</h2>
+<p>At its simplest, Nmap takes a target and reports which ports are <strong>open</strong>,
+<strong>closed</strong>, or <strong>filtered</strong>, and — with the right options — what's running behind
+them. The general shape of a command is:</p>
+<pre><code class="language-bash">nmap [options] TARGET_IP
+</code></pre>
+<p>The power is all in the options. Here are the ones that matter.</p>
+<h3>Host Discovery</h3>
+<div class="tw"><table>
+<thead>
+<tr>
+  <th>Flag</th>
+  <th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>-sn</code></td>
+  <td><strong>Ping scan.</strong> Discover which hosts are alive <em>without</em> scanning ports. Use it first to map a whole subnet (e.g. <code>nmap -sn 192.168.10.0/24</code>) and see who's up.</td>
+</tr>
+<tr>
+  <td><code>-Pn</code></td>
+  <td><strong>Skip host discovery.</strong> Treat the target as online even if it doesn't answer pings. Useful when a firewall drops ping but the host is really there.</td>
+</tr>
+</tbody>
+</table></div>
+<h3>Choosing Which Ports to Scan</h3>
+<div class="tw"><table>
+<thead>
+<tr>
+  <th>Flag</th>
+  <th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>-p 80</code></td>
+  <td>Scan a <strong>specific port</strong>.</td>
+</tr>
+<tr>
+  <td><code>-p 21,22,80</code></td>
+  <td>Scan a <strong>list</strong> of ports.</td>
+</tr>
+<tr>
+  <td><code>-p 1-1000</code></td>
+  <td>Scan a <strong>range</strong> of ports.</td>
+</tr>
+<tr>
+  <td><code>-p-</code></td>
+  <td>Scan <strong>all 65,535 ports</strong>. Thorough, but slower.</td>
+</tr>
+<tr>
+  <td><code>-F</code></td>
+  <td><strong>Fast scan</strong> — only the ~100 most common ports.</td>
+</tr>
+<tr>
+  <td><em>(default)</em></td>
+  <td>With no <code>-p</code>, Nmap scans the top 1,000 most common ports.</td>
+</tr>
+</tbody>
+</table></div>
+<h3>Digging Into What's Running</h3>
+<p>This is where recon gets interesting — going from &quot;port 80 is open&quot; to &quot;port 80
+is running <em>this exact software, this exact version</em>.&quot;</p>
+<div class="tw"><table>
+<thead>
+<tr>
+  <th>Flag</th>
+  <th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>-sV</code></td>
+  <td><strong>Service &amp; version detection.</strong> Probes each open port to identify the service <em>and its version number</em> — e.g. not just &quot;SSH&quot; but &quot;OpenSSH 4.7p1&quot;. This is the difference between knowing a door exists and knowing exactly which lock is on it.</td>
+</tr>
+<tr>
+  <td><code>-O</code></td>
+  <td><strong>OS detection.</strong> Guesses the target's operating system from its network fingerprint.</td>
+</tr>
+<tr>
+  <td><code>-A</code></td>
+  <td><strong>Aggressive scan.</strong> Turns on version detection, OS detection, default scripts, and traceroute all at once. The loud, everything-at-once option.</td>
+</tr>
+<tr>
+  <td><code>--script &lt;name&gt;</code></td>
+  <td><strong>Run an NSE script.</strong> Nmap ships hundreds of small scripts (the Nmap Scripting Engine) that go beyond simple port checks — probing for specific misconfigurations, default credentials, exposed shares, or known weaknesses in a service. Example: <code>--script http-title</code> fetches the page title from a web server, or <code>--script banner</code> grabs the raw banner a service announces itself with. Browse them in <code>/usr/share/nmap/scripts/</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<h3>Scan Types (how the probing is done)</h3>
+<div class="tw"><table>
+<thead>
+<tr>
+  <th>Flag</th>
+  <th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>-sS</code></td>
+  <td><strong>SYN scan.</strong> The default when run as root — fast and relatively quiet.</td>
+</tr>
+<tr>
+  <td><code>-sT</code></td>
+  <td><strong>TCP connect scan.</strong> Completes a full connection; used when you can't run as root.</td>
+</tr>
+<tr>
+  <td><code>-sU</code></td>
+  <td><strong>UDP scan.</strong> For UDP services (DNS, DHCP, SNMP…), which the TCP scans miss.</td>
+</tr>
+</tbody>
+</table></div>
+<h3>Speed and Output</h3>
+<div class="tw"><table>
+<thead>
+<tr>
+  <th>Flag</th>
+  <th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>-T0</code> … <code>-T5</code></td>
+  <td><strong>Timing template.</strong> <code>-T0</code> is glacially slow and stealthy; <code>-T4</code> is a good fast default on a local lab; <code>-T5</code> is fastest and loudest.</td>
+</tr>
+<tr>
+  <td><code>-oN file.txt</code></td>
+  <td>Save <strong>normal</strong> output to a file.</td>
+</tr>
+<tr>
+  <td><code>-oG file.txt</code></td>
+  <td>Save <strong>greppable</strong> output (easy to search later).</td>
+</tr>
+<tr>
+  <td><code>-v</code></td>
+  <td><strong>Verbose</strong> — show progress and results as they come in.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="your-objectives">Your Objectives</h2>
+<p>Scan <code>TARGET_IP</code> and build a complete profile of it. Use the flags above to
+answer each item — choose the right tool for each question.</p>
+<ol>
+<li><strong>Is it alive?</strong> Confirm the target is up.</li>
+<li><strong>What's open?</strong> Enumerate the open ports. Don't assume the defaults are
+enough — consider scanning beyond the top 1,000.</li>
+<li><strong>What's running?</strong> For <strong>every</strong> open port, identify the <strong>service and its
+exact version number</strong>. This is the most important part of the lab — be
+thorough and write the versions down precisely.</li>
+<li><strong>Go deeper on one service.</strong> Pick an interesting service and run an
+appropriate NSE script against it to learn more than a basic scan reveals.</li>
+<li><strong>Save your work.</strong> Output your findings to a file so you can refer back to
+them in Lab 3.</li>
+</ol>
+<h2 id="deliverable-recon-table">Deliverable — Recon Table</h2>
+<p>Fill this in. You'll need it for the next lab.</p>
+<div class="tw"><table>
+<thead>
+<tr>
+  <th>Port</th>
+  <th>Protocol</th>
+  <th>Service</th>
+  <th><strong>Version</strong></th>
+  <th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+</tr>
+</tbody>
+</table></div>
+<div class="callout"><p>🔎 Look hard at those <strong>version numbers</strong>. Old software is old for a reason,
+and a version string is often the single most valuable thing recon gives you.</p></div>
+<hr />
+<hr />
+<h1 id="lab-3-pop-the-box">Lab 3 — Pop the Box 💥</h1>
+<p><strong>Duration:</strong> ~60 min · <strong>Tools:</strong> Nmap, telnet, netcat (<code>nc</code>)</p>
+<h2 id="the-objective">The Objective</h2>
+<p>This is the payoff. You are going to <strong>break into the target machine at
+<code>TARGET_IP</code>, gain a shell on it, and capture a flag that lives on the machine
+itself.</strong></p>
+<p>The flag is a <strong><code>MAJAL{...}</code></strong> token your instructor has placed somewhere on the
+target's filesystem. To read it, you must first get command execution on the box
+— then find and read the file. Reaching a shell <em>is</em> the challenge; the flag is
+your proof you succeeded.</p>
+<h2 id="step-1-point-your-recon-at-the-target">Step 1 — Point Your Recon at the Target</h2>
+<p>You already met the tool you need for this in Lab 2. Before you attack anything,
+re-examine the target and get its services and <strong>version numbers</strong> in front of
+you. The way in is hiding in a version string — a service running software old
+enough to have a well-known, published weakness.</p>
+<div class="callout"><p>Lean on the flags from Lab 2 that reveal <strong>service versions</strong> and let you probe
+<strong>individual services</strong>. If you skipped straight here, go back and get a
+precise version inventory first — you cannot exploit what you haven't
+identified.</p></div>
+<h2 id="step-2-investigate-what-you-found">Step 2 — Investigate What You Found</h2>
+<p>Your recon gave you a list of services and, crucially, <strong>version numbers</strong>. That
+version inventory is your lead list. Now you turn detective.</p>
+<p>Take the versions you identified and <strong>research them.</strong> Software versions are
+public knowledge, and so are their weaknesses — security researchers document
+them, catalogue them, and publish how they work. One of the services on this box
+is running a version old enough that its problems are very well known. Your task
+is to find out <em>which</em> service that is, <em>what</em> is wrong with it, and <em>how</em> that
+weakness is triggered.</p>
+<ul>
+<li>Search for each service name together with its exact version number.</li>
+<li>Look for the words &quot;vulnerability,&quot; &quot;exploit,&quot; or &quot;known issues.&quot;</li>
+<li>When you find the weakness, read how it's actually triggered — what has to be
+sent to the service, and what happens when it is.</li>
+</ul>
+<p>Do this properly and you'll know exactly what to do next. The tools below are how
+you'll act on what you learn.</p>
+<h2 id="step-3-the-tools-you-ll-use">Step 3 — The Tools You'll Use</h2>
+<h3><code>telnet</code> — talking to a service by hand</h3>
+<p><code>telnet</code> opens a <strong>raw TCP connection to a port and lets you type at it</strong>. It was
+originally a remote-login protocol (long since abandoned as insecure because it
+sends everything in plain text — exactly the kind of thing you exploited in Lab
+1), but its real usefulness today is as a manual way to <em>speak a text-based
+protocol directly.</em></p>
+<p>You connect like this:</p>
+<pre><code class="language-bash">telnet TARGET_IP &lt;port&gt;
+</code></pre>
+<p>Once connected, whatever you type is sent straight to the service, and you can
+issue the service's own commands by hand. Many text-based services expect typed
+commands, and telnet lets you send them yourself, exactly as you choose. That
+control is the point: it lets you hand a service input a normal, well-behaved
+client never would.</p>
+<h3><code>netcat</code> (<code>nc</code>) — the TCP Swiss Army knife</h3>
+<p><code>nc</code> is the go-to tool for <strong>reading from and writing to network connections</strong>.
+In its simplest form it connects to a port and hands you an interactive session
+with whatever is on the other end:</p>
+<pre><code class="language-bash">nc TARGET_IP &lt;port&gt;
+</code></pre>
+<p>If there's a shell listening on that port, <code>nc</code> drops you straight into it —
+anything you type is run on the remote machine, and its output comes back to you.
+That makes it the tool of choice for interacting with a shell once one becomes
+available to you. (<code>nc</code> can also <em>listen</em> for incoming connections with <code>-l</code> —
+worth remembering; which direction you need depends on the situation.)</p>
+<p>Once you have a shell, confirm who you are with:</p>
+<pre><code class="language-bash">whoami
+id
+</code></pre>
+<h2 id="your-objectives">Your Objectives</h2>
+<ol>
+<li><strong>Confirm your target.</strong> Re-scan and pin down the service and version you're
+going after.</li>
+<li><strong>Research the weakness.</strong> Using the version you identified, find out what's
+publicly known about it and how it's triggered.</li>
+<li><strong>Exploit it.</strong> Use the tools above to interact with the weak service by hand
+and turn it into command execution on the box.</li>
+<li><strong>Get a shell and confirm access.</strong> Verify you can run commands on the target
+(check <code>whoami</code> / <code>id</code>).</li>
+<li><strong>Capture the flag.</strong> Explore the filesystem, locate the <code>MAJAL{...}</code> file
+your instructor planted, and read it.</li>
+</ol>
+<h2 id="deliverable">Deliverable</h2>
+<ul>
+<li>[ ] A shell on the target (show the output of <code>whoami</code> / <code>id</code>)</li>
+<li>[ ] The <strong><code>MAJAL{...}</code></strong> flag from the machine</li>
+</ul>
+<h2 id="something-to-carry-into-day-5">Something to Carry Into Day 5</h2>
+<p>Everything you just did left tracks — an odd interaction with a service, a
+connection to an unusual port, a shell spawned by a process that had no business
+spawning one. On Friday you switch sides and become the defender. Ask
+yourself now: <strong>what would this attack have looked like in the logs?</strong> Hold that
+thought.</p>
+
+</main>
+</div>
+
+<footer>
+  <div class="foot">
+    <span class="slogan">Majal · Unlocking your tech horizons</span>
+    <span>Cybersecurity 2026</span>
+  </div>
+</footer>
+<script>
+/* Highlight the section you're reading in the contents rail. */
+(function () {
+  var links = {}, heads = [];
+  document.querySelectorAll('.toc a').forEach(function (a) {
+    var el = document.getElementById(decodeURIComponent(a.hash.slice(1)));
+    if (el) { links[el.id] = a; heads.push(el); }
+  });
+  var current = null;
+  function sync() {
+    var best = null;
+    heads.forEach(function (h) {
+      if (h.getBoundingClientRect().top < 140) best = h;
+    });
+    if (best === current) return;
+    if (current) links[current.id].style.color = '';
+    current = best;
+    if (current) links[current.id].style.color = 'var(--petrol)';
+  }
+  addEventListener('scroll', sync, { passive: true });
+  sync();
+})();
+</script>
+</body>
+</html>

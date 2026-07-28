@@ -213,6 +213,13 @@ body{margin:0; font-family:var(--sans); color:var(--ink); background:var(--bg);
   border-radius:2px; padding:2px 20px; margin:1.3em 0}
 .callout p{font-size:15px}
 
+/* downloadable file button */
+.doc p:has(> a.dl:only-child){margin:.6em 0 1.4em}
+a.dl{display:inline-flex; align-items:center; gap:8px; text-decoration:none; font-weight:800;
+  font-size:14.5px; color:#fff; background:var(--petrol); border-radius:4px; padding:.7em 1.3em;
+  box-shadow:0 2px 8px rgba(0,86,125,.18)}
+a.dl:hover{background:var(--petrol-d)}
+
 /* exercises */
 .doc p.task{position:relative; background:var(--card); border:1px solid var(--line);
   border-left:4px solid var(--turq); border-radius:2px; padding:14px 18px 14px 74px;
