@@ -336,7 +336,7 @@
       <p class="kicker">Injection · straight to the operating system</p>
       <h2>Command injection: from a text box to a shell on their server</h2>
       <iframe class="wframe" style="height:566px"
-              src="widgets/cmdi.html?v=2"
+              src="widgets/cmdi.html?v=3"
               title="Command injection and path traversal" scrolling="auto"></iframe>
       <aside class="notes">The attack map promised injection means "SQL, <em>a shell</em>, an LDAP query" — here's the shell one,
       the highest-impact web bug because it ends in RCE. Tab 1, command injection: the ping tool glues your input into a shell
@@ -345,8 +345,14 @@
       the assembled shell line and the injected part in red. Fix: don't call a shell — pass input as a single argument
       (execFile), so <span class="mono">;</span> is just a bad hostname. Tab 2, path traversal: the file downloader reads
       /var/www/reports/&lt;you&gt;, and <span class="mono">../../../../etc/passwd</span> climbs out of the folder to any file on
-      disk — watch the resolved path. Fix: strip the path, keep the filename. Same root cause as always: input treated as
-      instructions (a command, a path) instead of data.</aside>
+      disk — watch the resolved path. Point at the <strong>address bar above the app</strong> and say the line: this one isn't
+      really a form at all — the filename is a query parameter, so the attack is just
+      <span class="mono">?file=../../../../etc/passwd</span> typed into the URL. No tooling, no interception; it's a link you
+      can paste into a chat, which is why traversal gets found by scanners in minutes. Then tick <strong>%-encode the ../</strong>:
+      the URL becomes <span class="mono">%2e%2e%2f…</span>, a filter searching the raw query string for "../" sees nothing, and
+      the widget shows the server URL-decoding it back <em>after</em> that check — the classic bypass. Fix: strip the path,
+      keep the filename (decode first, then basename). Same root cause as always: input treated as instructions (a command, a
+      path) instead of data.</aside>
     </section>
 
     <!-- ================= XSS ================= -->

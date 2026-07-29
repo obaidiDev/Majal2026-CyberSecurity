@@ -15,6 +15,19 @@
   .lede { font-size: 12.5px; color: #5C7880; line-height: 1.4; margin: 0 0 9px; }
   .lede b { color: #00567C; } .lede em { color: #1F8F89; font-style: normal; font-weight: 700; }
 
+  /* fake browser address bar — the traversal payload travels in the URL */
+  .urlbar { display: flex; align-items: center; gap: 8px; background: #EEF3F3; border: 1px solid #CDD8DA;
+    border-radius: 8px; padding: 6px 10px; }
+  .urlbar .dot { width: 8px; height: 8px; border-radius: 50%; background: #CDD8DA; flex: none; }
+  .urlbar .u { font-family: "JetBrains Mono", monospace; font-size: 11.5px; color: #5C7880; line-height: 1.5;
+    flex: 1; word-break: break-all; }
+  .urlbar .u .host { color: #12333D; font-weight: 700; }
+  .urlbar .u .inj { color: #D64545; font-weight: 700; background: rgba(214,69,69,.09); border-radius: 3px; padding: 0 2px; }
+  .urlnote { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 5px 2px 7px; font-size: 10.5px; color: #8AA1A8; }
+  .urlnote label { display: inline-flex; align-items: center; gap: 5px; color: #5C7880; cursor: pointer; }
+  .urlnote input { accent-color: #00567C; }
+  .urlnote .say { color: #D64545; font-weight: 700; }
+
   .app { border: 1px solid #E0E7E8; border-radius: 10px; background: #fff; padding: 12px 13px; }
   .apptitle { font-size: 13px; font-weight: 800; color: #12333D; margin-bottom: 2px; }
   .appsub { font-size: 11px; color: #8AA1A8; margin-bottom: 9px; }
@@ -56,6 +69,14 @@
   </div>
   <p class="lede" id="lede"></p>
 
+  <div id="urlwrap" style="display:none">
+    <div class="urlbar"><span class="dot"></span><span class="u" id="urlline"></span></div>
+    <div class="urlnote">
+      <label><input type="checkbox" id="encChk"> %-encode the <span class="mono">../</span></label>
+      <span id="urlhint"></span>
+    </div>
+  </div>
+
   <div class="app">
     <div class="apptitle" id="apptitle"></div>
     <div class="appsub" id="appsub"></div>
@@ -92,15 +113,16 @@ var CFG = {
     ]
   },
   trav: {
-    lede: 'A report downloader reads a file by name from its reports folder — <span class="mono">/var/www/reports/&lt;you&gt;</span>. If it doesn\'t stop <span class="mono">../</span>, you can <b>climb out</b> of that folder to anywhere on disk.',
-    title: "📄 Report Downloader",
-    sub: "Server reads:  /var/www/reports/<your input>",
+    lede: 'A report downloader reads a file by name out of <span class="mono">/var/www/reports/</span> — and the name rides <b>in the URL</b>. Nothing stops <span class="mono">../</span>, so you can <b>climb out</b> to anywhere on disk.',
+    title: "📄 Report Downloader  ·  GET /download?file=…",
+    sub: "",
     val: "Q3-2024.txt",
     ah: "the file path the server resolves",
     presets: [
       { l:"Normal file", v:"Q3-2024.txt" },
       { l:"../ once", v:"../secret.txt" },
-      { l:"climb to /etc/passwd", v:"../../../../etc/passwd" }
+      { l:"climb to /etc/passwd", v:"../../../../etc/passwd" },
+      { l:"encoded: %2e%2e%2f", v:"%2e%2e%2f%2e%2e%2f%2e%2e%2f%2e%2e%2fetc%2fpasswd" }
     ]
   }
 };
@@ -128,6 +150,26 @@ function runCmd(input) {
   return { html: out.join("\n"), pwned: didInject && injected.length > 0 };
 }
 
+/* the payload rides in the query string — this is the URL the victim server is sent */
+var TRAV_URL = "https://shop.majal.local/download?file=";
+function pctEncode(s){ return s.replace(/\./g, "%2e").replace(/\//g, "%2f"); }
+function pctDecode(s){ try { return decodeURIComponent(s); } catch (e) { return s; } }
+/* ticked, or the student typed %2e%2e%2f into the box themselves */
+function isEnc(){ return document.getElementById("encChk").checked || /%[0-9a-fA-F]{2}/.test(IN.value); }
+
+function renderUrl(raw) {
+  var wire = isEnc() ? pctEncode(raw) : raw;
+  var climbed = raw.indexOf("..") !== -1;
+  document.getElementById("urlline").innerHTML =
+    'https://<span class="host">shop.majal.local</span>/download?file=' +
+    (climbed ? '<span class="inj">' + esc(wire) + '</span>' : esc(wire));
+  document.getElementById("urlhint").innerHTML = climbed
+    ? (isEnc() ? 'a filter looking for the text <span class="mono">../</span> sees nothing — the server decodes it back <span class="say">after</span> the check'
+               : 'nothing here is a form field — the whole attack is typed into the address bar')
+    : 'a normal download link';
+  return wire;
+}
+
 /* path-traversal resolver: honestly resolve ../ against the base dir */
 function resolvePath(input) {
   var base = ["var","www","reports"];
@@ -152,7 +194,9 @@ function render() {
   document.getElementById("lede").innerHTML = c.lede;
   document.getElementById("apptitle").textContent = c.title;
   document.getElementById("appsub").textContent = c.sub;
+  document.getElementById("appsub").style.display = c.sub ? "block" : "none";
   document.getElementById("ah").textContent = vuln ? c.ah : c.ah + "  (input now sanitised)";
+  document.getElementById("urlwrap").style.display = TAB === "trav" ? "block" : "none";
   presetsEl.innerHTML = '<span class="ph">try ↓</span>';
   c.presets.forEach(function (p) {
     var b = document.createElement("button"); b.textContent = p.l;
@@ -164,6 +208,7 @@ function render() {
 
 function run() {
   var c = CFG[TAB], v = IN.value;
+  if (TAB === "trav") v = pctDecode(v);   // %2e%2e%2f typed straight into the box is the same climb
   verdict.style.display = "none";
   if (TAB === "cmd") {
     var host = v.split(/\s*(?:;|&&|\|\|)\s*/)[0];
@@ -184,21 +229,28 @@ function run() {
       if (/[;&|`$]/.test(v)) showV(false, "Injection neutralised", 'A normal host still pings fine — but the whole tampered string is passed as <b>one argument</b> to ping, never to a shell. So <b>;</b> is just part of a (bad) hostname. No shell, nothing to inject into.');
     }
   } else {
+    var wire = renderUrl(v);
     var resolved = resolvePath(v);
     if (vuln) {
       var climbed = v.indexOf("..") !== -1;
-      cmdEl.innerHTML = '<span class="fixed">open("/var/www/reports/</span>' + (climbed ? '<span class="inj">' + esc(v) + '</span>' : '<span class="fixed">' + esc(v) + '</span>') + '<span class="fixed">")</span>' +
-        '<br><span style="color:#5f7681">resolves to →</span> ' + (resolved === "/var/www/reports/" + v ? '<span class="fixed">' + esc(resolved) + '</span>' : '<span class="inj">' + esc(resolved) + '</span>');
+      var enc = isEnc();
+      var decodeStep = enc
+        ? '<span style="color:#5f7681">?file=</span><span class="inj">' + esc(wire) + '</span>' +
+          '<span style="color:#5f7681">  → URL-decoded by the server →  </span><span class="inj">' + esc(v) + '</span><br>'
+        : '';
+      cmdEl.innerHTML = decodeStep +
+        '<span class="fixed">open("/var/www/reports/</span>' + (climbed ? '<span class="inj">' + esc(v) + '</span>' : '<span class="fixed">' + esc(v) + '</span>') + '<span class="fixed">")</span>' +
+        (enc ? '  ' : '<br>') + '<span style="color:#5f7681">resolves to →</span> ' + (resolved === "/var/www/reports/" + v ? '<span class="fixed">' + esc(resolved) + '</span>' : '<span class="inj">' + esc(resolved) + '</span>');
       var f = readFile(resolved);
       termEl.innerHTML = '<span class="prompt">$ cat ' + esc(resolved) + '</span>\n' + (f.leak ? '<span class="leak">' + esc(f.txt) + '</span>' : '<span class="ok">' + esc(f.txt) + '</span>');
-      if (f.leak) showV(true, "Escaped the folder", 'Each <b>../</b> climbed one directory up until you left the reports folder entirely and read a system file. Same trick reaches config files, keys, source code.');
+      if (f.leak) showV(true, "Escaped the folder", 'Each <b>../</b> climbed one directory up until you left the reports folder and read a system file — and the whole attack is a <b>URL</b> you can paste into a chat. Same trick reaches config files, keys, source code.');
     } else {
       cmdEl.innerHTML = '<span class="fixed">name = basename(input)</span>  <span style="color:#5f7681">// strip any path, keep the filename only</span><br>' +
         '<span class="fixed">open("/var/www/reports/' + esc(v.replace(/^.*[\/]/,"")) + '")</span>';
       var safeName = v.replace(/^.*[\/]/,"");
       var f2 = readFile("/var/www/reports/" + safeName);
       termEl.innerHTML = '<span class="prompt">$ cat /var/www/reports/' + esc(safeName) + '</span>\n' + '<span class="ok">' + esc(f2.txt) + '</span>';
-      if (v.indexOf("..") !== -1) showV(false, "Traversal blocked", 'The server strips everything before the last <b>/</b>, so <b>../../../../etc/passwd</b> collapses to just <b>passwd</b> — looked up harmlessly inside the reports folder.');
+      if (v.indexOf("..") !== -1) showV(false, "Traversal blocked", 'The server decodes the URL <b>first</b>, then strips everything before the last <b>/</b> — so <b>../../../../etc/passwd</b> collapses to just <b>passwd</b>, looked up harmlessly inside the reports folder. Note what is <em>not</em> the fix: blocking the text "../" in the raw query string, which <b>%2e%2e%2f</b> walks straight past.');
     }
   }
 }
@@ -209,6 +261,8 @@ function showV(bad, h, body) {
 }
 
 document.getElementById("go").addEventListener("click", run);
+document.getElementById("encChk").addEventListener("change", run);
+IN.addEventListener("input", function(){ if (TAB === "trav") renderUrl(pctDecode(IN.value)); });
 IN.addEventListener("keydown", function(e){ if (e.key === "Enter") run(); });
 document.getElementById("tCmd").addEventListener("click", function(){ TAB="cmd"; this.classList.add("on"); document.getElementById("tTrav").classList.remove("on"); IN.value=CFG.cmd.val; render(); });
 document.getElementById("tTrav").addEventListener("click", function(){ TAB="trav"; this.classList.add("on"); document.getElementById("tCmd").classList.remove("on"); IN.value=CFG.trav.val; render(); });
@@ -219,7 +273,8 @@ IN.value = CFG.cmd.val; render();
 (function(){ var st = new URLSearchParams(location.search).get("state");
   if (st === "cmd") { IN.value = "8.8.8.8; cat /etc/passwd"; run(); }
   else if (st === "cmdsafe") { vuln=false; document.getElementById("mSafe").classList.add("on"); document.getElementById("mVuln").classList.remove("on"); IN.value="8.8.8.8; whoami"; run(); }
-  else if (st === "trav") { TAB="trav"; document.getElementById("tTrav").classList.add("on"); document.getElementById("tCmd").classList.remove("on"); IN.value="../../../../etc/passwd"; render(); }
+  else if (st === "trav" || st === "travenc") { TAB="trav"; document.getElementById("tTrav").classList.add("on"); document.getElementById("tCmd").classList.remove("on");
+    IN.value="../../../../etc/passwd"; if (st === "travenc") document.getElementById("encChk").checked = true; render(); }
 })();
 </script>
 </body></html>
