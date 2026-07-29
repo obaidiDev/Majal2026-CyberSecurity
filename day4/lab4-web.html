@@ -105,8 +105,14 @@ body{margin:0; font-family:var(--sans); color:var(--ink); background:var(--bg);
 .doc p.task{position:relative; background:var(--card); border:1px solid var(--line);
   border-left:4px solid var(--turq); border-radius:2px; padding:14px 18px 14px 74px;
   margin:1.2em 0 0; font-size:16px; color:var(--ink)}
+.doc p.task.m{padding-left:112px}
 .tid{position:absolute; left:16px; top:15px; font-family:var(--mono); font-weight:800; font-size:13px;
-  color:var(--petrol); background:var(--bg-2); border-radius:2px; padding:.25em .55em; letter-spacing:.02em}
+  color:var(--petrol); background:var(--bg-2); border-radius:2px; padding:.25em .55em; letter-spacing:.02em;
+  white-space:nowrap}
+@media (max-width:520px){
+  .doc p.task,.doc p.task.m{padding-left:18px; padding-top:44px}
+  .tid{top:12px}
+}
 p.wrapup{background:rgba(242,210,0,.14); border:1px solid rgba(242,210,0,.5);
   border-radius:2px; padding:14px 18px; font-size:15.5px; color:var(--ink)}
 
@@ -210,27 +216,27 @@ didn't happen.</p>
 capture. Each one is a goal, not a hint — how you pull it off is the whole point.
 They roughly build on each other, so work down the list, and don't move on until
 you can actually <strong>prove</strong> the one you're on.</p>
-<p class="task"><span class="tid">MISSION 1</span><strong>Get in as the administrator.</strong>
+<p class="task m"><span class="tid">MISSION 1</span><strong>Get in as the administrator.</strong>
 Reach the store's admin-only area — without anyone handing you the admin password.</p>
-<p class="task"><span class="tid">MISSION 2</span><strong>Run your own command on the server.</strong>
+<p class="task m"><span class="tid">MISSION 2</span><strong>Run your own command on the server.</strong>
 Make the machine hosting the store execute a command <em>you</em> chose, and get it
 to tell you which user the application runs as.</p>
-<p class="task"><span class="tid">MISSION 3</span><strong>Capture the flag.</strong>
+<p class="task m"><span class="tid">MISSION 3</span><strong>Capture the flag.</strong>
 Somewhere on that server sits a file named <code>FLAG.txt</code> that no page links
 to. Read it and recover the <code>MAJAL{&hellip;}</code> flag inside.</p>
-<p class="task"><span class="tid">MISSION 4</span><strong>Open a stranger's order.</strong>
+<p class="task m"><span class="tid">MISSION 4</span><strong>Open a stranger's order.</strong>
 View the full details — items, total, buyer — of an order that does <em>not</em>
 belong to your account.</p>
-<p class="task"><span class="tid">MISSION 5</span><strong>Weaponise a link.</strong>
+<p class="task m"><span class="tid">MISSION 5</span><strong>Weaponise a link.</strong>
 Craft a single URL that, the moment someone opens it, runs JavaScript of your
 choosing in <em>their</em> browser.</p>
-<p class="task"><span class="tid">MISSION 6</span><strong>Attack the whole room.</strong>
+<p class="task m"><span class="tid">MISSION 6</span><strong>Attack the whole room.</strong>
 Leave something on a product page that runs in the browser of <em>every</em> visitor
 who views it afterwards — including the person sitting next to you.</p>
-<p class="task"><span class="tid">MISSION 7</span><strong>Hijack an account from afar.</strong>
+<p class="task m"><span class="tid">MISSION 7</span><strong>Hijack an account from afar.</strong>
 Build a page that, when a logged-in customer simply opens it, silently changes
 their account details — no password, no clicks on anything they'd suspect.</p>
-<p class="task"><span class="tid">MISSION 8</span><strong>Chain them.</strong>
+<p class="task m"><span class="tid">MISSION 8</span><strong>Chain them.</strong>
 Find a place where one of your wins becomes the key to another you couldn't reach
 directly — then make sure all of it is written up in your report.</p>
 <div class="callout warn"><p>💡 That's eight missions covering the assessment. If a
