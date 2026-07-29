@@ -34,6 +34,7 @@
   .t i{position:absolute;inset:0;background:var(--teal);opacity:.85;transform-origin:left}
   .t.p4 i{background:var(--red)}.t.p3 i{background:#C4772F}
   .t.p2 i{background:var(--petrol)}.t.p1 i{background:var(--teal)}.t.p0 i{background:#7FA6B0}
+  .t.e1 i,.t.e2 i,.t.e3 i,.t.e4 i{background:#4C4A9B}
   .t b{position:absolute;inset:0;display:grid;place-items:center;font-size:9.5px;color:#fff;
        font-family:var(--mono);text-shadow:0 1px 2px rgba(0,0,0,.5)}
   .empty{padding:60px;text-align:center;color:var(--faint);font-size:15px;line-height:1.7}
@@ -54,8 +55,8 @@
   <div id="out"></div>
 </main>
 <script>
-const TIERS=[['Story','p0'],['Easy','p1'],['Normal','p2'],['Hard','p3'],['Night','p4']];
-const MAXF=[7,8,9,8,8];
+const TIERS=[["Story","p0"],["Easy","p1"],["Normal","p2"],["Hard","p3"],["Night","p4"],["EDR I","e1"],["EDR II","e2"],["EDR III","e3"],["EDR IV","e4"]];
+const MAXF=[7,8,9,8,8,7,7,7,7];
 const KEY='majal-day5-board';
 let B=JSON.parse(localStorage.getItem(KEY)||'[]');
 const save=()=>localStorage.setItem(KEY,JSON.stringify(B));

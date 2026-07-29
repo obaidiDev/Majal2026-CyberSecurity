@@ -76,7 +76,8 @@ Operations support addresses, also authorised, continuously:
 | Address | Role |
 |---|---|
 | `192.168.8.5` | Store administrator workstation |
-| `192.168.8.9` | Availability monitoring (`/healthz` probe, 60-second interval) |
+| `192.168.8.9` | Availability monitoring (`/healthz` probe, 5-minute interval) |
+| `192.168.8.7` | Backup server (accepts SSH from application hosts) |
 
 ## 3. In scope
 

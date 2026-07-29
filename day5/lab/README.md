@@ -34,6 +34,7 @@ in the browser with no install and no server.
 | `evidence-03-bash_history.txt` | Shell history recovered from the server |
 | `evidence-04-store.db` | The store database (open with DB Browser for SQLite) |
 | `evidence-05-c2.pcap` | A network capture (open with Wireshark) |
+| `edr.jsonl` | Endpoint telemetry — every process that ran on the server |
 
 Everything you need is in these files. Nothing you need is outside them.
 
@@ -56,6 +57,16 @@ one who says they are not sure. Some fields genuinely **cannot be answered** fro
 the evidence — finding those is worth more than any other single field.
 
 Three attempts per field. Your work is saved in the browser as you go.
+
+## Act two
+
+Partway through the day the **EDR sensor** is added to the console — endpoint
+telemetry showing every process that ran, what it connected to, and what it
+touched on disk. Four more scenarios open up.
+
+None of them can be solved from the web log. Some of them cannot be solved even
+*with* EDR — more telemetry moves the ceiling, it does not remove it. Knowing
+which is which is the point.
 
 ## Two things worth knowing before you start
 
