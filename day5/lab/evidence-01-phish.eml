@@ -1,0 +1,29 @@
+Return-Path: <no-reply@majal-store.co>
+Received: from mx3.majal-store.co (mx3.majal-store.co [203.0.113.44])
+	by mail.majal.lab (Postfix) with ESMTPS id 4B2F1A0C31
+	for <student01@majal.lab>; Sun, 26 Jul 2026 22:14:07 +0300 (AST)
+Authentication-Results: mail.majal.lab;
+	spf=pass (sender IP is 203.0.113.44) smtp.mailfrom=majal-store.co;
+	dkim=pass header.d=majal-store.co header.s=default;
+	dmarc=pass (p=none) header.from=majal-store.co
+Message-ID: <20260726191407.4B2F1A0C31@mx3.majal-store.co>
+Date: Sun, 26 Jul 2026 22:14:07 +0300
+From: "Majal Store Security" <no-reply@majal-store.co>
+To: <student01@majal.lab>
+Subject: Unusual sign-in on your Majal Store account - action required
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Dear Customer,
+
+We detected a sign-in to your Majal Store account from a device we do not
+recognise. If this was not you, your account may be at risk.
+
+Confirm your password within 24 hours to keep your account active:
+
+    http://majal-store.co/account/verify?ref=8f2a1c
+
+If you do not confirm, orders placed on your account will be suspended.
+
+Majal Store Security Team
+This is an automated message. Please do not reply.

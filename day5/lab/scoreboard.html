@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Majal SOC — Scoreboard</title>
+<style>
+  :root{--teal:#1F8F89;--petrol:#00567C;--red:#D64545;--amber:#F2C14E;
+        --dark:#04303F;--ink:#12333D;--faint:#5f97a3;
+        --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--dark);color:#BFE0E2;font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  header{display:flex;align-items:center;gap:16px;padding:16px 28px;border-bottom:1px solid #0C3A46}
+  .brand{font-size:22px;font-weight:800;color:#fff;letter-spacing:.02em}
+  .brand span{color:var(--teal)}
+  .spacer{flex:1}
+  .paste{display:flex;gap:8px}
+  .paste input{width:290px;font-family:var(--mono);font-size:12px;padding:8px 10px;border-radius:6px;
+    border:1px solid #14505F;background:#062A34;color:#BFE0E2;outline:none}
+  .paste input:focus{border-color:var(--teal)}
+  .paste button{font-size:12px;font-weight:700;padding:8px 14px;border-radius:6px;border:0;
+    background:var(--teal);color:#fff;cursor:pointer}
+  .paste button.ghost{background:transparent;border:1px solid #14505F;color:var(--faint)}
+  main{padding:22px 28px}
+  table{width:100%;border-collapse:collapse}
+  th{text-align:left;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);
+     font-weight:800;padding:0 12px 10px}
+  td{padding:11px 12px;border-top:1px solid #0C3A46;font-size:19px}
+  .rk{font-family:var(--mono);font-weight:800;color:var(--faint);width:56px}
+  tr.top .rk{color:var(--amber)}
+  .tm{font-weight:700;color:#fff}
+  .sc{font-family:var(--mono);font-weight:800;font-size:26px;color:var(--teal);text-align:right;width:110px}
+  .sc.neg{color:var(--red)}
+  .tiers{display:flex;gap:5px}
+  .t{width:46px;height:24px;border-radius:4px;background:#0B3542;position:relative;overflow:hidden}
+  .t i{position:absolute;inset:0;background:var(--teal);opacity:.85;transform-origin:left}
+  .t.p4 i{background:var(--red)}.t.p3 i{background:#C4772F}
+  .t.p2 i{background:var(--petrol)}.t.p1 i{background:var(--teal)}.t.p0 i{background:#7FA6B0}
+  .t b{position:absolute;inset:0;display:grid;place-items:center;font-size:9.5px;color:#fff;
+       font-family:var(--mono);text-shadow:0 1px 2px rgba(0,0,0,.5)}
+  .empty{padding:60px;text-align:center;color:var(--faint);font-size:15px;line-height:1.7}
+  .empty code{font-family:var(--mono);font-size:13px;color:var(--teal)}
+  .pin{font-family:var(--mono);font-size:12px;color:var(--faint);width:80px;text-align:right}
+</style>
+</head><body>
+<header>
+  <div class="brand">MAJAL <span>SOC</span> · scoreboard</div>
+  <div class="spacer"></div>
+  <div class="paste">
+    <input id="tok" placeholder="paste a team's score token…" spellcheck="false">
+    <button id="add">Add</button>
+    <button id="clr" class="ghost">Clear board</button>
+  </div>
+</header>
+<main>
+  <div id="out"></div>
+</main>
+<script>
+const TIERS=[['Story','p0'],['Easy','p1'],['Normal','p2'],['Hard','p3'],['Night','p4']];
+const MAXF=[7,8,8,8,8];
+const KEY='majal-day5-board';
+let B=JSON.parse(localStorage.getItem(KEY)||'[]');
+const save=()=>localStorage.setItem(KEY,JSON.stringify(B));
+
+function draw(){
+  const out=document.getElementById('out');
+  if(!B.length){
+    out.innerHTML='<div class="empty">No scores yet.<br><br>'
+      +'Each team exports a token from the console with <code>Export score for the board</code>,'
+      +'<br>then you paste it above.</div>';
+    return;
+  }
+  B.sort((a,b)=>b.s-a.s);
+  out.innerHTML='<table><thead><tr><th>#</th><th>Team</th>'
+    +TIERS.map(t=>`<th style="width:52px">${t[0]}</th>`).join('')
+    +'<th style="text-align:right">Pinned</th><th style="text-align:right">Score</th></tr></thead><tbody>'
+    +B.map((r,i)=>`<tr class="${i===0?'top':''}">
+        <td class="rk">${i+1}</td>
+        <td class="tm">${esc(r.t)}</td>
+        ${TIERS.map((t,k)=>{
+          const [done,pts]=r.d[k]||[0,0];
+          const pc=Math.round((done/MAXF[k])*100);
+          return `<td><div class="t ${t[1]}"><i style="transform:scaleX(${pc/100})"></i>
+                  <b>${done}/${MAXF[k]}</b></div></td>`;
+        }).join('')}
+        <td class="pin">${r.p}</td>
+        <td class="sc ${r.s<0?'neg':''}">${r.s>0?'+':''}${r.s}</td>
+      </tr>`).join('')
+    +'</tbody></table>';
+}
+const esc=s=>String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+
+document.getElementById('add').addEventListener('click',()=>{
+  const el=document.getElementById('tok');
+  const v=el.value.trim();
+  if(!v) return;
+  let d;
+  try{ d=JSON.parse(atob(v)); }catch(e){ alert('That does not look like a score token.'); return; }
+  if(typeof d.t!=='string'||typeof d.s!=='number'||!Array.isArray(d.d)){
+    alert('Token is malformed.'); return;
+  }
+  const i=B.findIndex(x=>x.t.toLowerCase()===d.t.toLowerCase());
+  if(i>=0) B[i]=d; else B.push(d);      // re-paste updates that team
+  save(); el.value=''; draw();
+});
+document.getElementById('tok').addEventListener('keydown',e=>{
+  if(e.key==='Enter') document.getElementById('add').click();
+});
+document.getElementById('clr').addEventListener('click',()=>{
+  if(confirm('Clear the whole board?')){ B=[]; save(); draw(); }
+});
+draw();
+</script>
+</body></html>

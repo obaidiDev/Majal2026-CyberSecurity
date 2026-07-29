@@ -1,0 +1,11 @@
+# The root .gitignore excludes *.log — but these ARE the lab evidence.
+!access.log
+!auth.log
+!source/majal-day4-raw.log
+
+# Instructor-only. THIS REPOSITORY IS PUBLIC — do not commit either of these.
+#   ANSWER_KEY.md    every answer in plain text
+#   build/           make_fields.py holds the plaintext answers the console
+#                    hashes to hide; verify.py names every attacker address
+ANSWER_KEY.md
+build/

