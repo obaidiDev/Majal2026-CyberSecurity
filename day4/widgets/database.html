@@ -2,80 +2,119 @@
 <html lang="en"><head><meta charset="utf-8">
 <link rel="stylesheet" href="_shared.css">
 <style>
-  body { padding: 6px 8px; }
+  body { padding: 5px 8px; }
   .wrap { max-width: 1040px; margin: 0 auto; }
 
   /* tier strip */
-  .tiers { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; }
-  .tiers .t { font-size: 11px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase;
-    padding: 4px 10px; border-radius: 999px; border: 1px solid #CDD8DA; color: #8AA1A8; background: #fff; }
+  .tiers { display: flex; align-items: center; gap: 6px; margin-bottom: 7px; }
+  .tiers .t { font-size: 10.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 999px; border: 1px solid #CDD8DA; color: #8AA1A8; background: #fff; }
   .tiers .t.on { background: #00567C; border-color: #00567C; color: #fff; }
-  .tiers .ar { color: #B9C6C9; font-size: 13px; }
-  .tiers .why { margin-left: 8px; font-size: 11.5px; color: #8AA1A8; line-height: 1.4; }
+  .tiers .ar { color: #B9C6C9; font-size: 12px; }
+  .tiers .why { margin-left: 7px; font-size: 11px; color: #8AA1A8; line-height: 1.4; }
   .tiers .why b { color: #00567C; }
 
   /* schema */
-  .schema { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
-    padding-bottom: 26px; margin-bottom: 4px; }
+  .schema { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); gap: 11px;
+    padding-bottom: 23px; margin-bottom: 3px; }
   .schema svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
   .tbl { border: 1px solid #E0E7E8; border-top: 3px solid #CDD8DA; border-radius: 3px; background: #fff;
-    padding: 7px 9px 8px; cursor: pointer; transition: box-shadow .15s, border-color .15s; }
+    padding: 6px 9px 7px; cursor: pointer; transition: box-shadow .15s, border-color .15s; }
   .tbl:hover { box-shadow: 0 2px 6px rgba(18,51,61,.09); }
   .tbl.on { box-shadow: 0 2px 8px rgba(18,51,61,.12); }
   .tbl[data-t="users"]    { border-top-color: #1F8F89; } .tbl[data-t="users"].on    { border-color: #1F8F89; }
   .tbl[data-t="invoices"] { border-top-color: #00567C; } .tbl[data-t="invoices"].on { border-color: #00567C; }
   .tbl[data-t="reviews"]  { border-top-color: #b08900; } .tbl[data-t="reviews"].on  { border-color: #b08900; }
-  .tbl .tn { font-family: "JetBrains Mono", monospace; font-size: 12.5px; font-weight: 800; color: #12333D;
-    display: flex; align-items: baseline; gap: 6px; margin-bottom: 5px; }
-  .tbl .tn .cnt { font-family: "Avenir Next", system-ui, sans-serif; font-size: 9.5px; font-weight: 700;
+  .tbl .tn { font-family: "JetBrains Mono", monospace; font-size: 12px; font-weight: 800; color: #12333D;
+    display: flex; align-items: baseline; gap: 6px; margin-bottom: 4px; }
+  .tbl .tn .cnt { font-family: "Avenir Next", system-ui, sans-serif; font-size: 9px; font-weight: 700;
     letter-spacing: .05em; text-transform: uppercase; color: #8AA1A8; }
   .cols2 { display: flex; flex-wrap: wrap; gap: 3px; }
-  .cc { font-family: "JetBrains Mono", monospace; font-size: 10.5px; padding: 2px 6px; border-radius: 4px;
+  .cc { font-family: "JetBrains Mono", monospace; font-size: 10px; padding: 2px 6px; border-radius: 4px;
     border: 1px solid #E7EDED; background: #F6F8F8; color: #5C7880; white-space: nowrap; }
   .cc.pk { border-color: #1F8F89; background: rgba(31,143,137,.1); color: #147a75; font-weight: 800; }
   .cc.fk { border-color: #00567C; background: rgba(0,86,125,.09); color: #00567C; font-weight: 800; }
-  .cc.sel { box-shadow: inset 0 -2px 0 #b08900; }
 
-  /* query strip */
+  /* operation pills */
+  .ops { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+  .ops .grp { display: inline-flex; border: 1px solid #CDD8DA; border-radius: 8px; overflow: hidden; }
+  .ops .grp button { border: 0; border-radius: 0; padding: 5px 12px; font-size: 11.5px;
+    font-family: "JetBrains Mono", monospace; font-weight: 800; background: #fff; color: #5C7880; }
+  .ops .grp button.on[data-o="SELECT"] { background: #1F8F89; color: #fff; }
+  .ops .grp button.on[data-o="INSERT"] { background: #00567C; color: #fff; }
+  .ops .grp button.on[data-o="UPDATE"] { background: #b08900; color: #fff; }
+  .ops .grp button.on[data-o="DELETE"] { background: #D64545; color: #fff; }
+  .ops .hint { font-size: 11px; color: #8AA1A8; line-height: 1.4; }
+  .ops .hint b { color: #00567C; }
+  .ops .rst { margin-left: auto; font-size: 11px; padding: 5px 11px; }
+
+  /* control strip */
   .ask { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; border: 1px solid #E0E7E8;
-    border-radius: 8px; background: #fff; padding: 7px 10px; margin-bottom: 9px; }
-  .ask .lb { font-size: 12px; color: #8AA1A8; font-weight: 700; }
-  .ask select { font-family: "JetBrains Mono", monospace; font-size: 11.5px; color: #12333D; background: #F6F8F8;
-    border: 1px solid #CDD8DA; border-radius: 5px; padding: 4px 6px; outline: none; }
-  .ask select:focus { border-color: #00567C; }
-  .ask .go { margin-left: auto; font-size: 12px; padding: 6px 14px; }
+    border-radius: 8px; background: #fff; padding: 6px 10px; margin-bottom: 8px; }
+  .ask .lb { font-size: 11.5px; color: #8AA1A8; font-weight: 700; }
+  .ask select, .ask input { font-family: "JetBrains Mono", monospace; font-size: 11px; color: #12333D;
+    background: #F6F8F8; border: 1px solid #CDD8DA; border-radius: 5px; padding: 4px 6px; outline: none; }
+  .ask input { width: 110px; }
+  .ask select:focus, .ask input:focus { border-color: #00567C; background: #fff; }
+  .ask .go { margin-left: auto; font-size: 11.5px; padding: 5px 13px; }
   .ask .chips { display: flex; gap: 3px; }
-  .ask .chips button { font-family: "JetBrains Mono", monospace; font-size: 10.5px; padding: 3px 7px; border-radius: 4px; }
+  .ask .chips button { font-family: "JetBrains Mono", monospace; font-size: 10px; padding: 3px 7px; border-radius: 4px; }
   .ask .chips button.on { background: #b08900; border-color: #b08900; color: #fff; }
+  .ask .fld { display: inline-flex; align-items: center; gap: 4px; }
+  .ask .fld .fn { font-family: "JetBrains Mono", monospace; font-size: 9.5px; color: #8AA1A8; font-weight: 700; }
 
-  .cols { display: grid; grid-template-columns: 1.32fr 1fr; gap: 11px; align-items: start; }
-  .pane { border: 1px solid #E0E7E8; border-radius: 8px; background: #fff; padding: 7px 10px 8px; }
+  /* the statement */
+  .qp { background: #04303F; border-radius: 8px; padding: 8px 11px 9px; margin-bottom: 8px; }
+  .qp .qh { font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: #5f97a3; font-weight: 700;
+    margin-bottom: 6px; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .qp .qh .tail { text-transform: none; letter-spacing: 0; font-size: 10px; color: #4d6b74; font-weight: 400; }
+  .q { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5;
+    color: #9fc9cf; white-space: pre-wrap; word-break: break-word; }
+  .q .kw { color: #ffd84a; font-weight: 700; }
+  .q .qt { color: #ff8a8a; font-weight: 800; }
+  .q .lit { color: #7fe3dc; }
+  .q .num { color: #ff9f6e; }
+
+  .cols { display: grid; grid-template-columns: 1.3fr 1fr; gap: 10px; align-items: start; }
+  .pane { border: 1px solid #E0E7E8; border-radius: 8px; background: #fff; padding: 6px 10px 7px; }
   .pane .ph { font-size: 9.5px; letter-spacing: .08em; text-transform: uppercase; color: #5C7880; font-weight: 800;
     margin-bottom: 5px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-  .pane .ph .r { text-transform: none; letter-spacing: 0; font-weight: 700; font-size: 10.5px; color: #8AA1A8; }
-  table { width: 100%; border-collapse: collapse; font-family: "JetBrains Mono", monospace; font-size: 11.5px; }
-  th { text-align: left; color: #8AA1A8; font-weight: 700; font-size: 9.5px; letter-spacing: .05em; text-transform: uppercase;
+  .pane .ph .r { text-transform: none; letter-spacing: 0; font-weight: 700; font-size: 10px; color: #8AA1A8; }
+  table { width: 100%; border-collapse: collapse; font-family: "JetBrains Mono", monospace; font-size: 11px; }
+  th { text-align: left; color: #8AA1A8; font-weight: 700; font-size: 9px; letter-spacing: .05em; text-transform: uppercase;
     padding: 3px 6px; border-bottom: 1px solid #E0E7E8; white-space: nowrap; }
   th.dimc, td.dimc { color: #CBD6D8; }
   th.pkc { color: #147a75; } th.fkc { color: #00567C; }
-  td { padding: 4px 6px; border-bottom: 1px solid #F1F5F5; color: #42606A; transition: background .25s, opacity .25s; }
+  td { padding: 3.5px 6px; border-bottom: 1px solid #F1F5F5; color: #42606A; transition: background .25s, opacity .25s; }
   tr.row { cursor: pointer; }
   tr.row:hover td { background: #F6F8F8; }
-  tr.out td { opacity: .3; }
+  tr.out td { opacity: .28; }
   tr.hit td { background: rgba(31,143,137,.1); color: #12333D; }
   tr.hit td:first-child { box-shadow: inset 3px 0 0 #1F8F89; }
-  tr.pick td { background: rgba(242,210,0,.28); }
+  tr.wrote td { background: rgba(242,210,0,.26); color: #12333D; }
+  tr.wrote td:first-child { box-shadow: inset 3px 0 0 #b08900; }
+  tr.fresh td { background: rgba(31,143,137,.24); color: #12333D; }
+  tr.fresh td:first-child { box-shadow: inset 3px 0 0 #1F8F89; }
+  tr.gone td { background: rgba(214,69,69,.13); text-decoration: line-through; color: #B9C6C9; }
+  tr.gone td:first-child { box-shadow: inset 3px 0 0 #D64545; }
+  tr.pick td { outline: 1px dashed #b08900; outline-offset: -1px; }
   td.pkv { color: #147a75; font-weight: 700; }
   td.fkv { color: #00567C; font-weight: 700; }
-  .empty { font-size: 11.5px; color: #B9C6C9; font-style: italic; padding: 8px 4px; }
+  .empty { font-size: 11px; color: #B9C6C9; font-style: italic; padding: 7px 3px; }
+  .count { font-size: 13px; font-weight: 800; margin: 1px 0 5px; }
+  .count.sel { color: #147a75; } .count.ins { color: #00567C; }
+  .count.upd { color: #8a6b00; } .count.del { color: #D64545; }
+  .count small { display: block; font-size: 10px; font-weight: 700; color: #8AA1A8; margin-top: 2px; line-height: 1.4; }
+  .count small b { color: #5C7880; }
 
-  .own { margin-top: 7px; border-top: 1px dashed #E0E7E8; padding-top: 7px; font-size: 11.5px; color: #42606A; line-height: 1.5; }
-  .own .lnk { font-family: "JetBrains Mono", monospace; font-size: 11px; color: #00567C; font-weight: 700; }
+  .own { margin-top: 6px; border-top: 1px dashed #E0E7E8; padding-top: 6px; font-size: 11px; color: #42606A; line-height: 1.45; }
+  .own .lnk { font-family: "JetBrains Mono", monospace; font-size: 10.5px; color: #00567C; font-weight: 700; }
   .own em { color: #D64545; font-style: normal; font-weight: 700; }
   .own b { color: #00567C; }
 
-  .cap2 { margin-top: 9px; border: 1px solid #E0E7E8; border-left: 4px solid #00567C; border-radius: 0 6px 6px 0;
-    background: #fff; padding: 7px 11px; font-size: 12px; color: #42606A; line-height: 1.45; min-height: 30px; }
+  .cap2 { margin-top: 8px; border: 1px solid #E0E7E8; border-left: 4px solid #00567C; border-radius: 0 6px 6px 0;
+    background: #fff; padding: 6px 11px; font-size: 11.5px; color: #42606A; line-height: 1.45; min-height: 28px; }
+  .cap2.warn { border-left-color: #D64545; background: rgba(214,69,69,.04); }
   .cap2 b { color: #00567C; } .cap2 em { color: #D64545; font-style: normal; font-weight: 700; }
   .cap2 .mono { font-size: .95em; }
 </style>
@@ -86,7 +125,7 @@
     <span class="t">app server</span><span class="ar">→</span>
     <span class="t on">database</span>
     <span class="why">A <b>separate program</b>, usually on its own machine. The app is the only thing that talks to it —
-      and it only ever talks in <b>queries</b>.</span>
+      and it only ever talks in <b>SQL statements</b>.</span>
   </div>
 
   <div class="schema" id="schema">
@@ -97,16 +136,23 @@
     </defs></svg>
   </div>
 
-  <div class="ask">
-    <span class="lb">ask for</span>
-    <span class="chips" id="proj"></span>
-    <span class="lb">from</span>
-    <select id="tsel"></select>
-    <span class="lb">where</span>
-    <select id="wcol"></select>
-    <span class="lb">=</span>
-    <select id="wval"></select>
-    <button class="primary go" id="run">Ask the database ▶</button>
+  <div class="ops">
+    <div class="grp" id="ops">
+      <button data-o="SELECT" class="on">SELECT</button>
+      <button data-o="INSERT">INSERT</button>
+      <button data-o="UPDATE">UPDATE</button>
+      <button data-o="DELETE">DELETE</button>
+    </div>
+    <span class="hint">read · create · change · destroy — <b>the only four things</b> any app ever does to data</span>
+    <button class="rst" id="reset">Reset the data</button>
+  </div>
+
+  <div class="ask" id="ask"></div>
+
+  <div class="qp">
+    <div class="qh"><span>The statement the app sends</span>
+      <span class="tail">built live from the controls above — this text is <b>all</b> the database ever sees</span></div>
+    <div class="q" id="q"></div>
   </div>
 
   <div class="cols">
@@ -116,7 +162,7 @@
     </div>
     <div class="pane">
       <div class="ph"><span>What comes back</span><span class="r" id="rcount"></span></div>
-      <div id="res"><div class="empty">press “Ask the database”…</div></div>
+      <div id="res"><div class="empty">press Run…</div></div>
       <div class="own" id="own"></div>
     </div>
   </div>
@@ -126,10 +172,12 @@
 
 <script>
 /* ---- three tables, the same people as every other Day-4 widget ------------ */
-var SCHEMA = {
+function seed() { return {
   users: {
-    cols: ["id","username","password_hash","role"],
-    pk: "id", fk: null,
+    cols: ["id","username","password_hash","role"], num: ["id"], pk: "id", fk: null, next: 5,
+    ins: [ { c:"username", t:"text",   v:"noura" },
+           { c:"role",     t:"select", opts:["user","admin"], v:"user" } ],
+    set: ["role","username"],
     rows: [
       { id:1, username:"admin",  password_hash:"c3319d322d43", role:"admin" },
       { id:2, username:"fadhel", password_hash:"f52fbd32b2b3", role:"user"  },
@@ -138,8 +186,12 @@ var SCHEMA = {
     ]
   },
   invoices: {
-    cols: ["id","user_id","total","status"],
-    pk: "id", fk: { col:"user_id", to:"users", toCol:"id" },
+    cols: ["id","user_id","total","status"], num: ["id","user_id"], pk: "id",
+    fk: { col:"user_id", to:"users", toCol:"id" }, next: 1045,
+    ins: [ { c:"user_id", t:"select", opts:["1","2","3","4"], v:"2" },
+           { c:"total",   t:"text",   v:"SAR 990" },
+           { c:"status",  t:"select", opts:["unpaid","paid"], v:"unpaid" } ],
+    set: ["status","total","user_id"],
     rows: [
       { id:1041, user_id:3, total:"SAR 1,240", status:"paid"   },
       { id:1042, user_id:2, total:"SAR 3,600", status:"paid"   },
@@ -148,26 +200,41 @@ var SCHEMA = {
     ]
   },
   reviews: {
-    cols: ["id","user_id","product_id","text"],
-    pk: "id", fk: { col:"user_id", to:"users", toCol:"id" },
+    cols: ["id","user_id","product_id","text"], num: ["id","user_id","product_id"], pk: "id",
+    fk: { col:"user_id", to:"users", toCol:"id" }, next: 4,
+    ins: [ { c:"user_id",    t:"select", opts:["1","2","3","4"], v:"2" },
+           { c:"product_id", t:"select", opts:["88","91"], v:"88" },
+           { c:"text",       t:"text",   v:"Sounds great." } ],
+    set: ["text","product_id"],
     rows: [
       { id:1, user_id:3, product_id:88, text:"Battery lasts all day" },
       { id:2, user_id:2, product_id:88, text:"Great sound, worth it!" },
       { id:3, user_id:4, product_id:91, text:"Cable is a bit short." }
     ]
   }
-};
-var ME = 2; /* you are users.id = 2, username fadhel */
+}; }
 
-var table = "invoices", proj = ["*"], wcol = "(no filter)", wval = "", picked = null;
+var SCHEMA = seed();
+var ME = 2;                              /* you are users.id = 2 (fadhel) */
+var op = "SELECT", table = "invoices", proj = ["*"];
+var wcol = "(no filter)", wval = "";
+var setCol = "status", setVal = "paid";
+var picked = null, ran = null, ghosts = [];
 
 var $ = function (x) { return document.getElementById(x); };
 function esc(s){ return String(s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];}); }
-function userName(id) { var u = SCHEMA.users.rows.filter(function (r) { return r.id === id; })[0]; return u ? u.username : "?"; }
+function userName(id) { var u = SCHEMA.users.rows.filter(function (r) { return r.id === Number(id); })[0]; return u ? u.username : "?"; }
+function isNum(t, c) { return SCHEMA[t].num.indexOf(c) !== -1; }
+/* numbers go in bare; everything else is fenced in quotes — that fence is the
+   whole subject of the SQL-injection slides later */
+function lit(t, c, v) {
+  return isNum(t, c) ? '<span class="num">' + esc(v) + '</span>'
+                     : '<span class="qt">\'</span><span class="lit">' + esc(v) + '</span><span class="qt">\'</span>';
+}
+function kw(s) { return '<span class="kw">' + s + '</span>'; }
 
 /* ---- schema cards + the foreign-key arrows -------------------------------- */
 function paintSchema() {
-  var svg = $("links");
   Array.prototype.slice.call($("schema").querySelectorAll(".tbl")).forEach(function (n) { n.remove(); });
   Object.keys(SCHEMA).forEach(function (t) {
     var s = SCHEMA[t], d = document.createElement("div");
@@ -193,7 +260,7 @@ function drawLinks() {
     var ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
     var x1 = ra.left - box.left + ra.width / 2, y1 = ra.bottom - box.top + 1;
     var x2 = rb.left - box.left + rb.width / 2, y2 = rb.bottom - box.top + 1;
-    var dip = t === "reviews" ? 22 : 12;
+    var dip = t === "reviews" ? 19 : 11;
     var p = document.createElementNS("http://www.w3.org/2000/svg", "path");
     p.setAttribute("class", "fkline");
     p.setAttribute("d", "M" + x1 + "," + y1 + " C" + x1 + "," + (y1 + dip) + " " + x2 + "," + (y2 + dip) + " " + x2 + "," + (y2 + 2));
@@ -204,13 +271,51 @@ function drawLinks() {
   });
 }
 
-/* ---- the question strip --------------------------------------------------- */
-function paintAsk() {
+/* ---- the control strip, which changes shape per operation ----------------- */
+function tblSelect() {
+  return '<select id="tsel">' + Object.keys(SCHEMA).map(function (t) {
+    return '<option' + (t === table ? " selected" : "") + '>' + t + '</option>'; }).join("") + '</select>';
+}
+function whereControls() {
   var s = SCHEMA[table];
-  $("proj").innerHTML = ["*"].concat(s.cols).map(function (c) {
-    return '<button data-c="' + c + '"' + (proj.indexOf(c) !== -1 ? ' class="on"' : '') + '>' + c + '</button>';
-  }).join("");
-  Array.prototype.forEach.call($("proj").querySelectorAll("button"), function (b) {
+  var colOpts = ["(no filter)"].concat(s.cols).map(function (c) {
+    return '<option' + (c === wcol ? " selected" : "") + '>' + c + '</option>'; }).join("");
+  var vals = wcol === "(no filter)" ? [] : s.rows.map(function (r) { return String(r[wcol]); })
+    .filter(function (v, i, a) { return a.indexOf(v) === i; });
+  if (vals.length && vals.indexOf(wval) === -1) wval = vals[0];
+  var valOpts = vals.map(function (v) {
+    return '<option' + (v === wval ? " selected" : "") + '>' + esc(v) + '</option>'; }).join("");
+  return '<span class="lb">where</span><select id="wcol">' + colOpts + '</select>' +
+    '<span class="lb">=</span><select id="wval"' + (vals.length ? "" : " disabled") + '>' + valOpts + '</select>';
+}
+function paintAsk() {
+  var s = SCHEMA[table], h = "";
+  if (op === "SELECT") {
+    h += '<span class="lb">ask for</span><span class="chips" id="proj">' +
+      ["*"].concat(s.cols).map(function (c) {
+        return '<button data-c="' + c + '"' + (proj.indexOf(c) !== -1 ? ' class="on"' : '') + '>' + c + '</button>';
+      }).join("") + '</span><span class="lb">from</span>' + tblSelect() + whereControls();
+  } else if (op === "INSERT") {
+    h += '<span class="lb">into</span>' + tblSelect() + '<span class="lb">a new row:</span>' +
+      s.ins.map(function (f, i) {
+        var ctl = f.t === "select"
+          ? '<select data-ins="' + i + '">' + f.opts.map(function (o) {
+              return '<option' + (o === f.v ? " selected" : "") + '>' + esc(o) + '</option>'; }).join("") + '</select>'
+          : '<input data-ins="' + i + '" spellcheck="false" value="' + esc(f.v) + '">';
+        return '<span class="fld"><span class="fn">' + f.c + '</span>' + ctl + '</span>';
+      }).join("");
+  } else if (op === "UPDATE") {
+    h += '<span class="lb">in</span>' + tblSelect() + '<span class="lb">set</span>' +
+      '<select id="scol">' + s.set.map(function (c) {
+        return '<option' + (c === setCol ? " selected" : "") + '>' + c + '</option>'; }).join("") + '</select>' +
+      '<span class="lb">=</span><input id="sval" spellcheck="false" value="' + esc(setVal) + '">' + whereControls();
+  } else {
+    h += '<span class="lb">from</span>' + tblSelect() + whereControls();
+  }
+  h += '<button class="primary go" id="run">' + (op === "SELECT" ? "Run the query ▶" : "Run it ▶") + '</button>';
+  $("ask").innerHTML = h;
+
+  if ($("proj")) Array.prototype.forEach.call($("proj").querySelectorAll("button"), function (b) {
     b.addEventListener("click", function () {
       var c = b.getAttribute("data-c");
       if (c === "*") proj = ["*"];
@@ -218,21 +323,43 @@ function paintAsk() {
         var i = proj.indexOf(c); if (i === -1) proj.push(c); else proj.splice(i, 1);
         if (!proj.length) proj = ["*"];
         proj.sort(function (x, y) { return s.cols.indexOf(x) - s.cols.indexOf(y); }); }
-      render(); });
+      ran = null; ghosts = []; render(); });
   });
-  $("tsel").innerHTML = Object.keys(SCHEMA).map(function (t) {
-    return '<option' + (t === table ? " selected" : "") + '>' + t + '</option>'; }).join("");
-  $("wcol").innerHTML = ["(no filter)"].concat(s.cols).map(function (c) {
-    return '<option' + (c === wcol ? " selected" : "") + '>' + c + '</option>'; }).join("");
-  var vals = wcol === "(no filter)" ? [] : s.rows.map(function (r) { return String(r[wcol]); })
-    .filter(function (v, i, a) { return a.indexOf(v) === i; });
-  if (vals.length && vals.indexOf(wval) === -1) wval = vals[0];
-  $("wval").innerHTML = vals.map(function (v) {
-    return '<option' + (v === wval ? " selected" : "") + '>' + esc(v) + '</option>'; }).join("");
-  $("wval").disabled = !vals.length;
+  if ($("tsel")) $("tsel").addEventListener("change", function () { setTable(this.value); });
+  if ($("wcol")) $("wcol").addEventListener("change", function () { wcol = this.value; wval = ""; ran = null; ghosts = []; render(); });
+  if ($("wval")) $("wval").addEventListener("change", function () { wval = this.value; ran = null; ghosts = []; render(); });
+  if ($("scol")) $("scol").addEventListener("change", function () { setCol = this.value; ran = null; render(); });
+  if ($("sval")) $("sval").addEventListener("input", function () { setVal = this.value; ran = null; paintQuery(); });
+  Array.prototype.forEach.call($("ask").querySelectorAll("[data-ins]"), function (el) {
+    el.addEventListener(el.tagName === "INPUT" ? "input" : "change", function () {
+      s.ins[Number(el.getAttribute("data-ins"))].v = el.value; ran = null; paintQuery(); });
+  });
+  $("run").addEventListener("click", run);
 }
 
-/* ---- the stored table and the result set ---------------------------------- */
+/* ---- the statement -------------------------------------------------------- */
+function whereSQL() {
+  if (wcol === "(no filter)") return "";
+  return "\n" + kw("WHERE") + " " + wcol + " = " + lit(table, wcol, wval);
+}
+function sqlHTML() {
+  var s = SCHEMA[table];
+  if (op === "SELECT") {
+    return kw("SELECT") + " " + (proj.indexOf("*") !== -1 ? "*" : proj.join(", ")) +
+           " " + kw("FROM") + " " + table + whereSQL() + ";";
+  }
+  if (op === "INSERT") {
+    return kw("INSERT INTO") + " " + table + " (" + s.ins.map(function (f) { return f.c; }).join(", ") + ")\n" +
+           kw("VALUES") + " (" + s.ins.map(function (f) { return lit(table, f.c, f.v); }).join(", ") + ");";
+  }
+  if (op === "UPDATE") {
+    return kw("UPDATE") + " " + table + " " + kw("SET") + " " + setCol + " = " + lit(table, setCol, setVal) + whereSQL() + ";";
+  }
+  return kw("DELETE") + " " + kw("FROM") + " " + table + whereSQL() + ";";
+}
+function paintQuery() { $("q").innerHTML = sqlHTML(); }
+
+/* ---- running it ----------------------------------------------------------- */
 function matches() {
   var s = SCHEMA[table];
   if (wcol === "(no filter)") return s.rows.slice();
@@ -240,87 +367,173 @@ function matches() {
 }
 function cols() { return proj.indexOf("*") !== -1 ? SCHEMA[table].cols : proj; }
 
-function paintRows(hits) {
-  var s = SCHEMA[table], shown = cols();
+function run() {
+  var s = SCHEMA[table];
+  ghosts = [];
+  if (op === "SELECT") {
+    ran = { op:"SELECT", rows: matches() };
+  } else if (op === "INSERT") {
+    var nr = {}; nr[s.pk] = s.next++;
+    s.ins.forEach(function (f) { nr[f.c] = isNum(table, f.c) ? Number(f.v) : f.v; });
+    s.cols.forEach(function (c) { if (nr[c] === undefined) nr[c] = "—"; });
+    s.rows.push(nr);
+    ran = { op:"INSERT", rows:[nr], id:nr[s.pk] };
+  } else if (op === "UPDATE") {
+    var hit = matches(), before = hit.map(function (r) { return String(r[setCol]); });
+    hit.forEach(function (r) { r[setCol] = isNum(table, setCol) ? Number(setVal) : setVal; });
+    ran = { op:"UPDATE", rows:hit, before:before, col:setCol };
+  } else {
+    var doomed = matches();
+    ghosts = doomed.map(function (r) { var c = {}; s.cols.forEach(function (k) { c[k] = r[k]; }); return c; });
+    s.rows = s.rows.filter(function (r) { return doomed.indexOf(r) === -1; });
+    ran = { op:"DELETE", rows:[], n:doomed.length };
+  }
+  picked = null;
+  render();
+}
+
+/* ---- painting ------------------------------------------------------------- */
+function paintRows() {
+  var s = SCHEMA[table], shown = op === "SELECT" ? cols() : s.cols;
   var head = '<tr>' + s.cols.map(function (c) {
     var cls = (shown.indexOf(c) === -1 ? "dimc " : "") + (c === s.pk ? "pkc" : (s.fk && s.fk.col === c ? "fkc" : ""));
     return '<th class="' + cls.trim() + '">' + c + '</th>'; }).join("") + '</tr>';
-  var ids = (hits || []).map(function (r) { return r.id; });
+  var touched = ran && ran.rows ? ran.rows : [];
   var body = s.rows.map(function (r) {
-    var hit = !hits ? false : ids.indexOf(r.id) !== -1;
-    var cls = "row" + (hits ? (hit ? " hit" : " out") : "") + (picked === r.id ? " pick" : "");
-    return '<tr class="' + cls + '" data-id="' + r.id + '">' + s.cols.map(function (c) {
+    var t = touched.indexOf(r) !== -1, cls = "row";
+    if (ran && ran.op === "SELECT") cls += t ? " hit" : " out";
+    else if (ran && ran.op === "UPDATE" && t) cls += " wrote";
+    else if (ran && ran.op === "INSERT" && t) cls += " fresh";
+    if (picked === r[s.pk]) cls += " pick";
+    return '<tr class="' + cls + '" data-id="' + r[s.pk] + '">' + s.cols.map(function (c) {
       var k = (shown.indexOf(c) === -1 ? "dimc " : "") + (c === s.pk ? "pkv" : (s.fk && s.fk.col === c ? "fkv" : ""));
       return '<td class="' + k.trim() + '">' + esc(r[c]) + '</td>'; }).join("") + '</tr>';
   }).join("");
-  $("rows").innerHTML = '<table><thead>' + head + '</thead><tbody>' + body + '</tbody></table>';
+  var gone = ghosts.map(function (g) {
+    return '<tr class="gone">' + s.cols.map(function (c) { return '<td>' + esc(g[c]) + '</td>'; }).join("") + '</tr>'; }).join("");
+  var none = (!s.rows.length && !ghosts.length)
+    ? '<tr><td colspan="' + s.cols.length + '" class="empty">the table is empty — press “Reset the data”</td></tr>' : "";
+  $("rows").innerHTML = '<table><thead>' + head + '</thead><tbody>' + body + gone + none + '</tbody></table>';
   $("tname").textContent = table;
   $("stored").textContent = s.rows.length + " rows";
   Array.prototype.forEach.call($("rows").querySelectorAll("tr.row"), function (tr) {
-    tr.addEventListener("click", function () { picked = Number(tr.getAttribute("data-id")); render(true); });
+    tr.addEventListener("click", function () { picked = Number(tr.getAttribute("data-id")); paintRows(); paintOwner(); });
   });
 }
 
-function paintResult(hits) {
-  if (!hits) { $("res").innerHTML = '<div class="empty">press “Ask the database”…</div>'; $("rcount").textContent = ""; return; }
-  var shown = cols();
-  if (!hits.length) { $("res").innerHTML = '<div class="empty">no rows matched</div>'; $("rcount").textContent = "0 rows"; return; }
-  $("rcount").textContent = hits.length + " row" + (hits.length === 1 ? "" : "s") + " × " + shown.length +
-    " column" + (shown.length === 1 ? "" : "s");
-  $("res").innerHTML = '<table><thead><tr>' + shown.map(function (c) { return '<th>' + c + '</th>'; }).join("") +
-    '</tr></thead><tbody>' + hits.map(function (r) {
+function miniTable(rows, shown) {
+  return '<table><thead><tr>' + shown.map(function (c) { return '<th>' + c + '</th>'; }).join("") +
+    '</tr></thead><tbody>' + rows.map(function (r) {
       return '<tr>' + shown.map(function (c) { return '<td>' + esc(r[c]) + '</td>'; }).join("") + '</tr>';
     }).join("") + '</tbody></table>';
+}
+function paintResult() {
+  var s = SCHEMA[table];
+  if (!ran) { $("res").innerHTML = '<div class="empty">press Run…</div>'; $("rcount").textContent = ""; return; }
+  if (ran.op === "SELECT") {
+    var shown = cols();
+    $("rcount").textContent = ran.rows.length + " × " + shown.length + " cols";
+    $("res").innerHTML = ran.rows.length
+      ? '<div class="count sel">' + ran.rows.length + ' row' + (ran.rows.length === 1 ? "" : "s") + ' returned' +
+        '<small>a <b>result set</b> — some rows, some columns, never the whole table</small></div>' + miniTable(ran.rows, shown)
+      : '<div class="count sel">0 rows returned<small>the filter matched nothing</small></div>';
+    return;
+  }
+  $("rcount").textContent = "a count, not rows";
+  if (ran.op === "INSERT") {
+    $("res").innerHTML = '<div class="count ins">1 row inserted' +
+      '<small>the database chose <b>' + s.pk + ' = ' + ran.id + '</b> — the app never sent one</small></div>' +
+      miniTable(ran.rows, s.cols);
+  } else if (ran.op === "UPDATE") {
+    var n = ran.rows.length;
+    $("res").innerHTML = '<div class="count upd">' + n + ' row' + (n === 1 ? "" : "s") + ' updated' +
+      '<small>' + (n ? '<b>' + esc(ran.col) + '</b>: ' + esc(ran.before.join(", ")) + ' → ' + esc(String(ran.rows[0][ran.col]))
+                     : "the filter matched nothing") + '</small></div>' + (n ? miniTable(ran.rows, s.cols) : "");
+  } else {
+    $("res").innerHTML = '<div class="count del">' + ran.n + ' row' + (ran.n === 1 ? "" : "s") + ' deleted' +
+      '<small>' + (ran.n ? "gone — a database has no undo button" : "the filter matched nothing") + '</small></div>' +
+      (ghosts.length ? miniTable(ghosts, s.cols) : "");
+  }
 }
 
 function paintOwner() {
   var s = SCHEMA[table];
   if (!s.fk) {
-    $("own").innerHTML = '<b>users</b> is where identity lives. Every other table points back here by <span class="lnk">id</span> — ' +
-      'which is how the database can always answer “<b>whose row is this?</b>”';
+    $("own").innerHTML = '<b>users</b> is where identity lives. Every other table points back here by ' +
+      '<span class="lnk">id</span> — which is how the database can always answer “<b>whose row is this?</b>”';
     return;
   }
-  var row = picked === null ? null : s.rows.filter(function (r) { return r.id === picked; })[0];
+  var row = picked === null ? null : s.rows.filter(function (r) { return r[s.pk] === picked; })[0];
   if (!row) { $("own").innerHTML = 'Click a row on the left to follow its <span class="lnk">' + s.fk.col + '</span> back to a person.'; return; }
-  var who = userName(row[s.fk.col]), mine = row[s.fk.col] === ME;
-  $("own").innerHTML = '<span class="lnk">' + table + ' #' + row.id + '</span> · ' + s.fk.col + ' = ' + row[s.fk.col] +
-    ' → <span class="lnk">users #' + row[s.fk.col] + ' ' + esc(who) + '</span>' +
+  var mine = Number(row[s.fk.col]) === ME;
+  $("own").innerHTML = '<span class="lnk">' + table + ' #' + row[s.pk] + '</span> · ' + s.fk.col + ' = ' + row[s.fk.col] +
+    ' → <span class="lnk">users #' + row[s.fk.col] + ' ' + esc(userName(row[s.fk.col])) + '</span>' +
     (mine ? ' — <b>that is you.</b>' : ' — <em>not you.</em>') +
     '<br><span style="color:#8AA1A8">The database <b>knows</b> who owns this row. The app only has to ask.</span>';
 }
 
-function caption(asked, hits) {
-  var s = SCHEMA[table], txt;
-  if (!asked) {
-    txt = 'A <b>table</b> is a grid: every row is one <b>record</b>, every column one <b>field</b>. ' +
+function paintCap() {
+  var s = SCHEMA[table], c = $("cap"), warn = false, txt;
+  if (!ran) {
+    if (op === "SELECT") txt = 'A <b>table</b> is a grid: every row is one <b>record</b>, every column one <b>field</b>. ' +
       'The <span class="mono">id</span> column is the <b>primary key</b> — unique, one per row. ' +
       '<em>That is the number you saw at the end of the URL.</em> The dashed arrows are <b>foreign keys</b>: ' +
       '<span class="mono">invoices.user_id</span> points at <span class="mono">users.id</span>, which is how rows belong to people.';
-  } else if (wcol === "(no filter)") {
-    txt = 'No filter, so the answer is <b>every row</b> — ' + hits.length + ' of them. ' +
-      'Notice you still only got the columns you asked for: a query returns a <b>result set</b>, not the table.';
+    else if (op === "INSERT") txt = '<b>INSERT</b> adds a row: you name the columns, then the values — and you do <b>not</b> ' +
+      'supply the <span class="mono">id</span>; the database hands out the next one itself. Set <span class="mono">role</span> ' +
+      'to <em>admin</em> on the users table and ask where that value would have come from on a real signup form.';
+    else if (op === "UPDATE") txt = '<b>UPDATE</b> is two halves: <span class="mono">SET</span> says <b>what to change</b>, ' +
+      '<span class="mono">WHERE</span> says <b>which rows</b>. Change the filter to <span class="mono">(no filter)</span> and ' +
+      'watch what the statement becomes.';
+    else txt = '<b>DELETE</b> removes whole <b>rows</b> — you never delete a single column, only the record. ' +
+      'The <span class="mono">WHERE</span> is the only thing standing between the app and an empty table.';
+  } else if (ran.op === "SELECT") {
+    txt = wcol === "(no filter)"
+      ? 'No filter, so the answer is <b>every row</b> — ' + ran.rows.length + '. You still only got the columns you asked for: ' +
+        'a query returns a <b>result set</b>, not the table.'
+      : 'The database tested <span class="mono">' + esc(wcol) + ' = ' + esc(wval) + '</span> against all ' + s.rows.length +
+        ' rows and sent back <b>' + ran.rows.length + '</b>. It does not ship the table over and let the app rummage — ' +
+        '<b>it does the work and returns the answer.</b>';
+  } else if (ran.op === "INSERT") {
+    txt = 'The table is now <b>' + s.rows.length + ' rows</b>. Notice the reply: <b>no data came back</b>, just a count and the ' +
+      'new <span class="mono">id</span> — and that id is what the app puts in the next URL.';
+  } else if (ran.op === "UPDATE") {
+    warn = wcol === "(no filter)";
+    txt = warn
+      ? '<em>No WHERE, so all ' + ran.rows.length + ' rows were rewritten.</em> One forgotten clause is a real outage — this is ' +
+        'why writes get reviewed.'
+      : '<b>' + ran.rows.length + ' row' + (ran.rows.length === 1 ? "" : "s") + '</b> rewritten in place. The old value is ' +
+        '<b>gone</b>: an UPDATE does not keep a copy.';
   } else {
-    txt = 'The database checked <span class="mono">' + esc(wcol) + ' = ' + esc(wval) + '</span> against all ' + s.rows.length +
-      ' rows and sent back <b>' + hits.length + '</b>. It does not hand over the table and let the app search — ' +
-      '<b>it does the work and returns the answer.</b> ' +
-      (hits.length === 1 ? 'One row, ' + cols().length + ' column' + (cols().length === 1 ? "" : "s") + ' — that is a result set.' : '');
+    warn = wcol === "(no filter)";
+    txt = warn
+      ? '<em>That was the entire table.</em> A DELETE with no WHERE empties it, and there is no undo.'
+      : '<b>' + ran.n + ' row' + (ran.n === 1 ? "" : "s") + '</b> destroyed. Nothing came back but the count.';
   }
-  $("cap").innerHTML = txt;
+  c.className = "cap2" + (warn ? " warn" : ""); c.innerHTML = txt;
 }
 
-var asked = false;
-function setTable(t) { table = t; proj = ["*"]; wcol = "(no filter)"; wval = ""; picked = null; asked = false; render(); }
-function render(keepAsked) {
-  if (!keepAsked && !asked) { /* nothing */ }
-  paintSchema(); paintAsk();
-  var hits = asked ? matches() : null;
-  paintRows(hits); paintResult(hits); paintOwner(); caption(asked, hits || []);
+/* ---- wiring --------------------------------------------------------------- */
+function setTable(t) {
+  table = t; proj = ["*"]; wcol = op === "SELECT" ? "(no filter)" : SCHEMA[t].pk; wval = "";
+  picked = null; ran = null; ghosts = [];
+  setCol = SCHEMA[t].set[0];
+  setVal = t === "users" ? "admin" : (t === "invoices" ? "paid" : "edited by me");
+  render();
 }
+function render() { paintSchema(); paintAsk(); paintQuery(); paintRows(); paintResult(); paintOwner(); paintCap(); }
 
-$("tsel").addEventListener("change", function () { setTable(this.value); });
-$("wcol").addEventListener("change", function () { wcol = this.value; wval = ""; asked = false; render(); });
-$("wval").addEventListener("change", function () { wval = this.value; asked = false; render(); });
-$("run").addEventListener("click", function () { asked = true; render(true); });
+Array.prototype.forEach.call($("ops").querySelectorAll("button"), function (b) {
+  b.addEventListener("click", function () {
+    Array.prototype.forEach.call($("ops").querySelectorAll("button"), function (x) { x.classList.remove("on"); });
+    b.classList.add("on"); op = b.getAttribute("data-o"); ran = null; ghosts = []; picked = null;
+    /* a write with no filter is a trap worth walking into deliberately, not by default */
+    if (op !== "SELECT" && wcol === "(no filter)") { wcol = SCHEMA[table].pk; wval = ""; }
+    render();
+  });
+});
+$("reset").addEventListener("click", function () {
+  SCHEMA = seed(); ran = null; ghosts = []; picked = null; wval = ""; render(); });
 window.addEventListener("resize", drawLinks);
 
 render();
@@ -329,9 +542,15 @@ render();
 (function () {
   var st = new URLSearchParams(location.search).get("state");
   if (!st) return;
-  if (st === "mine") { table = "invoices"; wcol = "user_id"; wval = "2"; proj = ["id","total","status"]; asked = true; picked = 1042; render(true); }
-  else if (st === "users") { table = "users"; asked = true; render(true); }
-  else if (st === "theirs") { table = "invoices"; picked = 1043; asked = false; render(true); }
+  function setOp(o) { op = o;
+    Array.prototype.forEach.call($("ops").querySelectorAll("button"), function (x) { x.classList.toggle("on", x.getAttribute("data-o") === o); }); }
+  if (st === "mine") { wcol = "user_id"; wval = "2"; proj = ["id","total","status"]; render(); run(); }
+  else if (st === "theirs") { picked = 1043; render(); paintRows(); paintOwner(); }
+  else if (st === "users") { setTable("users"); render(); run(); }
+  else if (st === "insert") { setOp("INSERT"); render(); run(); }
+  else if (st === "update") { setOp("UPDATE"); wcol = "id"; wval = "1043"; setCol = "status"; setVal = "paid"; render(); run(); }
+  else if (st === "delete") { setOp("DELETE"); wcol = "id"; wval = "1043"; render(); run(); }
+  else if (st === "nowhere") { setOp("DELETE"); wcol = "(no filter)"; render(); run(); }
 })();
 </script>
 </body></html>

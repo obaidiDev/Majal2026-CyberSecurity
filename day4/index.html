@@ -133,25 +133,29 @@
     <!-- ================= FOUNDATIONS: THE DATABASE ================= -->
     <section>
       <p class="kicker">Foundations · the third tier</p>
-      <h2>Where the data actually lives — tables, rows and ids</h2>
-      <iframe class="wframe" style="height:440px"
-              src="widgets/database.html?v=1"
-              title="Tables, primary keys, foreign keys and what a query returns" scrolling="auto"></iframe>
-      <div class="callout" style="margin-top:.4em;font-size:.6em"><strong>The app has no data of its own.</strong> Every page
-      you load, every review you post, every login — the app turns it into a <em>query</em> and the database answers.
-      <span style="color:var(--muted)">The language it answers in is SQL, and you'll write it yourself before we break it.</span></div>
-      <aside class="notes">The tier the deck kept pointing at without ever opening. Four beats. (1) <b>It is a separate
-      program</b> — usually its own machine — and the app is the only thing that talks to it. The app stores nothing itself;
-      restart the server and the data is still there, because it was never in the server. (2) <b>A table is a grid</b>: a row is
-      one record, a column is one field. Click through users / invoices / reviews and read the shapes aloud. (3) <b>The
-      <span class="mono">id</span> column is the primary key</b> — unique, one per row — and this is the payoff line: <em>that
-      is the number you just saw at the end of the URL.</em> The web address and the database row are the same thing seen from
-      two ends. (4) <b>Foreign keys</b> — follow the dashed arrows: <span class="mono">invoices.user_id → users.id</span> is how
-      a row belongs to a person. Click invoice #1043 and read the owner line: user_id 4 → omar, <em>not you</em>. Say it plainly:
-      <b>the database knows perfectly well whose row this is; the app simply has to ask.</b> Park that — when IDOR shows up, the
-      bug is not that the database was fooled, it is that nobody asked it the ownership question. Finally, drive one query:
-      pick columns, set a filter, press Ask. Land that what comes back is a <b>result set</b> — some rows, some columns — not the
-      table. The database does the searching; it does not ship the table over and let the app rummage.</aside>
+      <h2>Where the data lives — and the four things you do to it</h2>
+      <iframe class="wframe" style="height:520px"
+              src="widgets/database.html?v=2"
+              title="Tables, keys, and live SELECT / INSERT / UPDATE / DELETE statements" scrolling="auto"></iframe>
+      <aside class="notes">The tier the deck kept pointing at without ever opening. Structure first, then all four operations —
+      and the statement panel updates <em>as you touch the controls</em>, so they read real SQL long before they have to write any.
+      <b>Structure (SELECT tab).</b> (1) It is a <b>separate program</b>, usually its own machine; the app stores nothing itself,
+      so restart the server and the data is still there. (2) A <b>table is a grid</b> — a row is one record, a column one field.
+      Click through users / invoices / reviews. (3) The <span class="mono">id</span> is the <b>primary key</b>, unique, one per
+      row — and here is the payoff: <em>that is the number you just saw at the end of the URL.</em> The address bar and the
+      database row are the same thing seen from two ends. (4) <b>Foreign keys</b>: follow the dashed arrows,
+      <span class="mono">invoices.user_id → users.id</span>. Click invoice #1043 and read the owner line — user_id 4 → omar,
+      <em>not you</em>. Say it plainly: <b>the database knows perfectly well whose row this is; the app simply has to ask.</b>
+      Park it — when IDOR arrives, the bug is not that the database was fooled, it is that nobody asked it the ownership question.
+      <b>Then the four verbs</b>, quickly. <span class="mono">SELECT</span>: pick columns, set a filter, run — what comes back is a
+      <b>result set</b>, some rows and some columns, never the table; the database does the searching.
+      <span class="mono">INSERT</span>: add a row and point at the reply — <b>no data comes back, only a count and the new id</b>,
+      which the database chose, not the app. (On the users table set role to <em>admin</em> and ask where that value would come
+      from on a real signup form.) <span class="mono">UPDATE</span>: SET says what to change, WHERE says which rows; the old value
+      is simply gone. <span class="mono">DELETE</span>: removes whole rows. Then set the filter to <b>(no filter)</b> on a DELETE
+      and run it — the whole table, no undo. Last thing, and it sets up the injection slides: look at the statement panel and note
+      that <b>text values sit inside quotes and numbers do not</b>. Those quotes are a fence. Don't explain it further here —
+      just make them see it.</aside>
     </section>
 
     <!-- ================= FOUNDATIONS: HTTP METHODS ================= -->
