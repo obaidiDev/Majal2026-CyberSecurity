@@ -363,9 +363,32 @@
       land in the attacker console. Note the comment itself looks EMPTY in the feed: a script tag renders as nothing, which is
       exactly what stored XSS looks like to a normal visitor. Then hit the second payload — same theft with
       &lt;img src=x onerror=…&gt;, no &lt;script&gt; tag at all — and say the line: blocking the word "script" is not a fix,
-      because there are a hundred other tags that run code. Stored (saved for every viewer) vs reflected (in a crafted link) in one line. Then flip
+      because there are a hundred other tags that run code. Then flip
       "encode output on render": the same script now shows up as visible &lt;script&gt; text — inert. Land: the fix is to
-      treat input as data to DISPLAY, never as HTML to execute.</aside>
+      treat input as data to DISPLAY, never as HTML to execute. This one is <em>stored</em> XSS — saved once, fires for every
+      visitor; the next slide does the other flavour.</aside>
+    </section>
+
+    <!-- ================= REFLECTED XSS ================= -->
+    <section>
+      <p class="kicker">XSS · the other flavour · nothing is saved</p>
+      <h2>Reflected XSS: the attack is a link you click</h2>
+      <iframe class="wframe" style="height:566px"
+              src="widgets/xss_reflected.html?v=1"
+              title="Reflected XSS: a crafted link, one click, the script runs" scrolling="auto"></iframe>
+      <aside class="notes">Same bug, different delivery — and the difference is the whole point. The comment box saved your
+      payload; a <em>search</em> page saves nothing, it just echoes your query back ("You searched for: x"). That echo is the
+      sink. So the payload can't wait on the server for victims — the attacker must put it <em>in the link</em> and get one
+      person to click. Drive it: pick the &lt;script&gt; payload, watch the URL build in the left panel — the script is now
+      part of <span class="mono">?q=</span>. Tick "%-encode it" and say the line: the victim sees a legitimate domain,
+      <span class="mono">shop.example.com</span>, and gibberish they'll never read (real links get shortened, and the payload
+      sits off the end of the address bar). Send it, then click the link <em>as the victim</em>: the query rides out in the
+      GET, the server decodes it and pastes it into the page it builds, the response comes back, and the browser runs it —
+      cookie in the attacker's log. Point at the two counters: <strong>rows written to the database: 0</strong>. Then hit
+      "someone else opens the search page normally" — clean. That's the trade: stored XSS hits everyone but needs a place to
+      persist; reflected XSS needs a click per victim (phishing, an ad, a QR code) and leaves nothing behind on the server —
+      which is exactly why it's harder to spot afterwards. Fix is identical: encode on output. Flip the toggle and the same
+      link renders the script as visible text.</aside>
     </section>
 
     <!-- ================= CSRF ================= -->
@@ -510,7 +533,7 @@
         <div class="r"><div class="n">Injection<span class="lever">input became code</span></div>
           <div class="d"><span class="mono">' OR '1'='1</span> <b>rewrote a SQL query</b>; <span class="mono">; whoami</span> ran a <b>shell command</b>. Same disease, two targets.</div></div>
         <div class="r"><div class="n">XSS<span class="lever">input became script</span></div>
-          <div class="d">A comment ran as <b>code in the victim's browser</b> and stole their session cookie.</div></div>
+          <div class="d">A comment ran as <b>code in the victim's browser</b> and stole their session cookie — <b>stored</b> when the app saves it for every visitor, <b>reflected</b> when it rides in a link one victim clicks.</div></div>
         <div class="r"><div class="n">CSRF<span class="lever">your session, borrowed</span></div>
           <div class="d">Another site fired a request that <b>rode your cookie</b>; the bank obeyed a transfer you never made.</div></div>
         <div class="r"><div class="n">IDOR<span class="lever">what, not who</span></div>
