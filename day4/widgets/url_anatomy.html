@@ -160,12 +160,12 @@ var PARTS = {
   frag:   { name: "Fragment", what: "Where to <b>scroll to</b> on the page once it loads. The browser keeps it — it is <b>never sent to the server</b>.",
     angle: "Page JavaScript <em>can</em> read it. A payload here runs in the browser and appears in <b>no server log at all</b> — that's DOM XSS." }
 };
+/* the same four invoice rows the database slide showed, owned by the same people */
 var INVOICES = {
-  1040: { who: "Omar Al-Harbi",   total: "SAR 890" },
-  1041: { who: "Sara Nasser",     total: "SAR 1,240" },
-  1042: { who: "You",             total: "SAR 3,600" },
-  1043: { who: "Layla Al-Rashid", total: "SAR 4,120" },
-  1044: { who: "Khalid Mutairi",  total: "SAR 220" }
+  1041: { who: "sara",   total: "SAR 1,240" },
+  1042: { who: "fadhel", total: "SAR 3,600" },
+  1043: { who: "omar",   total: "SAR 890" },
+  1044: { who: "sara",   total: "SAR 210" }
 };
 
 var scheme = "https", id = 1042, query = "sort=date&currency=SAR", sel = "path", showAll = true;
@@ -285,7 +285,7 @@ Array.prototype.forEach.call(document.querySelectorAll(".url .seg"), function (s
   s.addEventListener("click", function () { sel = s.getAttribute("data-k"); paintExpl(); });
 });
 $("inc").addEventListener("click", function () { if (id < 1044) id++; sel = "path"; render(); });
-$("dec").addEventListener("click", function () { if (id > 1040) id--; sel = "path"; render(); });
+$("dec").addEventListener("click", function () { if (id > 1041) id--; sel = "path"; render(); });
 $("bHttps").addEventListener("click", function () { scheme = "https"; this.classList.add("on"); $("bHttp").classList.remove("on"); sel = "scheme"; render(); });
 $("bHttp").addEventListener("click", function () { scheme = "http"; this.classList.add("on"); $("bHttps").classList.remove("on"); sel = "scheme"; render(); });
 $("qin").addEventListener("input", function () { query = this.value.trim(); sel = "query"; render(); });

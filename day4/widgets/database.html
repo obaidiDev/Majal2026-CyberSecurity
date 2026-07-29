@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding: 6px 8px; }
+  .wrap { max-width: 1040px; margin: 0 auto; }
+
+  /* tier strip */
+  .tiers { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; }
+  .tiers .t { font-size: 11px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase;
+    padding: 4px 10px; border-radius: 999px; border: 1px solid #CDD8DA; color: #8AA1A8; background: #fff; }
+  .tiers .t.on { background: #00567C; border-color: #00567C; color: #fff; }
+  .tiers .ar { color: #B9C6C9; font-size: 13px; }
+  .tiers .why { margin-left: 8px; font-size: 11.5px; color: #8AA1A8; line-height: 1.4; }
+  .tiers .why b { color: #00567C; }
+
+  /* schema */
+  .schema { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    padding-bottom: 26px; margin-bottom: 4px; }
+  .schema svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+  .tbl { border: 1px solid #E0E7E8; border-top: 3px solid #CDD8DA; border-radius: 3px; background: #fff;
+    padding: 7px 9px 8px; cursor: pointer; transition: box-shadow .15s, border-color .15s; }
+  .tbl:hover { box-shadow: 0 2px 6px rgba(18,51,61,.09); }
+  .tbl.on { box-shadow: 0 2px 8px rgba(18,51,61,.12); }
+  .tbl[data-t="users"]    { border-top-color: #1F8F89; } .tbl[data-t="users"].on    { border-color: #1F8F89; }
+  .tbl[data-t="invoices"] { border-top-color: #00567C; } .tbl[data-t="invoices"].on { border-color: #00567C; }
+  .tbl[data-t="reviews"]  { border-top-color: #b08900; } .tbl[data-t="reviews"].on  { border-color: #b08900; }
+  .tbl .tn { font-family: "JetBrains Mono", monospace; font-size: 12.5px; font-weight: 800; color: #12333D;
+    display: flex; align-items: baseline; gap: 6px; margin-bottom: 5px; }
+  .tbl .tn .cnt { font-family: "Avenir Next", system-ui, sans-serif; font-size: 9.5px; font-weight: 700;
+    letter-spacing: .05em; text-transform: uppercase; color: #8AA1A8; }
+  .cols2 { display: flex; flex-wrap: wrap; gap: 3px; }
+  .cc { font-family: "JetBrains Mono", monospace; font-size: 10.5px; padding: 2px 6px; border-radius: 4px;
+    border: 1px solid #E7EDED; background: #F6F8F8; color: #5C7880; white-space: nowrap; }
+  .cc.pk { border-color: #1F8F89; background: rgba(31,143,137,.1); color: #147a75; font-weight: 800; }
+  .cc.fk { border-color: #00567C; background: rgba(0,86,125,.09); color: #00567C; font-weight: 800; }
+  .cc.sel { box-shadow: inset 0 -2px 0 #b08900; }
+
+  /* query strip */
+  .ask { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; border: 1px solid #E0E7E8;
+    border-radius: 8px; background: #fff; padding: 7px 10px; margin-bottom: 9px; }
+  .ask .lb { font-size: 12px; color: #8AA1A8; font-weight: 700; }
+  .ask select { font-family: "JetBrains Mono", monospace; font-size: 11.5px; color: #12333D; background: #F6F8F8;
+    border: 1px solid #CDD8DA; border-radius: 5px; padding: 4px 6px; outline: none; }
+  .ask select:focus { border-color: #00567C; }
+  .ask .go { margin-left: auto; font-size: 12px; padding: 6px 14px; }
+  .ask .chips { display: flex; gap: 3px; }
+  .ask .chips button { font-family: "JetBrains Mono", monospace; font-size: 10.5px; padding: 3px 7px; border-radius: 4px; }
+  .ask .chips button.on { background: #b08900; border-color: #b08900; color: #fff; }
+
+  .cols { display: grid; grid-template-columns: 1.32fr 1fr; gap: 11px; align-items: start; }
+  .pane { border: 1px solid #E0E7E8; border-radius: 8px; background: #fff; padding: 7px 10px 8px; }
+  .pane .ph { font-size: 9.5px; letter-spacing: .08em; text-transform: uppercase; color: #5C7880; font-weight: 800;
+    margin-bottom: 5px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .pane .ph .r { text-transform: none; letter-spacing: 0; font-weight: 700; font-size: 10.5px; color: #8AA1A8; }
+  table { width: 100%; border-collapse: collapse; font-family: "JetBrains Mono", monospace; font-size: 11.5px; }
+  th { text-align: left; color: #8AA1A8; font-weight: 700; font-size: 9.5px; letter-spacing: .05em; text-transform: uppercase;
+    padding: 3px 6px; border-bottom: 1px solid #E0E7E8; white-space: nowrap; }
+  th.dimc, td.dimc { color: #CBD6D8; }
+  th.pkc { color: #147a75; } th.fkc { color: #00567C; }
+  td { padding: 4px 6px; border-bottom: 1px solid #F1F5F5; color: #42606A; transition: background .25s, opacity .25s; }
+  tr.row { cursor: pointer; }
+  tr.row:hover td { background: #F6F8F8; }
+  tr.out td { opacity: .3; }
+  tr.hit td { background: rgba(31,143,137,.1); color: #12333D; }
+  tr.hit td:first-child { box-shadow: inset 3px 0 0 #1F8F89; }
+  tr.pick td { background: rgba(242,210,0,.28); }
+  td.pkv { color: #147a75; font-weight: 700; }
+  td.fkv { color: #00567C; font-weight: 700; }
+  .empty { font-size: 11.5px; color: #B9C6C9; font-style: italic; padding: 8px 4px; }
+
+  .own { margin-top: 7px; border-top: 1px dashed #E0E7E8; padding-top: 7px; font-size: 11.5px; color: #42606A; line-height: 1.5; }
+  .own .lnk { font-family: "JetBrains Mono", monospace; font-size: 11px; color: #00567C; font-weight: 700; }
+  .own em { color: #D64545; font-style: normal; font-weight: 700; }
+  .own b { color: #00567C; }
+
+  .cap2 { margin-top: 9px; border: 1px solid #E0E7E8; border-left: 4px solid #00567C; border-radius: 0 6px 6px 0;
+    background: #fff; padding: 7px 11px; font-size: 12px; color: #42606A; line-height: 1.45; min-height: 30px; }
+  .cap2 b { color: #00567C; } .cap2 em { color: #D64545; font-style: normal; font-weight: 700; }
+  .cap2 .mono { font-size: .95em; }
+</style>
+</head><body>
+<div class="wrap">
+  <div class="tiers">
+    <span class="t">browser</span><span class="ar">→</span>
+    <span class="t">app server</span><span class="ar">→</span>
+    <span class="t on">database</span>
+    <span class="why">A <b>separate program</b>, usually on its own machine. The app is the only thing that talks to it —
+      and it only ever talks in <b>queries</b>.</span>
+  </div>
+
+  <div class="schema" id="schema">
+    <svg id="links"><defs>
+      <marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+        <path d="M0,0 L8,4 L0,8 z" fill="#00567C"></path>
+      </marker>
+    </defs></svg>
+  </div>
+
+  <div class="ask">
+    <span class="lb">ask for</span>
+    <span class="chips" id="proj"></span>
+    <span class="lb">from</span>
+    <select id="tsel"></select>
+    <span class="lb">where</span>
+    <select id="wcol"></select>
+    <span class="lb">=</span>
+    <select id="wval"></select>
+    <button class="primary go" id="run">Ask the database ▶</button>
+  </div>
+
+  <div class="cols">
+    <div class="pane">
+      <div class="ph"><span>Stored in the table — <b id="tname">invoices</b></span><span class="r" id="stored"></span></div>
+      <div id="rows"></div>
+    </div>
+    <div class="pane">
+      <div class="ph"><span>What comes back</span><span class="r" id="rcount"></span></div>
+      <div id="res"><div class="empty">press “Ask the database”…</div></div>
+      <div class="own" id="own"></div>
+    </div>
+  </div>
+
+  <div class="cap2" id="cap"></div>
+</div>
+
+<script>
+/* ---- three tables, the same people as every other Day-4 widget ------------ */
+var SCHEMA = {
+  users: {
+    cols: ["id","username","password_hash","role"],
+    pk: "id", fk: null,
+    rows: [
+      { id:1, username:"admin",  password_hash:"c3319d322d43", role:"admin" },
+      { id:2, username:"fadhel", password_hash:"f52fbd32b2b3", role:"user"  },
+      { id:3, username:"sara",   password_hash:"65e84be33532", role:"user"  },
+      { id:4, username:"omar",   password_hash:"1c8bfe8f801d", role:"user"  }
+    ]
+  },
+  invoices: {
+    cols: ["id","user_id","total","status"],
+    pk: "id", fk: { col:"user_id", to:"users", toCol:"id" },
+    rows: [
+      { id:1041, user_id:3, total:"SAR 1,240", status:"paid"   },
+      { id:1042, user_id:2, total:"SAR 3,600", status:"paid"   },
+      { id:1043, user_id:4, total:"SAR 890",   status:"unpaid" },
+      { id:1044, user_id:3, total:"SAR 210",   status:"paid"   }
+    ]
+  },
+  reviews: {
+    cols: ["id","user_id","product_id","text"],
+    pk: "id", fk: { col:"user_id", to:"users", toCol:"id" },
+    rows: [
+      { id:1, user_id:3, product_id:88, text:"Battery lasts all day" },
+      { id:2, user_id:2, product_id:88, text:"Great sound, worth it!" },
+      { id:3, user_id:4, product_id:91, text:"Cable is a bit short." }
+    ]
+  }
+};
+var ME = 2; /* you are users.id = 2, username fadhel */
+
+var table = "invoices", proj = ["*"], wcol = "(no filter)", wval = "", picked = null;
+
+var $ = function (x) { return document.getElementById(x); };
+function esc(s){ return String(s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];}); }
+function userName(id) { var u = SCHEMA.users.rows.filter(function (r) { return r.id === id; })[0]; return u ? u.username : "?"; }
+
+/* ---- schema cards + the foreign-key arrows -------------------------------- */
+function paintSchema() {
+  var svg = $("links");
+  Array.prototype.slice.call($("schema").querySelectorAll(".tbl")).forEach(function (n) { n.remove(); });
+  Object.keys(SCHEMA).forEach(function (t) {
+    var s = SCHEMA[t], d = document.createElement("div");
+    d.className = "tbl" + (t === table ? " on" : ""); d.setAttribute("data-t", t);
+    d.innerHTML = '<div class="tn">' + t + '<span class="cnt">' + s.rows.length + ' rows · ' + s.cols.length + ' columns</span></div>' +
+      '<div class="cols2">' + s.cols.map(function (c) {
+        var cls = c === s.pk ? " pk" : (s.fk && s.fk.col === c ? " fk" : "");
+        return '<span class="cc' + cls + '" data-col="' + t + '.' + c + '">' + c + '</span>';
+      }).join("") + '</div>';
+    d.addEventListener("click", function () { setTable(t); });
+    $("schema").appendChild(d);
+  });
+  drawLinks();
+}
+function drawLinks() {
+  var svg = $("links"), box = $("schema").getBoundingClientRect();
+  Array.prototype.slice.call(svg.querySelectorAll("path.fkline")).forEach(function (n) { n.remove(); });
+  Object.keys(SCHEMA).forEach(function (t) {
+    var fk = SCHEMA[t].fk; if (!fk) return;
+    var a = $("schema").querySelector('[data-col="' + t + '.' + fk.col + '"]');
+    var b = $("schema").querySelector('[data-col="' + fk.to + '.' + fk.toCol + '"]');
+    if (!a || !b) return;
+    var ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+    var x1 = ra.left - box.left + ra.width / 2, y1 = ra.bottom - box.top + 1;
+    var x2 = rb.left - box.left + rb.width / 2, y2 = rb.bottom - box.top + 1;
+    var dip = t === "reviews" ? 22 : 12;
+    var p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    p.setAttribute("class", "fkline");
+    p.setAttribute("d", "M" + x1 + "," + y1 + " C" + x1 + "," + (y1 + dip) + " " + x2 + "," + (y2 + dip) + " " + x2 + "," + (y2 + 2));
+    p.setAttribute("fill", "none"); p.setAttribute("stroke", "#00567C");
+    p.setAttribute("stroke-width", "1.3"); p.setAttribute("stroke-dasharray", "3 2");
+    p.setAttribute("marker-end", "url(#ah)"); p.setAttribute("opacity", ".8");
+    svg.appendChild(p);
+  });
+}
+
+/* ---- the question strip --------------------------------------------------- */
+function paintAsk() {
+  var s = SCHEMA[table];
+  $("proj").innerHTML = ["*"].concat(s.cols).map(function (c) {
+    return '<button data-c="' + c + '"' + (proj.indexOf(c) !== -1 ? ' class="on"' : '') + '>' + c + '</button>';
+  }).join("");
+  Array.prototype.forEach.call($("proj").querySelectorAll("button"), function (b) {
+    b.addEventListener("click", function () {
+      var c = b.getAttribute("data-c");
+      if (c === "*") proj = ["*"];
+      else { proj = proj.filter(function (x) { return x !== "*"; });
+        var i = proj.indexOf(c); if (i === -1) proj.push(c); else proj.splice(i, 1);
+        if (!proj.length) proj = ["*"];
+        proj.sort(function (x, y) { return s.cols.indexOf(x) - s.cols.indexOf(y); }); }
+      render(); });
+  });
+  $("tsel").innerHTML = Object.keys(SCHEMA).map(function (t) {
+    return '<option' + (t === table ? " selected" : "") + '>' + t + '</option>'; }).join("");
+  $("wcol").innerHTML = ["(no filter)"].concat(s.cols).map(function (c) {
+    return '<option' + (c === wcol ? " selected" : "") + '>' + c + '</option>'; }).join("");
+  var vals = wcol === "(no filter)" ? [] : s.rows.map(function (r) { return String(r[wcol]); })
+    .filter(function (v, i, a) { return a.indexOf(v) === i; });
+  if (vals.length && vals.indexOf(wval) === -1) wval = vals[0];
+  $("wval").innerHTML = vals.map(function (v) {
+    return '<option' + (v === wval ? " selected" : "") + '>' + esc(v) + '</option>'; }).join("");
+  $("wval").disabled = !vals.length;
+}
+
+/* ---- the stored table and the result set ---------------------------------- */
+function matches() {
+  var s = SCHEMA[table];
+  if (wcol === "(no filter)") return s.rows.slice();
+  return s.rows.filter(function (r) { return String(r[wcol]) === String(wval); });
+}
+function cols() { return proj.indexOf("*") !== -1 ? SCHEMA[table].cols : proj; }
+
+function paintRows(hits) {
+  var s = SCHEMA[table], shown = cols();
+  var head = '<tr>' + s.cols.map(function (c) {
+    var cls = (shown.indexOf(c) === -1 ? "dimc " : "") + (c === s.pk ? "pkc" : (s.fk && s.fk.col === c ? "fkc" : ""));
+    return '<th class="' + cls.trim() + '">' + c + '</th>'; }).join("") + '</tr>';
+  var ids = (hits || []).map(function (r) { return r.id; });
+  var body = s.rows.map(function (r) {
+    var hit = !hits ? false : ids.indexOf(r.id) !== -1;
+    var cls = "row" + (hits ? (hit ? " hit" : " out") : "") + (picked === r.id ? " pick" : "");
+    return '<tr class="' + cls + '" data-id="' + r.id + '">' + s.cols.map(function (c) {
+      var k = (shown.indexOf(c) === -1 ? "dimc " : "") + (c === s.pk ? "pkv" : (s.fk && s.fk.col === c ? "fkv" : ""));
+      return '<td class="' + k.trim() + '">' + esc(r[c]) + '</td>'; }).join("") + '</tr>';
+  }).join("");
+  $("rows").innerHTML = '<table><thead>' + head + '</thead><tbody>' + body + '</tbody></table>';
+  $("tname").textContent = table;
+  $("stored").textContent = s.rows.length + " rows";
+  Array.prototype.forEach.call($("rows").querySelectorAll("tr.row"), function (tr) {
+    tr.addEventListener("click", function () { picked = Number(tr.getAttribute("data-id")); render(true); });
+  });
+}
+
+function paintResult(hits) {
+  if (!hits) { $("res").innerHTML = '<div class="empty">press “Ask the database”…</div>'; $("rcount").textContent = ""; return; }
+  var shown = cols();
+  if (!hits.length) { $("res").innerHTML = '<div class="empty">no rows matched</div>'; $("rcount").textContent = "0 rows"; return; }
+  $("rcount").textContent = hits.length + " row" + (hits.length === 1 ? "" : "s") + " × " + shown.length +
+    " column" + (shown.length === 1 ? "" : "s");
+  $("res").innerHTML = '<table><thead><tr>' + shown.map(function (c) { return '<th>' + c + '</th>'; }).join("") +
+    '</tr></thead><tbody>' + hits.map(function (r) {
+      return '<tr>' + shown.map(function (c) { return '<td>' + esc(r[c]) + '</td>'; }).join("") + '</tr>';
+    }).join("") + '</tbody></table>';
+}
+
+function paintOwner() {
+  var s = SCHEMA[table];
+  if (!s.fk) {
+    $("own").innerHTML = '<b>users</b> is where identity lives. Every other table points back here by <span class="lnk">id</span> — ' +
+      'which is how the database can always answer “<b>whose row is this?</b>”';
+    return;
+  }
+  var row = picked === null ? null : s.rows.filter(function (r) { return r.id === picked; })[0];
+  if (!row) { $("own").innerHTML = 'Click a row on the left to follow its <span class="lnk">' + s.fk.col + '</span> back to a person.'; return; }
+  var who = userName(row[s.fk.col]), mine = row[s.fk.col] === ME;
+  $("own").innerHTML = '<span class="lnk">' + table + ' #' + row.id + '</span> · ' + s.fk.col + ' = ' + row[s.fk.col] +
+    ' → <span class="lnk">users #' + row[s.fk.col] + ' ' + esc(who) + '</span>' +
+    (mine ? ' — <b>that is you.</b>' : ' — <em>not you.</em>') +
+    '<br><span style="color:#8AA1A8">The database <b>knows</b> who owns this row. The app only has to ask.</span>';
+}
+
+function caption(asked, hits) {
+  var s = SCHEMA[table], txt;
+  if (!asked) {
+    txt = 'A <b>table</b> is a grid: every row is one <b>record</b>, every column one <b>field</b>. ' +
+      'The <span class="mono">id</span> column is the <b>primary key</b> — unique, one per row. ' +
+      '<em>That is the number you saw at the end of the URL.</em> The dashed arrows are <b>foreign keys</b>: ' +
+      '<span class="mono">invoices.user_id</span> points at <span class="mono">users.id</span>, which is how rows belong to people.';
+  } else if (wcol === "(no filter)") {
+    txt = 'No filter, so the answer is <b>every row</b> — ' + hits.length + ' of them. ' +
+      'Notice you still only got the columns you asked for: a query returns a <b>result set</b>, not the table.';
+  } else {
+    txt = 'The database checked <span class="mono">' + esc(wcol) + ' = ' + esc(wval) + '</span> against all ' + s.rows.length +
+      ' rows and sent back <b>' + hits.length + '</b>. It does not hand over the table and let the app search — ' +
+      '<b>it does the work and returns the answer.</b> ' +
+      (hits.length === 1 ? 'One row, ' + cols().length + ' column' + (cols().length === 1 ? "" : "s") + ' — that is a result set.' : '');
+  }
+  $("cap").innerHTML = txt;
+}
+
+var asked = false;
+function setTable(t) { table = t; proj = ["*"]; wcol = "(no filter)"; wval = ""; picked = null; asked = false; render(); }
+function render(keepAsked) {
+  if (!keepAsked && !asked) { /* nothing */ }
+  paintSchema(); paintAsk();
+  var hits = asked ? matches() : null;
+  paintRows(hits); paintResult(hits); paintOwner(); caption(asked, hits || []);
+}
+
+$("tsel").addEventListener("change", function () { setTable(this.value); });
+$("wcol").addEventListener("change", function () { wcol = this.value; wval = ""; asked = false; render(); });
+$("wval").addEventListener("change", function () { wval = this.value; asked = false; render(); });
+$("run").addEventListener("click", function () { asked = true; render(true); });
+window.addEventListener("resize", drawLinks);
+
+render();
+
+/* optional ?state= hook for headless screenshots */
+(function () {
+  var st = new URLSearchParams(location.search).get("state");
+  if (!st) return;
+  if (st === "mine") { table = "invoices"; wcol = "user_id"; wval = "2"; proj = ["id","total","status"]; asked = true; picked = 1042; render(true); }
+  else if (st === "users") { table = "users"; asked = true; render(true); }
+  else if (st === "theirs") { table = "invoices"; picked = 1043; asked = false; render(true); }
+})();
+</script>
+</body></html>
