@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding: 6px 8px; }
+  .wrap { max-width: 1040px; margin: 0 auto; }
+  .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 7px; }
+  .mode { display: inline-flex; border: 1px solid #CDD8DA; border-radius: 8px; overflow: hidden; }
+  .mode button { border: 0; border-radius: 0; padding: 6px 11px; font-size: 12px; font-family: "JetBrains Mono", monospace;
+    font-weight: 700; letter-spacing: -.01em; }
+  .mode button.on { background: #00567C; color: #fff; }
+  .mode button:not(.on) { background: #fff; color: #5C7880; }
+  .lede { font-size: 12.5px; color: #5C7880; line-height: 1.4; margin: 0 0 6px; }
+  .lede b { color: #00567C; } .lede em { color: #1F8F89; font-style: normal; font-weight: 700; }
+
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: stretch; }
+  .pan { background: #04303F; border-radius: 10px; padding: 9px 11px 10px; min-height: 252px;
+    display: flex; flex-direction: column; }
+  .pfoot { margin-top: auto; padding-top: 9px; border-top: 1px solid rgba(159,201,207,.16);
+    font-size: 11px; line-height: 1.5; color: #5f97a3; }
+  .pfoot b { color: #9fc9cf; } .pfoot em { color: #ff8a8a; font-style: normal; font-weight: 700; }
+  .pan .ph { font-size: 10px; letter-spacing: .09em; text-transform: uppercase; color: #5f97a3; font-weight: 700;
+    margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .pan .ph .mini { font-size: 10px; padding: 3px 8px; background: #0c4658; color: #9fc9cf; border: 1px solid #1c5f74;
+    border-radius: 999px; letter-spacing: .03em; text-transform: none; font-weight: 700; }
+  .pan .ph .mini:hover { background: #1F8F89; border-color: #1F8F89; color: #fff; }
+
+  .zone { position: relative; padding: 2px 0 2px 26px; border-left: 2px solid transparent; margin-left: 2px;
+    transition: opacity .18s, background .18s; border-radius: 0 4px 4px 0; }
+  .zone .n { position: absolute; left: 6px; top: 2px; font-size: 10px; font-weight: 800; opacity: .85; }
+  .zone:hover { background: rgba(159,201,207,.07); }
+  .dim .zone { opacity: .26; }
+  .dim .zone.lit { opacity: 1; background: rgba(159,201,207,.09); }
+  .z1 { border-left-color: #33D3CB; } .z1 .n { color: #33D3CB; }
+  .z2 { border-left-color: #ffd84a; } .z2 .n { color: #ffd84a; }
+  .z3 { border-left-color: #5f7681; } .z3 .n { color: #5f7681; }
+  .z4 { border-left-color: #ff8a8a; } .z4 .n { color: #ff8a8a; }
+
+  .code { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 11.5px; line-height: 1.45;
+    color: #9fc9cf; white-space: pre-wrap; word-break: break-word; }
+  .code .m  { color: #33D3CB; font-weight: 800; }
+  .code .pt { color: #ffffff; }
+  .code .qs { color: #ff8a8a; }
+  .code .ver, .code .sp { color: #5f7681; }
+  .code .st2 { color: #5fe0a0; font-weight: 800; } .code .st4 { color: #ff8a8a; font-weight: 800; }
+  .code .hk { color: #5f97a3; } .code .hv { color: #cfe6e3; }
+  .code .hk.hot { color: #ffd84a; } .code .hv.hot { color: #ffd84a; }
+  .code .blank { color: #5f7681; font-style: italic; font-size: 11px; }
+  /* json colours — identical to the tree, so the eye links them */
+  .jk { color: #ffd84a; } .js { color: #7fe3dc; } .jnum { color: #ff9f6e; }
+  .jb { color: #5fe0a0; } .jn { color: #8296a0; font-style: italic; }
+  .htag { color: #5f97a3; } .hattr { color: #9fc9cf; }
+  .usr { background: rgba(214,69,69,.32); border-radius: 3px; padding: 0 2px; color: #ffd7d7; }
+
+  textarea.edit { width: 100%; min-height: 92px; background: #0c4658; color: #cfe6e3; border: 1px solid #33D3CB;
+    border-radius: 6px; padding: 7px 8px; font-family: "JetBrains Mono", Menlo, monospace; font-size: 12px;
+    line-height: 1.6; outline: none; resize: none; }
+
+  .caps { margin-top: 7px; min-height: 28px; border: 1px solid #E0E7E8; border-radius: 8px; background: #fff;
+    padding: 6px 11px; font-size: 11.8px; color: #42606A; line-height: 1.4; display: flex; align-items: center; gap: 9px; }
+  .caps .badge { font-size: 9.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
+    padding: 3px 7px; border-radius: 999px; white-space: nowrap; }
+  .caps b { color: #00567C; } .caps em { color: #D64545; font-style: normal; font-weight: 700; }
+  .b1 { background: rgba(31,143,137,.14); color: #147a75; }
+  .b2 { background: rgba(242,210,0,.22); color: #7a6100; }
+  .b3 { background: rgba(92,120,128,.16); color: #5C7880; }
+  .b4 { background: rgba(214,69,69,.14); color: #D64545; }
+
+  /* parsed panel */
+  .parsed { margin-top: 7px; border: 1px solid #E0E7E8; border-radius: 10px; background: #fff; padding: 7px 12px 8px; }
+  .pgrid { display: grid; grid-template-columns: 1.45fr 1fr; gap: 14px; align-items: start; }
+  .parsed .ph2 { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+  .parsed .ph2 .t { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: #5C7880; font-weight: 800; }
+  .parsed .ph2 .pick { display: inline-flex; border: 1px solid #CDD8DA; border-radius: 6px; overflow: hidden; margin-left: 2px; }
+  .parsed .ph2 .pick button { border: 0; border-radius: 0; font-size: 10.5px; padding: 4px 9px; }
+  .parsed .ph2 .pick button.on { background: #1F8F89; color: #fff; }
+  .parsed .ph2 .pick button:not(.on) { background: #fff; color: #5C7880; }
+  .parsed .ph2 .ok { margin-left: auto; font-size: 11px; font-weight: 800; }
+  .parsed .ph2 .ok.good { color: #1F8F89; } .parsed .ph2 .ok.bad { color: #D64545; }
+  /* two columns so a whole body fits on screen without scrolling */
+  .tree { max-height: 124px; overflow: auto; font-family: "JetBrains Mono", Menlo, monospace; font-size: 11.5px;
+    column-count: 2; column-gap: 16px; column-rule: 1px dotted #E7EDED; }
+  .grp2 { break-inside: avoid; -webkit-column-break-inside: avoid; page-break-inside: avoid; }
+  .tr { display: flex; align-items: baseline; gap: 7px; padding: 0.5px 0; line-height: 1.38; }
+  .tr .kk { color: #b08900; font-weight: 700; }
+  .tr .vv { word-break: break-word; }
+  .tr .vv.s { color: #147a75; } .tr .vv.n { color: #c2521a; } .tr .vv.b { color: #1F8F89; font-weight: 700; }
+  .tr .vv.z { color: #8AA1A8; font-style: italic; } .tr .vv.c { color: #5C7880; }
+  .tr .ty { font-family: "Avenir Next", system-ui, sans-serif; font-size: 8.5px; font-weight: 800; letter-spacing: .07em;
+    text-transform: uppercase; color: #8AA1A8; background: #F1F5F5; border-radius: 3px; padding: 1px 4px; white-space: nowrap; }
+  .guide { border-left: 1px dotted #CDD8DA; align-self: stretch; margin: 0 0 0 4px; }
+  .err { font-family: "JetBrains Mono", monospace; font-size: 11.5px; color: #D64545; line-height: 1.6;
+    background: rgba(214,69,69,.06); border: 1px solid rgba(214,69,69,.3); border-radius: 6px; padding: 7px 9px; }
+  .err .car { color: #D64545; font-weight: 800; }
+  .flat { display: flex; flex-wrap: wrap; gap: 6px; }
+  .flat .kv { font-family: "JetBrains Mono", monospace; font-size: 11.5px; border: 1px solid #E0E7E8;
+    border-radius: 6px; padding: 3px 8px; color: #5C7880; background: #F6F8F8; }
+  .flat .kv b { color: #D64545; }
+  .note2 { font-size: 11.5px; color: #5C7880; line-height: 1.5; margin: 6px 0 0; }
+  .note2 b { color: #00567C; } .note2 em { color: #D64545; font-style: normal; font-weight: 700; }
+</style>
+</head><body>
+<div class="wrap">
+  <div class="head">
+    <div class="mode" id="scn">
+      <button data-s="get" class="on">GET /api/reviews/2</button>
+      <button data-s="post">POST /api/reviews</button>
+      <button data-s="login">POST /login</button>
+      <button data-s="page">GET /product/42</button>
+    </div>
+    <div style="font-size:11px;color:#8AA1A8;letter-spacing:.04em">hover a numbered zone ↓</div>
+  </div>
+  <p class="lede">A request is <b>one block of plain text</b> in four zones — <b>request line</b>, <b>headers</b>,
+    <b>a blank line</b>, then an optional <b>body</b>, which for an API is <em>JSON</em>.</p>
+
+  <div class="cols">
+    <div class="pan" id="reqPan">
+      <div class="ph"><span>What your browser sends</span><span id="reqTools"></span></div>
+      <div class="code" id="reqCode"></div>
+      <div class="pfoot">That is the <b>entire</b> request — text you could type by hand into a terminal.
+        Nothing in it is signed, sealed or verified: <em>every single line was written by the client.</em></div>
+    </div>
+    <div class="pan" id="resPan">
+      <div class="ph"><span>What the server sends back</span><span id="resTools"></span></div>
+      <div class="code" id="resCode"></div>
+    </div>
+  </div>
+
+  <div class="caps" id="caps"></div>
+
+  <div class="parsed">
+    <div class="ph2">
+      <span class="t">The body, parsed</span>
+      <span class="pick" id="pick"></span>
+      <span class="ok" id="ok"></span>
+    </div>
+    <div id="pbody"></div>
+  </div>
+</div>
+
+<script>
+function esc(s){ return String(s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];}); }
+/* Content-Length counts BYTES, not characters — an emoji costs four of them. */
+function byteLen(s){ return encodeURIComponent(String(s)).replace(/%[0-9A-F]{2}/gi, "x").length; }
+
+var GET_BODY = '{\n  "id": 2,\n  "author": { "id": 7, "name": "You" },\n  "rating": 5,\n  "text": "Great sound, worth it!",\n  "verified": true,   "reply": null,\n  "tags": ["audio", "value"]\n}';
+var POST_BODY = '{\n  "product_id": 88,\n  "rating": 5,\n  "text": "Great sound, worth it! \uD83D\uDC4D",\n  "tags": ["audio", "value"]\n}';
+
+var SC = {
+  get: {
+    line: '<span class="m">GET</span> <span class="pt">/api/reviews/2</span> <span class="ver">HTTP/1.1</span>',
+    rh: [["Host","shop.example.com"],["Accept","application/json"],["Cookie","session=a3f9c1e8"]],
+    reqBody: null, reqType: null,
+    status: '<span class="ver">HTTP/1.1</span> <span class="st2">200 OK</span>',
+    sh: [["Content-Type","application/json"],["Content-Length","AUTO"]],
+    resBody: GET_BODY, resType: "json",
+    focus: "res"
+  },
+  post: {
+    line: '<span class="m">POST</span> <span class="pt">/api/reviews</span> <span class="ver">HTTP/1.1</span>',
+    rh: [["Host","shop.example.com"],["Content-Type","application/json",1],["Content-Length","AUTO",1],["Cookie","session=a3f9c1e8"]],
+    reqBody: POST_BODY, reqType: "json",
+    status: '<span class="ver">HTTP/1.1</span> <span class="st2">201 Created</span>',
+    sh: [["Location","/api/reviews/4"],["Content-Type","application/json"]],
+    resBody: '{\n  "id": 4,\n  "status": "created"\n}', resType: "json",
+    focus: "req"
+  },
+  login: {
+    line: '<span class="m">POST</span> <span class="pt">/login</span> <span class="ver">HTTP/1.1</span>',
+    rh: [["Host","shop.example.com"],["Content-Type","application/x-www-form-urlencoded",1],["Content-Length","AUTO",1]],
+    reqBody: 'username=fadhel&password=hunter2', reqType: "form",
+    status: '<span class="ver">HTTP/1.1</span> <span class="st2">200 OK</span>',
+    sh: [["Set-Cookie","session=a3f9c1e8; HttpOnly; Secure",1],["Content-Type","application/json"]],
+    resBody: '{ "ok": true, "user": "fadhel" }', resType: "json",
+    focus: "req"
+  },
+  page: {
+    line: '<span class="m">GET</span> <span class="pt">/product/42</span> <span class="ver">HTTP/1.1</span>',
+    rh: [["Host","shop.example.com"],["Accept","text/html"]],
+    reqBody: null, reqType: null,
+    status: '<span class="ver">HTTP/1.1</span> <span class="st2">200 OK</span>',
+    sh: [["Content-Type","text/html; charset=utf-8",1]],
+    resBody: '<div class="review">\n  <b>Layla</b>\n  <p>Battery lasts all day \uD83D\uDC4D</p>\n</div>', resType: "html",
+    focus: "res"
+  }
+};
+
+var ZONE = {
+  1: { c:"b1", t:'<b>Request line.</b> Verb, path (with its query string) and the HTTP version — the whole "what do you want" in one line.' },
+  2: { c:"b2", t:'<b>Headers.</b> <span class="mono">Key: value</span>, one per line. Metadata about the message — who you are, what format the body is in, how long it is. <em>Every one of them is typed by the client.</em>' },
+  3: { c:"b3", t:'<b>The blank line.</b> Two newlines. That is the <em>only</em> thing separating the headers from the body — the server reads until it hits this, then trusts <span class="mono">Content-Length</span> for the rest.' },
+  4: { c:"b4", t:'<b>The body.</b> The payload. <span class="mono">Content-Type</span> tells the server how to read it — <em>JSON</em> for APIs, form-encoding for classic HTML forms, HTML in a response.' }
+};
+
+var cur = "get", target = null, editing = false, draft = null;
+
+var $ = function (x){ return document.getElementById(x); };
+
+/* ---- syntax highlighting ------------------------------------------------- */
+function hlJSON(s) {
+  return esc(s)
+    .replace(/("(?:\\.|[^"\\])*")(\s*:)?/g, function (m, str, colon) {
+      return colon ? '<span class="jk">' + str + '</span>' + colon : '<span class="js">' + str + '</span>'; })
+    .replace(/\b(true|false)\b/g, '<span class="jb">$1</span>')
+    .replace(/\bnull\b/g, '<span class="jn">null</span>')
+    .replace(/(:\s*)(-?\d+(?:\.\d+)?)(?=[,\s\}\]])/g, '$1<span class="jnum">$2</span>');
+}
+function hlForm(s) {
+  /* split on the raw text first — escaping turns "&" into "&amp;" and would eat the separator */
+  return s.split("&").map(function (kv) {
+    var i = kv.indexOf("="), k = i === -1 ? kv : kv.slice(0, i), v = i === -1 ? "" : kv.slice(i + 1);
+    return '<span class="jk">' + esc(k) + '</span>' + (i === -1 ? "" : '=<span class="js">' + esc(v) + '</span>');
+  }).join('<span class="sp">&amp;</span>');
+}
+function hlHTML(s) {
+  // mark the one span that came from a user — the seed of XSS
+  return esc(s).replace(/&lt;(\/?)([a-z0-9]+)([^&]*?)&gt;/g, '<span class="htag">&lt;$1$2$3&gt;</span>')
+    .replace(/(Layla)/, '<span class="usr">$1</span>')
+    .replace(/(Battery lasts all day \uD83D\uDC4D)/, '<span class="usr">$1</span>');
+}
+function hlBody(s, type) { return type === "json" ? hlJSON(s) : type === "form" ? hlForm(s) : hlHTML(s); }
+
+/* ---- panel rendering ----------------------------------------------------- */
+function headers(list, bodyLen) {
+  return list.map(function (h) {
+    var v = h[1] === "AUTO" ? String(bodyLen) : h[1];
+    var hot = h[2] ? " hot" : "";
+    return '<span class="hk' + hot + '">' + esc(h[0]) + ':</span> <span class="hv' + hot + '">' + esc(v) + '</span>';
+  }).join("\n");
+}
+function zone(n, cls, html) {
+  return '<div class="zone ' + cls + '" data-z="' + n + '"><span class="n">' + n + '</span>' + html + '</div>';
+}
+
+function bodyText(which) {
+  var s = SC[cur];
+  if (which === "req") return (editing && target === "req" && draft !== null) ? draft : s.reqBody;
+  return (editing && target === "res" && draft !== null) ? draft : s.resBody;
+}
+
+function renderPanels() {
+  var s = SC[cur];
+  var rb = bodyText("req"), sb = bodyText("res");
+
+  /* request */
+  var html = zone(1, "z1", '<div class="code">' + s.line + '</div>') +
+             zone(2, "z2", '<div class="code">' + headers(s.rh, rb ? byteLen(rb) : 0) + '</div>');
+  if (s.reqBody !== null) {
+    html += zone(3, "z3", '<div class="code blank">(blank line — headers end here)</div>');
+    html += zone(4, "z4", '<div class="code" id="reqBodyBox">' +
+      (editing && target === "req"
+        ? '<textarea class="edit" id="reqEdit" spellcheck="false"></textarea>'
+        : hlBody(rb, s.reqType)) + '</div>');
+  } else {
+    html += zone(3, "z3", '<div class="code blank">(blank line — and nothing after it: a GET has no body)</div>');
+  }
+  $("reqCode").innerHTML = html;
+  $("reqTools").innerHTML = (s.reqType === "json")
+    ? '<button class="mini" id="tReq">' + (editing && target === "req" ? "done ✓" : "✎ edit this body") + '</button>' : "";
+
+  /* response */
+  var h2 = zone(1, "z1", '<div class="code">' + s.status + '</div>') +
+           zone(2, "z2", '<div class="code">' + headers(s.sh, byteLen(sb)) + '</div>') +
+           zone(3, "z3", '<div class="code blank">(blank line)</div>') +
+           zone(4, "z4", '<div class="code">' +
+             (editing && target === "res"
+               ? '<textarea class="edit" id="resEdit" spellcheck="false"></textarea>'
+               : hlBody(sb, s.resType)) + '</div>');
+  $("resCode").innerHTML = h2;
+  $("resTools").innerHTML = (s.resType === "json")
+    ? '<button class="mini" id="tRes">' + (editing && target === "res" ? "done ✓" : "✎ edit this body") + '</button>' : "";
+
+  if (editing && target === "req" && $("reqEdit")) { openEditor($("reqEdit"), rb); }
+  if (editing && target === "res" && $("resEdit")) { openEditor($("resEdit"), sb); }
+
+  wireZones();
+}
+
+function wireZones() {
+  Array.prototype.forEach.call(document.querySelectorAll(".zone"), function (z) {
+    z.addEventListener("mouseenter", function () { litZone(z.getAttribute("data-z")); });
+    z.addEventListener("mouseleave", function () { litZone(null); });
+  });
+}
+function litZone(n) {
+  var cols = document.querySelectorAll(".pan");
+  Array.prototype.forEach.call(cols, function (c) { c.classList.toggle("dim", !!n); });
+  Array.prototype.forEach.call(document.querySelectorAll(".zone"), function (z) {
+    z.classList.toggle("lit", !!n && z.getAttribute("data-z") === n);
+  });
+  if (!n) return paintCaps();
+  var z = ZONE[n];
+  $("caps").innerHTML = '<span class="badge ' + z.c + '">zone ' + n + '</span><span>' + z.t + '</span>';
+}
+function paintCaps() {
+  var s = SC[cur], txt;
+  if (cur === "get") txt = '<b>No body at all.</b> A GET just asks; everything it says is in the request line and the headers. The answer comes back as <em>JSON</em> — data for a program, not a page.';
+  else if (cur === "post") txt = 'The body carries the data you are creating, written as <em>JSON</em>. Edit it and watch <span class="mono">Content-Length</span> follow — it counts <b>bytes</b>, so that 👍 costs four.';
+  else if (cur === "login") txt = 'A classic HTML form does <b>not</b> send JSON — it sends <span class="mono">key=value&amp;key=value</span>. Note what is sitting in that body in plain text, and the <span class="mono">Set-Cookie</span> that comes back.';
+  else txt = 'Here the response body is not data at all — it is <b>HTML</b>, a document the browser will build a page from. The red parts were typed by <em>a user</em>, and the app pasted them straight in.';
+  $("caps").innerHTML = '<span class="badge b1">the whole message</span><span>' + txt + '</span>';
+}
+
+/* ---- the parsed body ----------------------------------------------------- */
+function typeOf(v) {
+  if (v === null) return "null";
+  if (Array.isArray(v)) return "array";
+  return typeof v; /* string | number | boolean | object */
+}
+function rows(v, key, depth, out) {
+  var t = typeOf(v), pad = 'style="padding-left:' + (depth * 15) + 'px"';
+  var k = key === null ? "" : '<span class="kk">' + esc(key) + '</span><span style="color:#B9C6C9">:</span>';
+  if (t === "object" || t === "array") {
+    var keys = t === "array" ? v.map(function (_, i) { return i; }) : Object.keys(v);
+    var open = t === "array" ? "[" : "{", close = t === "array" ? "]" : "}";
+    out.push('<div class="tr" ' + pad + '>' + k + '<span class="vv c">' + open + close + '</span>' +
+      '<span class="ty">' + t + ' · ' + keys.length + '</span></div>');
+    keys.forEach(function (kk) { rows(t === "array" ? v[kk] : v[kk], t === "array" ? "[" + kk + "]" : kk, depth + 1, out); });
+    return out;
+  }
+  var cls = t === "string" ? "s" : t === "number" ? "n" : t === "boolean" ? "b" : "z";
+  var disp = t === "string" ? '"' + v + '"' : String(v);
+  out.push('<div class="tr" ' + pad + '>' + k + '<span class="vv ' + cls + '">' + esc(disp) + '</span>' +
+    '<span class="ty">' + t + '</span></div>');
+  return out;
+}
+
+function renderParsed() {
+  var s = SC[cur];
+  var opts = [];
+  if (s.reqBody !== null) opts.push(["req", "request body"]);
+  opts.push(["res", "response body"]);
+  if (!target || !opts.some(function (o) { return o[0] === target; })) target = s.focus;
+  $("pick").innerHTML = opts.map(function (o) {
+    return '<button data-t="' + o[0] + '"' + (o[0] === target ? ' class="on"' : '') + '>' + o[1] + '</button>';
+  }).join("");
+  Array.prototype.forEach.call($("pick").querySelectorAll("button"), function (b) {
+    b.addEventListener("click", function () { target = b.getAttribute("data-t"); editing = false; draft = null; render(); });
+  });
+
+  var txt = bodyText(target), type = target === "req" ? s.reqType : s.resType;
+
+  if (type === "json") {
+    var parsed;
+    try { parsed = JSON.parse(txt); }
+    catch (e) {
+      $("ok").className = "ok bad"; $("ok").textContent = "✗ not valid JSON";
+      var pos = /position (\d+)/.exec(e.message);
+      var caret = "";
+      if (pos) {
+        var i = Math.min(+pos[1], txt.length - 1);
+        caret = '<div style="margin-top:5px;color:#5C7880">…' + esc(txt.slice(Math.max(0, i - 24), i)) +
+          '<span class="car">' + esc(txt.charAt(i) || "⏎") + '</span>' + esc(txt.slice(i + 1, i + 20)) + '…</div>';
+      }
+      $("pbody").innerHTML = '<div class="err">The server cannot read this. ' + esc(e.message) + caret +
+        '<div style="margin-top:6px;color:#5C7880">One missing quote or brace and the whole message is unreadable — ' +
+        'which is exactly why a stray <span class="mono">\'</span> breaks a SQL query too.</div></div>';
+      return;
+    }
+    /* the root wrapper is described in the badge, so the tree starts at its fields */
+    var t = typeOf(parsed), out = [];
+    /* each top-level field is one unbreakable group, so a nested object is never
+       split down the middle by the column break */
+    function group(v, k) { return '<div class="grp2">' + rows(v, k, 0, []).join("") + '</div>'; }
+    if (t === "object") { Object.keys(parsed).forEach(function (k) { out.push(group(parsed[k], k)); }); }
+    else if (t === "array") { parsed.forEach(function (v, i) { out.push(group(v, "[" + i + "]")); }); }
+    else { rows(parsed, null, 0, out); }
+    var n = (t === "object") ? Object.keys(parsed).length : (t === "array" ? parsed.length : 1);
+    $("ok").className = "ok good";
+    $("ok").textContent = "✓ valid JSON · one " + t + " of " + n + " fields · " + byteLen(txt) + " bytes";
+    $("pbody").innerHTML = '<div class="pgrid"><div class="tree">' + out.join("") + '</div>' +
+      '<p class="note2" style="margin-top:0"><b>Six kinds of value — that is the whole language:</b> string, number, boolean, ' +
+      'null, array, object. Objects nest inside objects, and keys are <b>always</b> quoted strings. ' +
+      '<em>Nothing in here is typed or checked</em> until the server decides to check it.</p></div>';
+  } else if (type === "form") {
+    $("ok").className = "ok good"; $("ok").textContent = "form-encoded · " + byteLen(txt) + " bytes";
+    var chips = txt.split("&").map(function (kv) {
+      var i = kv.indexOf("="), k = i === -1 ? kv : kv.slice(0, i), v = i === -1 ? "" : kv.slice(i + 1);
+      return '<span class="kv">' + esc(k) + ' = <b>' + esc(v) + '</b></span>';
+    }).join("");
+    $("pbody").innerHTML = '<div class="pgrid"><div class="flat">' + chips + '</div>' +
+      '<p class="note2" style="margin-top:0">Flat and typeless: <b>no nesting, no numbers, no booleans</b> — every value arrives ' +
+      'as a string. Same shape as a <b>query string</b>, just carried in the body instead of the URL. ' +
+      '<em>The password is in there as plain text</em> — only TLS is hiding it.</p></div>';
+  } else {
+    $("ok").className = "ok good"; $("ok").textContent = "text/html · " + byteLen(txt) + " bytes";
+    $("pbody").innerHTML = '<div class="pgrid"><div class="flat"><span class="kv">&lt;div&gt;</span>' +
+      '<span class="kv">&lt;b&gt; <b>Layla</b></span>' +
+      '<span class="kv">&lt;p&gt; <b>Battery lasts all day 👍</b></span></div>' +
+      '<p class="note2" style="margin-top:0">The browser does not "read" this — it <b>executes</b> it, building elements from the ' +
+      'tags. The red text came from a stranger, and the app pasted it straight in. <em>If a stranger can put tags in there, they ' +
+      'are writing your page</em> — hold that thought until XSS.</p></div>';
+  }
+}
+
+/* the textarea has to show the whole body — a scrollbar here hides the very
+   character the learner just broke */
+function fitTA(el) { el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight + 2, 210) + "px"; }
+function openEditor(el, value) { el.value = value; fitTA(el); el.addEventListener("input", onEdit); }
+function onEdit(e) { draft = e.target.value; fitTA(e.target); renderParsed(); syncLen(); }
+function syncLen() {
+  /* keep Content-Length honest while typing, without rebuilding the textarea */
+  var s = SC[cur], rb = bodyText("req"), sb = bodyText("res");
+  var panels = [[$("reqCode"), s.rh, rb], [$("resCode"), s.sh, sb]];
+  panels.forEach(function (p) {
+    var hs = p[0].querySelectorAll(".z2 .hk");
+    Array.prototype.forEach.call(hs, function (hk, i) {
+      if (p[1][i] && p[1][i][1] === "AUTO") hk.nextElementSibling.textContent = String(byteLen(p[2]));
+    });
+  });
+}
+
+function render() { renderPanels(); renderParsed(); paintCaps();
+  var tR = $("tReq"), tS = $("tRes");
+  if (tR) tR.addEventListener("click", function () {
+    if (editing && target === "req") { editing = false; }
+    else { target = "req"; editing = true; draft = bodyText("req"); }
+    render(); });
+  if (tS) tS.addEventListener("click", function () {
+    if (editing && target === "res") { editing = false; }
+    else { target = "res"; editing = true; draft = bodyText("res"); }
+    render(); });
+}
+
+Array.prototype.forEach.call($("scn").querySelectorAll("button"), function (b) {
+  b.addEventListener("click", function () {
+    Array.prototype.forEach.call($("scn").querySelectorAll("button"), function (x) { x.classList.remove("on"); });
+    b.classList.add("on"); cur = b.getAttribute("data-s"); target = null; editing = false; draft = null; render();
+  });
+});
+
+render();
+
+/* optional ?state= hook for headless screenshots */
+(function () {
+  var st = new URLSearchParams(location.search).get("state");
+  if (!st) return;
+  if (st === "post" || st === "login" || st === "page") {
+    cur = st;
+    Array.prototype.forEach.call($("scn").querySelectorAll("button"), function (x) { x.classList.toggle("on", x.getAttribute("data-s") === st); });
+    target = null; render();
+  } else if (st === "broken") {
+    target = "res"; editing = false; draft = GET_BODY.replace('"rating"', '"rating'); render();
+    /* draft only applies while editing — force it */
+    editing = true; target = "res"; render();
+  }
+})();
+</script>
+</body></html>

@@ -49,12 +49,12 @@
     /* recap "what you broke" rows */
     .broke { margin-top: .4em; }
     .broke .r { display: grid; grid-template-columns: 230px 1fr; gap: 16px; align-items: baseline;
-      padding: .28em 0; border-bottom: 1px solid var(--line); }
+      padding: .2em 0; border-bottom: 1px solid var(--line); }
     .broke .r:last-child { border-bottom: 0; }
     .broke .r .n { font-weight: 800; color: var(--petrol); font-size: .82em; }
     .broke .r .n .lever { font-family: var(--mono); font-size: .56em; color: var(--bad); font-weight: 700;
       letter-spacing: .04em; display: block; margin-top: .15em; }
-    .broke .r .d { font-size: .68em; color: var(--muted); line-height: 1.38; }
+    .broke .r .d { font-size: .66em; color: var(--muted); line-height: 1.32; }
     .broke .r .d b { color: var(--ink); font-weight: 700; }
   </style>
 </head>
@@ -84,19 +84,62 @@
               title="Request / response across the three tiers" scrolling="auto"></iframe>
       <aside class="notes">The load-bearing foundation — everything today abuses this model, so build it deliberately.
       Drive one request end to end: the browser (client) sends an HTTP request → the app server runs code → it asks the
-      database → a response comes back and the browser renders it. Point at the anatomy of the request: method (GET/POST),
-      path, ?query params, headers, and the session cookie. Land the two facts the rest of the day needs: (1) three tiers —
-      browser, server, database; (2) the request is just text the client composes — which means the client can compose
-      ANY text. That is the seam we pry open next.</aside>
+      database → a response comes back and the browser renders it. Keep it at the level of the three tiers here; the next two
+      slides take the request apart field by field, so don't pre-empt them. Land the two facts the rest of the day needs:
+      (1) three tiers — browser, server, database; (2) the request is just text the client composes — which means the client
+      can compose ANY text. That is the seam we pry open next.</aside>
+    </section>
+
+    <!-- ================= FOUNDATIONS: ANATOMY OF A URL ================= -->
+    <section>
+      <p class="kicker">Foundations · reading the address</p>
+      <h2>A URL is six fields — and you type every one of them</h2>
+      <iframe class="wframe" style="height:470px"
+              src="widgets/url_anatomy.html?v=1"
+              title="Anatomy of a URL, and what of it actually reaches the server" scrolling="auto"></iframe>
+      <aside class="notes">Everything after this slide points at a URL, so read one properly first. Click the six parts in order:
+      <em>scheme</em> (decides the default port and whether there's TLS), <em>host</em> (DNS resolves it, and it comes back as the
+      Host header — one machine serves many sites, so sub-domains like admin. and staging. are separate apps to enumerate),
+      <em>port</em> (8080/8443/3000 is where forgotten staging apps live), <em>path</em> (the resource — and that trailing number
+      is a database id), <em>query</em> (key=value pairs after the ?, joined by &amp;), <em>fragment</em>. Two beats to land.
+      (1) Press <b>+</b> on the invoice id: you just asked for someone else's invoice by editing a number, and the server handed it
+      over — that is IDOR, arriving four slides early and by accident. Say it: <em>the id is data you typed, not a fact.</em>
+      (2) Press "Watch it get sent" and point at the fragment falling away — <b>#items never leaves the browser</b>. That's why a
+      payload placed there appears in no server log at all (DOM XSS), and it's the first hint that the URL you see and the request
+      that travels are two different things. Flip http/https to show the connection line change: same request, no TLS, cookie in
+      the clear.</aside>
+    </section>
+
+    <!-- ================= FOUNDATIONS: THE MESSAGE ON THE WIRE ================= -->
+    <section>
+      <p class="kicker">Foundations · what a message looks like</p>
+      <h2>The request is plain text — and the payload is JSON</h2>
+      <iframe class="wframe" style="height:566px"
+              src="widgets/wire_format.html?v=1"
+              title="Raw HTTP request and response, and the JSON body parsed" scrolling="auto"></iframe>
+      <aside class="notes">Students see JSON in every widget today and in the tamper lab they'll <em>edit</em> a JSON body — teach
+      it before they need it. First the shape: hover the four numbered zones. ① request line, ② headers (key: value, one per line),
+      ③ <b>a blank line</b> — the only thing separating headers from body — ④ the body. Stress that the whole thing is ONE block of
+      text the client typed; nothing in it is signed or verified (the footer line under the request says exactly that, use it).
+      Then JSON, on the GET tab: the parsed panel shows the entire language — <em>string, number, boolean, null, array, object</em>,
+      and objects nesting inside objects; keys are always quoted strings. Hit "edit this body", delete a quote, and show the whole
+      message becoming unreadable — then say the callback out loud: <em>that is exactly what one stray apostrophe does to a SQL
+      query.</em> Then the other tabs, fast: POST shows Content-Type/Content-Length (bytes, not characters — the 👍 costs four);
+      <b>/login</b> shows a form does NOT send JSON, it sends key=value&amp;key=value, with the password sitting there in plain text
+      and Set-Cookie coming back; <b>/product/42</b> shows a response body that is HTML, with the user-typed part in red — the app
+      pasted a stranger's text into your page. Leave that one on screen for a second; it's the seed of XSS.</aside>
     </section>
 
     <!-- ================= FOUNDATIONS: HTTP METHODS ================= -->
     <section>
       <p class="kicker">Foundations · the verbs</p>
       <h2>A request has a verb: what you're asking the app to do</h2>
-      <iframe class="wframe" style="height:500px"
+      <iframe class="wframe" style="height:440px"
               src="widgets/http_methods.html?v=1"
               title="HTTP methods against a live reviews API" scrolling="auto"></iframe>
+      <div class="callout" style="margin-top:.4em;font-size:.6em"><strong>Where the verb lands:</strong>
+      <span class="mono">GET→SELECT · POST→INSERT · PUT/PATCH→UPDATE · DELETE→DELETE</span> — the four things any app does to
+      stored data. <span style="color:var(--muted)">You'll write those sentences yourself before we break one.</span></div>
       <aside class="notes">Methods are not trivia — they're the vocabulary of every API attack. Walk the five: GET reads and
       changes nothing (safe); POST creates (send it twice, you get two — that's the double-charge bug); PUT replaces the whole
       item; PATCH edits part of it; DELETE destroys it. Drive them live and watch the stored reviews actually change, and watch
@@ -123,29 +166,6 @@
       map goes dark. Note the widget stays honest — the 500 still leaks, so debug output must be off in production.</aside>
     </section>
 
-    <!-- ================= FOUNDATIONS: WHERE INPUT ENTERS ================= -->
-    <section>
-      <p class="kicker">Foundations · the input surface</p>
-      <h2>Five places your input enters — and you control all five</h2>
-      <div class="k2 c5" style="margin-top:.6em">
-        <div class="card"><h3>Path <span class="tag">url</span></h3><p>Which resource you're asking for.</p><span class="ex"><span class="mono">/invoice/<b>1042</b></span></span></div>
-        <div class="card"><h3>Query <span class="tag">?a=b</span></h3><p>Parameters after the <span class="mono">?</span> — visible in the bar.</p><span class="ex"><span class="mono">?id=<b>42</b>&amp;sort=date</span></span></div>
-        <div class="card"><h3>Body <span class="tag">post/patch</span></h3><p>The payload — form fields or JSON.</p><span class="ex"><span class="mono">{"price":<b>0.01</b>}</span></span></div>
-        <div class="card"><h3>Headers <span class="tag">metadata</span></h3><p>Who you claim to be, what you accept.</p><span class="ex"><span class="mono">User-Agent, Referer</span></span></div>
-        <div class="card"><h3>Cookies <span class="tag">identity</span></h3><p>Your session — <em>next slide</em>.</p><span class="ex"><span class="mono">session=<b>a3f9…</b></span></span></div>
-      </div>
-      <div class="callout hot" style="margin-top:.8em"><strong>Every one is just text your machine typed.</strong> Not only the
-      form fields — headers and cookies too. Anything that arrives at the server is a <em>claim</em>, never a fact.</div>
-      <div class="callout" style="margin-top:.5em;font-size:.72em"><strong>And no, HTTPS doesn't save you.</strong> The padlock
-      encrypts the pipe so nobody <em>in the middle</em> reads or edits it. It says nothing about the app at the other end —
-      you're the legitimate sender, and your injection travels perfectly encrypted.</div>
-      <aside class="notes">The bridge into the trust boundary. A taxonomy, so it's cards — but it's load-bearing: learners
-      assume "input" means form fields. Show them the whole surface. Every attack later plugs into one of these five: SQLi via
-      body/query, XSS via body, IDOR via path/query, session hijack via cookie. The HTTPS myth-buster matters — students
-      routinely think the padlock means "safe site". Say it plainly: TLS protects data IN TRANSIT from a third party; it does
-      nothing about what the application does with the data once it arrives. An HTTPS site can be trivially injectable.</aside>
-    </section>
-
     <!-- ================= FOUNDATIONS: SESSIONS & COOKIES ================= -->
     <section>
       <p class="kicker">Foundations · how it knows who you are</p>
@@ -161,6 +181,33 @@
       flip to "predictable session ids": the ids just count up, so press + and walk into the next account with no theft at all.
       That is the "weak session tokens" bullet from the broken-auth slide, made real. Land: the cookie IS your identity —
       protect it (HttpOnly, Secure, random, short-lived) or anyone holding it is you.</aside>
+    </section>
+
+    <!-- ================= THE INPUT SURFACE (recap of the foundations block) ================= -->
+    <section>
+      <p class="kicker">Foundations · the input surface</p>
+      <h2>Five places your input enters — and you control all five</h2>
+      <div class="k2 c5" style="margin-top:.6em">
+        <div class="card"><h3>Path <span class="tag">url</span></h3><p>Which resource you're asking for — usually ending in an id.</p><span class="ex"><span class="mono">/invoice/<b>1042</b></span></span></div>
+        <div class="card"><h3>Query <span class="tag">?a=b</span></h3><p>Parameters after the <span class="mono">?</span> — visible in the bar.</p><span class="ex"><span class="mono">?id=<b>42</b>&amp;sort=date</span></span></div>
+        <div class="card"><h3>Body <span class="tag">post/patch</span></h3><p>The payload — JSON, or a form's <span class="mono">key=value</span>.</p><span class="ex"><span class="mono">{"price":<b>0.01</b>}</span></span></div>
+        <div class="card"><h3>Headers <span class="tag">metadata</span></h3><p>Who you claim to be, what you accept.</p><span class="ex"><span class="mono">User-Agent, Referer</span></span></div>
+        <div class="card"><h3>Cookies <span class="tag">identity</span></h3><p>Your session — the one you just stole.</p><span class="ex"><span class="mono">session=<b>a3f9…</b></span></span></div>
+      </div>
+      <div class="callout hot" style="margin-top:.8em"><strong>You have now watched all five leave your own machine.</strong>
+      Not only the form fields — the path, the headers and the cookie too. Anything that arrives at the server is a
+      <em>claim</em>, never a fact.</div>
+      <div class="callout" style="margin-top:.5em;font-size:.72em"><strong>And no, HTTPS doesn't save you.</strong> The padlock
+      encrypts the pipe so nobody <em>in the middle</em> reads or edits it. It says nothing about the app at the other end —
+      you're the legitimate sender, and your injection travels perfectly encrypted.</div>
+      <aside class="notes">The bridge that closes the foundations block and opens the trust boundary. A taxonomy, so it's cards,
+      not a fake interactive — and by now it is a <em>recap</em>, not new information: they have seen every one of these five on
+      screen (path and query in the URL slide, body and headers in the wire-format slide, the cookie in the session slide). Say
+      that out loud — "you've already watched all five leave your machine." The point learners miss is that "input" means only
+      form fields; name the whole surface, and map each attack to its channel: SQLi via body/query, XSS via body, IDOR via
+      path/query, session hijack via cookie. The HTTPS myth-buster matters — students routinely think the padlock means "safe
+      site". Say it plainly: TLS protects data IN TRANSIT from a third party; it does nothing about what the application does
+      with the data once it arrives. An HTTPS site can be trivially injectable.</aside>
     </section>
 
     <!-- ================= THE TRUST BOUNDARY ================= -->
@@ -210,6 +257,29 @@
       two cards tie back to Day 2 (stuffing, recon) so the week connects.</aside>
     </section>
 
+    <!-- ================= FOUNDATIONS: SQL ================= -->
+    <section>
+      <p class="kicker">Foundations · the language behind the app</p>
+      <h2>SQL: the sentence your app writes to the database</h2>
+      <iframe class="wframe" style="height:560px"
+              src="widgets/sql_basics.html?v=1"
+              title="Build real SQL statements against a toy users table" scrolling="auto"></iframe>
+      <aside class="notes">The next slide is a magic trick without this one — <span class="mono">admin'--</span> is unreadable
+      unless you already know what a quote and a comment do. Ten minutes, four beats. (1) <b>It's a sentence</b>: what to do, to
+      which table, to which rows. Run SELECT with <span class="mono">role = 'admin'</span>, then <span class="mono">id &gt; 2</span>,
+      then untick WHERE — the clause is tested against every row and the true ones come back. Toggle the column chips so they see
+      the app choosing what it asks for. Point out this is the same table the injection sandbox uses, and the same four verbs as
+      the API slide: GET→SELECT, POST→INSERT, PUT/PATCH→UPDATE, DELETE→DELETE. (2) <b>Writes are just as easy</b>: INSERT a new
+      user and set the role to <em>admin</em> — one row, and they're staff; then UPDATE sara's role, then DELETE. Untick WHERE on
+      a DELETE and wipe the table, because "one forgotten line" is a real outage story. (3) <b>THE BEAT THAT MATTERS — the
+      quotes are a fence.</b> Watch the ruler under the statement: <span class="mono">└─ the data ─┘</span>. The apostrophes are
+      not part of the value; they are the marker telling the database where <em>data</em> stops and <em>command</em> resumes.
+      Hit the red preset <span class="mono">sa'ra</span>: the fence closes early, the leftovers are read as SQL, 1064 syntax
+      error, nothing runs. (4) Hit the other red preset: everything after <span class="mono">--</span> is a comment the database
+      throws away — a whole condition can be deleted by typing two characters. Land it: <em>a quote ends the data, and a
+      double-dash deletes the rest of the sentence.</em> Now turn the page — that is the entire trick.</aside>
+    </section>
+
     <!-- ================= SQL INJECTION (STAR) ================= -->
     <section>
       <p class="kicker">Injection · the classic</p>
@@ -217,9 +287,10 @@
       <iframe class="wframe" style="height:566px"
               src="widgets/sqli.html?v=2"
               title="SQL injection sandbox over a real toy database" scrolling="auto"></iframe>
-      <aside class="notes">The centrepiece. One-line primer first: behind the login is a query the server BUILDS from your
-      input — SELECT * FROM users WHERE username='…' AND password_hash='…'. If it glues your text straight in, your text can
-      BE part of the query. The four presets are numbered because they are the real attacker's order — walk them:
+      <aside class="notes">The centrepiece — and the previous slide did the teaching, so open by calling it back: behind this
+      login is the same kind of sentence they just wrote, over the same four rows, except the app BUILDS it from your input —
+      SELECT * FROM users WHERE username='…' AND password_hash='…'. If it glues your text straight in, your text is inside the
+      fence, and it can BE part of the query. The four presets are numbered because they are the real attacker's order — walk them:
       (1) NORMAL LOGIN, so they see the honest case; point out the password is hashed BEFORE the query is built, so that box
       can't carry SQL — the username is the hole. (2) PROBE WITH ONE QUOTE: a single ' and the database throws a 500 syntax
       error. Dwell here — this is how the bug is FOUND. The error proves your text reached the query and it names MySQL;
@@ -401,7 +472,9 @@
       <h2>One root cause, wearing every mask</h2>
       <div class="broke">
         <div class="r"><div class="n">The web model<span class="lever">foundation</span></div>
-          <div class="d">Browser → server → database. Verbs (<b>GET/POST/PATCH/DELETE</b>), status codes, and five input channels — all of it <b>text the client composes</b>.</div></div>
+          <div class="d">Browser → server → database. A <b>URL in six fields</b>; a request that is <b>plain text</b> with a <b>JSON</b> body; verbs, status codes, five input channels — <b>all composed by the client</b>.</div></div>
+        <div class="r"><div class="n">SQL<span class="lever">it's a sentence</span></div>
+          <div class="d">SELECT / INSERT / UPDATE / DELETE, filtered by <b>WHERE</b> — and <b>quotes fence the data off</b> from the command.</div></div>
         <div class="r"><div class="n">Sessions<span class="lever">the cookie is you</span></div>
           <div class="d">HTTP forgets you, so a cookie carries your identity. Steal it or <b>guess it</b> and you are that user.</div></div>
         <div class="r"><div class="n">Trust boundary<span class="lever">never trust the client</span></div>
@@ -411,9 +484,9 @@
         <div class="r"><div class="n">XSS<span class="lever">input became script</span></div>
           <div class="d">A comment ran as <b>code in the victim's browser</b> and stole their session cookie.</div></div>
         <div class="r"><div class="n">CSRF<span class="lever">your session, borrowed</span></div>
-          <div class="d">Another site fired a request that <b>rode your cookie</b> — the bank obeyed a transfer you never made.</div></div>
+          <div class="d">Another site fired a request that <b>rode your cookie</b>; the bank obeyed a transfer you never made.</div></div>
         <div class="r"><div class="n">IDOR<span class="lever">what, not who</span></div>
-          <div class="d">Changed one number in the URL and read <b>another customer's data</b> — the one move that left <b>no alert</b>.</div></div>
+          <div class="d">One number changed in the URL read <b>another customer's data</b> — and left <b>no alert</b>.</div></div>
       </div>
       <div class="callout hot" style="margin-top:.5em">Every single one: <strong>the app trusted input it never should have.</strong>
       Keep data and code apart, decide trust on the server — and Thursday, watch it from the defender's chair.</div>

@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding: 6px 8px; }
+  .wrap { max-width: 1040px; margin: 0 auto; }
+  .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+  .verbs { display: inline-flex; border: 1px solid #CDD8DA; border-radius: 8px; overflow: hidden; }
+  .verbs button { border: 0; border-radius: 0; padding: 6px 13px; font-size: 12px; font-family: "JetBrains Mono", monospace;
+    font-weight: 800; letter-spacing: .02em; background: #fff; color: #5C7880; }
+  .verbs button.on[data-s="SELECT"] { background: #1F8F89; color: #fff; }
+  .verbs button.on[data-s="INSERT"] { background: #00567C; color: #fff; }
+  .verbs button.on[data-s="UPDATE"] { background: #b08900; color: #fff; }
+  .verbs button.on[data-s="DELETE"] { background: #D64545; color: #fff; }
+  .map { font-size: 11px; color: #8AA1A8; letter-spacing: .02em; text-align: right; line-height: 1.5; }
+  .map b { color: #00567C; } .map .mono { color: #5C7880; }
+  .lede { font-size: 12.5px; color: #5C7880; line-height: 1.4; margin: 0 0 8px; }
+  .lede b { color: #00567C; } .lede em { color: #1F8F89; font-style: normal; font-weight: 700; }
+
+  .cols { display: grid; grid-template-columns: .92fr 1.28fr; gap: 11px; align-items: start; }
+
+  /* composer */
+  .comp { border: 1px solid #E0E7E8; border-radius: 10px; background: #fff; padding: 10px 12px; }
+  .comp .lab { font-size: 9.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #5C7880;
+    margin: 0 0 4px; display: block; }
+  .comp .lab + .lab, .grp + .grp { margin-top: 9px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  .chips button { font-family: "JetBrains Mono", monospace; font-size: 10.5px; font-weight: 700; padding: 4px 8px;
+    border-radius: 5px; }
+  .chips button.on { background: #00567C; color: #fff; border-color: #00567C; }
+  .comp input { width: 100%; font-family: "JetBrains Mono", monospace; font-size: 12.5px; color: #12333D;
+    background: #F6F8F8; border: 1px solid #CDD8DA; border-radius: 6px; padding: 7px 8px; outline: none; }
+  .comp input:focus { border-color: #00567C; background: #fff; }
+  .comp input:disabled { color: #B9C6C9; background: #F1F5F5; }
+  .toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: #5C7880; font-weight: 700; }
+  .toggle input { width: auto; }
+  .presets { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+  .presets button { font-size: 10.5px; padding: 4px 8px; border-radius: 5px; }
+  .presets button.hot { border-color: rgba(214,69,69,.5); color: #D64545; }
+  .presets button.hot:hover { background: rgba(214,69,69,.08); }
+  .runrow { margin-top: 10px; display: flex; gap: 7px; align-items: center; }
+
+  /* query panel */
+  .qp { background: #04303F; border-radius: 10px; padding: 11px 13px; }
+  .qp .qh { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: #5f97a3; font-weight: 700; margin-bottom: 8px; }
+  .q { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 13.5px; line-height: 1.6;
+    color: #9fc9cf; white-space: pre; word-break: break-word; overflow-x: auto; }
+  .q .kw { color: #ffd84a; font-weight: 700; }
+  .q .lit { color: #7fe3dc; }
+  .q .qt { color: #ff8a8a; font-weight: 800; }
+  .q .num { color: #ff9f6e; }
+  .q .col { color: #ffffff; }
+  .q .cmt { color: #5f7681; font-style: italic; }
+  .ruler { font-family: "JetBrains Mono", Menlo, monospace; font-size: 13.5px; line-height: 1.3; white-space: pre;
+    color: #ff8a8a; margin-top: -2px; }
+  /* the padding must stay monospace at the query's own size or the label drifts */
+  .ruler .pad { font-family: "JetBrains Mono", Menlo, monospace; font-size: 13.5px; }
+  .ruler .lbl { font-family: "Avenir Next", system-ui, sans-serif; font-size: 10px; font-weight: 800;
+    letter-spacing: .06em; text-transform: uppercase; }
+  .qnote { margin-top: 9px; border-top: 1px solid rgba(159,201,207,.16); padding-top: 8px;
+    font-size: 11.5px; color: #7fa8b0; line-height: 1.55; }
+  .qnote b { color: #ffd84a; } .qnote em { color: #ff8a8a; font-style: normal; font-weight: 700; }
+
+  .banner { margin-top: 9px; border-radius: 8px; padding: 8px 11px; font-size: 12.5px; line-height: 1.45;
+    display: flex; align-items: flex-start; gap: 8px; }
+  .banner .big { font-size: 15px; line-height: 1.2; }
+  .banner.ok   { background: rgba(31,143,137,.1);  color: #147a75; border: 1px solid rgba(31,143,137,.35); }
+  .banner.warn { background: rgba(242,210,0,.16);  color: #7a6100; border: 1px solid rgba(242,210,0,.65); }
+  .banner.err  { background: rgba(214,69,69,.09);  color: #D64545; border: 1px solid rgba(214,69,69,.4); }
+  .banner b { color: inherit; }
+  .banner .sqlerr { display: block; font-family: "JetBrains Mono", monospace; font-size: 10.5px; font-weight: 400;
+    color: #5C7880; margin-top: 3px; word-break: break-word; }
+
+  /* table */
+  .db { margin-top: 10px; }
+  .dbh { font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; color: #5C7880; font-weight: 800;
+    margin-bottom: 4px; display: flex; justify-content: space-between; align-items: baseline; }
+  .dbh .r { text-transform: none; letter-spacing: 0; font-weight: 700; font-size: 11px; color: #8AA1A8; }
+  table { width: 100%; border-collapse: collapse; font-family: "JetBrains Mono", Menlo, monospace; font-size: 12px; }
+  th { text-align: left; color: #5C7880; font-weight: 700; font-size: 10px; letter-spacing: .05em; text-transform: uppercase;
+    padding: 4px 8px; border-bottom: 1px solid #E0E7E8; }
+  th.dimc, td.dimc { color: #C7D3D6; }
+  td { padding: 5px 8px; border-bottom: 1px solid #EEF3F3; color: #42606A; transition: background .3s; }
+  tr.hit td { background: rgba(31,143,137,.11); color: #12333D; }
+  tr.hit td:first-child { box-shadow: inset 3px 0 0 #1F8F89; }
+  tr.hit.write td { background: rgba(242,210,0,.22); }
+  tr.hit.write td:first-child { box-shadow: inset 3px 0 0 #b08900; }
+  tr.gone td { background: rgba(214,69,69,.14); text-decoration: line-through; color: #B9C6C9; }
+  tr.gone td:first-child { box-shadow: inset 3px 0 0 #D64545; }
+  tr.fresh td { background: rgba(31,143,137,.22); }
+  .ret { display: inline-block; font-size: 9px; font-weight: 800; letter-spacing: .05em; color: #1F8F89; margin-left: 6px; }
+  .foot { margin: 7px 0 0; font-size: 11px; color: #8AA1A8; line-height: 1.45; }
+  .foot b { color: #5C7880; } .foot em { color: #D64545; font-style: normal; font-weight: 700; }
+</style>
+</head><body>
+<div class="wrap">
+  <div class="head">
+    <div class="verbs" id="verbs">
+      <button data-s="SELECT" class="on">SELECT</button>
+      <button data-s="INSERT">INSERT</button>
+      <button data-s="UPDATE">UPDATE</button>
+      <button data-s="DELETE">DELETE</button>
+    </div>
+    <div class="map">the same four things your HTTP verbs do —
+      <b>GET</b>→<span class="mono">SELECT</span> · <b>POST</b>→<span class="mono">INSERT</span> ·
+      <b>PUT/PATCH</b>→<span class="mono">UPDATE</span> · <b>DELETE</b>→<span class="mono">DELETE</span></div>
+  </div>
+  <p class="lede">The app doesn't "look things up" — it <b>writes a sentence in SQL</b> and hands it to the database.
+    Build one here and watch the real rows react. <em>Everything today's biggest attack does, it does inside this sentence.</em></p>
+
+  <div class="cols">
+    <div class="comp" id="comp"></div>
+    <div>
+      <div class="qp">
+        <div class="qh">The statement the database receives</div>
+        <div class="q" id="q"></div>
+        <div class="ruler" id="ruler"></div>
+        <div class="qnote" id="qnote"></div>
+      </div>
+      <div class="banner ok" id="banner"><span class="big">▸</span><span id="bmsg">Press <b>Run</b>.</span></div>
+    </div>
+  </div>
+
+  <div class="db">
+    <div class="dbh"><span>Database · table <b>users</b></span><span class="r" id="rowcount"></span></div>
+    <table>
+      <thead><tr id="thead"></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <p class="foot">Real databases hold millions of rows across dozens of tables — the sentence is <b>exactly the same</b>.
+      Note what the app stores: not your password, only its <b>hash</b>. <em>A password column full of hashes is still worth stealing.</em></p>
+  </div>
+</div>
+
+<script src="../js/sha256.js"></script>
+<script>
+/* ---- the same toy table the injection sandbox uses ----------------------- */
+var SEED = [
+  { id:1, username:"admin",  password_hash:"c3319d322d43", role:"admin" },
+  { id:2, username:"fadhel", password_hash:"f52fbd32b2b3", role:"user"  },
+  { id:3, username:"sara",   password_hash:"65e84be33532", role:"user"  },
+  { id:4, username:"omar",   password_hash:"1c8bfe8f801d", role:"user"  }
+];
+var COLS = ["id","username","password_hash","role"];
+var DB = SEED.map(function (r) { return { id:r.id, username:r.username, password_hash:r.password_hash, role:r.role }; });
+var nextId = 5;
+
+var stmt = "SELECT";
+var pick = ["*"];                       /* projected columns */
+var useWhere = true;
+var where = "role = 'user'";
+var insUser = "noura", insRole = "user";
+var setCol = "role", setVal = "admin";
+
+function esc(s){ return String(s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];}); }
+var $ = function (x) { return document.getElementById(x); };
+
+/* ---- a small, honest SQL WHERE engine (=, >, <, AND, OR, -- comments) ----- */
+function stripComment(sql) { var i = sql.indexOf("--"); return i === -1 ? { code: sql, comment: "" } : { code: sql.slice(0, i), comment: sql.slice(i) }; }
+function oddQuotes(s) { var n = 0; for (var i = 0; i < s.length; i++) if (s.charAt(i) === "'") n++; return n % 2 === 1; }
+function tokenize(s) {
+  var t = [], i = 0;
+  while (i < s.length) {
+    var c = s[i];
+    if (/\s/.test(c)) { i++; continue; }
+    if (c === "'") { var j = i + 1, v = ""; while (j < s.length && s[j] !== "'") v += s[j++]; i = j + 1; t.push({ k:"str", v:v }); continue; }
+    if (c === "=") { t.push({ k:"op2", v:"=" }); i++; continue; }
+    if (c === ">") { t.push({ k:"op2", v:">" }); i++; continue; }
+    if (c === "<") { t.push({ k:"op2", v:"<" }); i++; continue; }
+    if (c === "(") { t.push({ k:"lp" }); i++; continue; }
+    if (c === ")") { t.push({ k:"rp" }); i++; continue; }
+    var m = /^[A-Za-z0-9_.]+/.exec(s.slice(i));
+    if (m) { var w = m[0]; i += w.length; var up = w.toUpperCase();
+      if (up === "AND" || up === "OR") t.push({ k:"op", v:up });
+      else if (/^[0-9]+$/.test(w)) t.push({ k:"num", v:w });
+      else t.push({ k:"id", v:w });
+      continue; }
+    i++;
+  }
+  return t;
+}
+function parse(tokens) {
+  var pos = 0;
+  function peek(){ return tokens[pos]; } function eat(){ return tokens[pos++]; }
+  function value() {
+    var tk = peek(); if (!tk) return { type:"const", v:"" };
+    if (tk.k === "lp") { eat(); var e = orExpr(); if (peek() && peek().k === "rp") eat(); return { type:"group", e:e }; }
+    eat();
+    if (tk.k === "str") return { type:"lit", v:tk.v };
+    if (tk.k === "num") return { type:"num", v:tk.v };
+    if (tk.k === "id")  return { type:"col", v:tk.v };
+    return { type:"const", v:"" };
+  }
+  function cmp() {
+    var left = value();
+    if (peek() && peek().k === "op2") { var o = eat().v; return { type:"cmp", op:o, left:left, right:value() }; }
+    return { type:"truthy", left:left };
+  }
+  function andExpr(){ var n = cmp(); while (peek() && peek().k === "op" && peek().v === "AND") { eat(); n = { type:"and", l:n, r:cmp() }; } return n; }
+  function orExpr(){ var n = andExpr(); while (peek() && peek().k === "op" && peek().v === "OR") { eat(); n = { type:"or", l:n, r:andExpr() }; } return n; }
+  return orExpr();
+}
+function operand(node, row) {
+  if (node.type === "lit" || node.type === "num") return node.v;
+  if (node.type === "col") return row[node.v] !== undefined ? String(row[node.v]) : "";
+  if (node.type === "group") return evalNode(node.e, row);
+  return "";
+}
+function evalNode(node, row) {
+  if (!node) return false;
+  if (node.type === "or")  return !!evalNode(node.l, row) || !!evalNode(node.r, row);
+  if (node.type === "and") return !!evalNode(node.l, row) && !!evalNode(node.r, row);
+  if (node.type === "group") return !!evalNode(node.e, row);
+  if (node.type === "cmp") {
+    var a = operand(node.left, row), b = operand(node.right, row);
+    if (node.op === "=") return String(a) === String(b);
+    var na = Number(a), nb = Number(b);
+    if (isNaN(na) || isNaN(nb)) return false;
+    return node.op === ">" ? na > nb : na < nb;
+  }
+  if (node.type === "truthy") { var v = operand(node.left, row); return node.left.type === "num" ? Number(v) !== 0 : v !== ""; }
+  return false;
+}
+function matches() {
+  if (!useWhere) return DB.slice();
+  var code = stripComment(where).code;
+  var ast = parse(tokenize(code));
+  return DB.filter(function (r) { return evalNode(ast, r); });
+}
+
+/* ---- highlight one SQL fragment ------------------------------------------ */
+var KW = /\b(SELECT|FROM|WHERE|AND|OR|INSERT|INTO|VALUES|UPDATE|SET|DELETE)\b/g;
+function hl(s) {
+  var parts = stripComment(s);
+  var out = esc(parts.code)
+    .replace(/'([^']*)'/g, '<span class="qt">\'</span><span class="lit">$1</span><span class="qt">\'</span>')
+    .replace(/\b(\d+)\b/g, '<span class="num">$1</span>')
+    .replace(KW, '<span class="kw">$1</span>');
+  if (parts.comment) out += '<span class="cmt">' + esc(parts.comment) + '</span>';
+  return out;
+}
+
+/* ---- build the statement text (plain, for the ruler) --------------------- */
+function sqlText() {
+  var proj = pick.indexOf("*") !== -1 ? "*" : pick.join(", ");
+  if (stmt === "SELECT") return "SELECT " + proj + " FROM users" + (useWhere ? "\nWHERE " + where : "");
+  if (stmt === "INSERT") return "INSERT INTO users (username, password_hash, role)\nVALUES ('" + insUser + "', '" +
+    MAJAL.sha256("p@ssw0rd").slice(0, 12) + "', '" + insRole + "')";
+  if (stmt === "UPDATE") return "UPDATE users SET " + setCol + " = '" + setVal + "'" + (useWhere ? "\nWHERE " + where : "");
+  return "DELETE FROM users" + (useWhere ? "\nWHERE " + where : "");
+}
+
+/* ---- the ruler: mark where a string literal starts and stops -------------- */
+function ruler(text) {
+  var lines = text.split("\n"), last = lines[lines.length - 1];
+  var cm = last.indexOf("--");
+  var scan = cm === -1 ? last : last.slice(0, cm);
+  var a = scan.indexOf("'");
+  if (a === -1) {
+    if (cm !== -1) return { line: pad(cm) + "└" + rep("─", Math.max(0, last.length - cm - 2)) + "┘",
+                            pad: pad(cm), lbl: "ignored — the database throws this away", cls: "cmt" };
+    return null;
+  }
+  var b = scan.indexOf("'", a + 1);
+  if (b === -1) return { line: pad(a) + "▲", pad: pad(a), lbl: "this quote is never closed", cls: "err" };
+  var inner = b - a - 1;
+  var line = pad(a) + "└" + rep("─", Math.max(0, inner)) + "┘";
+  /* an odd count means a later quote is dangling: the literal ends EARLY and the
+     leftovers become command text the database cannot parse */
+  if (oddQuotes(scan)) return { line: line, pad: pad(a + 1), cls: "err",
+    lbl: "the data stops here — everything after it is read as SQL" };
+  return { line: line, pad: pad(a + 1), lbl: "the data", cls: "ok" };
+}
+function pad(n){ return rep(" ", Math.max(0, n)); }
+function rep(c, n){ var s = ""; for (var i = 0; i < n; i++) s += c; return s; }
+
+/* ---- composer ------------------------------------------------------------ */
+var PRESETS = {
+  SELECT: [
+    ["role = 'admin'", "role = 'admin'"],
+    ["username = 'sara'", "username = 'sara'"],
+    ["id &gt; 2", "id > 2"],
+    ["role = 'user' AND id &lt; 4", "role = 'user' AND id < 4"],
+    ["username = 'sara' -- rest ignored", "username = 'sara' -- and the rest is ignored", 1],
+    ["a stray quote: sa'ra", "username = 'sa'ra'", 1]
+  ],
+  UPDATE: [["username = 'sara'", "username = 'sara'"], ["id = 4", "id = 4"]],
+  DELETE: [["id = 4", "id = 4"], ["role = 'user'", "role = 'user'"]]
+};
+function renderComp() {
+  var h = "";
+  if (stmt === "SELECT") {
+    h += '<span class="lab">Which columns come back</span><div class="chips" id="cols">' +
+      ['*'].concat(COLS).map(function (c) {
+        return '<button data-c="' + c + '"' + (pick.indexOf(c) !== -1 ? ' class="on"' : '') + '>' + c + '</button>';
+      }).join("") + '</div>';
+  }
+  if (stmt === "INSERT") {
+    h += '<span class="lab">New username</span><input id="iu" spellcheck="false" value="' + esc(insUser) + '">' +
+      '<span class="lab">Role</span><div class="chips" id="irole">' +
+      ["user","admin"].map(function (r) { return '<button data-r="' + r + '"' + (insRole === r ? ' class="on"' : '') + '>' + r + '</button>'; }).join("") + '</div>';
+  }
+  if (stmt === "UPDATE") {
+    h += '<span class="lab">Set which column</span><div class="chips" id="scol">' +
+      ["role","username"].map(function (c) { return '<button data-c="' + c + '"' + (setCol === c ? ' class="on"' : '') + '>' + c + '</button>'; }).join("") + '</div>' +
+      '<span class="lab">to the value</span><input id="sv" spellcheck="false" value="' + esc(setVal) + '">';
+  }
+  if (stmt !== "INSERT") {
+    h += '<div class="grp"><label class="toggle"><input type="checkbox" id="wOn"' + (useWhere ? " checked" : "") + '> ' +
+      'use a <span class="mono">WHERE</span> filter</label>' +
+      '<input id="wIn" style="margin-top:5px" spellcheck="false" value="' + esc(where) + '"' + (useWhere ? "" : " disabled") + '>' +
+      '<div class="presets">' + (PRESETS[stmt] || []).map(function (p) {
+        return '<button data-w="' + esc(p[1]) + '"' + (p[2] ? ' class="hot"' : '') + '>' + p[0] + '</button>'; }).join("") + '</div></div>';
+  }
+  h += '<div class="runrow"><button class="primary" id="run">Run it ▶</button><button id="reset">Reset table</button></div>';
+  $("comp").innerHTML = h;
+
+  if ($("cols")) Array.prototype.forEach.call($("cols").querySelectorAll("button"), function (b) {
+    b.addEventListener("click", function () {
+      var c = b.getAttribute("data-c");
+      if (c === "*") pick = ["*"];
+      else { pick = pick.filter(function (x) { return x !== "*"; });
+        var i = pick.indexOf(c); if (i === -1) pick.push(c); else pick.splice(i, 1);
+        if (!pick.length) pick = ["*"];
+        pick.sort(function (a, b2) { return COLS.indexOf(a) - COLS.indexOf(b2); }); }
+      render(); });
+  });
+  if ($("irole")) Array.prototype.forEach.call($("irole").querySelectorAll("button"), function (b) {
+    b.addEventListener("click", function () { insRole = b.getAttribute("data-r"); render(); }); });
+  if ($("scol")) Array.prototype.forEach.call($("scol").querySelectorAll("button"), function (b) {
+    b.addEventListener("click", function () { setCol = b.getAttribute("data-c"); render(); }); });
+  if ($("iu")) $("iu").addEventListener("input", function () { insUser = this.value; paintQuery(); });
+  if ($("sv")) $("sv").addEventListener("input", function () { setVal = this.value; paintQuery(); });
+  if ($("wOn")) $("wOn").addEventListener("change", function () { useWhere = this.checked; render(); });
+  if ($("wIn")) $("wIn").addEventListener("input", function () { where = this.value; paintQuery(); paintTable(); });
+  Array.prototype.forEach.call(document.querySelectorAll(".presets button"), function (b) {
+    b.addEventListener("click", function () { where = b.getAttribute("data-w"); useWhere = true; render(); }); });
+  $("run").addEventListener("click", run);
+  $("reset").addEventListener("click", function () {
+    DB = SEED.map(function (r) { return { id:r.id, username:r.username, password_hash:r.password_hash, role:r.role }; });
+    nextId = 5; banner("ok", "▸", "Table restored to its four original rows."); render(); });
+}
+
+/* ---- painting ------------------------------------------------------------ */
+function paintQuery() {
+  var text = sqlText();
+  $("q").innerHTML = hl(text);
+  var r = ruler(text);
+  if (r) {
+    var col = r.cls === "err" ? "#ff8a8a" : r.cls === "cmt" ? "#5f7681" : "#5fe0a0";
+    $("ruler").innerHTML = '<span style="color:' + col + '">' + esc(r.line) + '</span>\n' +
+      '<span class="pad">' + esc(r.pad) + '</span>' +
+      '<span class="lbl" style="color:' + col + '">' + esc(r.lbl) + '</span>';
+    $("ruler").style.display = "block";
+  } else { $("ruler").style.display = "none"; }
+
+  var broken = useWhere && stmt !== "INSERT" && oddQuotes(stripComment(where).code);
+  var hasCmt = useWhere && where.indexOf("--") !== -1;
+  var note;
+  if (broken) note = 'Those <b>\'</b> marks are <em>not part of the data</em> — they are the fence that tells the database where a ' +
+    'piece of text starts and stops. An odd number of them and the fence never closes: the sentence is <em>ungrammatical</em> and nothing runs.';
+  else if (hasCmt) note = 'Everything after <b>--</b> is a <b>comment</b>: the database reads it and throws it away. ' +
+    'The rest of the sentence — however important — simply stops existing.';
+  else if (!useWhere && stmt !== "SELECT" && stmt !== "INSERT") note = 'No <b>WHERE</b> means <em>every row</em>. This is how ' +
+    'production tables get wiped by one forgotten line.';
+  else note = 'Read it as a sentence: <b>what to do</b> (' + stmt + '), <b>to which table</b> (users)' +
+    (stmt === "INSERT" ? ', <b>with which values</b>.' : ', <b>to which rows</b> (WHERE).') +
+    ' The <b>\'</b> marks fence off the parts that are <em>data</em>, not instructions.';
+  $("qnote").innerHTML = note;
+}
+
+function banner(cls, icon, msg) {
+  $("banner").className = "banner " + cls;
+  $("banner").innerHTML = '<span class="big">' + icon + '</span><span>' + msg + '</span>';
+}
+
+function paintTable(hits, mode, ghost) {
+  var proj = (stmt === "SELECT" && pick.indexOf("*") === -1) ? pick : null;
+  $("thead").innerHTML = COLS.map(function (c) {
+    return '<th class="' + (proj && proj.indexOf(c) === -1 ? "dimc" : "") + '">' + c + '</th>'; }).join("");
+  var ids = (hits || []).map(function (r) { return r.id; });
+  var html = DB.map(function (r) {
+    var hit = ids.indexOf(r.id) !== -1;
+    return '<tr class="' + (hit ? "hit " + (mode || "") : "") + '">' + COLS.map(function (c) {
+      var dim = proj && proj.indexOf(c) === -1 ? " dimc" : "";
+      return '<td class="' + dim.trim() + '">' + esc(r[c]) +
+        (c === "id" && hit && mode === "sel" ? '<span class="ret">◄ RETURNED</span>' : '') + '</td>';
+    }).join("") + '</tr>';
+  }).join("");
+  if (ghost) html += '<tr class="gone">' + COLS.map(function (c) { return '<td>' + esc(ghost[c]) + '</td>'; }).join("") + '</tr>';
+  if (!DB.length && !ghost) html = '<tr><td colspan="4" style="color:#B9C6C9;font-style:italic;padding:9px 8px">' +
+    'the table is empty — press <b>Reset table</b></td></tr>';
+  $("rows").innerHTML = html;
+  $("rowcount").textContent = DB.length + " rows stored";
+}
+
+/* ---- run ----------------------------------------------------------------- */
+function run() {
+  if (stmt !== "INSERT" && useWhere && oddQuotes(stripComment(where).code)) {
+    paintTable([]);
+    return banner("err", "⚠", '<b>Syntax error — nothing ran.</b> The quote you opened was never closed, so the database ' +
+      'cannot tell where your text ends and the command resumes.' +
+      '<span class="sqlerr">ERROR 1064 (42000): You have an error in your SQL syntax near \'' + esc(where.slice(-10)) + '\'</span>');
+  }
+  var hits = stmt === "INSERT" ? [] : matches();
+
+  if (stmt === "SELECT") {
+    paintTable(hits, "sel");
+    var proj = pick.indexOf("*") !== -1 ? "every column" : "<b>" + pick.join(", ") + "</b> only";
+    return banner(hits.length ? "ok" : "warn", hits.length ? "✓" : "○",
+      '<b>' + hits.length + ' row' + (hits.length === 1 ? "" : "s") + ' returned</b> — ' + proj + '. ' +
+      (useWhere ? 'The <span class="mono">WHERE</span> clause was tested against every row; the ones it answered <b>true</b> for came back.'
+                : 'No filter, so the answer is the <b>whole table</b>.'));
+  }
+  if (stmt === "INSERT") {
+    var nr = { id: nextId++, username: insUser || "(blank)", password_hash: MAJAL.sha256("p@ssw0rd").slice(0, 12), role: insRole };
+    DB.push(nr); paintTable([nr], "fresh2");
+    var tr = $("rows").lastChild; if (tr) tr.className = "fresh";
+    return banner("ok", "✓", '<b>1 row inserted.</b> The table is now ' + DB.length + ' rows — and the new row is ' +
+      (insRole === "admin" ? '<b>an administrator</b>. Imagine that value coming from a form field.' : 'a normal user.'));
+  }
+  if (stmt === "UPDATE") {
+    hits.forEach(function (r) { r[setCol] = setVal; });
+    paintTable(hits, "write");
+    return banner(hits.length ? (useWhere ? "ok" : "err") : "warn", hits.length ? (useWhere ? "✓" : "⚠") : "○",
+      '<b>' + hits.length + ' row' + (hits.length === 1 ? "" : "s") + ' changed</b> — <span class="mono">' + esc(setCol) +
+      '</span> is now <span class="mono">' + esc(setVal) + '</span>' +
+      (useWhere ? '.' : ' <b>on every single row</b>. One missing WHERE and the whole table is rewritten.'));
+  }
+  /* DELETE */
+  var ghost = hits.length === 1 ? hits[0] : null;
+  DB = DB.filter(function (r) { return hits.indexOf(r) === -1; });
+  paintTable([], "", ghost);
+  return banner(hits.length ? (useWhere ? "ok" : "err") : "warn", hits.length ? (useWhere ? "✓" : "⚠") : "○",
+    '<b>' + hits.length + ' row' + (hits.length === 1 ? "" : "s") + ' deleted.</b> ' +
+    (useWhere ? 'Gone — there is no undo button in a database.' : 'That was <b>the entire users table</b>. Everyone is locked out.'));
+}
+
+function render() { renderComp(); paintQuery(); paintTable(stmt === "SELECT" && useWhere ? matches() : [], "sel"); }
+
+Array.prototype.forEach.call($("verbs").querySelectorAll("button"), function (b) {
+  b.addEventListener("click", function () {
+    Array.prototype.forEach.call($("verbs").querySelectorAll("button"), function (x) { x.classList.remove("on"); });
+    b.classList.add("on"); stmt = b.getAttribute("data-s");
+    if (stmt === "UPDATE") where = "username = 'sara'";
+    else if (stmt === "DELETE") where = "id = 4";
+    else if (stmt === "SELECT") where = "role = 'user'";
+    useWhere = true;
+    banner("ok", "▸", "Press <b>Run</b>.");
+    render();
+  });
+});
+
+render();
+
+/* optional ?state= hook for headless screenshots */
+(function () {
+  var st = new URLSearchParams(location.search).get("state");
+  if (!st) return;
+  if (st === "quote") { where = "username = 'sa'ra'"; render(); run(); }
+  else if (st === "comment") { where = "username = 'sara' -- and the rest is ignored"; render(); run(); }
+  else if (st === "nowhere") { stmt = "DELETE"; useWhere = false;
+    Array.prototype.forEach.call($("verbs").querySelectorAll("button"), function (x) { x.classList.toggle("on", x.getAttribute("data-s") === "DELETE"); });
+    render(); run(); }
+  else if (st === "insert") { stmt = "INSERT"; insRole = "admin";
+    Array.prototype.forEach.call($("verbs").querySelectorAll("button"), function (x) { x.classList.toggle("on", x.getAttribute("data-s") === "INSERT"); });
+    render(); run(); }
+  else if (st === "select") { render(); run(); }
+})();
+</script>
+</body></html>

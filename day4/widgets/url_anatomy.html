@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding: 6px 8px; }
+  .wrap { max-width: 1040px; margin: 0 auto; position: relative; }
+  .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 7px; }
+  .mode { display: inline-flex; border: 1px solid #CDD8DA; border-radius: 8px; overflow: hidden; }
+  .mode button { border: 0; border-radius: 0; padding: 6px 13px; font-size: 12.5px; }
+  .mode button.on { background: #00567C; color: #fff; }
+  .mode button:not(.on) { background: #fff; color: #5C7880; }
+  .lede { font-size: 12.5px; color: #5C7880; line-height: 1.4; margin: 0 0 8px; }
+  .lede b { color: #00567C; } .lede em { color: #1F8F89; font-style: normal; font-weight: 700; }
+
+  /* ---------- the address bar ---------- */
+  .bar { background: #04303F; border-radius: 10px; padding: 11px 13px 8px; }
+  .barh { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: #5f97a3; margin-bottom: 9px;
+    display: flex; justify-content: space-between; align-items: center; }
+  .url { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 15.5px; white-space: nowrap;
+    padding-bottom: 21px; letter-spacing: -.01em; }
+  .seg { position: relative; display: inline-block; border-radius: 4px; padding: 1px 1px; cursor: pointer;
+    transition: background .15s, box-shadow .15s; }
+  .seg:hover { background: rgba(159,201,207,.13); }
+  .seg.sel { background: rgba(159,201,207,.2); box-shadow: 0 0 0 1.5px #9fc9cf; }
+  .seg .tick { position: absolute; left: 50%; top: 100%; transform: translateX(-50%); margin-top: 3px;
+    font-family: "Avenir Next", system-ui, sans-serif; font-style: normal; font-size: 9.5px; font-weight: 800;
+    letter-spacing: .07em; text-transform: uppercase; white-space: nowrap; opacity: .78; }
+  .sep { color: #4d6b74; }
+  #sScheme { color: #ffd84a; } #sScheme .tick { color: #ffd84a; }
+  #sHost   { color: #33D3CB; } #sHost .tick   { color: #33D3CB; }
+  #sPort   { color: #5fe0a0; } #sPort .tick   { color: #5fe0a0; }
+  #sPath   { color: #ffffff; } #sPath .tick   { color: #cfe6e3; }
+  #sQuery  { color: #ff8a8a; } #sQuery .tick  { color: #ff8a8a; }
+  #sFrag   { color: #5f7681; } #sFrag .tick   { color: #5f7681; }
+  #sPath .idv { background: #D64545; color: #fff; border-radius: 4px; padding: 0 5px; font-weight: 800; }
+
+  .ctlrow { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-top: 2px;
+    border-top: 1px solid rgba(159,201,207,.16); padding-top: 8px; }
+  .ctlrow .lab { font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: #5f97a3; font-weight: 700; }
+  .ctlrow .stepper button { font-family: "JetBrains Mono", monospace; font-size: 12px; font-weight: 800;
+    width: 22px; height: 22px; padding: 0; background: #0c4658; color: #fff; border: 1px solid #1c5f74; border-radius: 5px; }
+  .ctlrow .stepper button:hover { background: #1F8F89; border-color: #1F8F89; }
+  .ctlrow input { font-family: "JetBrains Mono", monospace; font-size: 11.5px; color: #cfe6e3; background: #0c4658;
+    border: 1px solid #1c5f74; border-radius: 5px; padding: 4px 7px; outline: none; width: 210px; }
+  .ctlrow input:focus { border-color: #33D3CB; }
+  .ctlrow .schemebtn { font-size: 11px; padding: 4px 10px; background: #0c4658; color: #9fc9cf; border: 1px solid #1c5f74; }
+  .ctlrow .schemebtn.on { background: #ffd84a; color: #04303F; border-color: #ffd84a; }
+  .ctlrow .play { font-size: 11.5px; padding: 5px 12px; background: #1F8F89; color: #fff; border-color: #1F8F89; margin-left: auto; }
+  .ctlrow .play:hover { background: #33D3CB; border-color: #33D3CB; }
+
+  /* ---------- lower grid ---------- */
+  .cols { display: grid; grid-template-columns: 1.12fr 1fr; gap: 11px; margin-top: 11px; align-items: start; }
+  .wire { background: #04303F; border-radius: 10px; padding: 11px 13px; font-family: "JetBrains Mono", Menlo, monospace;
+    color: #9fc9cf; min-height: 168px; }
+  .wire .qh { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: #5f97a3; margin-bottom: 9px;
+    font-family: "Avenir Next", system-ui, sans-serif; font-weight: 700; }
+  .wire .ln { font-size: 12.5px; line-height: 1.75; white-space: nowrap; }
+  .wire .drop { transition: opacity .3s; }
+  .wire .m { color: #33D3CB; font-weight: 800; }
+  .wire .hk { color: #5f97a3; }
+  .wire .tp { color: #ffffff; } .wire .tq { color: #ff8a8a; } .wire .th { color: #33D3CB; }
+  .wire .ver { color: #5f7681; }
+  .wire .conn { margin-top: 9px; border-top: 1px solid rgba(159,201,207,.16); padding-top: 8px;
+    font-size: 11px; line-height: 1.55; color: #7fa8b0; white-space: normal; }
+  .wire .conn b { color: #5fe0a0; } .wire .conn .warn { color: #ff8a8a; font-weight: 700; }
+  .wire .nofrag { margin-top: 7px; font-size: 11px; color: #5f7681; white-space: normal; line-height: 1.5; }
+  .wire .nofrag s { color: #5f7681; }
+  .wire .nofrag b { color: #9fc9cf; }
+  .pulse { animation: pl .7s ease; }
+  @keyframes pl { 0%,100% { background: transparent; } 30% { background: rgba(51,211,203,.3); } }
+
+  .expl { border: 1px solid #E0E7E8; border-radius: 10px; background: #fff; padding: 11px 13px; min-height: 168px; }
+  .expl h4 { margin: 0 0 2px; font-size: 14px; color: #00567C; letter-spacing: -.01em; }
+  .expl .val { font-family: "JetBrains Mono", monospace; font-size: 11.5px; color: #5C7880;
+    background: #F6F8F8; border: 1px solid #E0E7E8; border-radius: 5px; padding: 2px 6px; display: inline-block; margin-bottom: 7px; }
+  .expl p { margin: 0 0 8px; font-size: 12.5px; color: #42606A; line-height: 1.5; }
+  .expl p b { color: #00567C; }
+  .expl .angle { border-top: 1px dashed #E0E7E8; padding-top: 8px; font-size: 12px; color: #D64545; line-height: 1.5; }
+  .expl .angle .t { display: block; font-size: 9.5px; letter-spacing: .09em; text-transform: uppercase;
+    font-weight: 800; color: #D64545; margin-bottom: 3px; opacity: .8; }
+  .expl .angle b { color: #D64545; }
+  .params { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 5px; }
+  .params .kv { font-family: "JetBrains Mono", monospace; font-size: 10.5px; border: 1px solid #E0E7E8;
+    border-radius: 5px; padding: 2px 6px; color: #5C7880; background: #F6F8F8; }
+  .params .kv b { color: #D64545; font-weight: 700; }
+
+  /* ---------- server answer ---------- */
+  .ans { margin-top: 10px; border: 1px solid #E0E7E8; border-radius: 10px; background: #fff; padding: 8px 12px;
+    display: flex; align-items: center; gap: 12px; }
+  .ans .tag { font-size: 9.5px; letter-spacing: .08em; text-transform: uppercase; font-weight: 800; color: #5C7880; white-space: nowrap; }
+  .ans .body { font-family: "JetBrains Mono", monospace; font-size: 12px; color: #42606A; }
+  .ans .body .code { color: #1F8F89; font-weight: 800; }
+  .ans .body .k { color: #8AA1A8; }
+  .ans .note { margin-left: auto; font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+  .ans.mine .note { color: #1F8F89; } .ans.theirs .note { color: #D64545; }
+  .ans.theirs { background: rgba(214,69,69,.05); border-color: rgba(214,69,69,.3); }
+
+  /* flying clones */
+  .fly { position: absolute; font-family: "JetBrains Mono", Menlo, monospace; font-size: 15.5px; white-space: nowrap;
+    pointer-events: none; z-index: 9; border-radius: 4px; padding: 1px; }
+</style>
+</head><body>
+<div class="wrap" id="stage">
+  <div class="head">
+    <div class="mode">
+      <button id="mAll" class="on">Show every part</button>
+      <button id="mReal">As you'd normally see it</button>
+    </div>
+    <div style="font-size:11px;color:#8AA1A8;letter-spacing:.04em">click any coloured part ↓</div>
+  </div>
+  <p class="lede">Before you can attack an app you have to <b>read its address</b>. A URL is not one blob — it is
+    <b>six separate fields</b>, and the browser sends only <em>some</em> of them to the server.</p>
+
+  <div class="bar">
+    <div class="barh"><span>the address bar</span><span id="barnote">every part labelled</span></div>
+    <div class="url" id="url"><span class="seg" id="sScheme" data-k="scheme">https<i class="tick">scheme</i></span><span
+      class="sep">://</span><span class="seg" id="sHost" data-k="host">shop.example.com<i class="tick">host</i></span><span
+      class="seg" id="sPort" data-k="port">:443<i class="tick">port</i></span><span
+      class="seg" id="sPath" data-k="path">/api/invoices/<span class="idv" id="idv">1042</span><i class="tick">path</i></span><span
+      class="seg" id="sQuery" data-k="query">?sort=date&amp;currency=SAR<i class="tick">query</i></span><span
+      class="seg" id="sFrag" data-k="frag">#items<i class="tick">fragment</i></span></div>
+    <div class="ctlrow">
+      <span class="lab">scheme</span>
+      <button class="schemebtn on" id="bHttps">https</button><button class="schemebtn" id="bHttp">http</button>
+      <span class="lab" style="margin-left:6px">invoice id</span>
+      <span class="stepper"><button id="dec">−</button><button id="inc">+</button></span>
+      <span class="lab" style="margin-left:6px">query</span>
+      <input id="qin" spellcheck="false" autocomplete="off" value="sort=date&amp;currency=SAR">
+      <button class="play" id="send">Watch it get sent ▶</button>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div class="wire">
+      <div class="qh">What actually leaves your machine</div>
+      <div class="ln drop" id="wReq"></div>
+      <div class="ln drop" id="wHost"></div>
+      <div class="conn" id="wConn"></div>
+      <div class="nofrag" id="wFrag"></div>
+    </div>
+    <div class="expl" id="expl"></div>
+  </div>
+
+  <div class="ans" id="ans"></div>
+</div>
+
+<script>
+/* ---- the six fields, and what each one is worth to an attacker ------------ */
+var PARTS = {
+  scheme: { name: "Scheme", what: "The <b>protocol</b> to speak. It also decides the default port: <b>https → 443</b>, <b>http → 80</b>.",
+    angle: "<b>http://</b> means the whole request — cookies included — crosses the network as readable text. Flip the toggle and watch the connection line." },
+  host:   { name: "Host", what: "<b>Which machine.</b> DNS turns this name into an IP address, and the name is also sent back to the server as the <b>Host:</b> header — one server can host many sites.",
+    angle: "Sub-domains are <b>separate apps</b>: <span class=\"mono\">admin.</span>, <span class=\"mono\">staging.</span>, <span class=\"mono\">api.</span> Enumerating them is the first move of recon." },
+  port:   { name: "Port", what: "<b>Which door</b> on that machine. Hidden when it's the default for the scheme, which is why you rarely see it.",
+    angle: "Non-standard ports — <b>8080, 8443, 3000</b> — are where staging builds and admin panels get left facing the internet." },
+  path:   { name: "Path", what: "<b>Which resource</b> you're asking for. The trailing number is almost always a <b>database id</b>.",
+    angle: "Press <b>+</b>. The id is just a number <b>you</b> typed — and nothing yet checks that invoice is yours. That is <b>IDOR</b>, later today." },
+  query:  { name: "Query string", what: "Parameters after the <span class=\"mono\">?</span> — <b>key=value</b> pairs joined by <span class=\"mono\">&amp;</span>. Edit the box and watch them re-parse.",
+    angle: "100% attacker-controlled text that the server often <b>glues straight into a SQL query</b>. This is where injection starts." },
+  frag:   { name: "Fragment", what: "Where to <b>scroll to</b> on the page once it loads. The browser keeps it — it is <b>never sent to the server</b>.",
+    angle: "Page JavaScript <em>can</em> read it. A payload here runs in the browser and appears in <b>no server log at all</b> — that's DOM XSS." }
+};
+var INVOICES = {
+  1040: { who: "Omar Al-Harbi",   total: "SAR 890" },
+  1041: { who: "Sara Nasser",     total: "SAR 1,240" },
+  1042: { who: "You",             total: "SAR 3,600" },
+  1043: { who: "Layla Al-Rashid", total: "SAR 4,120" },
+  1044: { who: "Khalid Mutairi",  total: "SAR 220" }
+};
+
+var scheme = "https", id = 1042, query = "sort=date&currency=SAR", sel = "path", showAll = true;
+
+var $ = function (x) { return document.getElementById(x); };
+var sScheme = $("sScheme"), sHost = $("sHost"), sPort = $("sPort"), sPath = $("sPath"), sQuery = $("sQuery"), sFrag = $("sFrag");
+function esc(s){ return String(s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];}); }
+
+function paintURL() {
+  sScheme.firstChild.nodeValue = scheme;
+  $("idv").textContent = id;
+  // the port is hidden when it is the default for the scheme — that's the "real" view
+  var def = (scheme === "https" ? "443" : "80");
+  sPort.firstChild.nodeValue = ":" + def;
+  sPort.style.display = showAll ? "inline-block" : "none";
+  sQuery.firstChild.nodeValue = query ? "?" + query : "";
+  sQuery.style.display = query ? "inline-block" : "none";
+  Array.prototype.forEach.call(document.querySelectorAll(".url .tick"), function (t) { t.style.display = showAll ? "block" : "none"; });
+  $("url").style.paddingBottom = showAll ? "21px" : "4px";
+  $("barnote").textContent = showAll ? "every part labelled" : "the port is hidden because it is the default for the scheme";
+}
+
+function paintWire() {
+  var qs = query ? '<span class="tq">?' + esc(query) + '</span>' : "";
+  $("wReq").innerHTML = '<span class="m">GET</span> <span class="tp">/api/invoices/' + id + '</span>' + qs + ' <span class="ver">HTTP/1.1</span>';
+  $("wHost").innerHTML = '<span class="hk">Host:</span> <span class="th">shop.example.com</span>';
+  var port = scheme === "https" ? "443" : "80";
+  $("wConn").innerHTML = scheme === "https"
+    ? 'Connection: TCP to <b>shop.example.com:' + port + '</b>, then a <b>TLS handshake</b> — everything above is encrypted on the wire. ' +
+      'The padlock protects it <em>in transit</em>; it says nothing about what the app does with it.'
+    : 'Connection: TCP to <b>shop.example.com:' + port + '</b>, <span class="warn">no TLS</span> — the request line, the headers and ' +
+      '<span class="warn">your session cookie</span> travel as plain readable text that anyone on the path can copy.';
+  $("wFrag").innerHTML = '<s>#items</s> &nbsp;— <b>the fragment never left the browser.</b> The server has no idea it exists.';
+}
+
+function paintExpl() {
+  var p = PARTS[sel], val;
+  if (sel === "scheme") val = scheme;
+  else if (sel === "host") val = "shop.example.com";
+  else if (sel === "port") val = ":" + (scheme === "https" ? "443" : "80");
+  else if (sel === "path") val = "/api/invoices/" + id;
+  else if (sel === "query") val = query ? "?" + query : "(none)";
+  else val = "#items";
+
+  var extra = "";
+  if (sel === "query") {
+    var chips = query.split("&").filter(function (s) { return s.length; }).map(function (kv) {
+      var i = kv.indexOf("="), k = i === -1 ? kv : kv.slice(0, i), v = i === -1 ? "" : kv.slice(i + 1);
+      return '<span class="kv">' + esc(k) + ' = <b>' + esc(v) + '</b></span>';
+    }).join("");
+    extra = '<div class="params">' + (chips || '<span class="kv">no parameters</span>') + '</div>';
+  }
+  $("expl").innerHTML = '<h4>' + p.name + '</h4><span class="val">' + esc(val) + '</span>' +
+    '<p>' + p.what + '</p>' + extra +
+    '<div class="angle"><span class="t">the attacker\'s angle</span>' + p.angle + '</div>';
+
+  Array.prototype.forEach.call(document.querySelectorAll(".url .seg"), function (s) {
+    s.classList.toggle("sel", s.getAttribute("data-k") === sel);
+  });
+}
+
+function paintAns() {
+  var inv = INVOICES[id], mine = (id === 1042);
+  var a = $("ans");
+  a.className = "ans " + (mine ? "mine" : "theirs");
+  a.innerHTML = '<span class="tag">the server answers</span>' +
+    '<span class="body"><span class="code">200 OK</span> &nbsp;{<span class="k">"invoice"</span>: ' + id +
+    ', <span class="k">"customer"</span>: "' + esc(inv.who) + '", <span class="k">"total"</span>: "' + esc(inv.total) + '"}</span>' +
+    '<span class="note">' + (mine ? "✓ this one is yours" : "⚠ not your invoice — nobody checked") + '</span>';
+}
+
+function render() { paintURL(); paintWire(); paintExpl(); paintAns(); }
+
+/* ---- the reveal: watch the parts split up on their way out ---------------- */
+var flying = false;
+function fly() {
+  if (flying) return; flying = true;
+  var stage = $("stage"), sr = stage.getBoundingClientRect();
+  var wReq = $("wReq"), wHost = $("wHost"), wConn = $("wConn"), wFrag = $("wFrag");
+  [wReq, wHost, wConn, wFrag].forEach(function (e) { e.style.opacity = 0; });
+
+  function clone(src, dst, delay, mode) {
+    var a = src.getBoundingClientRect(), b = dst.getBoundingClientRect();
+    var c = document.createElement("span");
+    c.className = "fly";
+    c.textContent = src.getAttribute("data-k") === "path" ? "/api/invoices/" + id : src.firstChild.nodeValue;
+    c.style.color = getComputedStyle(src).color;
+    c.style.left = (a.left - sr.left) + "px";
+    c.style.top = (a.top - sr.top) + "px";
+    stage.appendChild(c);
+    setTimeout(function () {
+      c.style.transition = "transform .55s cubic-bezier(.4,.05,.2,1), opacity .45s ease";
+      if (mode === "drop") { c.style.transform = "translate(0px, 46px)"; c.style.opacity = 0; }
+      else {
+        c.style.transform = "translate(" + ((b.left - a.left) + 6) + "px," + ((b.top - a.top) + 2) + "px) scale(.82)";
+        c.style.opacity = 0;
+      }
+    }, delay);
+    setTimeout(function () {
+      if (c.parentNode) c.parentNode.removeChild(c);
+      if (mode !== "drop") { dst.style.opacity = 1; dst.classList.add("pulse");
+        setTimeout(function(){ dst.classList.remove("pulse"); }, 720); }
+      else { wFrag.style.opacity = 1; }
+    }, delay + 560);
+  }
+
+  clone(sHost, wHost, 60, "move");
+  clone(sPath, wReq, 300, "move");
+  if (query) clone(sQuery, wReq, 520, "move");
+  setTimeout(function () { wConn.style.opacity = 1; }, 1050);
+  clone(sFrag, wFrag, 800, "drop");
+  setTimeout(function () { flying = false; }, 1700);
+}
+
+/* ---- wiring -------------------------------------------------------------- */
+Array.prototype.forEach.call(document.querySelectorAll(".url .seg"), function (s) {
+  s.addEventListener("click", function () { sel = s.getAttribute("data-k"); paintExpl(); });
+});
+$("inc").addEventListener("click", function () { if (id < 1044) id++; sel = "path"; render(); });
+$("dec").addEventListener("click", function () { if (id > 1040) id--; sel = "path"; render(); });
+$("bHttps").addEventListener("click", function () { scheme = "https"; this.classList.add("on"); $("bHttp").classList.remove("on"); sel = "scheme"; render(); });
+$("bHttp").addEventListener("click", function () { scheme = "http"; this.classList.add("on"); $("bHttps").classList.remove("on"); sel = "scheme"; render(); });
+$("qin").addEventListener("input", function () { query = this.value.trim(); sel = "query"; render(); });
+$("send").addEventListener("click", fly);
+$("mAll").addEventListener("click", function () { showAll = true; this.classList.add("on"); $("mReal").classList.remove("on"); render(); });
+$("mReal").addEventListener("click", function () { showAll = false; this.classList.add("on"); $("mAll").classList.remove("on"); render(); });
+
+render();
+
+/* optional ?state= hook for headless screenshots */
+(function () {
+  var st = new URLSearchParams(location.search).get("state");
+  if (st === "idor") { id = 1043; sel = "path"; }
+  else if (st === "http") { scheme = "http"; sel = "scheme";
+    $("bHttp").classList.add("on"); $("bHttps").classList.remove("on"); }
+  else if (st === "frag") { sel = "frag"; }
+  else if (st === "real") { showAll = false; $("mReal").classList.add("on"); $("mAll").classList.remove("on"); }
+  render();
+  if (st === "fly") setTimeout(fly, 60);
+})();
+</script>
+</body></html>
