@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 4 — Break the App</title>
+<style>
+:root{
+  --petrol:#00567d; --petrol-d:#003f5e; --teal:#1f8f89; --turq:#33d2cb;
+  --yellow:#f2d200; --ink:#12333d; --slate:#2f4f59; --muted:#5c7880;
+  --bg:#f6f8f8; --bg-2:#eef3f3; --card:#fff; --line:#e0e7e8;
+  --code-bg:#0f2b34; --code-ink:#dff3f2;
+  --sans:"Avenir Next","Avenir","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  --mono:"JetBrains Mono","Cascadia Code","SF Mono",Menlo,Consolas,"DejaVu Sans Mono",monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth; scroll-padding-top:84px}
+body{margin:0; font-family:var(--sans); color:var(--ink); background:var(--bg);
+  -webkit-font-smoothing:antialiased; line-height:1.6}
+
+/* ---- top bar ---- */
+.bar{position:sticky; top:0; z-index:30; background:rgba(246,248,248,.94);
+  backdrop-filter:blur(8px); border-bottom:1px solid var(--line)}
+.bar .in{max-width:1240px; margin:0 auto; padding:10px 26px; display:flex;
+  align-items:center; gap:16px}
+.bar img{height:34px; width:auto; mix-blend-mode:multiply}
+.bar .crumb{font-size:12px; font-weight:800; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--teal)}
+.bar .spacer{flex:1}
+.bar a.back{font-size:13px; font-weight:700; color:var(--petrol); text-decoration:none;
+  border:1px solid var(--line); background:var(--card); padding:.45em 1em; border-radius:2px}
+.bar a.back:hover{border-color:var(--petrol)}
+
+/* ---- hero ---- */
+.hero{max-width:1240px; margin:0 auto; padding:52px 26px 30px}
+.hero .kicker{margin:0 0 12px; font-size:13px; font-weight:800; letter-spacing:.24em;
+  text-transform:uppercase; color:var(--teal)}
+.hero h1{margin:0; font-size:clamp(32px,5vw,54px); line-height:1.05; letter-spacing:-.02em;
+  color:var(--petrol); font-weight:800; max-width:18ch}
+.hero .rule{width:72px; height:6px; border-radius:3px; background:var(--yellow); margin:22px 0 22px}
+.meta{display:flex; flex-wrap:wrap; gap:10px; margin:0; padding:0; list-style:none}
+.meta li{background:var(--card); border:1px solid var(--line); border-left:3px solid var(--turq);
+  padding:.5em .9em; border-radius:2px}
+.meta .k{display:block; font-size:10.5px; font-weight:800; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--muted)}
+.meta .v{font-size:14px; font-weight:700; color:var(--slate)}
+
+/* ---- layout ---- */
+.layout{max-width:1240px; margin:0 auto; padding:14px 26px 80px;
+  display:grid; grid-template-columns:236px minmax(0,1fr); gap:44px; align-items:start}
+.toc{position:sticky; top:78px; max-height:calc(100vh - 100px); overflow-y:auto;
+  border-left:2px solid var(--line); padding-left:16px}
+.toc-h{margin:0 0 10px; font-size:11px; font-weight:800; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--muted)}
+.toc ul{list-style:none; margin:0; padding:0}
+.toc li{margin:0}
+.toc a{display:block; padding:3px 0; font-size:13.5px; line-height:1.35; color:var(--muted);
+  text-decoration:none}
+.toc a:hover{color:var(--petrol)}
+.toc .l1 a{margin-top:12px; font-weight:800; font-size:12px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--petrol)}
+.toc .l2 a{padding-left:2px}
+
+/* ---- content ---- */
+.doc{min-width:0; max-width:78ch}
+.doc h1{margin:56px 0 6px; font-size:clamp(24px,3.2vw,32px); font-weight:800; letter-spacing:-.02em;
+  color:var(--petrol); border-top:4px solid var(--yellow); padding-top:18px}
+.doc h2{margin:44px 0 4px; font-size:clamp(20px,2.6vw,25px); font-weight:800; letter-spacing:-.01em;
+  color:var(--petrol)}
+.doc h3{margin:30px 0 4px; font-size:16px; font-weight:800; letter-spacing:.02em; color:var(--teal)}
+.doc p{margin:.85em 0; color:var(--slate); font-size:16px}
+.doc hr{border:0; border-top:1px solid var(--line); margin:44px 0}
+.doc a{color:var(--petrol)}
+.doc strong{color:var(--ink)}
+.doc em{color:var(--muted)}
+.doc ul,.doc ol{color:var(--slate); font-size:16px}
+.doc li{margin:.3em 0}
+
+/* code */
+.doc code{font-family:var(--mono); font-size:.88em; background:var(--bg-2);
+  border:1px solid var(--line); border-radius:3px; padding:.1em .38em; color:var(--petrol-d)}
+.doc pre{background:var(--code-bg); color:var(--code-ink); border-radius:3px;
+  border-left:4px solid var(--turq); padding:16px 18px; overflow-x:auto; margin:1.1em 0}
+.doc pre code{background:none; border:0; padding:0; color:inherit; font-size:13.5px; line-height:1.55}
+
+/* tables */
+.tw{overflow-x:auto; margin:1.2em 0; border:1px solid var(--line); border-radius:2px; background:var(--card)}
+.doc table{border-collapse:collapse; width:100%; font-size:14px}
+.doc th{text-align:left; font-family:var(--mono); font-size:11px; font-weight:700;
+  letter-spacing:.1em; text-transform:uppercase; color:var(--teal);
+  background:var(--bg-2); border-bottom:1px solid var(--line); padding:10px 14px; white-space:nowrap}
+.doc td{border-bottom:1px solid var(--line); padding:10px 14px; color:var(--slate);
+  vertical-align:top; line-height:1.5}
+.doc tbody tr:last-child td{border-bottom:0}
+.doc td:first-child{color:var(--petrol); font-weight:700; white-space:nowrap}
+
+/* callouts */
+.callout{background:var(--card); border:1px solid var(--line); border-left:4px solid var(--petrol);
+  border-radius:2px; padding:2px 20px; margin:1.3em 0}
+.callout p{font-size:15px}
+.callout.warn{border-left-color:var(--yellow)}
+.callout.warn p{font-size:15px}
+
+/* objective / task cards */
+.doc p.task{position:relative; background:var(--card); border:1px solid var(--line);
+  border-left:4px solid var(--turq); border-radius:2px; padding:14px 18px 14px 74px;
+  margin:1.2em 0 0; font-size:16px; color:var(--ink)}
+.tid{position:absolute; left:16px; top:15px; font-family:var(--mono); font-weight:800; font-size:13px;
+  color:var(--petrol); background:var(--bg-2); border-radius:2px; padding:.25em .55em; letter-spacing:.02em}
+p.wrapup{background:rgba(242,210,0,.14); border:1px solid rgba(242,210,0,.5);
+  border-radius:2px; padding:14px 18px; font-size:15.5px; color:var(--ink)}
+
+footer{border-top:1px solid var(--line); background:var(--bg)}
+.foot{max-width:1240px; margin:0 auto; padding:20px 26px; display:flex; gap:16px;
+  flex-wrap:wrap; justify-content:space-between; font-size:13px; color:var(--muted)}
+.foot .slogan{font-weight:700; color:var(--slate)}
+
+@media (max-width:960px){
+  .layout{grid-template-columns:1fr; gap:0}
+  .toc{position:static; max-height:none; border-left:0; border-top:1px solid var(--line);
+    padding:16px 0 24px; margin-bottom:8px}
+  .toc ul{columns:2; column-gap:24px}
+}
+@media print{
+  .bar,.toc{display:none}
+  body{background:#fff}
+  .layout{display:block; padding:0 0 20px}
+  .doc h1,.doc h2{break-after:avoid}
+  p.task{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="bar">
+  <div class="in">
+    <img src="../MajalLogo.jpg" alt="Majal">
+    <span class="crumb">Day 4 · Lab</span>
+    <span class="spacer"></span>
+    <a class="back" href="../index.html">← Course</a>
+  </div>
+</div>
+
+<div class="hero">
+  <p class="kicker">Majal Initiative · Cybersecurity Bootcamp</p>
+  <h1>Day 4 — Break the App</h1>
+  <div class="rule"></div>
+  <ul class="meta"><li><span class="k">Duration</span><span class="v">~2 hours</span></li><li><span class="k">Target</span><span class="v">Majal Store (web app)</span></li><li><span class="k">Level</span><span class="v">Intermediate</span></li><li><span class="k">Format</span><span class="v">Black-box web penetration test</span></li></ul>
+</div>
+
+<div class="layout">
+<nav class="toc" aria-label="Lab contents"><p class="toc-h">Contents</p><ul>
+<li class="l2"><a href="#the-engagement">The Engagement</a></li>
+<li class="l2"><a href="#you-are-the-pen-tester">You Are the Pen Tester</a></li>
+<li class="l2"><a href="#your-objectives">Your Objectives</a></li>
+<li class="l2"><a href="#setup">Setup — Getting Connected</a></li>
+<li class="l2"><a href="#rules-of-engagement">Rules of Engagement</a></li>
+<li class="l2"><a href="#how-to-work">How to Work the Target</a></li>
+<li class="l2"><a href="#deliverable">Deliverable — Findings Report</a></li>
+<li class="l2"><a href="#into-day-5">Into Day 5</a></li>
+</ul></nav>
+<main class="doc">
+
+<h2 id="the-engagement">The Engagement</h2>
+<p><strong>Majal Store</strong> is a small online shop — you can browse products, log
+in, check your orders, download receipts, leave reviews. It looks finished. It is
+not safe.</p>
+<p>You have been hired to find out how unsafe. This is a <strong>black-box
+penetration test</strong>: you get the same access any customer gets — a browser and a
+login — and nothing else. No source code, no map, no list of what's wrong. Your
+job is to probe every corner of the application, find the ways it can be abused,
+and prove it.</p>
+<div class="callout"><p>Everything you learned this morning — the URL, the request,
+where input enters, what the client is allowed to touch, how the app talks to its
+database — is the toolkit. This afternoon you use it against a real target.</p></div>
+
+<h2 id="you-are-the-pen-tester">You Are the Pen Tester</h2>
+<p>This is the part that makes it a test and not a walkthrough: <strong>we are not
+telling you where the flaws are.</strong> A real client doesn't hand their attacker a
+checklist, and neither will we. You are working as a penetration tester — you map
+the app yourself, decide what's worth poking, and discover the weaknesses on your
+own.</p>
+<p>What we will tell you: the assessment team has confirmed the application contains
+<strong>at least seven distinct, exploitable vulnerabilities</strong>, spread across its
+ordinary features. Some are found in seconds; some take patience; a few only open
+up once you've used another. Finding all seven is the goal.</p>
+<div class="callout warn"><p>💡 If you get stuck, that's expected — raise your hand.
+Your instructor will give you a nudge toward a feature worth a second look, one
+hint at a time. Struggling with it first is how it sticks.</p></div>
+
+<h2 id="your-objectives">Your Objectives</h2>
+<p class="task"><span class="tid">OBJ 1</span><strong>Map the application.</strong> Visit
+every page. Note every place you can send input — search boxes, forms, URLs,
+IDs, cookies — and every different role or account you can act as.</p>
+<p class="task"><span class="tid">OBJ 2</span><strong>Test the inputs.</strong> Take each
+input you found and ask what the app <em>assumes</em> about it — then break that
+assumption. Watch closely how the app responds.</p>
+<p class="task"><span class="tid">OBJ 3</span><strong>Find and exploit the flaws.</strong>
+Locate at least <strong>seven</strong> distinct vulnerabilities and actually demonstrate
+each one — not "this looks off," but a working exploit that proves impact.</p>
+<p class="task"><span class="tid">OBJ 4</span><strong>Escalate and chain.</strong> Some
+findings are keys to others. When one weakness gives you access, ask what that
+access unlocks next.</p>
+<p class="task"><span class="tid">OBJ 5</span><strong>Write it up.</strong> Record each
+finding as you go — see the deliverable below. If it isn't written down, it
+didn't happen.</p>
+
+<h2 id="setup">Setup — Getting Connected</h2>
+<h3>The target</h3>
+<p>The store runs on a <strong>shared box on the lab network</strong>. Your instructor
+will give you its address on the whiteboard — you'll browse to something like
+<code>http://&lt;lab-address&gt;/</code>. Everyone in the room hits the same target, so
+keep an eye on the site: other people's attacks are landing there too.</p>
+<h3>Your account</h3>
+<p>You'll be handed a <strong>personal login</strong> (username and password) for the
+store. There is no sign-up page — you're testing an existing app with the access
+a real, logged-in customer would have. Start there and see how far past your own
+account you can get.</p>
+<h3>What you need</h3>
+<ul>
+<li><strong>A web browser</strong> with its <strong>developer tools</strong> (F12) — this alone
+is enough to complete the whole assessment.</li>
+<li><em>Optional power tools</em>, if you want them: an intercepting proxy
+(<strong>Burp Suite</strong> or <strong>OWASP ZAP</strong>), <code>curl</code> for hand-crafting
+requests, and content/parameter discovery tools. None are required.</li>
+</ul>
+<div class="callout"><p><strong>Can't reach the shared box?</strong> Ask your instructor for
+the offline fallback — a self-contained Docker image of the same store you can run
+on your own laptop and attack locally.</p></div>
+
+<h2 id="rules-of-engagement">Rules of Engagement</h2>
+<div class="callout warn"><p>⚠️ <strong>The target is the store, and only the store.</strong>
+Scanning, connecting to, or attacking anything else — a classmate's laptop, the
+instructor's machine, the wider network, the internet — is out of scope and ends
+your session. What you're doing is legal <em>because</em> you have explicit permission
+to attack this one deliberately vulnerable target. That permission does not extend
+one inch past it. This is the exact line the ethics slide draws today.</p></div>
+<ul>
+<li><strong>The box is shared and self-healing.</strong> It resets to a clean state every
+few minutes. If you knock it over — or someone else does — it comes back on its
+own. Don't count on your changes sticking around.</li>
+<li><strong>Griefing is still the lesson.</strong> If your attack breaks the site for the
+whole room, notice <em>why</em> — that's a finding worth writing down, not just a prank.</li>
+<li><strong>Work like a professional.</strong> A real tester documents, stays in scope, and
+doesn't destroy what they don't have to. Same here.</li>
+</ul>
+
+<h2 id="how-to-work">How to Work the Target</h2>
+<p>You're not guessing randomly — you're applying a method. Some prompts to keep
+moving, without giving anything away:</p>
+<ul>
+<li><strong>Enumerate every input.</strong> This morning's "five places your input enters"
+is your checklist. If the app reads it, test it.</li>
+<li><strong>Question what the client controls.</strong> URLs, IDs in the address bar,
+hidden form fields, cookies — anything that reaches you can be changed before it
+goes back. What does the server simply trust?</li>
+<li><strong>Read the responses.</strong> Error messages, status codes, and page contents
+often reveal more than the app intended. Feed it something malformed and listen.</li>
+<li><strong>Cross the line between accounts.</strong> Once you can act as yourself, ask what
+stops you from acting as — or seeing — someone else.</li>
+<li><strong>Chain your wins.</strong> A small foothold in one feature is often the key that
+opens a bigger door somewhere else.</li>
+</ul>
+
+<h2 id="deliverable">Deliverable — Findings Report</h2>
+<p>Keep a running report as you go. For <strong>each</strong> vulnerability you find,
+record these five things — the same shape a real pentest report takes:</p>
+<div class="tw"><table>
+<thead><tr><th>Field</th><th>What to write</th></tr></thead>
+<tbody>
+<tr><td>Where</td><td>The exact page / URL / parameter or input.</td></tr>
+<tr><td>What</td><td>The class of flaw, in your own words.</td></tr>
+<tr><td>Proof</td><td>The precise steps or payload you used to exploit it.</td></tr>
+<tr><td>Impact</td><td>What an attacker gains — whose data, what access, what damage.</td></tr>
+<tr><td>Fix</td><td>How you'd stop it. (You'll defend against these tomorrow.)</td></tr>
+</tbody>
+</table></div>
+<p>Seven findings, fully written up, is a complete assessment. Bring it to the
+debrief — we'll compare what the room found.</p>
+
+<h2 id="into-day-5">Into Day 5</h2>
+<p class="wrapup">Every payload you send this afternoon lands in a log somewhere.
+Tomorrow you take the defender's chair and meet this same store from the other
+side — reconstructing an attack from the alerts it left behind. The cleaner your
+findings report today, the sharper your eye tomorrow.</p>
+
+</main>
+</div>
+
+<footer>
+  <div class="foot">
+    <span class="slogan">Majal · Unlocking your tech horizons</span>
+    <span>Cybersecurity 2026 · Day 4 Lab</span>
+  </div>
+</footer>
+</body>
+</html>
