@@ -1,0 +1,7 @@
+.venv
+data/store.db
+receipts/*.txt
+receipts/FLAG.txt
+__pycache__
+*.pyc
+.git

@@ -1,0 +1,8 @@
+# Auto-reset the lab every 10 minutes so one student's DROP TABLE / stored XSS
+# can't stop the class. Install on the VM with:
+#
+#   sudo cp reset.cron /etc/cron.d/majal-lab-reset
+#   sudo chmod 644 /etc/cron.d/majal-lab-reset
+#
+# Adjust the path below to wherever you cloned the repo.
+*/10 * * * * root /home/majal/cyber/day4/lab/reset.sh >> /var/log/majal-lab-reset.log 2>&1

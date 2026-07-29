@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}My Account — Majal Store{% endblock %}
+{% block body %}
+
+<div class="panel">
+  <h2>Welcome, {{ u['fullname'] }}</h2>
+  <p class="sub">{{ '@' }}{{ u['username'] }}{% if u['is_admin'] %} · <span class="pill">admin</span>{% endif %}</p>
+  <table>
+    <tr><th>Email</th><td>{{ u['email'] }}</td></tr>
+    <tr><th>Shipping address</th><td>{{ u['address'] }}</td></tr>
+  </table>
+
+  <form method="get" action="{{ url_for('change_email') }}" style="margin-top:18px">
+    <label>Change account email</label>
+    <input type="email" name="to" placeholder="new@email.com">
+    <div style="margin-top:12px"><button class="btn alt" type="submit">Update email</button></div>
+  </form>
+</div>
+
+<div class="panel" style="margin-top:22px">
+  <h2 style="font-size:20px">Your orders</h2>
+  <table>
+    <tr><th>Order</th><th>Date</th><th>Total</th><th></th></tr>
+    {% for o in orders %}
+    <tr>
+      <td>#{{ o['id'] }}</td>
+      <td>{{ o['created'] }}</td>
+      <td>${{ '%.2f'|format(o['total']) }}</td>
+      <td><a href="{{ url_for('order', oid=o['id']) }}">View</a></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4" class="muted">No orders yet.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Majal Store — Shop{% endblock %}
+{% block body %}
+
+<div class="hero">
+  <h1>Gear for the field.</h1>
+  <p>Drones, power, optics and networking — shipped across the Gulf.</p>
+</div>
+
+<form class="searchbar" method="get" action="{{ url_for('index') }}">
+  <input type="text" name="q" value="{{ q }}" placeholder="Search products…" autocomplete="off">
+  <button class="btn" type="submit">Search</button>
+</form>
+
+{% if q %}
+  {# VULN 6 — Reflected XSS: the search term is written back with |safe. #}
+  <p class="muted">Results for “{{ q|safe }}” — {{ products|length }} item(s).</p>
+{% endif %}
+
+<div class="grid">
+  {% for p in products %}
+  <div class="card">
+    <span class="cat">{{ p['category'] }}</span>
+    <h3><a href="{{ url_for('product', pid=p['id']) }}">{{ p['name'] }}</a></h3>
+    <p class="blurb">{{ p['blurb'] }}</p>
+    <div class="foot">
+      <span class="price">${{ '%.2f'|format(p['price']) }}</span>
+      <span class="stock">{{ p['stock'] }} in stock</span>
+    </div>
+  </div>
+  {% else %}
+  <p class="muted">No products matched.</p>
+  {% endfor %}
+</div>
+{% endblock %}

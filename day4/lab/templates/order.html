@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Order #{{ o['id'] }} — Majal Store{% endblock %}
+{% block body %}
+
+<p><a href="{{ url_for('account') }}">← Back to account</a></p>
+
+<div class="panel">
+  <h2>Order #{{ o['id'] }}</h2>
+  <p class="sub">Placed {{ o['created'] }} · billed to {{ owner['fullname'] }}</p>
+  <table>
+    <tr><th>Item</th><th>Qty</th><th>Price</th></tr>
+    {% for it in items %}
+    <tr><td>{{ it['product'] }}</td><td>{{ it['qty'] }}</td><td>${{ '%.2f'|format(it['price']) }}</td></tr>
+    {% endfor %}
+    <tr><th>Total</th><td></td><td><strong>${{ '%.2f'|format(o['total']) }}</strong></td></tr>
+  </table>
+  <p style="margin-top:16px">
+    <a class="btn alt" href="{{ url_for('receipt') }}?file={{ o['receipt'] }}">Download receipt</a>
+  </p>
+</div>
+{% endblock %}

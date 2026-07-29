@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}{{ p['name'] }} — Majal Store{% endblock %}
+{% block body %}
+
+<p><a href="{{ url_for('index') }}">← Back to shop</a></p>
+
+<div class="panel">
+  <span class="cat pill">{{ p['category'] }}</span>
+  <h2>{{ p['name'] }}</h2>
+  <p class="sub">{{ p['blurb'] }}</p>
+  <p class="price" style="font-size:22px;font-weight:800;color:var(--petrol)">
+    ${{ '%.2f'|format(p['price']) }}</p>
+  <p class="muted">{{ p['stock'] }} in stock</p>
+</div>
+
+<div class="panel" style="margin-top:22px">
+  <h2 style="font-size:20px">Customer reviews</h2>
+  {% for r in reviews %}
+    <div class="review">
+      <span class="who">{{ r['author'] }}</span>
+      <span class="when">{{ r['created'] }}</span>
+      {# VULN 7 — Stored XSS: review body rendered unescaped. #}
+      <div class="body">{{ r['body']|safe }}</div>
+    </div>
+  {% else %}
+    <p class="muted">No reviews yet. Be the first.</p>
+  {% endfor %}
+
+  <form method="post" action="{{ url_for('add_review', pid=p['id']) }}" style="margin-top:18px">
+    {% if not user %}
+      <label>Your name</label>
+      <input type="text" name="author" placeholder="Name" autocomplete="off">
+    {% endif %}
+    <label>Your review</label>
+    <textarea name="body" placeholder="What did you think?"></textarea>
+    <div style="margin-top:12px"><button class="btn" type="submit">Post review</button></div>
+  </form>
+</div>
+{% endblock %}

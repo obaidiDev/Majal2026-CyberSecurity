@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Network Tools — Majal Store{% endblock %}
+{% block body %}
+
+<div class="panel">
+  <h2>Network Tools <span class="pill">admin</span></h2>
+  <p class="sub">Check connectivity from the store server to a host.</p>
+
+  <form method="post" action="{{ url_for('admin') }}">
+    <label>Host to ping</label>
+    <input type="text" name="host" value="{{ host }}" placeholder="8.8.8.8" autocomplete="off">
+    <div style="margin-top:12px"><button class="btn" type="submit">Ping</button></div>
+  </form>
+
+  {% if output is not none %}
+    <h3 style="margin-top:22px;font-size:14px;color:var(--muted)">Output</h3>
+    <pre class="term">{{ output }}</pre>
+  {% endif %}
+</div>
+{% endblock %}
