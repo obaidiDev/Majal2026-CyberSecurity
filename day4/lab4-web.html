@@ -152,6 +152,7 @@ footer{border-top:1px solid var(--line); background:var(--bg)}
 <li class="l2"><a href="#the-engagement">The Engagement</a></li>
 <li class="l2"><a href="#you-are-the-pen-tester">You Are the Pen Tester</a></li>
 <li class="l2"><a href="#your-objectives">Your Objectives</a></li>
+<li class="l2"><a href="#your-missions">Your Missions</a></li>
 <li class="l2"><a href="#setup">Setup — Getting Connected</a></li>
 <li class="l2"><a href="#rules-of-engagement">Rules of Engagement</a></li>
 <li class="l2"><a href="#how-to-work">How to Work the Target</a></li>
@@ -204,6 +205,38 @@ access unlocks next.</p>
 finding as you go — see the deliverable below. If it isn't written down, it
 didn't happen.</p>
 
+<h2 id="your-missions">Your Missions</h2>
+<p>Objectives tell you <em>how</em> to work; these missions are the <em>wins</em> to
+capture. Each one is a goal, not a hint — how you pull it off is the whole point.
+They roughly build on each other, so work down the list, and don't move on until
+you can actually <strong>prove</strong> the one you're on.</p>
+<p class="task"><span class="tid">MISSION 1</span><strong>Get in as the administrator.</strong>
+Reach the store's admin-only area — without anyone handing you the admin password.</p>
+<p class="task"><span class="tid">MISSION 2</span><strong>Run your own command on the server.</strong>
+Make the machine hosting the store execute a command <em>you</em> chose, and get it
+to tell you which user the application runs as.</p>
+<p class="task"><span class="tid">MISSION 3</span><strong>Capture the flag.</strong>
+Somewhere on that server sits a file named <code>FLAG.txt</code> that no page links
+to. Read it and recover the <code>MAJAL{&hellip;}</code> flag inside.</p>
+<p class="task"><span class="tid">MISSION 4</span><strong>Open a stranger's order.</strong>
+View the full details — items, total, buyer — of an order that does <em>not</em>
+belong to your account.</p>
+<p class="task"><span class="tid">MISSION 5</span><strong>Weaponise a link.</strong>
+Craft a single URL that, the moment someone opens it, runs JavaScript of your
+choosing in <em>their</em> browser.</p>
+<p class="task"><span class="tid">MISSION 6</span><strong>Attack the whole room.</strong>
+Leave something on a product page that runs in the browser of <em>every</em> visitor
+who views it afterwards — including the person sitting next to you.</p>
+<p class="task"><span class="tid">MISSION 7</span><strong>Hijack an account from afar.</strong>
+Build a page that, when a logged-in customer simply opens it, silently changes
+their account details — no password, no clicks on anything they'd suspect.</p>
+<p class="task"><span class="tid">MISSION 8</span><strong>Chain them.</strong>
+Find a place where one of your wins becomes the key to another you couldn't reach
+directly — then make sure all of it is written up in your report.</p>
+<div class="callout warn"><p>💡 That's eight missions covering the assessment. If a
+mission has you stumped, that's the job — try a few angles before you raise your
+hand for a nudge.</p></div>
+
 <h2 id="setup">Setup — Getting Connected</h2>
 <h3>The target</h3>
 <p>The store runs on a <strong>shared box on the lab network</strong>. Your instructor
@@ -223,6 +256,22 @@ is enough to complete the whole assessment.</li>
 (<strong>Burp Suite</strong> or <strong>OWASP ZAP</strong>), <code>curl</code> for hand-crafting
 requests, and content/parameter discovery tools. None are required.</li>
 </ul>
+<h3>Using Burp Suite (optional)</h3>
+<p>Burp lets you catch every request the browser sends, then replay and tamper with
+it — which is exactly what these missions call for. Because the store is plain
+<strong>HTTP</strong>, there's no certificate to install. Setup:</p>
+<ol>
+<li>Start Burp; its proxy listens on <code>127.0.0.1:8080</code> by default.</li>
+<li>Send your browser through it — either use Burp's built-in browser
+(<em>Proxy → Open Browser</em>), or point your browser's proxy at
+<code>127.0.0.1:8080</code>.</li>
+<li>Browse to the store. Requests appear under <strong>Proxy → HTTP history</strong>.</li>
+<li>Right-click any request → <strong>Send to Repeater</strong> to edit and resend it by
+hand, or <strong>Send to Intruder</strong> to try many values automatically.</li>
+</ol>
+<p>The free <strong>Community Edition</strong> is plenty (Intruder just runs slower). Explore
+the right-click menu on a captured request — Burp has tools that build whole
+attacks for you, once you work out which attack you need.</p>
 <div class="callout"><p><strong>Can't reach the shared box?</strong> Ask your instructor for
 the offline fallback — a self-contained Docker image of the same store you can run
 on your own laptop and attack locally.</p></div>
