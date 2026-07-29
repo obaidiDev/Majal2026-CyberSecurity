@@ -147,7 +147,6 @@
   .node .cl{color:var(--muted);word-break:break-all;flex:1}
   .node .usr{color:var(--faint);font-size:10px;flex:none}
   .node.root .nm{color:var(--ink)}
-  .node.mal .nm{color:var(--red)}
   .kid{border-left:1px dotted var(--line);margin-left:11px;padding-left:9px}
   .anc{border-left:2px solid var(--line2);margin:0 0 8px 3px;padding-left:7px;opacity:.72}
   .anc .node{padding:1px 5px}
@@ -710,7 +709,6 @@ ROWS.forEach((r,i)=>{
     FACTS.get(r[GI]).push(i);
   }
 });
-const MAL = /10\.8\.0\.42|\.cache\.tgz|cron\.d\/majal-metrics|pty\.spawn|dev\/tcp|192\.168\.8\.7/;
 
 function ancestry(g){
   const chain = [], seen = new Set();
@@ -735,8 +733,9 @@ function lineHtml(g, cls, depth){
 }
 function subtree(g, sel, depth){
   const i = START.get(g); if (i===undefined) return '';
-  const r = ROWS[i], cl = PATH[r[PI]];
-  let h = lineHtml(g, (g===sel?'sel ':'') + (MAL.test(cl)?'mal':''), 0);
+  const r = ROWS[i];
+  // no verdicts here: the tree shows what happened, the analyst decides what it means
+  let h = lineHtml(g, g===sel?'sel':'', 0);
   const facts = FACTS.get(g)||[];
   if (facts.length){
     h += '<div class="facts">' + facts.map(j=>{
