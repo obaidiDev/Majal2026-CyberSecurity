@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Majal — Red Team Portal</title>
+<style>
+  :root{
+    --ink:#12333D; --petrol:#00567C; --teal:#1F8F89; --red:#D64545; --reddk:#8E2B2B;
+    --amber:#F2C14E; --muted:#5C7880; --faint:#8AA1A8; --line:#2a4650;
+    --bg:#0b1f27; --panel:#102b34; --dark:#04303F;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    color:#DCEAEC;background:radial-gradient(1200px 700px at 70% -10%,#123742 0,#0b1f27 55%);}
+  a{color:var(--teal)}
+  .wrap{max-width:560px;margin:0 auto;padding:34px 20px 60px}
+  .top{display:flex;align-items:center;gap:12px;margin-bottom:26px}
+  .badge{font-family:var(--mono);font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+    color:#fff;background:linear-gradient(180deg,var(--red),var(--reddk));padding:5px 11px;border-radius:6px;
+    box-shadow:0 2px 12px rgba(214,69,69,.35)}
+  .brand{font-weight:800;font-size:18px;color:#fff;letter-spacing:.01em}
+  .brand span{color:var(--red)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:16px;
+    box-shadow:0 8px 30px rgba(0,0,0,.25)}
+  .card h2{margin:0 0 4px;font-size:14px;letter-spacing:.03em;color:#fff}
+  .card .sub{font-size:12px;color:var(--faint);margin-bottom:14px;line-height:1.5}
+  label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);margin-bottom:6px}
+  input{width:100%;font-family:var(--mono);font-size:14px;padding:11px 13px;color:#fff;background:#0a1a20;
+    border:1px solid var(--line);border-radius:8px;outline:none}
+  input:focus{border-color:var(--teal)}
+  .btn{width:100%;margin-top:12px;padding:12px;border:0;border-radius:8px;font-weight:800;font-size:14px;
+    letter-spacing:.03em;color:#fff;background:linear-gradient(180deg,var(--red),var(--reddk));cursor:pointer}
+  .btn:hover{filter:brightness(1.08)}
+  .btn.alt{background:linear-gradient(180deg,var(--teal),#146b66)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .me{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12px;color:var(--faint);
+    background:#0a1a20;border:1px solid var(--line);border-radius:8px;padding:9px 12px;margin-bottom:14px}
+  .me b{color:#fff}.me .ip{color:var(--amber)}
+  .warn{color:var(--amber)}
+  .msg{margin-top:12px;font-family:var(--mono);font-size:12.5px;border-radius:8px;padding:10px 12px;display:none}
+  .msg.ok{display:block;background:rgba(31,143,137,.14);border:1px solid #1F8F89;color:#8fe6df}
+  .msg.first{display:block;background:rgba(242,193,78,.14);border:1px solid var(--amber);color:#ffe6a6}
+  .msg.err{display:block;background:rgba(214,69,69,.12);border:1px solid var(--red);color:#f2b6b6}
+  .slots{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:4px}
+  .slot{text-align:center;border:1px dashed var(--line);border-radius:9px;padding:11px 4px;background:#0a1a20}
+  .slot.got{border-style:solid;border-color:var(--teal);background:rgba(31,143,137,.12)}
+  .slot .ic{font-size:17px}
+  .slot .nm{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--faint);margin-top:4px}
+  .slot.got .nm{color:#8fe6df}
+  .score{display:flex;align-items:baseline;gap:10px;margin-top:14px}
+  .score .n{font-family:var(--mono);font-size:30px;font-weight:800;color:#fff}
+  .score .l{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--faint)}
+  .hidden{display:none}
+  .foot{text-align:center;font-size:11.5px;color:var(--faint);margin-top:8px;line-height:1.6}
+  .foot code{color:var(--amber);font-family:var(--mono)}
+</style></head>
+<body>
+<div class="wrap">
+  <div class="top"><span class="badge">Red Team</span><div class="brand">Majal<span>Store</span> · Capture the Flag</div></div>
+
+  <!-- join -->
+  <div class="card" id="joincard">
+    <h2>Claim your handle</h2>
+    <div class="sub">Your handle goes on the leaderboard. The portal records the address you
+      connect from — <b class="warn">the same address the blue team is watching.</b> Stay quiet.</div>
+    <label>Handle</label>
+    <input id="handle" placeholder="e.g. n0ct3rn" autocomplete="off" maxlength="24">
+    <button class="btn" id="joinbtn">Enter the arena</button>
+    <div class="msg" id="joinmsg"></div>
+  </div>
+
+  <!-- play -->
+  <div class="card hidden" id="playcard">
+    <div class="me">playing as <b id="me-handle">—</b> · from <span class="ip" id="me-ip">—</span>
+      <span id="me-elim" class="warn hidden">· ELIMINATED</span></div>
+    <h2>Submit a flag</h2>
+    <div class="sub">Target: <code>http://majalstore/</code> — five flags, one per weakness.
+      Paste any <code>MAJAL{…}</code> you pull out.</div>
+    <label>Flag</label>
+    <input id="flag" placeholder="MAJAL{...}" autocomplete="off">
+    <button class="btn alt" id="submitbtn">Submit</button>
+    <div class="msg" id="submitmsg"></div>
+
+    <div class="slots" id="slots"></div>
+    <div class="score"><span class="n" id="score">0</span><span class="l">points</span></div>
+  </div>
+
+  <div class="foot">Big board: <a href="/board" target="_blank">/board</a> ·
+    change handle: <a href="#" id="leave">leave</a></div>
+</div>
+
+<script>
+const FLAGS = [["traversal","🗂️"],["sqli","💉"],["idor","🔓"],["cmdi","🐚"],["xss","📜"]];
+const st = { handle: localStorage.getItem("red_handle") || "", ip:"", flags:new Set(), score:0, elim:false };
+const $ = s=>document.querySelector(s);
+
+function renderSlots(){
+  $("#slots").innerHTML = FLAGS.map(([n,ic])=>{
+    const got = st.flags.has(n);
+    return `<div class="slot ${got?'got':''}"><div class="ic">${got?ic:'▢'}</div><div class="nm">${n}</div></div>`;
+  }).join("");
+  $("#score").textContent = st.score;
+}
+function showPlay(){
+  $("#joincard").classList.add("hidden"); $("#playcard").classList.remove("hidden");
+  $("#me-handle").textContent = st.handle; $("#me-ip").textContent = st.ip || "…";
+  $("#me-elim").classList.toggle("hidden", !st.elim);
+  $("#submitbtn").disabled = st.elim;
+  renderSlots();
+}
+async function refreshMe(){
+  try{
+    const d = await (await fetch("/api/board")).json();
+    const mine = d.red.find(r=>r.handle===st.handle);
+    if(mine){ st.flags=new Set(mine.flags); st.score=mine.score; st.elim=mine.eliminated;
+      $("#me-ip").textContent = mine.ip; if(st.elim){ $("#me-elim").classList.remove("hidden"); $("#submitbtn").disabled=true; }
+      renderSlots(); }
+  }catch(e){}
+}
+async function join(){
+  const h = $("#handle").value.trim();
+  const r = await fetch("/api/red/join",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({handle:h})});
+  const d = await r.json();
+  const m=$("#joinmsg");
+  if(!d.ok){ m.className="msg err"; m.textContent=d.error; return; }
+  st.handle=h; st.ip=d.ip; st.elim=d.eliminated; localStorage.setItem("red_handle",h);
+  showPlay(); refreshMe();
+}
+async function submit(){
+  const f=$("#flag").value.trim(); const m=$("#submitmsg");
+  if(!f) return;
+  const r = await fetch("/api/red/submit",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({handle:st.handle,flag:f})});
+  const d = await r.json();
+  if(!d.ok){ m.className="msg err"; m.textContent=d.error; if(d.error&&d.error.includes("eliminated")){ st.elim=true; showPlay(); } return; }
+  st.flags.add(d.flag); st.score=d.score;
+  m.className = d.first_blood? "msg first":"msg ok";
+  m.textContent = (d.first_blood?"🩸 FIRST BLOOD — ":"✓ ")+`${d.flag} flag captured  (+${d.points})`;
+  $("#flag").value=""; renderSlots();
+}
+$("#joinbtn").onclick=join;
+$("#handle").addEventListener("keydown",e=>{if(e.key==="Enter")join();});
+$("#submitbtn").onclick=submit;
+$("#flag").addEventListener("keydown",e=>{if(e.key==="Enter")submit();});
+$("#leave").onclick=e=>{e.preventDefault();localStorage.removeItem("red_handle");location.reload();};
+
+if(st.handle){ // rejoin silently to re-register IP
+  fetch("/api/red/join",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({handle:st.handle})})
+    .then(r=>r.json()).then(d=>{ if(d.ok){ st.ip=d.ip; st.elim=d.eliminated; showPlay(); refreshMe(); }
+      else { localStorage.removeItem("red_handle"); } });
+}
+setInterval(()=>{ if(st.handle) refreshMe(); }, 4000);
+</script>
+</body></html>

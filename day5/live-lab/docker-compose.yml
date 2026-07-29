@@ -1,0 +1,90 @@
+# Majal Store — live red-vs-blue lab.
+#
+#   store    the vulnerable website red attacks           -> host :80
+#   siem     collector + blue console + red portal +       -> host :8000
+#            scoreboard + instructor panel
+#   shopper  benign background traffic (innocents)
+#   admin    the stored-XSS victim (real headless Chromium)
+#
+# The store mints this run's flags into the `flags` volume on boot; the SIEM
+# reads them from there to validate red's submissions. A fixed 172.30/16 network
+# means the bots' peer address falls inside the store's trusted-proxy range, so
+# their X-Forwarded-For addresses are honoured while external red players' are not.
+#
+# ⚠️  Intentionally vulnerable + gives a shell inside a container. Tailnet / lab
+#     LAN only. Never expose to the public internet; no Funnel, no exit node.
+
+name: majal-livelab
+
+services:
+  store:
+    build: ./store
+    restart: unless-stopped
+    ports:
+      - "80:8080"
+    environment:
+      SIEM_URL: http://siem:8000
+      FLAGS_PATH: /shared/flags.json
+      VAULT_FLAG: /srv/majal/vault/traversal.flag
+      CMDI_FLAG: /srv/flags/cmdi.flag
+      TRUST_PROXY_CIDR: "172.16.0.0/12,127.0.0.0/8"
+    volumes:
+      - flags:/shared
+    depends_on:
+      - siem
+    pids_limit: 256
+    mem_limit: 2g
+    cpus: 2
+    logging: { options: { max-size: "10m", max-file: "3" } }
+
+  siem:
+    build: ./siem
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      FLAGS_PATH: /shared/flags.json
+      INSTRUCTOR_TOKEN: "${INSTRUCTOR_TOKEN:-majal-instructor}"
+      AMMO_START: "${AMMO_START:-30}"
+      COOLDOWN_SEC: "${COOLDOWN_SEC:-60}"
+      FRIENDLY_FIRE: "${FRIENDLY_FIRE:-eliminate}"
+      TRUST_PROXY_CIDR: "172.16.0.0/12,127.0.0.0/8"
+    volumes:
+      - flags:/shared:ro
+    mem_limit: 1g
+    logging: { options: { max-size: "10m", max-file: "3" } }
+
+  shopper:
+    build: ./bots
+    restart: unless-stopped
+    command: python shopper_bot.py
+    environment:
+      STORE_URL: http://store:8080
+      SHOPPERS: "${SHOPPERS:-12}"
+      SHOPPER_SUBNET: "${SHOPPER_SUBNET:-10.20.0}"
+    depends_on:
+      - store
+    mem_limit: 512m
+
+  admin:
+    build: ./bots
+    restart: unless-stopped
+    command: python admin_bot.py
+    environment:
+      STORE_URL: http://store:8080
+      ADMIN_USER: admin
+      ADMIN_PASS: "M@jal-Adm1n-2026"
+      ADMIN_IP: "192.168.8.10"
+      ADMIN_INTERVAL: "20"
+    depends_on:
+      - store
+    mem_limit: 1g
+
+volumes:
+  flags:
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.30.0.0/16

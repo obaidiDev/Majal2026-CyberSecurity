@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Majal — Instructor Control</title>
+<style>
+  :root{
+    --teal:#1F8F89; --petrol:#00567C; --red:#D64545; --reddk:#8E2B2B; --amber:#F2C14E;
+    --faint:#7f9aa2; --line:#22414b; --panel:#0f2830; --ink:#EAF3F4;
+    --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;color:var(--ink);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:radial-gradient(1200px 700px at 60% -10%,#123742 0,#071a21 60%)}
+  .top{display:flex;align-items:center;gap:14px;padding:13px 24px;border-bottom:1px solid var(--line)}
+  .brand{font-weight:800;font-size:18px}.brand span{color:var(--amber)}
+  .tag{font-family:var(--mono);font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+    background:linear-gradient(180deg,var(--amber),#c99a2e);color:#3a2c05;padding:4px 10px;border-radius:6px}
+  .spacer{flex:1}
+  .phasebtns{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .phasebtns button{border:0;background:#0c232b;color:var(--faint);font-size:12px;padding:7px 14px;cursor:pointer}
+  .phasebtns button.on{background:var(--teal);color:#fff}
+  .toggle{border:1px solid var(--line);border-radius:8px;background:#0c232b;color:var(--faint);
+    font-size:12px;padding:7px 12px;cursor:pointer}
+  .toggle.on{border-color:var(--amber);color:var(--amber)}
+  .wrap{display:grid;grid-template-columns:1fr 380px;gap:0;height:calc(100vh - 53px)}
+  .main{padding:18px 24px;overflow:auto}
+  .side{border-left:1px solid var(--line);padding:18px 20px;overflow:auto;background:rgba(0,0,0,.12)}
+  h3{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);margin:0 0 12px}
+  .cfg{font-family:var(--mono);font-size:11.5px;color:var(--faint);margin-bottom:16px}
+  .cfg b{color:var(--ink)}
+
+  /* kill queue */
+  .kill{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--amber);
+    border-radius:11px;padding:14px 16px;margin-bottom:11px}
+  .kill.confirmed{border-left-color:var(--red);opacity:.72}
+  .kill.dismissed{border-left-color:var(--faint);opacity:.5}
+  .kill .r1{display:flex;align-items:center;gap:10px}
+  .kill .ip{font-family:var(--mono);font-size:17px;font-weight:800;color:#fff}
+  .kill .who{font-size:13px;color:var(--amber);font-weight:700}
+  .kill .who.unknown{color:var(--faint);font-weight:500}
+  .kill .st{margin-left:auto;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;
+    padding:2px 8px;border-radius:20px}
+  .st.pending{background:rgba(242,193,78,.16);color:var(--amber)}
+  .st.confirmed{background:rgba(214,69,69,.16);color:#f2b6b6}
+  .st.dismissed{background:#16323b;color:var(--faint)}
+  .kill .meta{font-family:var(--mono);font-size:11px;color:var(--faint);margin:8px 0 12px}
+  .kill .meta b{color:var(--ink)}
+  .acts{display:flex;gap:8px}
+  .acts button{flex:1;padding:9px;border-radius:7px;border:1px solid var(--line);font-weight:700;font-size:12.5px;cursor:pointer;background:#0c232b;color:var(--ink)}
+  .acts .go{background:linear-gradient(180deg,var(--red),var(--reddk));border-color:var(--reddk);color:#fff}
+  .acts .no:hover{border-color:var(--faint)} .acts .go:hover{filter:brightness(1.08)}
+  .empty{color:var(--faint);text-align:center;padding:40px 16px;line-height:1.6;font-size:13px}
+
+  /* rosters */
+  .roster{margin-bottom:22px}
+  .prow{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;
+    padding:7px 9px;border-bottom:1px solid var(--line)}
+  .prow .h{color:#fff;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+  .prow .ip{color:var(--faint);font-size:10.5px}
+  .prow .sc{color:var(--amber);font-weight:700}
+  .prow.elim{opacity:.45}.prow.elim .h{text-decoration:line-through}
+  .prow .badge{font-size:9.5px;padding:1px 6px;border-radius:20px;background:#16323b;color:var(--faint)}
+  .prow .badge.called{background:rgba(242,193,78,.16);color:var(--amber)}
+  .lock{max-width:380px;margin:80px auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:26px}
+  .lock h2{margin:0 0 14px;font-size:16px}
+  .lock input{width:100%;font-family:var(--mono);padding:11px;border-radius:8px;border:1px solid var(--line);background:#0a1a20;color:#fff}
+  .lock button{width:100%;margin-top:12px;padding:11px;border:0;border-radius:8px;background:var(--teal);color:#fff;font-weight:800;cursor:pointer}
+</style></head>
+<body>
+<div id="app" style="display:none">
+  <div class="top">
+    <div class="brand">Majal<span>SOC</span></div><span class="tag">Instructor</span>
+    <div class="spacer"></div>
+    <div class="phasebtns" id="phasebtns">
+      <button data-phase="lobby">Lobby</button>
+      <button data-phase="live">Live</button>
+      <button data-phase="ended">Ended</button>
+    </div>
+    <button class="toggle" id="reveal">Reveal verdicts</button>
+  </div>
+  <div class="wrap">
+    <section class="main">
+      <h3>Kill queue — confirmed call-outs awaiting your action</h3>
+      <div class="cfg" id="cfg"></div>
+      <div id="queue"></div>
+    </section>
+    <aside class="side">
+      <div class="roster">
+        <h3>Red players</h3><div id="red"></div>
+      </div>
+      <div class="roster">
+        <h3>Blue analysts</h3><div id="blue"></div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<div id="lockscreen">
+  <div class="lock">
+    <h2>Instructor access</h2>
+    <input id="tok" type="password" placeholder="instructor token" autocomplete="off">
+    <button id="unlock">Unlock</button>
+  </div>
+</div>
+
+<script>
+const $ = s=>document.querySelector(s);
+const params = new URLSearchParams(location.search);
+let TOKEN = params.get("token") || localStorage.getItem("instr_token") || "";
+
+function esc(s){ return (s==null?"":String(s)).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+async function api(path, opts){
+  opts = opts||{}; opts.headers = Object.assign({"X-Instructor-Token":TOKEN,"Content-Type":"application/json"}, opts.headers||{});
+  return fetch(path, opts);
+}
+async function killAction(id, action){
+  await api("/api/instructor/kill",{method:"POST",body:JSON.stringify({id,action})});
+  tick();
+}
+async function setGame(body){
+  await api("/api/instructor/game",{method:"POST",body:JSON.stringify(body)});
+  tick();
+}
+
+function renderQueue(q){
+  const box=$("#queue");
+  const active = q.slice().reverse();
+  if(!q.length){ box.innerHTML='<div class="empty">No call-outs yet. When blue confirms an attacker, it lands here — verify the student powers off, then confirm the kill.</div>'; return; }
+  box.innerHTML = active.map(k=>{
+    const who = k.handle? `<span class="who">${esc(k.handle)}</span>` : `<span class="who unknown">unregistered attacker</span>`;
+    const when = new Date(k.ts*1000).toLocaleTimeString();
+    const acts = k.status==="pending"
+      ? `<div class="acts"><button class="go" onclick="killAction(${k.id},'confirm')">Confirm eliminated</button>
+         <button class="no" onclick="killAction(${k.id},'dismiss')">Dismiss</button></div>`
+      : k.status==="confirmed"
+      ? `<div class="acts"><button class="no" onclick="killAction(${k.id},'restore')">Undo — back to pending</button></div>`
+      : `<div class="acts"><button class="no" onclick="killAction(${k.id},'restore')">Reopen</button></div>`;
+    return `<div class="kill ${k.status}">
+      <div class="r1"><span class="ip">${esc(k.ip)}</span>${who}<span class="st ${k.status}">${k.status}</span></div>
+      <div class="meta">called by <b>${esc(k.by)}</b> · evidence seq <b>${k.evidence_seq}</b> · ${when}</div>
+      ${acts}</div>`;
+  }).join("");
+}
+function renderRed(red){
+  $("#red").innerHTML = red.length? red.map(r=>`
+    <div class="prow ${r.eliminated?'elim':''}">
+      <span class="h">${esc(r.handle)}</span><span class="ip">${esc(r.ip)}</span>
+      ${r.status==='called_out'?'<span class="badge called">called</span>':''}
+      <span class="sc">${r.score}</span></div>`).join("")
+    : '<div class="empty" style="padding:14px">no players yet</div>';
+}
+function renderBlue(blue){
+  $("#blue").innerHTML = blue.length? blue.map(b=>`
+    <div class="prow ${b.eliminated?'elim':''}">
+      <span class="h">${esc(b.handle)}</span>
+      <span class="badge">${b.ammo}⦿ ${b.correct}✓ ${b.wrong}✕</span>
+      <span class="sc">${b.score}</span></div>`).join("")
+    : '<div class="empty" style="padding:14px">no analysts yet</div>';
+}
+
+async function tick(){
+  try{
+    const r = await api("/api/instructor/state");
+    if(r.status===403){ showLock(); return; }
+    const d = await r.json();
+    if(!d.ok){ showLock(); return; }
+    $("#lockscreen").style.display="none"; $("#app").style.display="block";
+    localStorage.setItem("instr_token", TOKEN);
+    renderQueue(d.queue); renderRed(d.red); renderBlue(d.blue);
+    document.querySelectorAll("#phasebtns button").forEach(b=>b.classList.toggle("on", b.dataset.phase===d.game.phase));
+    $("#reveal").classList.toggle("on", d.game.reveal);
+    $("#reveal").textContent = d.game.reveal? "Verdicts revealed":"Reveal verdicts";
+    $("#cfg").innerHTML = `ammo <b>${d.config.ammo}</b> · cooldown <b>${d.config.cooldown}s</b> · friendly fire <b>${d.config.friendly_fire}</b>`;
+  }catch(e){}
+}
+function showLock(){ $("#app").style.display="none"; $("#lockscreen").style.display="block"; }
+
+document.querySelectorAll("#phasebtns button").forEach(b=>b.onclick=()=>setGame({phase:b.dataset.phase}));
+$("#reveal").onclick=()=>setGame({reveal: !$("#reveal").classList.contains("on")});
+$("#unlock").onclick=()=>{ TOKEN=$("#tok").value.trim(); localStorage.setItem("instr_token",TOKEN); tick(); };
+$("#tok").addEventListener("keydown",e=>{if(e.key==="Enter")$("#unlock").click();});
+
+if(TOKEN){ tick(); } else { showLock(); }
+setInterval(()=>{ if(TOKEN) tick(); }, 2000);
+</script>
+</body></html>

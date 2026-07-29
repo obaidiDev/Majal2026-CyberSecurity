@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Majal — Red vs Blue Scoreboard</title>
+<style>
+  :root{
+    --teal:#1F8F89; --red:#D64545; --reddk:#8E2B2B; --amber:#F2C14E;
+    --faint:#7f9aa2; --line:#22414b; --panel:#0f2830; --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;color:#EAF3F4;font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:radial-gradient(1400px 800px at 50% -20%,#123742 0,#071a21 60%);overflow:hidden}
+  .top{display:flex;align-items:center;gap:16px;padding:16px 30px;border-bottom:1px solid var(--line)}
+  .brand{font-weight:800;font-size:24px;letter-spacing:.01em}
+  .brand span{color:var(--teal)}
+  .vs{font-family:var(--mono);font-weight:800;color:var(--faint);font-size:13px;letter-spacing:.2em}
+  .spacer{flex:1}
+  .clock{font-family:var(--mono);font-size:14px;color:var(--faint)}
+  .live{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:12px;color:var(--faint)}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--teal);animation:p 1.8s infinite}
+  @keyframes p{0%{box-shadow:0 0 0 0 rgba(31,143,137,.5)}70%{box-shadow:0 0 0 8px rgba(31,143,137,0)}100%{box-shadow:0 0 0 0 rgba(31,143,137,0)}}
+
+  .grid{display:grid;grid-template-columns:1fr 340px;gap:0;height:calc(100vh - 69px)}
+  .red{padding:20px 30px;overflow:hidden;display:flex;flex-direction:column}
+  .side{border-left:1px solid var(--line);padding:20px 24px;display:flex;flex-direction:column;gap:16px;background:rgba(0,0,0,.12)}
+
+  .h{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .h .tag{font-family:var(--mono);font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+    padding:5px 12px;border-radius:6px;color:#fff}
+  .h .tag.r{background:linear-gradient(180deg,var(--red),var(--reddk))}
+  .h .tag.b{background:linear-gradient(180deg,#00567C,#023a54)}
+  .h .cap{margin-left:auto;font-family:var(--mono);font-size:14px;color:var(--faint)}
+  .h .cap b{color:#fff}
+
+  /* leaderboard */
+  .lb{flex:1;overflow:auto}
+  .row{display:grid;grid-template-columns:52px 1fr auto 210px;align-items:center;gap:14px;
+    padding:12px 14px;border-radius:12px;margin-bottom:9px;background:var(--panel);border:1px solid var(--line);
+    transition:transform .3s}
+  .row.top1{background:linear-gradient(90deg,rgba(242,193,78,.18),var(--panel));border-color:var(--amber)}
+  .row.elim{opacity:.42;filter:grayscale(.6)}
+  .row.elim .name{text-decoration:line-through}
+  .rank{font-family:var(--mono);font-size:22px;font-weight:800;color:var(--faint);text-align:center}
+  .row.top1 .rank{color:var(--amber)}
+  .name{font-size:19px;font-weight:700;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .name .ip{font-family:var(--mono);font-size:12px;color:var(--faint);margin-left:8px}
+  .pts{font-family:var(--mono);font-size:22px;font-weight:800;color:#fff;text-align:right}
+  .pts .l{font-size:11px;color:var(--faint);font-weight:500;margin-left:4px}
+  .fl{display:flex;gap:6px;justify-content:flex-end}
+  .fl .s{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;
+    font-size:15px;background:#0a1a20;border:1px solid var(--line);opacity:.34}
+  .fl .s.got{opacity:1;border-color:var(--teal);background:rgba(31,143,137,.16)}
+  .kill{margin-left:6px;font-family:var(--mono);font-size:11px;color:var(--red);font-weight:800;letter-spacing:.05em}
+  .empty{color:var(--faint);text-align:center;padding:60px 20px;font-size:16px;line-height:1.7}
+
+  /* side panels */
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+  .stat .l{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--faint)}
+  .stat .big{font-family:var(--mono);font-size:44px;font-weight:800;color:#fff;line-height:1.1;margin-top:6px}
+  .stat.b .big{color:#6fbfe6}
+  .flagbar{display:flex;gap:6px;margin-top:12px}
+  .flagbar .c{flex:1;height:8px;border-radius:6px;background:#0a1a20;border:1px solid var(--line)}
+  .flagbar .c.got{background:var(--teal);border-color:var(--teal)}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .mini{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;text-align:center}
+  .mini .n{font-family:var(--mono);font-size:30px;font-weight:800;color:#fff}
+  .mini.ok .n{color:var(--teal)} .mini.bad .n{color:var(--red)}
+  .mini .l{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);margin-top:2px}
+  .note{font-size:12px;color:var(--faint);line-height:1.6;text-align:center;margin-top:auto}
+  .note code{color:var(--amber);font-family:var(--mono)}
+</style></head>
+<body>
+<div class="top">
+  <div class="brand">Majal<span>Store</span></div>
+  <div class="vs">RED · vs · BLUE</div>
+  <div class="spacer"></div>
+  <div class="live"><span class="dot"></span><span id="ago">live</span></div>
+  <div class="clock" id="clock">—</div>
+</div>
+
+<div class="grid">
+  <section class="red">
+    <div class="h"><span class="tag r">Red Team</span>
+      <span class="cap">flags captured <b id="capnum">0/5</b> · <b id="players">0</b> players</span></div>
+    <div class="lb" id="lb"><div class="empty">Waiting for the first attacker to claim a handle…</div></div>
+  </section>
+
+  <aside class="side">
+    <div class="h"><span class="tag b">Blue Team</span></div>
+    <div class="stat b"><div class="l">Attackers eliminated</div><div class="big" id="elim">0</div></div>
+    <div class="two">
+      <div class="mini ok"><div class="n" id="cc">0</div><div class="l">correct calls</div></div>
+      <div class="mini bad"><div class="n" id="cw">0</div><div class="l">wrong calls</div></div>
+    </div>
+    <div class="stat"><div class="l">Flags still on the board</div>
+      <div class="big" id="remain">5</div>
+      <div class="flagbar" id="flagbar"></div>
+    </div>
+    <div class="note">Red captures flags at <code>/red</code>.<br>
+      Blue hunts on the live console and calls out attacker IPs.<br>
+      A confirmed call takes an attacker off the board.</div>
+  </aside>
+</div>
+
+<script>
+const FLAG_ICON = {traversal:"🗂️", sqli:"💉", idor:"🔓", cmdi:"🐚", xss:"📜"};
+const ORDER = ["traversal","sqli","idor","cmdi","xss"];
+const $ = s=>document.querySelector(s);
+let lastUpdate = 0;
+
+function medal(i){ return i===0?"①":i===1?"②":i===2?"③":(i+1); }
+
+async function tick(){
+  try{
+    const d = await (await fetch("/api/board")).json();
+    lastUpdate = Date.now();
+    const red = d.red;
+    $("#capnum").textContent = `${d.flags.captured}/${d.flags.total}`;
+    $("#players").textContent = red.length;
+    $("#elim").textContent = d.blue.eliminated;
+    $("#cc").textContent = d.blue.calls_correct;
+    $("#cw").textContent = d.blue.calls_wrong;
+    $("#remain").textContent = d.flags.total - d.flags.captured;
+
+    // which flags are captured by anyone
+    const taken = new Set(); red.forEach(r=>r.flags.forEach(f=>taken.add(f)));
+    $("#flagbar").innerHTML = ORDER.map(f=>`<div class="c ${taken.has(f)?'got':''}" title="${f}"></div>`).join("");
+
+    const lb = $("#lb");
+    if(!red.length){ lb.innerHTML='<div class="empty">Waiting for the first attacker to claim a handle…</div>'; return; }
+    lb.innerHTML = red.map((r,i)=>{
+      const flags = ORDER.map(f=>`<div class="s ${r.flags.includes(f)?'got':''}">${FLAG_ICON[f]}</div>`).join("");
+      return `<div class="row ${i===0&&r.score>0?'top1':''} ${r.eliminated?'elim':''}">
+        <div class="rank">${medal(i)}</div>
+        <div class="name">${escapeHtml(r.handle)}<span class="ip">${r.ip}</span>${r.eliminated?'<span class="kill">✕ ELIMINATED</span>':''}</div>
+        <div class="pts">${r.score}<span class="l">pts</span></div>
+        <div class="fl">${flags}</div>
+      </div>`;
+    }).join("");
+  }catch(e){}
+}
+function escapeHtml(s){ return s.replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function clock(){
+  $("#clock").textContent = new Date().toLocaleTimeString();
+  const s = lastUpdate? Math.round((Date.now()-lastUpdate)/1000):null;
+  $("#ago").textContent = s==null? "live" : s<3? "live" : s+"s ago";
+}
+tick(); setInterval(tick, 2000); setInterval(clock, 1000); clock();
+</script>
+</body></html>
