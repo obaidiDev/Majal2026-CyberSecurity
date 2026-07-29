@@ -48,6 +48,23 @@
   .console .line { color: #7fe3dc; line-height: 1.5; word-break: break-all; }
   .console .line .steal { color: #ff8a8a; font-weight: 700; }
   .console .empty { color: #4d6b74; font-style: italic; }
+
+  /* what the site actually saved */
+  .blanknote { margin-top: 6px; font-size: 10.5px; line-height: 1.4; color: #D64545; font-weight: 700; min-height: 15px; }
+  .db { margin-top: 10px; background: #04303F; border-radius: 9px; padding: 8px 11px 9px; }
+  .dbh { display: flex; justify-content: space-between; align-items: baseline; font-size: 10px; text-transform: uppercase;
+    letter-spacing: .07em; color: #5f97a3; margin-bottom: 5px; }
+  .dbh .r { font-family: "JetBrains Mono", monospace; text-transform: none; letter-spacing: 0; }
+  table.tbl { width: 100%; border-collapse: collapse; font-family: "JetBrains Mono", monospace; font-size: 11px; color: #9fc9cf; }
+  table.tbl th { text-align: left; font-size: 9.5px; text-transform: uppercase; letter-spacing: .05em; color: #5f97a3;
+    font-weight: 700; padding: 0 10px 3px 0; border-bottom: 1px solid rgba(159,201,207,.2); }
+  table.tbl td { padding: 4px 10px 4px 0; border-bottom: 1px solid rgba(159,201,207,.08); vertical-align: top; word-break: break-all; }
+  table.tbl td.id { color: #5f97a3; width: 44px; }
+  table.tbl td.who { color: #7fe3dc; width: 76px; }
+  table.tbl tr.hot td.body { color: #ff8a8a; font-weight: 700; }
+  .dbnote { margin-top: 7px; font-size: 11px; line-height: 1.45; color: #9fc9cf; }
+  .dbnote b { color: #fff; }
+  .dbnote.bad { color: #ff8a8a; } .dbnote.good { color: #7fe0b0; }
 </style>
 </head><body>
 <div class="wrap">
@@ -93,7 +110,14 @@
           <div class="flash" id="flash"><span class="big">⚠</span><span>Attacker's script just ran<br>in the victim's browser</span><span class="s" id="flashsub"></span></div>
         </div>
       </div>
+      <div class="blanknote" id="blanknote"></div>
     </div>
+  </div>
+
+  <div class="db">
+    <div class="dbh"><span>what the site saved · table <span style="color:#7fe3dc">reviews</span></span><span class="r" id="dbcount">1 row</span></div>
+    <table class="tbl" id="tbl"></table>
+    <div class="dbnote" id="dbnote"></div>
   </div>
 </div>
 
@@ -135,7 +159,51 @@ function activateScripts(container) {
 
 function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
 
+var tbl = document.getElementById("tbl"), dbcount = document.getElementById("dbcount");
+var dbnote = document.getElementById("dbnote"), blanknote = document.getElementById("blanknote");
+
 var seeded = [{ who:"Layla", body:"Battery lasts all day 👍" }];
+var FIRST_ID = 41;
+
+/* what a review looks like on screen once the browser is done with it:
+   scripts draw nothing, and a tag with no text between it draws nothing either */
+function visibleText(html) {
+  return String(html).replace(/<script[\s\S]*?<\/script>/gi, "").replace(/<[^>]*>/g, "").trim();
+}
+
+/* ③ the stored row — the payload really is sitting in the table, even when the
+   feed shows an empty line, and it is identical in both modes */
+function renderDb(rows) {
+  var html = '<tr><th>id</th><th>author</th><th>body — exactly the characters that were typed</th></tr>';
+  var payloadId = 0;
+  rows.forEach(function (r, i) {
+    var hot = !r.trusted && /[<>]/.test(r.body);
+    if (hot) payloadId = FIRST_ID + i;
+    html += '<tr class="' + (hot ? "hot" : "") + '"><td class="id">' + (FIRST_ID + i) + '</td>' +
+            '<td class="who">' + esc(r.who) + '</td><td class="body">' + esc(r.body) + '</td></tr>';
+  });
+  tbl.innerHTML = html;
+  dbcount.textContent = rows.length + (rows.length === 1 ? " row" : " rows");
+
+  if (!payloadId) {
+    dbnote.className = "dbnote";
+    dbnote.innerHTML = "The site stores every review as <b>plain characters</b> — that part is normal. The bug is what the page does with those characters when it shows them to the next visitor.";
+  } else if (vuln) {
+    dbnote.className = "dbnote bad";
+    dbnote.innerHTML = "Row <b>#" + payloadId + "</b> is now saved. <b>Every</b> visitor who opens this product page is served that row <b>as HTML</b> — so it runs in their browser. Written once, fires forever, with no link to click.";
+  } else {
+    dbnote.className = "dbnote good";
+    dbnote.innerHTML = "<b>The same row, unchanged</b> — the fix was never in the database. On the way <b>out</b>, the page prints those characters as text, so visitors see the payload instead of running it.";
+  }
+
+  var last = rows[rows.length - 1];
+  if (payloadId && vuln && last && !last.trusted && visibleText(last.body) === "") {
+    blanknote.innerHTML = "↑ the attacker's review renders as an <b>empty line</b> — a script tag draws nothing. To a visitor the page looks completely normal; the payload is row #" + payloadId + " below.";
+  } else {
+    blanknote.innerHTML = "";
+  }
+}
+
 function renderFeed(comments) {
   feed.innerHTML = "";
   comments.forEach(function (c) {
@@ -148,19 +216,19 @@ function renderFeed(comments) {
     row.appendChild(body); feed.appendChild(row);
     if (vuln && !c.trusted) activateScripts(body);   // a real page would have run these on parse
   });
+  renderDb(comments);   // the table the site saved it all in
 }
 
 var posted = [];
+function allRows() {
+  return seeded.map(function(s){ return { who:s.who, body:s.body, trusted:true }; }).concat(posted);
+}
 function post() {
   var val = cmt.value;
   posted.push({ who: "You", body: val });
-  var all = seeded.map(function(s){ return { who:s.who, body:s.body, trusted:true }; }).concat(posted);
-  renderFeed(all);   // victim's browser renders the feed — payload fires here if vulnerable
+  renderFeed(allRows());   // victim's browser renders the feed — payload fires here if vulnerable
 }
-function reRender() {
-  var all = seeded.map(function(s){ return { who:s.who, body:s.body, trusted:true }; }).concat(posted);
-  renderFeed(all);
-}
+function reRender() { renderFeed(allRows()); }
 
 document.getElementById("post").addEventListener("click", post);
 Array.prototype.forEach.call(document.querySelectorAll(".presets button"), function (b) {

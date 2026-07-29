@@ -352,19 +352,22 @@
     <!-- ================= XSS ================= -->
     <section>
       <p class="kicker">Injection · into the browser this time</p>
-      <h2>XSS: your comment becomes everyone else's code</h2>
+      <h2>Stored XSS: your comment becomes everyone's code</h2>
       <iframe class="wframe" style="height:566px"
-              src="widgets/xss.html?v=2"
+              src="widgets/xss.html?v=3"
               title="Stored XSS: inject a script, steal a session cookie" scrolling="auto"></iframe>
       <aside class="notes">Same disease, different tier: SQLi injects into the database; XSS injects into the PAGE. One-line
       primer: a session cookie is the token that proves you're logged in — steal it and you ARE that user, no password.
       Drive it: post a normal comment (renders as text), then post &lt;script&gt;steal(document.cookie)&lt;/script&gt;. Because
       the app writes your comment into the page without encoding it, the victim's browser RUNS it — watch the victim's cookie
       land in the attacker console. Note the comment itself looks EMPTY in the feed: a script tag renders as nothing, which is
-      exactly what stored XSS looks like to a normal visitor. Then hit the second payload — same theft with
+      exactly what stored XSS looks like to a normal visitor — then drop to the <strong>reviews table</strong> at the bottom
+      and show that the payload is very much there, saved as row #42, exactly as typed. That table is the "stored" in stored
+      XSS: written once, served to every visitor from then on, no link to click. Then hit the second payload — same theft with
       &lt;img src=x onerror=…&gt;, no &lt;script&gt; tag at all — and say the line: blocking the word "script" is not a fix,
       because there are a hundred other tags that run code. Then flip
-      "encode output on render": the same script now shows up as visible &lt;script&gt; text — inert. Land: the fix is to
+      "encode output on render": the same script now shows up as visible &lt;script&gt; text — inert, while the stored row is
+      byte-for-byte unchanged. Say that out loud: the fix is not in the database, it's at output time. Land: the fix is to
       treat input as data to DISPLAY, never as HTML to execute. This one is <em>stored</em> XSS — saved once, fires for every
       visitor; the next slide does the other flavour.</aside>
     </section>
