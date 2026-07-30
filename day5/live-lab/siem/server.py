@@ -35,7 +35,7 @@ FLAG_POINTS = {"traversal": 100, "sqli": 150, "idor": 150, "cmdi": 200, "xss": 2
 FIRST_BLOOD_BONUS = 50
 
 # --- blue-team call-out economy (all tunable at deploy time) ----------------
-AMMO_START = int(os.environ.get("AMMO_START", "30"))
+AMMO_START = int(os.environ.get("AMMO_START", "5"))
 COOLDOWN_SEC = int(os.environ.get("COOLDOWN_SEC", "60"))
 CORRECT_POINTS = int(os.environ.get("CORRECT_POINTS", "300"))
 WRONG_POINTS = int(os.environ.get("WRONG_POINTS", "150"))

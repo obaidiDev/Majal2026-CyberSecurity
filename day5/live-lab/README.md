@@ -75,7 +75,7 @@ From your workstation, push and start it on the VM in one shot:
 
 ### Tuning (env vars, all optional)
 
-`INSTRUCTOR_TOKEN` · `AMMO_START` (30) · `COOLDOWN_SEC` (60) ·
+`INSTRUCTOR_TOKEN` · `AMMO_START` (5) · `COOLDOWN_SEC` (60) ·
 `FRIENDLY_FIRE` (`eliminate` | `penalty`) · `SHOPPERS` (12) · `SHOPPER_SUBNET` (10.20.0)
 
 ```bash

@@ -59,7 +59,7 @@ INSTRUCTOR_TOKEN=<secret> docker compose up -d
 | Env | Default | Effect |
 |-----|---------|--------|
 | `FRIENDLY_FIRE` | `eliminate` | wrong call ends the analyst's shift. Set `penalty` to only dock points/ammo/cooldown so the room can't empty out early. |
-| `AMMO_START` | `30` | wrong calls an analyst can afford (only bites in `penalty` mode; in `eliminate` mode one wrong call ends the shift regardless). |
+| `AMMO_START` | `5` | wrong calls an analyst can afford (only bites in `penalty` mode; in `eliminate` mode one wrong call ends the shift regardless). |
 | `COOLDOWN_SEC` | `60` | lockout after a wrong call. |
 | `SHOPPERS` | `12` | more shoppers = more innocents = more danger in calling on volume. |
 

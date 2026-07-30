@@ -45,7 +45,7 @@ services:
     environment:
       FLAGS_PATH: /shared/flags.json
       INSTRUCTOR_TOKEN: "${INSTRUCTOR_TOKEN:-majal-instructor}"
-      AMMO_START: "${AMMO_START:-30}"
+      AMMO_START: "${AMMO_START:-5}"
       COOLDOWN_SEC: "${COOLDOWN_SEC:-60}"
       FRIENDLY_FIRE: "${FRIENDLY_FIRE:-eliminate}"
       TRUST_PROXY_CIDR: "172.16.0.0/12,127.0.0.0/8"
