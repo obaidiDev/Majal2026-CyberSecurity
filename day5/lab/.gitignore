@@ -3,12 +3,12 @@
 !auth.log
 !source/majal-day4-raw.log
 
-# Instructor-only. THIS REPOSITORY IS PUBLIC — do not commit any of these.
+# Instructor-only. THIS REPOSITORY IS PUBLIC — do not commit either of these.
 #   ANSWER_KEY.md    every answer in plain text
-#   SOLUTIONS.md     the worked walkthrough — answers plus the derivations,
-#                    including which fields are 'cannot be determined'
 #   build/           make_fields.py holds the plaintext answers the console
 #                    hashes to hide; verify.py names every attacker address
+#
+# SOLUTIONS.md is published deliberately — the worked walkthrough is public
+# course material. The key and the generators stay out.
 ANSWER_KEY.md
-SOLUTIONS.md
 build/
