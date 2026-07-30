@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Majal — Cyber Day 5: The Defender's Chair</title>
+  <link rel="stylesheet" href="../shared/dist/reset.css">
+  <link rel="stylesheet" href="../shared/dist/reveal.css">
+  <link rel="stylesheet" href="../shared/css/course.css?v=5">
+  <style>
+    /* Day-5 concept slides — native cards/grids */
+    .k2 { display: grid; gap: 14px; margin-top: .3em; }
+    .k2.c2 { grid-template-columns: 1fr 1fr; }
+    .k2.c3 { grid-template-columns: repeat(3,1fr); }
+    .k2.c4 { grid-template-columns: repeat(4,1fr); }
+    .k2 .card h3 { margin: 0 0 .3em; font-size: .82em; color: var(--petrol); letter-spacing: -.01em; }
+    .k2 .card h3 .tag { font-family: var(--mono); font-size: .58em; font-weight: 700; color: var(--muted);
+      letter-spacing: .05em; text-transform: uppercase; margin-left: .4em; }
+    .k2 .card p { margin: 0; font-size: .64em; color: var(--muted); line-height: 1.42; }
+    .k2 .card .ex { display: block; margin-top: .55em; font-size: .6em; color: var(--slate);
+      border-top: 1px dashed var(--line); padding-top: .45em; }
+    .k2 .card .ex b { color: var(--petrol); font-weight: 700; }
+
+    /* the SOC pipeline: four stages with the tools that live in each */
+    .pipe { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin-top: .55em;
+      border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+    .pipe .stg { padding: .75em .85em; border-right: 1px solid var(--line); background: var(--panel);
+      position: relative; }
+    .pipe .stg:last-child { border-right: 0; }
+    .pipe .stg .num { font-family: var(--mono); font-size: .5em; font-weight: 800; letter-spacing: .16em;
+      color: var(--turq); text-transform: uppercase; }
+    .pipe .stg h3 { margin: .12em 0 .3em; font-size: .74em; color: var(--petrol); }
+    .pipe .stg .q { font-size: .56em; color: var(--muted); line-height: 1.38; min-height: 3.4em; }
+    .pipe .stg .tools { margin-top: .5em; border-top: 1px dashed var(--line); padding-top: .45em;
+      display: flex; flex-wrap: wrap; gap: .28em; }
+    .pipe .stg .tools span { font-family: var(--mono); font-size: .5em; font-weight: 700; letter-spacing: .04em;
+      background: rgba(0,86,125,.09); color: var(--petrol); border-radius: 999px; padding: .28em .65em; }
+    .pipe .stg .tools span.soft { background: rgba(18,51,61,.055); color: var(--muted); }
+  </style>
+</head>
+<body>
+<div class="reveal">
+  <div class="slides">
+
+    <!-- ================= TITLE ================= -->
+    <section>
+      <p class="kicker">Day 5 · The Defender's Chair</p>
+      <h1>For four days you were<br>the thing on the screen.</h1>
+      <p class="sub" style="margin-top:1.2em;max-width:27em">Every payload you fired this week landed in somebody's
+      log. Today you sit on the other side of that glass. The job is not to know more tools than the attacker — it is to
+      answer one question, over and over, under time pressure: <em>is this thing I am looking at actually bad?</em></p>
+      <aside class="notes">Set the chair-swap in one breath. They are not learning "defence" as a topic; they are
+      learning a JOB — the SOC analyst's. Two promises for the day: (1) by lunch they will know what every tool in a SOC
+      actually does, because they will have driven a small version of each; (2) after lunch they investigate a real
+      breach, then defend live against each other. Do NOT let this become an acronym lecture — every tool today gets
+      answered with the same question: what does it SEE, and what can it therefore never catch?</aside>
+    </section>
+
+    <!-- ================= FRAMING: THE PIPELINE ================= -->
+    <section>
+      <p class="kicker">Foundations · what a SOC actually is</p>
+      <h2>Not a room full of screens — a pipeline with four stages</h2>
+      <div class="pipe">
+        <div class="stg">
+          <div class="num">Stage 1</div>
+          <h3>Collect</h3>
+          <div class="q">Something has to be <em>watching</em>. If nothing recorded it, it did not happen — and you
+            will never find it.</div>
+          <div class="tools"><span>EDR</span><span>IDS</span><span>app logs</span><span class="soft">auth</span><span class="soft">netflow</span></div>
+        </div>
+        <div class="stg">
+          <div class="num">Stage 2</div>
+          <h3>Detect</h3>
+          <div class="q">A rule decides which of the millions of recorded events deserve a human. Signatures, behaviour,
+            baselines.</div>
+          <div class="tools"><span>AV</span><span>IDS/IPS</span><span>DLP</span><span class="soft">rules</span></div>
+        </div>
+        <div class="stg">
+          <div class="num">Stage 3</div>
+          <h3>Triage</h3>
+          <div class="q">A human joins events from different sources into a story, and decides: real, or noise? This is
+            the actual job.</div>
+          <div class="tools"><span>SIEM</span><span class="soft">the analyst</span></div>
+        </div>
+        <div class="stg">
+          <div class="num">Stage 4</div>
+          <h3>Respond</h3>
+          <div class="q">Contain it, prove what happened, stop it recurring — fast enough to matter, without breaking
+            the business.</div>
+          <div class="tools"><span>SOAR</span><span class="soft">IR playbook</span></div>
+        </div>
+      </div>
+      <div class="callout" style="margin-top:.75em">Every acronym today is just <strong>an answer to one of these four
+      questions.</strong> For each one, we ask the same thing back: <em>what does it see — and what can it therefore
+      never catch?</em></div>
+      <aside class="notes">This is the spine of the whole morning; put it up and keep referring back to it. Land three
+      things. (1) Collection is upstream of everything — no telemetry, no detection, no investigation, full stop. That is
+      the logging gap they will hit in this afternoon's lab, so plant it now. (2) Detection is a FILTER, not an oracle;
+      it decides who gets woken up. (3) Triage is where the human lives — the tools do not answer "is this bad," they
+      only narrow it down. Tell them explicitly: you are about to drive a small version of each tool. Do not memorise the
+      acronyms; memorise the coverage question.</aside>
+    </section>
+
+    <!-- ================= AV — SIGNATURES ================= -->
+    <section>
+      <p class="kicker">Detect · antivirus</p>
+      <h2>AV asks one question: seen this exact file before?</h2>
+      <iframe class="wframe" style="height:404px"
+              src="widgets/av_signature.html?v=1"
+              title="Signature scanning, and what one byte does to it" scrolling="auto"></iframe>
+      <aside class="notes">Start with the oldest tool so everything after it has something to improve on. Drive it in
+      three beats. (1) Press <b>Scan file</b> — the head walks the bytes, the hash lands, and it matches
+      Trojan.Shell.Majal.a in the database. Say what just happened: AV <em>read</em> the file, hashed it, looked the hash
+      up. It never ran anything. That is why it is cheap enough to scan every file on every machine. (2) Press
+      <b>Flip one byte</b> — point out that the byte is inside a <em>comment</em>, "v2" to "v3": the shell never even
+      executes it, the file does exactly the same damage. Scan again → CLEAN. Read the "59/64 hex digits changed" counter
+      out loud and call back to Day 1's avalanche effect. (3) Let someone in the room click a random byte in the grid
+      themselves. Land the sentence: <em>a signature describes a file somebody already caught.</em> Real AV does add
+      heuristics and YARA-style string rules, which is worth one sentence — but the structural limit stands, and it is
+      exactly why the next tool exists. Ask the room the handoff question before you advance: if renaming and recompiling
+      defeat the hash, what should we watch instead?</aside>
+    </section>
+
+    <!-- ================= EDR — LINEAGE ================= -->
+    <section>
+      <p class="kicker">Collect + detect · endpoint detection &amp; response</p>
+      <h2>EDR watches what a process <em>does</em>, and who started it</h2>
+      <iframe class="wframe" style="height:470px"
+              src="widgets/edr_lineage.html?v=1"
+              title="Process lineage detection and its ceiling" scrolling="auto"></iframe>
+      <aside class="notes">The answer to the question you just asked. Same attacker, same server, no malware file at
+      all. Walk the escalation — each click is a beat, and the whole point is that the learner drives the attacker's side.
+      (1) <b>Run the attack</b> as-is: php-fpm spawns sh spawns curl. Three alerts. Say it plainly — a web server has no
+      legitimate reason to ever spawn a shell; that parent→child EDGE is the detection, and no file was scanned to find
+      it. (2) Press <b>rename the binary</b>: the name-based rule goes grey, the lineage rule stays red. This is the beat
+      to land hard — you cannot rename your way out of who your parent is. Note the AV panel too: it is right to allow
+      the file; curl IS legitimate. This is "living off the land," and they will meet it by name in the lab. (3)
+      <b>run the tool directly</b> — no shell, weaker signal, still a signal. (4) <b>stay inside the app</b> — the
+      webshell opens the socket from inside php-fpm; both lineage rules go silent because there is no child process to
+      see. (5) Add <b>blend in: 443 → a cloud host</b> — everything goes silent. Do not rush past this. Ask: "did we lose
+      because our tool is bad?" No — the attacker gave up capability to get quiet, and that is the trade you are forcing
+      them to make. Then hand off: the only thing that could still catch this is joining evidence from DIFFERENT sources,
+      which is the next slide, and it is the whole reason SIEM exists.</aside>
+    </section>
+
+  </div>
+</div>
+
+<!-- scripts: reveal, notes, then engine -->
+<script src="../shared/dist/reveal.js"></script>
+<script src="../shared/plugin/notes/notes.js"></script>
+<script src="js/state.js?v=1"></script>
+</body>
+</html>

