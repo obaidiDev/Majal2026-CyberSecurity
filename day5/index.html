@@ -36,6 +36,23 @@
     .pipe .stg .tools span { font-family: var(--mono); font-size: .5em; font-weight: 700; letter-spacing: .04em;
       background: rgba(0,86,125,.09); color: var(--petrol); border-radius: 999px; padding: .28em .65em; }
     .pipe .stg .tools span.soft { background: rgba(18,51,61,.055); color: var(--muted); }
+
+    /* the 4x2 acronym reference grid — denser than a normal card grid */
+    .k2.ref { gap: 10px; margin-top: .45em; }
+    .k2.ref .card { padding: .6em .72em; }
+    .k2.ref .card h3 { font-size: .72em; margin-bottom: .22em; }
+    .k2.ref .card p { font-size: .54em; line-height: 1.4; }
+
+    /* recap "one question, six times" rows */
+    .broke { margin-top: .4em; }
+    .broke .r { display: grid; grid-template-columns: 270px 1fr; gap: 16px; align-items: baseline;
+      padding: .2em 0; border-bottom: 1px solid var(--line); }
+    .broke .r:last-child { border-bottom: 0; }
+    .broke .r .n { font-weight: 800; color: var(--petrol); font-size: .82em; }
+    .broke .r .n .lever { font-family: var(--mono); font-size: .52em; color: var(--bad); font-weight: 700;
+      letter-spacing: .03em; display: block; margin-top: .15em; }
+    .broke .r .d { font-size: .64em; color: var(--muted); line-height: 1.34; }
+    .broke .r .d b { color: var(--ink); font-weight: 700; }
   </style>
 </head>
 <body>
@@ -141,6 +158,214 @@
       because our tool is bad?" No — the attacker gave up capability to get quiet, and that is the trade you are forcing
       them to make. Then hand off: the only thing that could still catch this is joining evidence from DIFFERENT sources,
       which is the next slide, and it is the whole reason SIEM exists.</aside>
+    </section>
+
+    <!-- ================= SIEM — CORRELATION ================= -->
+    <section>
+      <p class="kicker">Triage · security information &amp; event management</p>
+      <h2>A SIEM does not watch anything — it joins what others saw</h2>
+      <iframe class="wframe" style="height:474px"
+              src="widgets/siem_correlate.html?v=1"
+              title="Correlating three log sources across a time window" scrolling="auto"></iframe>
+      <aside class="notes">Correct the mental model first: most students think SIEM = "log viewer with a search box."
+      It is a <em>join engine</em>. Say the line on the slide out loud. Beats to drive. (1) As loaded, both rules fire
+      and there are zero false alarms — walk the timeline and point out that <b>no single dot is an alert</b>. Forty
+      failures is a bad password; one success is a Tuesday; a shell is a maintenance script. Only the join is a breach.
+      (2) Switch <b>auth.log</b> off. The rules do not weaken, they go <b>NO DATA</b>. This is the most important click
+      in the deck — collection is upstream of detection, and no clever rule recovers a source you never collected. Tie it
+      to Stage 1 of the pipeline. (3) Switch it back on, then press <b>low &amp; slow</b>: the identical attack spread
+      over six days, every event still in the log, and the rule sees nothing. This is Hard mode ("The Slow Drip") in the
+      afternoon lab. (4) Now let them fix it — widen the window and drop the threshold until it catches, and watch the
+      false-alarm counter climb. That trade is the whole of detection engineering, and it sets up the next slide.
+      Do NOT let anyone leave thinking a bigger window is free.</aside>
+    </section>
+
+    <!-- ================= BASE RATE ================= -->
+    <section>
+      <p class="kicker">Triage · why tuning is the job</p>
+      <h2>A 99%-accurate detector still buries you</h2>
+      <iframe class="wframe" style="height:418px"
+              src="widgets/base_rate.html?v=1"
+              title="Base rates, alert volume and analyst load" scrolling="auto"></iframe>
+      <aside class="notes">The arithmetic behind the last slide's trade-off, and the most counter-intuitive thing in
+      the day — do not skip it because it looks like a stats slide. Start at the default: 221 alerts, 3 real, one in 74.
+      Then drag <b>sensitivity</b> to maximum: catch rate 99%, and precision collapses to <em>1 in 2,794</em> with 105
+      full-time analysts needed. Ask the room where the mistake is. There isn't one — that is what happens when you
+      multiply a small false-positive rate by a huge event count. Say the general form: <b>when the thing you are
+      looking for is rare, even an excellent test is usually wrong when it fires.</b> Then drag the other way and let
+      them see the tempting trap: a quiet queue bought by missing half the attacks, and <em>nobody ever files a ticket
+      about the attack you did not detect.</em> Land three consequences: (1) this is why alert fatigue is a real
+      security failure, not laziness; (2) it is why correlation beats raw sensitivity — a join has a far better base
+      rate than a single signature; (3) it is why this afternoon's scoring punishes confident wrong answers hardest.
+      An analyst who invents a source IP is a false positive with a human attached.</aside>
+    </section>
+
+    <!-- ================= IDS / IPS ================= -->
+    <section>
+      <p class="kicker">Detect · intrusion detection &amp; prevention</p>
+      <h2>A network rule is a line of text — and you can edit it</h2>
+      <iframe class="wframe" style="height:456px"
+              src="widgets/ids_rule.html?v=1"
+              title="A Suricata-style rule matching traffic, and its evasions" scrolling="auto"></iframe>
+      <aside class="notes">Demystify the box: this is a real Suricata-shaped rule, and the detection is a string match.
+      Beats. (1) Plain payload matches — note the sensor gets a <em>copy</em>; the attack already reached the server, so
+      IDS gives you knowledge, not protection. (2) <b>mIxEd CaSe</b> → miss. Let someone suggest the fix, then click
+      <b>nocase</b>. (3) <b>URL-encoded</b> → miss; click <b>http.uri</b> and explain normalisation — Suricata matches
+      the decoded URI. This is the arms race made visible, and they are on the defender's side of it now. (4)
+      <b>UNION/**/SELECT</b> → miss, and <em>no option fixes it</em>: <code>/**/</code> is a comment to the database and
+      a gap to the sensor. Same disease as the AV byte-flip, one layer up. (5) Switch to <b>IPS</b> and type
+      <code>select</code> into the content box — the attacker is blocked and so is a shopper searching "select the right
+      size guide". CUSTOMER LOST. This is why IPS runs in detect-only for weeks first: inline, a false positive is
+      downtime, and it is the same trade they just made on the base-rate slide. (6) Finish with <b>over HTTPS</b>:
+      every rule blind at once. Ask what is left — the endpoint, where the data is already decrypted. That is the arc of
+      the last twenty years of this industry in one click.</aside>
+    </section>
+
+    <!-- ================= DLP ================= -->
+    <section>
+      <p class="kicker">Detect · data loss prevention</p>
+      <h2>DLP guards the exit, and only knows what data <em>looks like</em></h2>
+      <iframe class="wframe" style="height:430px"
+              src="widgets/dlp_egress.html?v=1"
+              title="Pattern matching on outbound data, including a real Luhn check" scrolling="auto"></iframe>
+      <aside class="notes">The only tool today that watches data rather than behaviour. Beats. (1) Let the scan run and
+      point at the highlights: national IDs, IBANs, card numbers. (2) Point at the <b>green</b> match — a 16-digit
+      internal order reference that the card detector deliberately did <em>not</em> flag, because it fails the
+      <b>Luhn check</b>. That checksum is real and it is running in the widget; it is the difference between a detector
+      and a regex. Worth thirty seconds: this is how a rule earns the right to block. (3) Note that <b>Bulk records</b>
+      alone would have caught this — volume is often the strongest signal, because nobody exports the whole customer
+      table by accident. (4) Then press <b>base64</b> and let it land in silence: byte-identical data, every detector
+      at zero. Say clearly that base64 is <em>not</em> encryption — anyone can decode it in one command — but DLP
+      matches shapes, and the shape is gone. (5) Switch to <b>monitor only</b> and connect it back: this is IDS vs IPS
+      again. Detect is cheap, block is a promise. Honest framing to close: DLP is genuinely good against accidents and
+      the careless insider, and weak against an attacker who knows it is there. That is still worth buying — most data
+      loss is an accident.</aside>
+    </section>
+
+    <!-- ================= SOAR ================= -->
+    <section>
+      <p class="kicker">Respond · security orchestration &amp; automated response</p>
+      <h2>SOAR is a runbook a computer executes at 3am</h2>
+      <iframe class="wframe" style="height:492px"
+              src="widgets/soar_playbook.html?v=1"
+              title="An incident response playbook executing, with and without guardrails" scrolling="auto"></iframe>
+      <aside class="notes">Deflate the acronym immediately: there is nothing intelligent here. Every step is something
+      an analyst already does by hand — look up the IP, check what the machine is, find out whose account it is, then
+      act. SOAR is that list, written down once. Beats. (1) Run it on <b>the breach</b>: contained in 8.4 seconds
+      against a human's 41 minutes. The win is <em>speed and consistency</em>, not judgement — and consistency matters
+      most at 3am on a Friday. (2) Switch to <b>a false positive</b> with the guardrail on: a nightly billing job on a
+      tier-0 payment gateway. The playbook enriches everything and <b>stops</b>, handing the analyst a ticket that is
+      already answered. Name this shape: good automation does the boring 90% and stops at the ten seconds of judgement.
+      (3) Now turn the <b>guardrail</b> off and run it again — it isolates the payment gateway, checkout down 14
+      minutes, 312 orders lost. Let that sit. The lesson is not "automation is dangerous"; it is that automation
+      <em>amplifies whatever your logic already was</em>, including the wrong parts, at machine speed and without
+      anyone watching. (4) Point ahead: this afternoon, blue team calls out attacker IPs and a wrong call is friendly
+      fire. Same rule, human version — <b>evidence before action.</b></aside>
+    </section>
+
+    <!-- ================= COVERAGE MAP — SYNTHESIS ================= -->
+    <section>
+      <p class="kicker">Synthesis · what you can actually prove</p>
+      <h2>No single tool covers the chain</h2>
+      <iframe class="wframe" style="height:440px"
+              src="widgets/coverage_map.html?v=1"
+              title="Sensor coverage across the Majal breach chain" scrolling="auto"></iframe>
+      <aside class="notes">The payoff slide. Every tool they drove this morning is a row; the real Majal breach is the
+      columns. Read a few rows out loud so the shape lands: EDR is blind to the login, the logs are blind to the beacon,
+      DLP wakes up only at the very end. That picture <em>is</em> defence in depth — not a slogan, a matrix.
+      Beats. (1) With everything on, point at column 2 sitting at zero. The victim typed their password into a page on
+      the attacker's server; no tool you own can ever see that. Some blind spots are not budget problems. Connect it
+      straight to the lab: "did the victim enter their credentials?" answers <b>cannot be determined</b>, and saying so
+      scores +3 while guessing confidently scores −3. (2) Toggle sensors off one at a time and watch the questions on
+      the right flip to NO. Frame coverage as a list of questions you can answer, not a score — and note you only find
+      out what you failed to collect <em>after</em> the incident. (3) Finally press <b>log rotation</b>: seven minutes
+      of ordinary maintenance, roughly 1,100 requests gone, and the IDOR becomes unprovable. Nobody attacked the
+      logging. It rotated. They will hit this exact hole in about an hour — when they do, the correct answer is to say
+      the data is gone, not to estimate.</aside>
+    </section>
+
+    <!-- ================= THE REST OF THE ALPHABET ================= -->
+    <section>
+      <p class="kicker">Reference · the rest of the alphabet</p>
+      <h2>Everything else you'll hear in an interview</h2>
+      <div class="k2 c4 ref">
+        <div class="card"><h3>XDR</h3><p>EDR that also ingests network, email and cloud telemetry into one
+          console. Mostly a <em>product packaging</em> word — treat claims with suspicion.</p></div>
+        <div class="card"><h3>NDR</h3><p>IDS's modern cousin: baselines <em>behaviour</em> on the network instead of
+          matching payload signatures. Survives encryption better.</p></div>
+        <div class="card"><h3>UEBA</h3><p>Baselines each <em>user</em> and flags deviation — Maha never logs in from
+          another country at 3am. Powerful and false-positive prone.</p></div>
+        <div class="card"><h3>TIP</h3><p>Threat intel platform. Stores known-bad IPs, hashes and domains so
+          enrichment (SOAR step 2) has something to look up.</p></div>
+        <div class="card"><h3>WAF</h3><p>An IPS that only speaks HTTP, parked in front of the web app. Would have
+          sat on Day 4's payloads — and can be bypassed the same ways.</p></div>
+        <div class="card"><h3>CASB / DSPM</h3><p>DLP and posture management for SaaS and cloud storage, where most
+          company data now actually lives.</p></div>
+        <div class="card"><h3>SOC tiers</h3><p><b>L1</b> triages the queue, <b>L2</b> investigates, <b>L3</b> hunts
+          and engineers detections. Most people start at L1 — that is today's lab.</p></div>
+        <div class="card"><h3>MTTD / MTTR</h3><p>Mean time to <em>detect</em> and to <em>respond</em>. The two numbers
+          a SOC is actually judged on. Industry MTTD is still measured in days.</p></div>
+      </div>
+      <div class="callout" style="margin-top:.6em">Every one of these is a variation on the four stages. <strong>If you
+      can say what a tool sees and what it misses, you understand it</strong> — the acronym is just its marketing.</div>
+      <aside class="notes">Deliberately fast — three or four minutes, no dwelling. The point is that nothing they hear
+      in an interview should be a surprise word, not that they memorise these. Read each card's <em>coverage</em>
+      sentence, not its definition. Two asides worth making: XDR is largely a vendor category, so being slightly
+      cynical about it is the correct professional instinct; and UEBA is the honest answer to the "low and slow" attack
+      from the SIEM slide, because a baseline does not care how slowly you move — at the cost of many more false
+      positives, which they now know how to reason about. Finish on SOC tiers: L1 is a real, gettable first job, and
+      the next four hours are exactly what it looks like.</aside>
+    </section>
+
+    <!-- ================= RECAP ================= -->
+    <section>
+      <p class="kicker">Recap · the only question that matters</p>
+      <h2>Six tools, one question asked six times</h2>
+      <div class="broke">
+        <div class="r"><div class="n">AV<span class="lever">has anyone seen this file?</span></div>
+          <div class="d">Hashes a file and looks it up. Cheap, instant, and <b>blind to anything one byte different</b> — or to an attack with no file at all.</div></div>
+        <div class="r"><div class="n">EDR<span class="lever">what did the process do?</span></div>
+          <div class="d">Watches behaviour and <b>lineage</b>. A web server spawning a shell is caught no matter what the binary is called — until the attacker stops spawning anything.</div></div>
+        <div class="r"><div class="n">IDS / IPS<span class="lever">what is on the wire?</span></div>
+          <div class="d">Matches bytes in traffic. Defeated by a different <b>spelling</b>, and blinded entirely by <b>encryption</b>. IPS is the same thing allowed to block — and to break things.</div></div>
+        <div class="r"><div class="n">DLP<span class="lever">what does this data look like?</span></div>
+          <div class="d">Recognises the <b>shape</b> of sensitive data leaving. Real checksums, real value against accidents — and base64 walks straight past it.</div></div>
+        <div class="r"><div class="n">SIEM<span class="lever">do these events, together, mean something?</span></div>
+          <div class="d">Joins sources nothing else can join. <b>Cannot join what was never collected</b>, and a time window is beatable by going slow.</div></div>
+        <div class="r"><div class="n">SOAR<span class="lever">can a computer do the first ten minutes?</span></div>
+          <div class="d">Runs the runbook in seconds instead of an hour. It does not decide better — it <b>decides the same way every time</b>, so the logic had better be right.</div></div>
+      </div>
+      <div class="callout hot" style="margin-top:.5em">You do not need to remember six definitions. Ask any tool:
+      <strong>what does it see, and what can it therefore never catch?</strong> That question also tells you what a
+      vendor is not saying.</div>
+      <aside class="notes">Walk the levers, not the paragraphs — one line each, fast. The bolded limits are the actual
+      content; the definitions they can look up. Then land the closing frame twice: (1) defence is a <em>portfolio</em>,
+      because every tool has a shape it cannot see, and the coverage map is what that portfolio looks like; (2) the
+      question in the callout is the transferable skill — it works on tools that do not exist yet, and it is the
+      fastest way to see through a vendor pitch. Then hand over to the lab.</aside>
+    </section>
+
+    <!-- ================= HANDOFF TO THE LAB ================= -->
+    <section>
+      <p class="kicker">Day 5 · your shift starts now</p>
+      <h1>The tools narrow it down.<br>They never decide.</h1>
+      <p class="sub" style="margin-top:1.1em;max-width:28em">You have driven every sensor a SOC owns, and you have seen
+      each one go blind. What is left over — the judgement about whether <em>this</em> thing is actually bad — has your
+      name on it. That is the job, and it starts now.</p>
+      <div class="callout" style="margin-top:1em;max-width:36em"><strong>Next · the investigation.</strong> Sixteen
+      thousand lines of it are <em>your own attacks from this week</em>. Almost everything hostile in that log was
+      authorised. Three questions separate the noise from the breach: <em>was the source authorised, was it inside the
+      window, did it stay in scope?</em></div>
+      <div class="callout hot" style="margin-top:.7em;max-width:36em">And the rule that decides your score:
+      <strong>a confidently wrong answer is worth less than &ldquo;I don't know.&rdquo;</strong> Some fields genuinely
+      cannot be determined. Finding those is worth more than any other answer on the sheet.</div>
+      <aside class="notes">Bookend to the title slide. Land the arc: they arrived able to break an app and are leaving
+      able to say what a defender would have seen — and, more importantly, what nobody would have seen. Then set the
+      lab up properly, because the scoring is the pedagogy. Say the confidence rule out loud and explain <em>why</em> it
+      is not a gimmick: an analyst who invents a source IP sends the wrong person's laptop to be wiped, and that costs
+      more than an honest "not sure". Point them at SCOPE.md first — rules of engagement before evidence, every time.
+      Remind them the loudest thing in the dataset achieved almost nothing and the quietest thing is the actual breach.
+      Then open console.html and let them work.</aside>
     </section>
 
   </div>

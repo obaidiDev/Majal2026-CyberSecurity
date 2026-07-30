@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding: 4px 6px; }
+  .lab { display: grid; grid-template-columns: 1fr 268px; gap: 12px; align-items: start; }
+
+  .colhd { font-size: 10.5px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+    color: #8AA1A8; margin: 0 0 7px; display: flex; align-items: center; gap: 7px; }
+  .colhd .n { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px;
+    border-radius: 50%; background: #00567C; color: #fff; font-size: 9px; letter-spacing: 0; }
+
+  .grid { border: 1px solid #D3E1E1; border-radius: 11px; background: #fff; overflow: hidden; }
+  .gr { display: grid; grid-template-columns: 132px repeat(8, 1fr); }
+  .gr.head .c { padding: 6px 4px 7px; border-bottom: 1px solid #E0E7E8; background: #EEF3F3;
+    font-size: 8.5px; font-weight: 800; line-height: 1.25; color: #5C7880; text-align: center; }
+  .gr.head .c .st { display: block; font-family: "JetBrains Mono", monospace; font-size: 8px;
+    color: #A8BCC0; margin-bottom: 2px; }
+  .gr.head .c.dead { background: rgba(214,69,69,.1); color: #C1403f; }
+
+  .gr.row .c { border-bottom: 1px solid #F2F6F6; border-left: 1px solid #F2F6F6; height: 34px;
+    display: flex; align-items: center; justify-content: center; transition: background 160ms; }
+  .gr.row:last-of-type .c { border-bottom: 0; }
+  .gr.row .lbl { display: flex; align-items: center; gap: 7px; padding: 0 9px; cursor: pointer;
+    border-bottom: 1px solid #F2F6F6; height: 34px; transition: opacity 160ms; }
+  .gr.row:last-of-type .lbl { border-bottom: 0; }
+  .gr.row .lbl:hover { background: #F6F8F8; }
+  .gr.row .box { width: 13px; height: 13px; border-radius: 4px; border: 1.5px solid #CDD8DA; background: #fff;
+    position: relative; flex: none; }
+  .gr.row.on .box { background: #1F8F89; border-color: #1F8F89; }
+  .gr.row.on .box::after { content: "✓"; position: absolute; inset: 0; color: #fff; font-size: 9px;
+    font-weight: 900; text-align: center; line-height: 11px; }
+  .gr.row .nm { font-size: 10.5px; font-weight: 700; color: #12333D; }
+  .gr.row.off .nm { color: #B9C7CA; }
+
+  .cell { width: 74%; height: 17px; border-radius: 4px; transition: all 180ms; }
+  .cell.s2 { background: #1F8F89; }
+  .cell.s1 { background: repeating-linear-gradient(45deg, #9AD3CF 0 4px, #C9E6E4 4px 8px); }
+  .cell.s0 { background: #F2F6F6; }
+  .gr.row.off .cell.s2, .gr.row.off .cell.s1 { background: #EDF2F2; }
+
+  .gr.foot .c { padding: 7px 3px; border-top: 1px solid #E0E7E8; background: #F6F8F8; text-align: center;
+    font-family: "JetBrains Mono", monospace; font-size: 12px; font-weight: 800; color: #5C7880; }
+  .gr.foot .c.zero { background: rgba(214,69,69,.1); color: #C1403f; }
+  .gr.foot .lbl { padding: 7px 9px; border-top: 1px solid #E0E7E8; background: #F6F8F8;
+    font-size: 9px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: #8AA1A8; }
+
+  .rig { margin-top: 9px; border: 1px solid #D3E1E1; border-radius: 11px; background: #fff; padding: 9px 11px;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .rlb { font-size: 9.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #8AA1A8; }
+  .chip { font-family: "JetBrains Mono", monospace; font-size: 11px; font-weight: 700; color: #12333D;
+    border: 1px solid #CDD8DA; background: #fff; border-radius: 999px; padding: 5px 11px; cursor: pointer;
+    transition: all 120ms; }
+  .chip:hover { border-color: #8AA1A8; background: #EEF3F3; }
+  .chip.on { background: #D64545; color: #fff; border-color: #D64545; }
+  .lgd { margin-left: auto; display: flex; align-items: center; gap: 9px; font-size: 9.5px; color: #8AA1A8; }
+  .lgd i { display: inline-block; width: 15px; height: 9px; border-radius: 3px; vertical-align: -1px;
+    margin-right: 3px; }
+
+  .side { border: 1px solid #D3E1E1; border-radius: 11px; background: #fff; overflow: hidden; }
+  .side .h { padding: 8px 11px; background: #EEF3F3; border-bottom: 1px solid #E0E7E8;
+    font-size: 11.5px; font-weight: 800; color: #12333D; }
+  .side .b { padding: 9px 11px; font-size: 11px; color: #5C7880; line-height: 1.5; }
+  .side .b b { color: #00567C; }
+  .qa { padding: 7px 11px; border-bottom: 1px solid #F2F6F6; display: grid; grid-template-columns: 1fr 54px;
+    gap: 6px; align-items: center; }
+  .qa:last-child { border-bottom: 0; }
+  .qa .q { font-size: 10.5px; color: #12333D; line-height: 1.32; }
+  .qa .a { font-family: "JetBrains Mono", monospace; font-size: 8px; font-weight: 700; letter-spacing: .04em;
+    text-align: center; padding: 3px 0; border-radius: 999px; }
+  .a.yes { background: rgba(31,143,137,.16); color: #146d68; }
+  .a.no  { background: rgba(214,69,69,.14); color: #C1403f; }
+
+  .cap { margin-top: 9px; font-size: 12.5px; color: #42606A; line-height: 1.45; min-height: 34px; }
+  .cap b { color: #00567C; } .cap em { color: #1F8F89; font-style: normal; font-weight: 700; }
+  .cap .dngr { color: #D64545; font-weight: 700; }
+</style>
+</head><body>
+
+<div class="lab">
+  <div>
+    <p class="colhd"><span class="n">1</span> The Majal breach, step by step — and who was watching each one</p>
+    <div class="grid" id="grid"></div>
+
+    <div class="rig">
+      <span class="rlb">Incident</span>
+      <button class="chip" id="rot">log rotation restarts the web server, 10:43–10:50</button>
+      <span class="lgd"><span><i style="background:#1F8F89"></i>sees it</span>
+        <span><i style="background:repeating-linear-gradient(45deg,#9AD3CF 0 4px,#C9E6E4 4px 8px)"></i>partial</span>
+        <span><i style="background:#F2F6F6;border:1px solid #E0E7E8"></i>blind</span></span>
+    </div>
+
+    <div class="cap" id="cap">Every tool you drove this morning is a row. The attack is the columns. <b>Switch a
+      sensor off and watch the story break.</b></div>
+  </div>
+
+  <div>
+    <p class="colhd"><span class="n">2</span> Can you prove it?</p>
+    <div class="side">
+      <div class="h">Questions the report asks</div>
+      <div id="qs"></div>
+    </div>
+    <div class="side" style="margin-top:9px">
+      <div class="h" id="sh">Coverage</div>
+      <div class="b" id="sb"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+
+  var STEPS = [
+    { n: "1", t: "phishing email<br>delivered" },
+    { n: "2", t: "credentials typed<br>on a fake page" },
+    { n: "3", t: "login with<br>stolen password" },
+    { n: "4", t: "browsing /admin<br>· IDOR" },
+    { n: "5", t: "SQL<br>injection" },
+    { n: "6", t: "command injection<br>· shell" },
+    { n: "7", t: "C2 beacon<br>outbound" },
+    { n: "8", t: "customer data<br>exfiltrated" }
+  ];
+
+  // 2 = sees it · 1 = partial · 0 = blind
+  var SENSORS = [
+    { id: "email", n: "Email gateway", c: [2, 0, 0, 0, 0, 0, 0, 0] },
+    { id: "av",    n: "Antivirus",     c: [1, 0, 0, 0, 0, 0, 0, 0] },
+    { id: "ids",   n: "IDS / NDR",     c: [1, 0, 0, 0, 1, 0, 1, 1] },
+    { id: "edr",   n: "EDR",           c: [0, 0, 0, 0, 0, 2, 2, 1] },
+    { id: "logs",  n: "App + auth logs", c: [0, 0, 2, 2, 2, 1, 0, 0] },
+    { id: "dlp",   n: "DLP",           c: [0, 0, 0, 0, 0, 0, 0, 2] }
+  ];
+
+  var state = { on: {}, rot: false };
+  SENSORS.forEach(function (s) { state.on[s.id] = true; });
+
+  function eff(s, i) {
+    if (!state.on[s.id]) return 0;
+    // the rotation gap blanks the web/app log for the window that covers steps 4 and 5
+    if (state.rot && s.id === "logs" && (i === 3 || i === 4)) return 0;
+    return s.c[i];
+  }
+  function coverage(i) {
+    return SENSORS.reduce(function (a, s) { return a + (eff(s, i) === 2 ? 1 : 0); }, 0);
+  }
+  function anyCoverage(i) {
+    return SENSORS.some(function (s) { return eff(s, i) > 0; });
+  }
+
+  var QUESTIONS = [
+    { q: "Which account was used to log in?", need: function () { return eff(SENSORS[4], 2) === 2; } },
+    { q: "Did the victim actually type their password on the fake page?", need: function () { return false; } },
+    { q: "How many requests arrived 10:43–10:50?", need: function () { return eff(SENSORS[4], 3) === 2; } },
+    { q: "What command did the attacker run on the server?", need: function () { return eff(SENSORS[3], 5) === 2; } },
+    { q: "Where did the stolen data go?", need: function () {
+        return eff(SENSORS[5], 7) === 2 || eff(SENSORS[2], 7) > 0 || eff(SENSORS[3], 7) > 0; } }
+  ];
+
+  function render() {
+    var h = '<div class="gr head"><div class="c" style="background:#EEF3F3"></div>';
+    STEPS.forEach(function (s, i) {
+      h += '<div class="c' + (anyCoverage(i) ? "" : " dead") + '"><span class="st">' + s.n + '</span>' + s.t + '</div>';
+    });
+    h += "</div>";
+
+    SENSORS.forEach(function (s) {
+      var on = state.on[s.id];
+      h += '<div class="gr row ' + (on ? "on" : "off") + '" data-s="' + s.id + '">' +
+        '<div class="lbl"><span class="box"></span><span class="nm">' + s.n + "</span></div>";
+      for (var i = 0; i < STEPS.length; i++)
+        h += '<div class="c"><span class="cell s' + eff(s, i) + '"></span></div>';
+      h += "</div>";
+    });
+
+    h += '<div class="gr foot"><div class="lbl">sensors that see it</div>';
+    for (var i = 0; i < STEPS.length; i++) {
+      var n = coverage(i), any = anyCoverage(i);
+      // "~" = nothing sees it fully, but something has partial visibility
+      h += '<div class="c' + (any ? "" : " zero") + '">' + (!any ? "0" : n === 0 ? "~" : n) + "</div>";
+    }
+    h += "</div>";
+
+    $("grid").innerHTML = h;
+    $("grid").querySelectorAll("[data-s]").forEach(function (r) {
+      r.querySelector(".lbl").addEventListener("click", function () {
+        var k = r.getAttribute("data-s"); state.on[k] = !state.on[k]; render();
+      });
+    });
+
+    // questions
+    var qh = "";
+    QUESTIONS.forEach(function (q) {
+      var ok = q.need();
+      qh += '<div class="qa"><span class="q">' + q.q + '</span>' +
+        '<span class="a ' + (ok ? "yes" : "no") + '">' + (ok ? "PROVABLE" : "NO") + "</span></div>";
+    });
+    $("qs").innerHTML = qh;
+
+    // summary + caption
+    var blind = [];
+    for (i = 0; i < STEPS.length; i++) if (!anyCoverage(i)) blind.push(i + 1);
+    var offCount = SENSORS.filter(function (s) { return !state.on[s.id]; }).length;
+    var sh = $("sh"), sb = $("sb"), c = $("cap");
+
+    sh.textContent = blind.length + " blind step" + (blind.length === 1 ? "" : "s");
+    if (blind.length === 1 && blind[0] === 2 && !state.rot) {
+      sb.innerHTML = "Everything is switched on and step <b>2 is still dark</b> — the victim typed their password " +
+        "into a page on <em>the attacker's server</em>. No tool you own can ever see that. " +
+        "<b>Some blind spots are not budget problems.</b>";
+      c.innerHTML = "This is full coverage, and it still has a hole. Step 2 happens on infrastructure you do not own — " +
+        "which is why the answer to <em>“did they enter their password?”</em> in this afternoon's lab is " +
+        "<b>cannot be determined</b>, and why saying so scores <em>higher</em> than guessing.";
+    } else if (state.rot && offCount === 0) {
+      sb.innerHTML = "Step 2 is <b>structurally</b> blind. Step 4 went dark because the web server " +
+        "<b>restarted and stopped writing</b> for seven minutes — roughly <b>1,100 requests</b> are simply gone. " +
+        "Step 5 survives only as an <b>IDS partial</b>: you know SQL injection happened, not what it returned.";
+      c.innerHTML = "<span class='dngr'>Nobody attacked your logging. It rotated.</span> Seven minutes of ordinary " +
+        "maintenance and the IDOR is unprovable — the attacker did not evade a tool, they got lucky. " +
+        "<b>You will hit this exact hole in the lab.</b>";
+    } else if (offCount > 0) {
+      sb.innerHTML = "You turned off <b>" + offCount + "</b> source" + (offCount > 1 ? "s" : "") + ". " +
+        (blind.length > 1 ? "Blind at steps <b>" + blind.join(", ") + "</b>." : "") +
+        " Notice the questions on the left flipping to <b>NO</b> — that is the report you cannot write.";
+      c.innerHTML = "Coverage is not a score, it is <b>a list of questions you can answer</b>. Every sensor you " +
+        "remove deletes a sentence from the incident report — and you only find out <em>after</em> the incident.";
+    } else {
+      sb.innerHTML = "All sources feeding. Coverage is as good as it gets here.";
+      c.innerHTML = "Read the row for each tool: <b>no single one covers the chain.</b> EDR is blind to the login, " +
+        "the logs are blind to the beacon, DLP only wakes up at the very end. <em>Defence in depth is not a slogan — " +
+        "it is this picture.</em>";
+    }
+  }
+
+  $("rot").addEventListener("click", function () {
+    state.rot = !state.rot; this.classList.toggle("on", state.rot); render();
+  });
+
+  /* presenter / screenshot hook: ?state=gap|noedr|nologs */
+  var st = (location.search.match(/state=(\w+)/) || [])[1];
+  if (st === "gap")    { state.rot = true; $("rot").classList.add("on"); }
+  if (st === "noedr")  { state.on.edr = false; }
+  if (st === "nologs") { state.on.logs = false; }
+
+  render();
+})();
+</script>
+</body></html>

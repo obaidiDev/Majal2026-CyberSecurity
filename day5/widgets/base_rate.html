@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding: 4px 6px; }
+  .lab { display: grid; grid-template-columns: 1fr 286px; gap: 13px; align-items: start; }
+
+  .colhd { font-size: 10.5px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+    color: #8AA1A8; margin: 0 0 7px; display: flex; align-items: center; gap: 7px; }
+  .colhd .n { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px;
+    border-radius: 50%; background: #00567C; color: #fff; font-size: 9px; letter-spacing: 0; }
+  .colhd .rt { margin-left: auto; font-family: "JetBrains Mono", monospace; font-size: 9px; letter-spacing: .04em;
+    color: #A8BCC0; text-transform: none; font-weight: 600; }
+
+  canvas#q { width: 100%; height: 196px; border: 1px solid #0C3A46; border-radius: 11px; background: #06232B; }
+
+  .rig { margin-top: 9px; border: 1px solid #D3E1E1; border-radius: 11px; background: #fff; padding: 10px 12px; }
+  .rrow { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+  .rrow:last-child { margin-bottom: 0; }
+  .rlb { font-size: 9.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #8AA1A8;
+    width: 104px; flex: none; }
+  input[type=range] { flex: 1; accent-color: #00567C; height: 4px; cursor: pointer; }
+  .val { font-family: "JetBrains Mono", monospace; font-size: 11px; font-weight: 700; color: #00567C;
+    min-width: 108px; text-align: right; }
+
+  /* stat tiles */
+  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .tile { border: 1px solid #D3E1E1; border-radius: 10px; background: #fff; padding: 9px 10px; }
+  .tile .l { font-size: 8.5px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: #8AA1A8; }
+  .tile .n { font-family: "JetBrains Mono", monospace; font-size: 19px; font-weight: 800; color: #12333D;
+    line-height: 1.2; margin-top: 2px; }
+  .tile .s { font-size: 9.5px; color: #8AA1A8; margin-top: 1px; line-height: 1.3; }
+  .tile.wide { grid-column: 1 / -1; }
+  .tile.hero { border-color: #D64545; background: rgba(214,69,69,.06); }
+  .tile.hero .n { color: #C1403f; font-size: 25px; }
+  .tile.hero .l { color: #C1403f; }
+  .tile.miss .n { color: #8A7500; }
+  .tile.load .n { color: #00567C; }
+  .tile.load.over .n { color: #C1403f; }
+
+  .cap { margin-top: 9px; font-size: 12.5px; color: #42606A; line-height: 1.45; min-height: 34px; }
+  .cap b { color: #00567C; } .cap em { color: #1F8F89; font-style: normal; font-weight: 700; }
+  .cap .dngr { color: #D64545; font-weight: 700; }
+</style>
+</head><body>
+
+<div class="lab">
+  <div>
+    <p class="colhd"><span class="n">1</span> Your queue this shift <span class="rt" id="rt"></span></p>
+    <canvas id="q"></canvas>
+
+    <div class="rig">
+      <div class="rrow"><span class="rlb">Detector<br>sensitivity</span>
+        <input type="range" id="sens" min="0" max="100" value="52">
+        <span class="val" id="sensv"></span>
+      </div>
+      <div class="rrow"><span class="rlb">Real attacks<br>today</span>
+        <input type="range" id="atk" min="1" max="10" value="3">
+        <span class="val" id="atkv"></span>
+      </div>
+    </div>
+
+    <div class="cap" id="cap"></div>
+  </div>
+
+  <div>
+    <p class="colhd"><span class="n">2</span> The arithmetic of a shift</p>
+    <div class="tiles">
+      <div class="tile hero wide"><div class="l">precision — how often an alert is real</div>
+        <div class="n" id="prec">—</div><div class="s" id="precs"></div></div>
+      <div class="tile"><div class="l">alerts</div><div class="n" id="alerts">—</div>
+        <div class="s">in 24 hours</div></div>
+      <div class="tile miss"><div class="l">attacks missed</div><div class="n" id="missed">—</div>
+        <div class="s" id="missedS">never alerted</div></div>
+      <div class="tile load wide" id="loadT"><div class="l">analysts needed at 6 min per alert</div>
+        <div class="n" id="load">—</div><div class="s" id="loads"></div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+
+  var EVENTS = 4200000;        // logins, requests, process starts, connections — one day at Majal Store
+  var MIN_PER_ALERT = 6, SHIFT_H = 8;
+
+  var state = { s: 0.52, attacks: 3 };
+
+  /* ---- the detector's operating point -------------------------------------- */
+  function model() {
+    var s = state.s;
+    var fpr = 1e-6 * Math.pow(10, s * 3.3);          // 0.0001% … 0.2%
+    var tpr = 0.55 + 0.44 * Math.pow(s, 0.45);       // 55% … 99% — never a perfect detector
+    var falseAlerts = Math.round(EVENTS * fpr);
+    var caught = Math.round(state.attacks * tpr);
+    var missed = state.attacks - caught;
+    var total = falseAlerts + caught;
+    var analystDay = (SHIFT_H * 60) / MIN_PER_ALERT; // 80 alerts per analyst per shift
+    return { fpr: fpr, tpr: tpr, falseAlerts: falseAlerts, caught: caught, missed: missed,
+             total: total, oneIn: caught ? total / caught : Infinity,
+             analysts: total / analystDay, hours: total * MIN_PER_ALERT / 60 };
+  }
+
+  /* ---- the queue: one dot = one alert -------------------------------------- */
+  var cv = $("q"), ctx = cv.getContext("2d"), W = 0, H = 196;
+  function fit() {
+    var dpr = window.devicePixelRatio || 1;
+    W = cv.clientWidth || 680;
+    cv.width = W * dpr; cv.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    draw();
+  }
+  window.addEventListener("resize", fit);
+
+  function draw() {
+    var M = model();
+    ctx.clearRect(0, 0, W, H); ctx.fillStyle = "#06232B"; ctx.fillRect(0, 0, W, H);
+
+    var padX = 14, padTop = 30, padBot = 26;
+    var gw = W - padX * 2, gh = H - padTop - padBot;
+    var step = 8.2, cols = Math.floor(gw / step), rows = Math.floor(gh / step);
+    var cap = cols * rows;
+    var shown = Math.min(M.total, cap);
+
+    // how many of the shown prefix are real — honest proportional slice
+    var realShown = M.total > 0 ? Math.round(M.caught * (shown / M.total)) : 0;
+    // deterministic positions for the real ones, spread through the queue
+    var realIdx = {};
+    for (var r = 0; r < realShown; r++)
+      realIdx[Math.floor((r + 0.42) * shown / Math.max(1, realShown))] = true;
+
+    for (var i = 0; i < shown; i++) {
+      var c = i % cols, rw = Math.floor(i / cols);
+      var x = padX + c * step + step / 2, y = padTop + rw * step + step / 2;
+      if (realIdx[i]) {
+        ctx.fillStyle = "#D64545";
+        ctx.beginPath(); ctx.arc(x, y, 3.4, 0, 7); ctx.fill();
+        ctx.strokeStyle = "rgba(214,69,69,.45)"; ctx.lineWidth = 1.4;
+        ctx.beginPath(); ctx.arc(x, y, 6.4, 0, 7); ctx.stroke();
+      } else {
+        ctx.fillStyle = "#35606B";
+        ctx.beginPath(); ctx.arc(x, y, 2.1, 0, 7); ctx.fill();
+      }
+    }
+
+    // header + legend (identity is never colour alone: size + ring + label)
+    ctx.textAlign = "left"; ctx.textBaseline = "top";
+    ctx.fillStyle = "rgba(127,227,220,.55)"; ctx.font = "700 9.5px 'JetBrains Mono', Menlo, monospace";
+    ctx.fillText("one dot = one alert a human must open", padX, 11);
+
+    ctx.fillStyle = "#D64545"; ctx.beginPath(); ctx.arc(W - padX - 152, 16, 3.4, 0, 7); ctx.fill();
+    ctx.strokeStyle = "rgba(214,69,69,.45)"; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.arc(W - padX - 152, 16, 6.2, 0, 7); ctx.stroke();
+    ctx.fillStyle = "rgba(255,155,155,.9)"; ctx.font = "9px 'JetBrains Mono', Menlo, monospace";
+    ctx.textAlign = "left"; ctx.fillText("real attack", W - padX - 141, 12);
+    ctx.fillStyle = "#35606B"; ctx.beginPath(); ctx.arc(W - padX - 62, 16, 2.1, 0, 7); ctx.fill();
+    ctx.fillStyle = "rgba(191,224,226,.5)"; ctx.fillText("false alarm", W - padX - 54, 12);
+
+    // footer
+    ctx.textAlign = "left"; ctx.textBaseline = "bottom";
+    ctx.fillStyle = "rgba(191,224,226,.45)"; ctx.font = "9px 'JetBrains Mono', Menlo, monospace";
+    var note = M.total > cap
+      ? "showing the first " + fmt(shown) + " of " + fmt(M.total) + " alerts — the grid ran out of room before the day did"
+      : "all " + fmt(M.total) + " alerts of the day, on one screen";
+    ctx.fillText(note, padX, H - 9);
+
+    if (realShown === 0 && M.caught > 0) {
+      ctx.textAlign = "right"; ctx.fillStyle = "#FF9B9B";
+      ctx.font = "700 9px 'JetBrains Mono', Menlo, monospace";
+      ctx.fillText("not one real attack in this screenful", W - padX, H - 9);
+    }
+  }
+
+  function fmt(n) { return n.toLocaleString("en-US"); }
+
+  /* ---- panels -------------------------------------------------------------- */
+  function render() {
+    var M = model();
+    draw();
+
+    $("sensv").textContent = (M.fpr * 100).toFixed(4).replace(/0+$/, "").replace(/\.$/, "") +
+      "% FP · " + Math.round(M.tpr * 100) + "% catch";
+    $("atkv").textContent = state.attacks + " in " + fmt(EVENTS) + " events";
+    $("rt").textContent = fmt(EVENTS) + " events/day · " + state.attacks + " real";
+
+    $("prec").textContent = M.caught ? "1 in " + fmt(Math.round(M.oneIn)) : "0 real";
+    $("precs").innerHTML = M.caught
+      ? "open " + fmt(Math.round(M.oneIn)) + " alerts to find one that matters — " +
+        (100 / M.oneIn).toFixed(2) + "% of the queue"
+      : "the detector caught nothing at all today";
+    $("alerts").textContent = fmt(M.total);
+    $("missed").textContent = M.missed;
+    $("missedS").textContent = M.missed ? "walked in unseen" : "none — every attack alerted";
+    $("load").textContent = M.analysts.toFixed(1) + " people";
+    $("loads").textContent = Math.round(M.hours) + " analyst-hours a day, every day";
+    $("loadT").className = "tile load wide" + (M.analysts > 3 ? " over" : "");
+
+    caption(M);
+  }
+
+  function caption(M) {
+    var c = $("cap");
+    if (M.analysts > 8)
+      c.innerHTML = "<span class='dngr'>" + M.analysts.toFixed(0) + " full-time analysts</span> to read this queue — " +
+        "and " + (100 / M.oneIn).toFixed(2) + "% of it is real. No SOC on earth is staffed for this. " +
+        "<b>The alerts do not get read; they get ignored.</b>";
+    else if (M.missed >= Math.ceil(state.attacks / 2))
+      c.innerHTML = "Quiet queue, <span class='dngr'>" + M.missed + " of " + state.attacks + " attacks missed</span>. " +
+        "You bought that silence by turning the detector down. <b>Nobody is going to tell you about the ones you " +
+        "never saw</b> — which is what makes this the tempting direction.";
+    else if (M.oneIn > 120)
+      c.innerHTML = "The detector is <b>" + Math.round(M.tpr * 100) + "% accurate</b> and still, <em>1 alert in " +
+        fmt(Math.round(M.oneIn)) + "</em> is real. That is not a broken tool — it is arithmetic. " +
+        "<b>When the base rate is tiny, even a very good detector produces mostly false alarms.</b>";
+    else
+      c.innerHTML = "A workable queue: <b>" + fmt(M.total) + " alerts</b>, " + M.caught + " real, " +
+        M.missed + " missed. Getting here is called <em>tuning</em>, and it is most of a detection engineer's job.";
+  }
+
+  /* ---- controls ------------------------------------------------------------ */
+  $("sens").addEventListener("input", function () { state.s = +this.value / 100; render(); });
+  $("atk").addEventListener("input", function () { state.attacks = +this.value; render(); });
+
+  /* presenter / screenshot hook: ?state=loose|tight */
+  var st = (location.search.match(/state=(\w+)/) || [])[1];
+  if (st === "loose") { state.s = 1; $("sens").value = 100; }
+  if (st === "tight") { state.s = 0.06; $("sens").value = 6; }
+
+  fit(); render();
+})();
+</script>
+</body></html>

@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding: 4px 6px; }
+  .lab { display: grid; grid-template-columns: 1fr 314px; gap: 13px; align-items: start; }
+
+  .colhd { font-size: 10.5px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+    color: #8AA1A8; margin: 0 0 7px; display: flex; align-items: center; gap: 7px; }
+  .colhd .n { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px;
+    border-radius: 50%; background: #00567C; color: #fff; font-size: 9px; letter-spacing: 0; }
+
+  canvas#tl { width: 100%; height: 226px; border: 1px solid #0C3A46; border-radius: 11px; background: #06232B; }
+
+  .rig { margin-top: 9px; border: 1px solid #D3E1E1; border-radius: 11px; background: #fff; padding: 9px 11px; }
+  .rrow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+  .rrow:last-child { margin-bottom: 0; }
+  .rlb { font-size: 9.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #8AA1A8;
+    width: 86px; flex: none; }
+  .chip { font-family: "JetBrains Mono", monospace; font-size: 11px; font-weight: 700; color: #12333D;
+    border: 1px solid #CDD8DA; background: #fff; border-radius: 999px; padding: 5px 11px; cursor: pointer;
+    transition: all 120ms; }
+  .chip:hover { border-color: #8AA1A8; background: #EEF3F3; }
+  .chip.on { background: #00567C; color: #fff; border-color: #00567C; }
+  .chip.src.on { background: #1F8F89; border-color: #1F8F89; }
+  .chip.pace.on { background: #D64545; border-color: #D64545; }
+
+  input[type=range] { flex: 1; min-width: 90px; accent-color: #00567C; height: 4px; cursor: pointer; }
+  .val { font-family: "JetBrains Mono", monospace; font-size: 11px; font-weight: 700; color: #00567C;
+    min-width: 62px; text-align: right; }
+
+  /* rule + verdict panel */
+  .engine { border: 1px solid #D3E1E1; border-radius: 11px; background: #fff; overflow: hidden; margin-bottom: 10px; }
+  .ehead { display: flex; align-items: center; gap: 8px; padding: 8px 11px; border-bottom: 1px solid #E0E7E8;
+    background: #EEF3F3; }
+  .ehead .en { font-size: 11.5px; font-weight: 800; color: #12333D; }
+  .ehead .ev { margin-left: auto; font-family: "JetBrains Mono", monospace; font-size: 9px; font-weight: 700;
+    letter-spacing: .06em; padding: 3px 8px; border-radius: 999px; background: #E6ECEC; color: #8AA1A8; }
+  .ehead .ev.fire { background: #D64545; color: #fff; }
+  .ehead .ev.quiet { background: rgba(242,210,0,.28); color: #8A7500; }
+  .ehead .ev.dead { background: rgba(18,51,61,.1); color: #8AA1A8; }
+  .ebody { padding: 9px 11px; font-family: "JetBrains Mono", monospace; font-size: 10px; color: #5C7880;
+    line-height: 1.6; }
+  .ebody .k { color: #00567C; font-weight: 700; }
+  .ebody .hit { color: #C1403f; font-weight: 700; }
+  .ebody .off { color: #C9D4D6; }
+
+  .score { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .sc { border: 1px solid #D3E1E1; border-radius: 10px; background: #fff; padding: 8px 10px; text-align: center; }
+  .sc .n { font-family: "JetBrains Mono", monospace; font-size: 20px; font-weight: 800; line-height: 1.1; }
+  .sc .l { font-size: 9px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: #8AA1A8;
+    margin-top: 2px; }
+  .sc.tp .n { color: #1F8F89; } .sc.tp.zero .n { color: #C9D4D6; }
+  .sc.fp .n { color: #D64545; } .sc.fp.zero .n { color: #C9D4D6; }
+
+  .cap { margin-top: 9px; font-size: 12.5px; color: #42606A; line-height: 1.45; min-height: 34px; }
+  .cap b { color: #00567C; } .cap em { color: #1F8F89; font-style: normal; font-weight: 700; }
+  .cap .dngr { color: #D64545; font-weight: 700; }
+</style>
+</head><body>
+
+<div class="lab">
+  <div>
+    <p class="colhd"><span class="n">1</span> Three log sources, one timeline — nothing here is an alert on its own</p>
+    <canvas id="tl"></canvas>
+
+    <div class="rig">
+      <div class="rrow"><span class="rlb">Feeding SIEM</span>
+        <button class="chip src on" data-src="web">access.log</button>
+        <button class="chip src on" data-src="auth">auth.log</button>
+        <button class="chip src on" data-src="edr">edr</button>
+        <span class="rlb" style="width:auto;margin-left:auto">Attacker pace</span>
+        <button class="chip pace on" data-pace="fast">smash &amp; grab</button>
+        <button class="chip pace" data-pace="slow">low &amp; slow</button>
+      </div>
+      <div class="rrow"><span class="rlb">Join window</span>
+        <input type="range" id="win" min="0" max="100" value="34">
+        <span class="val" id="winv">5 min</span>
+      </div>
+      <div class="rrow"><span class="rlb">Threshold</span>
+        <input type="range" id="thr" min="2" max="40" value="20">
+        <span class="val" id="thrv">20 fails</span>
+      </div>
+    </div>
+
+    <div class="cap" id="cap">Forty failed logins is a bad password. One success is a Tuesday. A shell is a maintenance
+      script. <b>Only together are they a breach.</b> That join is what a SIEM is for.</div>
+  </div>
+
+  <div>
+    <p class="colhd"><span class="n">2</span> The correlation rule</p>
+
+    <div class="engine">
+      <div class="ehead"><span class="en">🔗 CredentialStuffingSuccess</span><span class="ev" id="v1">—</span></div>
+      <div class="ebody" id="b1"></div>
+    </div>
+
+    <div class="engine">
+      <div class="ehead"><span class="en">🔗 PostAuthServerExec</span><span class="ev" id="v2">—</span></div>
+      <div class="ebody" id="b2"></div>
+    </div>
+
+    <div class="score">
+      <div class="sc tp" id="sctp"><div class="n" id="tpn">0</div><div class="l">breach caught</div></div>
+      <div class="sc fp" id="scfp"><div class="n" id="fpn">0</div><div class="l">false alarms</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var LANES = [
+    { id: "web",  name: "access.log", sub: "web requests" },
+    { id: "auth", name: "auth.log",   sub: "usernames" },
+    { id: "edr",  name: "edr",        sub: "process starts" }
+  ];
+  var state = { src: { web: true, auth: true, edr: true }, pace: "fast", win: 300, thr: 20 };
+
+  var ATTACKER = "45.147.230.12";
+
+  /* ---- the data: attacker chain + benign shoppers who fumble passwords ----- */
+  function build() {
+    var fast = state.pace === "fast";
+    var span = fast ? 1800 : 6 * 86400;
+    var ev = [];
+    var nFail = 40;
+
+    // attacker credential stuffing
+    var f0 = fast ? 20 : 3600, fStep = fast ? 1.4 : 11000;
+    for (var i = 0; i < nFail; i++) {
+      var t = f0 + i * fStep;
+      ev.push({ lane: "auth", t: t, kind: "fail", ip: ATTACKER });
+      ev.push({ lane: "web",  t: t, kind: "req",  ip: ATTACKER });
+    }
+    var tSucc = fast ? 90 : 455000;
+    ev.push({ lane: "auth", t: tSucc, kind: "success", ip: ATTACKER, user: "maha.alfaisal", bad: true });
+    ev.push({ lane: "web",  t: tSucc, kind: "req", ip: ATTACKER });
+    var tProc = fast ? 130 : 470000;
+    ev.push({ lane: "edr", t: tProc, kind: "proc", ip: ATTACKER, bad: true });
+
+    // benign shoppers: a couple of fumbles, then a success (never a shell)
+    var benign = fast ? [260, 520, 780, 1040, 1300, 1560]
+                      : [40000, 130000, 210000, 300000, 380000, 500000];
+    benign.forEach(function (b, k) {
+      var ip = "10.20.4." + (11 + k), n = 2 + (k % 3);
+      for (var j = 0; j < n; j++) {
+        ev.push({ lane: "auth", t: b + j * 9, kind: "fail", ip: ip });
+        ev.push({ lane: "web",  t: b + j * 9, kind: "req",  ip: ip });
+      }
+      ev.push({ lane: "auth", t: b + n * 9 + 6, kind: "success", ip: ip, user: "shopper" });
+      ev.push({ lane: "web",  t: b + n * 9 + 6, kind: "req", ip: ip });
+    });
+
+    // ordinary browsing traffic, so the web lane is genuinely noisy
+    for (i = 0; i < 90; i++) ev.push({ lane: "web", t: (i * 7919 % 1000) / 1000 * span, kind: "req", ip: "shop" });
+
+    return { ev: ev, span: span, tSucc: tSucc, tProc: tProc };
+  }
+
+  /* ---- evaluate the two correlation rules --------------------------------- */
+  function evaluate(D) {
+    var W = state.win, N = state.thr;
+    var r1 = { fires: [], possible: state.src.auth };
+    var r2 = { fires: [], possible: state.src.auth && state.src.edr };
+
+    if (r1.possible) {
+      D.ev.filter(function (e) { return e.lane === "auth" && e.kind === "success"; }).forEach(function (s) {
+        var c = D.ev.filter(function (e) {
+          return e.lane === "auth" && e.kind === "fail" && e.ip === s.ip && e.t >= s.t - W && e.t <= s.t;
+        }).length;
+        if (c >= N) r1.fires.push({ ip: s.ip, count: c, t: s.t, bad: !!s.bad });
+      });
+    }
+    if (r2.possible) {
+      D.ev.filter(function (e) { return e.lane === "edr" && e.kind === "proc"; }).forEach(function (p) {
+        var s = D.ev.filter(function (e) {
+          return e.lane === "auth" && e.kind === "success" && e.ip === p.ip && p.t - e.t <= W && p.t >= e.t;
+        })[0];
+        if (s) r2.fires.push({ ip: p.ip, t: p.t, bad: true });
+      });
+    }
+    return { r1: r1, r2: r2 };
+  }
+
+  /* ---- canvas -------------------------------------------------------------- */
+  var cv = $("tl"), ctx = cv.getContext("2d"), W = 0, H = 226;
+  var PADL = 108, PADR = 18, PADT = 30, laneH = 46;
+
+  function fit() {
+    var dpr = window.devicePixelRatio || 1;
+    W = cv.clientWidth || 680;
+    cv.width = W * dpr; cv.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    draw();
+  }
+  window.addEventListener("resize", fit);
+
+  function xOf(t, span) { return PADL + (t / span) * (W - PADL - PADR); }
+
+  function fmtDur(s) {
+    if (s < 60) return Math.round(s) + " sec";
+    if (s < 3600) return Math.round(s / 60) + " min";
+    if (s < 86400) return (s / 3600).toFixed(s < 36000 ? 1 : 0) + " hr";
+    return (s / 86400).toFixed(s < 864000 ? 1 : 0) + " days";
+  }
+
+  function draw() {
+    var D = build(), R = evaluate(D);
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = "#06232B"; ctx.fillRect(0, 0, W, H);
+
+    var succX = xOf(D.tSucc, D.span);
+
+    // ---- join window shading, anchored on the successful login ----
+    if (state.src.auth) {
+      var wx0 = xOf(Math.max(0, D.tSucc - state.win), D.span);
+      var wx1 = xOf(Math.min(D.span, D.tSucc + state.win), D.span);
+      ctx.fillStyle = "rgba(0,86,124,.20)";
+      ctx.fillRect(wx0, PADT - 8, wx1 - wx0, laneH * 3 + 6);
+      ctx.strokeStyle = "rgba(51,211,203,.45)"; ctx.lineWidth = 1;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(wx0, PADT - 8); ctx.lineTo(wx0, PADT + laneH * 3 - 2);
+      ctx.moveTo(wx1, PADT - 8); ctx.lineTo(wx1, PADT + laneH * 3 - 2); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = "rgba(127,227,220,.7)";
+      ctx.font = "700 9px 'JetBrains Mono', Menlo, monospace";
+      ctx.textAlign = "left"; ctx.textBaseline = "bottom";
+      ctx.fillText("± " + fmtDur(state.win) + " join window", wx0 + 5, PADT - 11);
+    }
+
+    // ---- lanes ----
+    LANES.forEach(function (L, li) {
+      var y = PADT + li * laneH + laneH / 2;
+      var on = state.src[L.id];
+
+      ctx.textAlign = "left"; ctx.textBaseline = "middle";
+      ctx.fillStyle = on ? "#7FE3DC" : "rgba(127,227,220,.22)";
+      ctx.font = "700 11px 'JetBrains Mono', Menlo, monospace";
+      ctx.fillText(L.name, 12, y - 6);
+      ctx.fillStyle = on ? "rgba(191,224,226,.4)" : "rgba(191,224,226,.15)";
+      ctx.font = "8.5px 'JetBrains Mono', Menlo, monospace";
+      ctx.fillText(on ? L.sub : "not collected", 12, y + 7);
+
+      ctx.strokeStyle = on ? "rgba(127,227,220,.16)" : "rgba(127,227,220,.06)";
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(PADL, y); ctx.lineTo(W - PADR, y); ctx.stroke();
+
+      if (!on) return;
+
+      D.ev.filter(function (e) { return e.lane === L.id; }).forEach(function (e) {
+        var x = xOf(e.t, D.span), inWin = Math.abs(e.t - D.tSucc) <= state.win;
+        var col, r = 2.6;
+        if (e.kind === "success" && e.bad) { col = "#F2D200"; r = 5; }
+        else if (e.kind === "proc")        { col = "#D64545"; r = 5; }
+        else if (e.kind === "success")     { col = "rgba(31,143,137,.75)"; r = 3.4; }
+        else if (e.ip === ATTACKER)        { col = inWin ? "#FF7A7A" : "rgba(255,122,122,.45)"; r = 3; }
+        else                               { col = "rgba(127,227,220,.28)"; r = 2.2; }
+        ctx.fillStyle = col;
+        ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+        if (e.kind === "success" && e.bad) {
+          ctx.strokeStyle = "rgba(242,210,0,.5)"; ctx.lineWidth = 1.2;
+          ctx.beginPath(); ctx.arc(x, y, 9, 0, 7); ctx.stroke();
+        }
+      });
+    });
+
+    // ---- the join: arcs linking the correlated events across lanes ----
+    var yAuth = PADT + 1 * laneH + laneH / 2, yEdr = PADT + 2 * laneH + laneH / 2;
+    if (R.r1.fires.some(function (f) { return f.bad; })) {
+      var firstFail = xOf(Math.max(0, D.tSucc - state.win), D.span);
+      ctx.strokeStyle = "#F2D200"; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(firstFail, yAuth - 15);
+      ctx.quadraticCurveTo((firstFail + succX) / 2, yAuth - 30, succX, yAuth - 12); ctx.stroke();
+    }
+    if (R.r2.fires.length) {
+      ctx.strokeStyle = "#D64545"; ctx.lineWidth = 1.8;
+      ctx.beginPath(); ctx.moveTo(succX, yAuth + 10);
+      ctx.quadraticCurveTo((succX + xOf(D.tProc, D.span)) / 2, (yAuth + yEdr) / 2 + 14,
+                           xOf(D.tProc, D.span), yEdr - 9); ctx.stroke();
+    }
+
+    // ---- time axis ----
+    ctx.strokeStyle = "rgba(127,227,220,.14)";
+    ctx.beginPath(); ctx.moveTo(PADL, H - 20); ctx.lineTo(W - PADR, H - 20); ctx.stroke();
+    ctx.fillStyle = "rgba(191,224,226,.42)"; ctx.font = "8.5px 'JetBrains Mono', Menlo, monospace";
+    ctx.textAlign = "center"; ctx.textBaseline = "top";
+    for (var i = 0; i <= 6; i++) {
+      var t = D.span * i / 6, x = xOf(t, D.span);
+      ctx.fillText(i === 0 ? "0" : "+" + fmtDur(t), x, H - 15);
+    }
+
+    // legend
+    ctx.textAlign = "right"; ctx.textBaseline = "top";
+    ctx.fillStyle = "rgba(191,224,226,.38)"; ctx.font = "8.5px 'JetBrains Mono', Menlo, monospace";
+    ctx.fillText("● attacker  ● login success  ● shell spawn  ● everyone else", W - PADR, 9);
+
+    return R;
+  }
+
+  /* ---- panels -------------------------------------------------------------- */
+  function render() {
+    var D = build(), R = evaluate(D);
+    draw();
+
+    var tp = 0, fp = 0;
+    R.r1.fires.forEach(function (f) { f.bad ? tp++ : fp++; });
+    R.r2.fires.forEach(function (f) { if (f.bad) tp++; });
+
+    // rule 1
+    var v1 = $("v1"), b1 = $("b1");
+    if (!R.r1.possible) {
+      v1.className = "ev dead"; v1.textContent = "NO DATA";
+      b1.innerHTML = '<span class="off">auth.log is not being collected.</span><br>' +
+        'This rule <span class="hit">cannot run at all</span> — the only source that<br>knows <em>which account</em> succeeded is switched off.';
+    } else {
+      var bad = R.r1.fires.filter(function (f) { return f.bad; }).length;
+      v1.className = "ev " + (R.r1.fires.length ? "fire" : "quiet");
+      v1.textContent = R.r1.fires.length ? R.r1.fires.length + " FIRED" : "SILENT";
+      b1.innerHTML =
+        '<span class="k">WHEN</span> auth.fail <span class="k">FROM</span> same src ≥ ' +
+        '<span class="' + (bad ? "hit" : "") + '">' + state.thr + '</span><br>' +
+        '<span class="k">AND</span> auth.success <span class="k">FROM</span> that src<br>' +
+        '<span class="k">WITHIN</span> <span class="' + (bad ? "hit" : "") + '">' + fmtDur(state.win) + '</span><br>' +
+        '<br>matched: <b>' + R.r1.fires.length + '</b> · of those, real: <b>' + bad + '</b>';
+    }
+
+    // rule 2
+    var v2 = $("v2"), b2 = $("b2");
+    if (!R.r2.possible) {
+      v2.className = "ev dead"; v2.textContent = "NO DATA";
+      b2.innerHTML = '<span class="off">needs auth.log + edr together.</span><br>' +
+        'One of them is off, so this join is <span class="hit">impossible</span> —<br>no window size can fix a missing source.';
+    } else {
+      v2.className = "ev " + (R.r2.fires.length ? "fire" : "quiet");
+      v2.textContent = R.r2.fires.length ? "FIRED" : "SILENT";
+      b2.innerHTML =
+        '<span class="k">WHEN</span> auth.success <span class="k">FROM</span> src X<br>' +
+        '<span class="k">AND</span> procstart(shell) on that host<br>' +
+        '<span class="k">WITHIN</span> <span class="' + (R.r2.fires.length ? "hit" : "") + '">' + fmtDur(state.win) + '</span><br>' +
+        '<br>false alarms from this rule: <b>0</b> — shoppers<br>never spawn shells.';
+    }
+
+    $("tpn").textContent = tp; $("fpn").textContent = fp;
+    $("sctp").className = "sc tp" + (tp ? "" : " zero");
+    $("scfp").className = "sc fp" + (fp ? "" : " zero");
+
+    caption(R, tp, fp);
+  }
+
+  function caption(R, tp, fp) {
+    var c = $("cap");
+    if (!state.src.auth)
+      c.innerHTML = "<span class='dngr'>Turn off one source and the rule does not get weaker — it stops existing.</span> " +
+        "Collection is upstream of everything. <b>This is the gap you will hit in the lab.</b>";
+    else if (!state.src.edr)
+      c.innerHTML = "Without EDR you can still prove <b>someone logged in</b> — but not <b>what they then did</b>. " +
+        "You would close this as a password reset and miss the breach.";
+    else if (state.pace === "slow" && tp === 0)
+      c.innerHTML = "Same forty failures, same stolen account — <b>spread over six days</b>. Every event is still in " +
+        "the log, and the rule sees nothing. <span class='dngr'>Low and slow beats a time window</span>, and widening " +
+        "the window is not free — watch the false alarms.";
+    else if (fp > 0 && tp > 0)
+      c.innerHTML = "You caught it — and woke the analyst <b>" + fp + " extra time" + (fp > 1 ? "s" : "") + "</b> for " +
+        "shoppers who mistyped a password. <em>Every threshold you loosen buys detection with somebody's attention.</em>";
+    else if (fp > 0)
+      c.innerHTML = "<span class='dngr'>" + fp + " false alarms and the real one still missed.</span> " +
+        "The worst quadrant: noisy <em>and</em> blind.";
+    else if (tp >= 2)
+      c.innerHTML = "<b>Both rules fired, zero false alarms.</b> No single log line here was suspicious — the " +
+        "<em>join</em> is the detection. That is the one thing a SIEM does that no endpoint tool can.";
+    else if (tp === 1)
+      c.innerHTML = "One rule fired. Widen the window a little and the <b>second</b> join lands too — then you have a " +
+        "story, not an event.";
+    else
+      c.innerHTML = "Nothing fired. The evidence is all on screen; the rule just cannot reach across the gap between " +
+        "the events. <b>Try a wider window.</b>";
+  }
+
+  /* ---- controls ------------------------------------------------------------ */
+  // window slider is logarithmic: 30 s → 14 days
+  function winFromSlider(v) { return Math.round(30 * Math.pow(40320, v / 100)); }
+  function sliderFromWin(w) { return Math.round(100 * Math.log(w / 30) / Math.log(40320)); }
+
+  $("win").addEventListener("input", function () {
+    state.win = winFromSlider(+this.value);
+    $("winv").textContent = fmtDur(state.win); render();
+  });
+  $("thr").addEventListener("input", function () {
+    state.thr = +this.value; $("thrv").textContent = state.thr + " fails"; render();
+  });
+  document.querySelectorAll("[data-src]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var k = b.getAttribute("data-src");
+      state.src[k] = !state.src[k]; b.classList.toggle("on", state.src[k]); render();
+    });
+  });
+  document.querySelectorAll("[data-pace]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      document.querySelectorAll("[data-pace]").forEach(function (x) { x.classList.remove("on"); });
+      b.classList.add("on"); state.pace = b.getAttribute("data-pace"); render();
+    });
+  });
+
+  /* presenter / screenshot hook: ?state=join|slow|wide|noauth */
+  var st = (location.search.match(/state=(\w+)/) || [])[1];
+  if (st === "slow" || st === "wide") {
+    state.pace = "slow";
+    document.querySelectorAll("[data-pace]").forEach(function (x) {
+      x.classList.toggle("on", x.getAttribute("data-pace") === "slow"); });
+  }
+  if (st === "wide") { state.win = 604800; state.thr = 3; }
+  if (st === "noauth") { state.src.auth = false;
+    document.querySelector('[data-src="auth"]').classList.remove("on"); }
+
+  $("win").value = sliderFromWin(state.win); $("winv").textContent = fmtDur(state.win);
+  $("thr").value = state.thr; $("thrv").textContent = state.thr + " fails";
+  fit(); render();
+})();
+</script>
+</body></html>

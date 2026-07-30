@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding: 4px 6px; }
+  .lab { display: grid; grid-template-columns: 1fr 330px; gap: 13px; align-items: start; }
+
+  .colhd { font-size: 10.5px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+    color: #8AA1A8; margin: 0 0 7px; display: flex; align-items: center; gap: 7px; }
+  .colhd .n { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px;
+    border-radius: 50%; background: #00567C; color: #fff; font-size: 9px; letter-spacing: 0; }
+
+  canvas#wire { width: 100%; height: 150px; border: 1px solid #0C3A46; border-radius: 11px; background: #06232B; }
+
+  /* the rule, as a real editable Suricata line */
+  .rulebox { margin-top: 9px; border: 1px solid #0C3A46; border-radius: 11px; background: #06232B;
+    padding: 10px 12px; font-family: "JetBrains Mono", monospace; font-size: 11.5px; line-height: 1.7;
+    color: #BFE0E2; overflow-x: auto; white-space: nowrap; }
+  .rulebox .kw { color: #7FE3DC; font-weight: 700; }
+  .rulebox .op { color: #8AA1A8; }
+  .rulebox .str { color: #F2D200; }
+  .rulebox input {
+    font-family: inherit; font-size: 11.5px; font-weight: 700; color: #F2D200;
+    background: rgba(242,210,0,.09); border: 1px solid rgba(242,210,0,.35); border-radius: 4px;
+    padding: 1px 6px; width: 190px; outline: none; }
+  .rulebox input:focus { border-color: #F2D200; background: rgba(242,210,0,.16); }
+  .rulebox .opt { display: inline-block; font-size: 10.5px; font-weight: 700; border-radius: 999px;
+    padding: 1px 9px; margin: 0 1px; cursor: pointer; border: 1px solid #2C5661; color: #6E939B;
+    background: transparent; transition: all 120ms; }
+  .rulebox .opt:hover { border-color: #4E7C87; color: #9FBFC5; }
+  .rulebox .opt.on { background: #1F8F89; border-color: #1F8F89; color: #fff; }
+
+  .rig { margin-top: 9px; border: 1px solid #D3E1E1; border-radius: 11px; background: #fff; padding: 9px 11px; }
+  .rrow { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+  .rlb { font-size: 9.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #8AA1A8;
+    width: 78px; flex: none; }
+  .chip { font-family: "JetBrains Mono", monospace; font-size: 11px; font-weight: 700; color: #12333D;
+    border: 1px solid #CDD8DA; background: #fff; border-radius: 999px; padding: 5px 10px; cursor: pointer;
+    transition: all 120ms; }
+  .chip:hover { border-color: #8AA1A8; background: #EEF3F3; }
+  .chip.on { background: #D64545; color: #fff; border-color: #D64545; }
+  .chip.mode.on { background: #00567C; border-color: #00567C; }
+
+  /* traffic verdict table */
+  .tv { border: 1px solid #D3E1E1; border-radius: 11px; background: #fff; overflow: hidden; }
+  .tvr { display: grid; grid-template-columns: minmax(0,1fr) 92px; gap: 6px; align-items: center;
+    padding: 7px 10px; border-bottom: 1px solid #EEF3F3; }
+  .tvr:last-child { border-bottom: 0; }
+  .tvr > div { min-width: 0; }
+  .tvr .p { font-family: "JetBrains Mono", monospace; font-size: 10px; color: #12333D; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap; }
+  .tvr .who { display: block; font-size: 8.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+    color: #8AA1A8; margin-bottom: 1px; }
+  .tvr .o { font-family: "JetBrains Mono", monospace; font-size: 8.5px; font-weight: 700; letter-spacing: .04em;
+    text-align: center; padding: 3px 0; border-radius: 999px; }
+  .o.pass  { background: #EEF3F3; color: #8AA1A8; }
+  .o.alert { background: rgba(242,210,0,.28); color: #8A7500; }
+  .o.block { background: #D64545; color: #fff; }
+  .o.miss  { background: rgba(214,69,69,.12); color: #C1403f; }
+  .o.harm  { background: #7A1F1F; color: #fff; }
+  .tvr.bad { background: rgba(214,69,69,.055); }
+  .tvr.harmed { background: rgba(122,31,31,.09); }
+
+  .cap { margin-top: 9px; font-size: 12.5px; color: #42606A; line-height: 1.45; min-height: 34px; }
+  .cap b { color: #00567C; } .cap em { color: #1F8F89; font-style: normal; font-weight: 700; }
+  .cap .dngr { color: #D64545; font-weight: 700; }
+</style>
+</head><body>
+
+<div class="lab">
+  <div>
+    <p class="colhd"><span class="n">1</span> Traffic crossing the sensor — the payload is just bytes on the wire</p>
+    <canvas id="wire"></canvas>
+
+    <div class="rulebox">
+      <span class="kw">alert</span> http <span class="op">$EXTERNAL_NET any -&gt;</span> $HOME_NET 80 <span class="op">(</span><br>
+      &nbsp;&nbsp;msg:<span class="str">"SQLi attempt"</span>; flow:established,to_server;<br>
+      &nbsp;&nbsp;<span class="kw">content</span>:<span class="str">"</span><input id="content" value="UNION SELECT"><span class="str">"</span>;
+      <span class="opt" id="nocase">nocase</span><span class="opt" id="uri">http.uri</span>
+      <span class="op">sid:</span>2001; <span class="op">)</span>
+    </div>
+
+    <div class="rig">
+      <div class="rrow" style="margin-bottom:8px"><span class="rlb">Attacker</span>
+        <button class="chip on" data-p="plain">plain</button>
+        <button class="chip" data-p="case">mIxEd CaSe</button>
+        <button class="chip" data-p="comment">UNION/**/SELECT</button>
+        <button class="chip" data-p="encode">URL-encoded</button>
+        <button class="chip" data-p="tls">over HTTPS</button>
+      </div>
+      <div class="rrow"><span class="rlb">Sensor mode</span>
+        <button class="chip mode on" data-m="ids">IDS · detect</button>
+        <button class="chip mode" data-m="ips">IPS · block</button>
+      </div>
+    </div>
+
+    <div class="cap" id="cap">A network sensor reads every packet and compares the bytes to a list of rules. The rule
+      is <b>a line of text</b> — you can edit it right there. Try to catch the attacker.</div>
+  </div>
+
+  <div>
+    <p class="colhd"><span class="n">2</span> What crosses the sensor</p>
+    <div class="tv" id="tv"></div>
+    <div style="margin-top:9px;padding:8px 10px;border:1px solid #D3E1E1;border-radius:10px;background:#F6F8F8;
+                font-size:10.5px;color:#5C7880;line-height:1.45" id="note"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+
+  var PAYLOADS = {
+    plain:   "/search?q=' UNION SELECT flag FROM secrets--",
+    case:    "/search?q=' uNiOn SeLeCt flag FROM secrets--",
+    comment: "/search?q=' UNION/**/SELECT flag FROM secrets--",
+    encode:  "/search?q='%20UNION%20SELECT%20flag%20FROM%20secrets--",
+    tls:     "[TLS application data · 1,214 bytes]"
+  };
+  var TRAFFIC = [
+    { who: "attacker",  key: "atk" },
+    { who: "shopper",   raw: "/search?q=select the right size guide" },
+    { who: "shopper",   raw: "/search?q=usb-c cable" },
+    { who: "shopper",   raw: "/checkout?order=8814" }
+  ];
+
+  var state = { p: "plain", mode: "ids", content: "UNION SELECT", nocase: false, uri: false };
+
+  /* ---- the matching engine: a real content match on the inspected buffer --- */
+  function inspected(raw) {
+    // http.uri gives Suricata the NORMALISED uri — percent-decoded
+    if (!state.uri) return raw;
+    return raw.replace(/%([0-9A-Fa-f]{2})/g, function (_, h) {
+      return String.fromCharCode(parseInt(h, 16)); });
+  }
+  function matches(raw, encrypted) {
+    if (encrypted) return false;                 // sensor sees ciphertext, full stop
+    var c = state.content;
+    if (!c) return false;
+    var hay = inspected(raw);
+    if (state.nocase) { hay = hay.toLowerCase(); c = c.toLowerCase(); }
+    return hay.indexOf(c) >= 0;
+  }
+
+  function rows() {
+    return TRAFFIC.map(function (t) {
+      var enc = t.key === "atk" && state.p === "tls";
+      var raw = t.key === "atk" ? PAYLOADS[state.p] : t.raw;
+      var hit = matches(raw, enc);
+      var hostile = t.key === "atk";
+      var outcome;
+      if (hostile) {
+        if (!hit) outcome = "miss";
+        else outcome = state.mode === "ips" ? "block" : "alert";
+      } else {
+        if (!hit) outcome = "pass";
+        else outcome = state.mode === "ips" ? "harm" : "alert";
+      }
+      return { who: t.who, raw: raw, hit: hit, hostile: hostile, outcome: outcome, enc: enc };
+    });
+  }
+
+  var LABEL = { pass: "pass", alert: "ALERT", block: "BLOCKED", miss: "MISSED", harm: "CUSTOMER LOST" };
+
+  /* ---- canvas: packets flowing through the sensor -------------------------- */
+  var cv = $("wire"), ctx = cv.getContext("2d"), W = 0, H = 150, raf = null, t0 = performance.now();
+  function fit() {
+    var dpr = window.devicePixelRatio || 1;
+    W = cv.clientWidth || 680;
+    cv.width = W * dpr; cv.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  window.addEventListener("resize", fit);
+
+  function rr(x, y, w, h, r) {
+    ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+
+  function draw(now) {
+    var el = (now - t0) / 1000, R = rows(), SX = W * 0.52, yMid = 72;
+    ctx.clearRect(0, 0, W, H); ctx.fillStyle = "#06232B"; ctx.fillRect(0, 0, W, H);
+
+    // the wire
+    ctx.strokeStyle = "rgba(127,227,220,.14)"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, yMid); ctx.lineTo(W, yMid); ctx.stroke();
+
+    // endpoints
+    ctx.textAlign = "left"; ctx.textBaseline = "middle";
+    ctx.fillStyle = "rgba(127,227,220,.4)"; ctx.font = "9px 'JetBrains Mono', Menlo, monospace";
+    ctx.fillText("internet", 8, 20);
+    ctx.textAlign = "right"; ctx.fillText("majal-store", W - 8, 20);
+
+    // packets
+    var span = W + 150, V = 108;
+    R.forEach(function (r, i) {
+      var off = i * (span / R.length);
+      var raw = ((el * V + off) % span) - 70;
+      var dropped = r.outcome === "block" || r.outcome === "harm";
+      var past = raw > SX, a = 1;
+      if (dropped && past) { a = Math.max(0, 1 - (raw - SX) / 46); raw = SX; }
+      if (a <= 0) return;
+
+      var pw = 108, ph = 26, y = yMid - ph / 2;
+      var col = !past ? (r.enc ? "#6E939B" : "#4E7C87")
+                      : (r.hit ? (r.hostile ? "#D64545" : "#7A1F1F") : (r.hostile ? "#D64545" : "#1F8F89"));
+      ctx.globalAlpha = a;
+      ctx.fillStyle = past && r.hit ? "rgba(214,69,69,.18)" : "rgba(255,255,255,.05)";
+      rr(raw, y, pw, ph, 6); ctx.fill();
+      ctx.strokeStyle = col; ctx.lineWidth = 1.2; rr(raw, y, pw, ph, 6); ctx.stroke();
+      ctx.fillStyle = r.enc ? "rgba(191,224,226,.5)" : "rgba(191,224,226,.85)";
+      ctx.font = "9px 'JetBrains Mono', Menlo, monospace";
+      ctx.textAlign = "left"; ctx.textBaseline = "middle";
+      var txt = r.enc ? "██ encrypted ██" : r.raw.replace("/search?q=", "").slice(0, 15);
+      ctx.fillText(txt, raw + 8, yMid);
+      ctx.globalAlpha = 1;
+
+      // verdict tag above the packet, once it is past the sensor
+      if (past && a > .4) {
+        var tag = LABEL[r.outcome];
+        ctx.globalAlpha = a;
+        ctx.font = "700 8px 'JetBrains Mono', Menlo, monospace"; ctx.textAlign = "left";
+        ctx.fillStyle = r.outcome === "miss" ? "#FF7A7A"
+                      : r.outcome === "alert" ? "#F2D200"
+                      : r.outcome === "harm" ? "#FF9B9B" : "#7FE3DC";
+        ctx.fillText(tag, raw + 8, y - 8);
+        ctx.globalAlpha = 1;
+      }
+    });
+
+    // the sensor
+    var sw = 12;
+    ctx.fillStyle = "#0A3A46"; ctx.fillRect(SX - sw / 2, 34, sw, 76);
+    ctx.strokeStyle = state.mode === "ips" ? "#D64545" : "#33D3CB"; ctx.lineWidth = 1.6;
+    ctx.strokeRect(SX - sw / 2, 34, sw, 76);
+    ctx.save();
+    ctx.translate(SX, 122); ctx.textAlign = "center"; ctx.textBaseline = "top";
+    ctx.fillStyle = state.mode === "ips" ? "#FF9B9B" : "#7FE3DC";
+    ctx.font = "700 9.5px 'JetBrains Mono', Menlo, monospace";
+    ctx.fillText(state.mode === "ips" ? "IPS · inline · drops" : "IDS · a copy · watches", 0, 0);
+    ctx.restore();
+
+    // IDS taps a copy; IPS sits in the path
+    if (state.mode === "ids") {
+      ctx.strokeStyle = "rgba(51,211,203,.3)"; ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(SX, 110); ctx.lineTo(SX, 118); ctx.stroke(); ctx.setLineDash([]);
+    }
+
+    raf = requestAnimationFrame(draw);
+  }
+
+  /* ---- panel --------------------------------------------------------------- */
+  function render() {
+    var R = rows(), html = "";
+    R.forEach(function (r) {
+      html += '<div class="tvr' + (r.outcome === "miss" ? " bad" : r.outcome === "harm" ? " harmed" : "") + '">' +
+        '<div><span class="who">' + r.who + '</span><span class="p">' +
+        r.raw.replace(/</g, "&lt;") + '</span></div>' +
+        '<div class="o ' + r.outcome + '">' + LABEL[r.outcome] + '</div></div>';
+    });
+    $("tv").innerHTML = html;
+
+    var atk = R[0], harmed = R.filter(function (r) { return r.outcome === "harm"; }).length;
+    var n = $("note"), c = $("cap");
+
+    if (atk.enc) {
+      n.innerHTML = "<b>The sensor sees ciphertext.</b> No rule you can write matches encrypted bytes. " +
+        "Real networks solve this by <em>terminating TLS at a proxy</em> and inspecting there — which means " +
+        "decrypting your users' traffic, with everything that implies.";
+      c.innerHTML = "<span class='dngr'>Every rule goes blind at once.</span> Most traffic on a real network is " +
+        "encrypted — which is exactly why the industry moved detection <b>onto the endpoint</b>, where the data is " +
+        "already decrypted. That is the tool you just used.";
+    } else if (!atk.hit) {
+      n.innerHTML = "The payload no longer contains your literal string, so the match fails. " +
+        (state.p === "case" ? "Try the <b>nocase</b> option." :
+         state.p === "encode" ? "Try <b>http.uri</b> — it matches the <em>normalised</em> URI, percent-decoded." :
+         state.p === "comment" ? "<b>No option fixes this one.</b> <code>/**/</code> is a valid SQL comment, so the " +
+           "keywords are still adjacent to the <em>database</em> but not to the <em>sensor</em>. You would need a " +
+           "different content string, or a regex — and the attacker can move again." :
+         "Edit the content string to match what is actually on the wire.");
+      c.innerHTML = "The attack still works on the database. The <b>rule</b> is what broke. A signature describes " +
+        "<em>one spelling</em> of an attack, and there are always more spellings.";
+    } else if (harmed) {
+      n.innerHTML = "Your rule also matched a shopper searching for <b>\"select the right size guide\"</b>. " +
+        "In IDS that is one noisy alert. Inline, it is <b>a customer who cannot buy anything</b>.";
+      c.innerHTML = "You caught the attacker — and <span class='dngr'>dropped a paying customer</span> with the same " +
+        "rule. This is why teams run IPS in <em>detect-only</em> for weeks before letting it block: " +
+        "<b>a false positive stops being noise and starts being downtime.</b>";
+    } else if (state.mode === "ips") {
+      n.innerHTML = "Inline and blocking, with no collateral damage. Note what it cost: the sensor is now " +
+        "<b>in the path of every request</b> — if it is slow, the site is slow; if it dies, the site dies.";
+      c.innerHTML = "<b>IPS is IDS that is allowed to act.</b> Same engine, same rule — the only difference is " +
+        "whether the sensor sits <em>beside</em> the wire or <em>in</em> it.";
+    } else {
+      n.innerHTML = "A copy of the traffic reaches the sensor; the original is already at the server. " +
+        "You get an <b>alert</b>, not a block — the attack landed and you know about it.";
+      c.innerHTML = "Matched. Now play the attacker: change the spelling with the chips and watch this one rule " +
+        "fall over — then try to repair it with <b>nocase</b> and <b>http.uri</b>.";
+    }
+  }
+
+  /* ---- controls ------------------------------------------------------------ */
+  $("content").addEventListener("input", function () { state.content = this.value; render(); });
+  ["nocase", "uri"].forEach(function (k) {
+    $(k).addEventListener("click", function () {
+      state[k] = !state[k]; this.classList.toggle("on", state[k]); render();
+    });
+  });
+  document.querySelectorAll("[data-p]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      document.querySelectorAll("[data-p]").forEach(function (x) { x.classList.remove("on"); });
+      b.classList.add("on"); state.p = b.getAttribute("data-p"); render();
+    });
+  });
+  document.querySelectorAll("[data-m]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      document.querySelectorAll("[data-m]").forEach(function (x) { x.classList.remove("on"); });
+      b.classList.add("on"); state.mode = b.getAttribute("data-m"); render();
+    });
+  });
+
+  /* presenter / screenshot hook */
+  var st = (location.search.match(/state=(\w+)/) || [])[1];
+  if (st) {
+    if (st === "case")    { state.p = "case"; }
+    if (st === "encode")  { state.p = "encode"; state.nocase = true; $("nocase").classList.add("on"); }
+    if (st === "comment") { state.p = "comment"; state.nocase = true; $("nocase").classList.add("on");
+                            state.uri = true; $("uri").classList.add("on"); }
+    if (st === "tls")     { state.p = "tls"; }
+    if (st === "fp")      { state.content = "select"; $("content").value = "select";
+                            state.nocase = true; $("nocase").classList.add("on");
+                            state.mode = "ips"; }
+    if (st === "ips")     { state.mode = "ips"; }
+    document.querySelectorAll("[data-p]").forEach(function (x) {
+      x.classList.toggle("on", x.getAttribute("data-p") === state.p); });
+    document.querySelectorAll("[data-m]").forEach(function (x) {
+      x.classList.toggle("on", x.getAttribute("data-m") === state.mode); });
+  }
+
+  fit(); render(); raf = requestAnimationFrame(draw);
+})();
+</script>
+</body></html>

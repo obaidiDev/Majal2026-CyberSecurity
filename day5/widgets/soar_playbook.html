@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body { padding: 4px 6px; }
+  .lab { display: grid; grid-template-columns: 1fr 318px; gap: 13px; align-items: start; }
+
+  .colhd { font-size: 10.5px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+    color: #8AA1A8; margin: 0 0 7px; display: flex; align-items: center; gap: 7px; }
+  .colhd .n { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px;
+    border-radius: 50%; background: #00567C; color: #fff; font-size: 9px; letter-spacing: 0; }
+
+  canvas#flow { width: 100%; height: 250px; border: 1px solid #0C3A46; border-radius: 11px; background: #06232B; }
+
+  .rig { margin-top: 9px; border: 1px solid #D3E1E1; border-radius: 11px; background: #fff; padding: 9px 11px; }
+  .rrow { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+  .rlb { font-size: 9.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #8AA1A8;
+    width: 92px; flex: none; }
+  .chip { font-family: "JetBrains Mono", monospace; font-size: 11px; font-weight: 700; color: #12333D;
+    border: 1px solid #CDD8DA; background: #fff; border-radius: 999px; padding: 5px 10px; cursor: pointer;
+    transition: all 120ms; }
+  .chip:hover { border-color: #8AA1A8; background: #EEF3F3; }
+  .chip.on { background: #D64545; color: #fff; border-color: #D64545; }
+  .chip.guard.on { background: #1F8F89; border-color: #1F8F89; }
+
+  /* race: soar vs human */
+  .race { margin-top: 9px; border: 1px solid #D3E1E1; border-radius: 11px; background: #fff; padding: 10px 12px; }
+  .lane { display: grid; grid-template-columns: 74px 1fr 66px; gap: 9px; align-items: center; margin-bottom: 8px; }
+  .lane:last-child { margin-bottom: 0; }
+  .lane .ln { font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #8AA1A8; }
+  .lane .bar { height: 9px; border-radius: 999px; background: #EEF3F3; overflow: hidden; }
+  .lane .bar i { display: block; height: 100%; width: 0; border-radius: 999px; transition: width 90ms linear; }
+  .lane.soar .bar i { background: linear-gradient(90deg, #1F8F89, #33D3CB); }
+  .lane.human .bar i { background: #CDD8DA; }
+  .lane .tv { font-family: "JetBrains Mono", monospace; font-size: 11.5px; font-weight: 800; text-align: right; }
+  .lane.soar .tv { color: #1F8F89; } .lane.human .tv { color: #8AA1A8; }
+
+  /* enrichment / outcome panel */
+  .panel { border: 1px solid #D3E1E1; border-radius: 11px; background: #fff; overflow: hidden; margin-bottom: 10px; }
+  .ph { padding: 8px 11px; background: #EEF3F3; border-bottom: 1px solid #E0E7E8;
+    font-size: 11.5px; font-weight: 800; color: #12333D; }
+  .er { display: grid; grid-template-columns: 74px minmax(0,1fr); gap: 8px; padding: 7px 11px;
+    border-bottom: 1px solid #EEF3F3; align-items: baseline; }
+  .er:last-child { border-bottom: 0; }
+  .er .k { font-size: 9px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: #8AA1A8; }
+  .er .v { font-family: "JetBrains Mono", monospace; font-size: 10.5px; color: #12333D; line-height: 1.4; }
+  .er .v.bad { color: #C1403f; font-weight: 700; }
+  .er .v.warn { color: #8A7500; font-weight: 700; }
+  .er .v.dim { color: #C9D4D6; }
+
+  .outcome { border-radius: 11px; padding: 11px 13px; border: 1px solid #D3E1E1; background: #fff; min-height: 88px; }
+  .outcome .ot { font-size: 13.5px; font-weight: 800; }
+  .outcome .os { font-size: 11px; color: #5C7880; line-height: 1.45; margin-top: 3px; }
+  .outcome.good { border-color: #1F8F89; background: rgba(31,143,137,.07); } .outcome.good .ot { color: #146d68; }
+  .outcome.held { border-color: #00567C; background: rgba(0,86,124,.06); }  .outcome.held .ot { color: #00567C; }
+  .outcome.harm { border-color: #D64545; background: rgba(214,69,69,.09); } .outcome.harm .ot { color: #C1403f; }
+
+  .cap { margin-top: 9px; font-size: 12.5px; color: #42606A; line-height: 1.45; min-height: 34px; }
+  .cap b { color: #00567C; } .cap em { color: #1F8F89; font-style: normal; font-weight: 700; }
+  .cap .dngr { color: #D64545; font-weight: 700; }
+</style>
+</head><body>
+
+<div class="lab">
+  <div>
+    <p class="colhd"><span class="n">1</span> The playbook — steps a human used to do by hand, written down once</p>
+    <canvas id="flow"></canvas>
+
+    <div class="rig">
+      <div class="rrow"><span class="rlb">Incoming alert</span>
+        <button class="chip on" data-a="real">the breach</button>
+        <button class="chip" data-a="fp">a false positive</button>
+        <span class="rlb" style="width:auto;margin-left:auto">Guardrail</span>
+        <button class="chip guard on" id="guard">never auto-isolate tier-0</button>
+        <button class="primary" id="run" style="font-size:12px;padding:6px 14px">▶ Run playbook</button>
+      </div>
+    </div>
+
+    <div class="race">
+      <div class="lane soar"><span class="ln">SOAR</span><span class="bar"><i id="sbar"></i></span>
+        <span class="tv" id="stv">0.0 s</span></div>
+      <div class="lane human"><span class="ln">A human</span><span class="bar"><i id="hbar"></i></span>
+        <span class="tv" id="htv">0 min</span></div>
+    </div>
+
+    <div class="cap" id="cap">Everything in this flow is something an analyst does by hand at 3am: look the IP up,
+      check what the machine is, find out whose account it is, then act. <b>SOAR is that, written down and run by a
+      computer.</b></div>
+  </div>
+
+  <div>
+    <p class="colhd"><span class="n">2</span> What the playbook found</p>
+    <div class="panel">
+      <div class="ph">Enrichment</div>
+      <div id="enrich"></div>
+    </div>
+    <div class="outcome" id="out">
+      <div class="ot" id="ot">Not run yet</div>
+      <div class="os" id="os">Press <b>Run playbook</b>.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+
+  var ALERTS = {
+    real: {
+      name: "EDR · WebServerSpawnsShell",
+      ip: "45.147.230.12", ipVerdict: "known C2 · 47 reports · 3 feeds", ipBad: true,
+      host: "majal-store-01", tier: "tier-2 · web front end", tier0: false,
+      user: "maha.alfaisal", userNote: "finance · logged in 4 min ago from a new country"
+    },
+    fp: {
+      name: "EDR · WebServerSpawnsShell",
+      ip: "10.20.4.15", ipVerdict: "internal · no reputation data", ipBad: false,
+      host: "pay-gw-01", tier: "TIER-0 · payment gateway", tier0: true,
+      user: "svc-billing", userNote: "service account · nightly reconciliation job"
+    }
+  };
+
+  var state = { alert: "real", guard: true, step: -1, t: 0, running: false };
+
+  /* ---- what the playbook decides ------------------------------------------ */
+  function decide() {
+    var A = ALERTS[state.alert];
+    if (A.tier0 && state.guard) return "hold";     // guardrail catches it
+    if (A.ipBad) return "contain";                 // confident: act
+    if (!A.ipBad && !A.tier0) return "hold";
+    return "contain";                              // tier-0 with no guardrail → the accident
+  }
+  function isHarm() { return state.alert === "fp" && decide() === "contain"; }
+
+  /* ---- the flow graph ------------------------------------------------------ */
+  // steps: 0 trigger, 1 enrich, 2 decide, 3 act, 4 record
+  var STEPS = ["trigger", "enrich", "decide", "act", "record"];
+
+  var cv = $("flow"), ctx = cv.getContext("2d"), W = 0, H = 250, raf = null;
+  function fit() {
+    var dpr = window.devicePixelRatio || 1;
+    W = cv.clientWidth || 680;
+    cv.width = W * dpr; cv.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    draw();
+  }
+  window.addEventListener("resize", fit);
+
+  function rr(x, y, w, h, r) {
+    ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+
+  function nodes() {
+    var A = ALERTS[state.alert], d = decide();
+    var colW = (W - 40) / 5, yMid = 112;
+    function cx(i) { return 22 + colW * i + colW / 2; }
+    return [
+      { i: 0, x: cx(0), y: yMid, w: 122, h: 52, t: "ALERT", s: A.name.split(" · ")[1], kind: "trigger" },
+      { i: 1, x: cx(1), y: yMid, w: 112, h: 76, t: "ENRICH", s: "3 lookups", kind: "enrich" },
+      { i: 2, x: cx(2), y: yMid, w: 104, h: 56, t: "DECIDE", s: d === "hold" ? "hold" : "contain", kind: "decide" },
+      { i: 3, x: cx(3), y: yMid, w: 116, h: 62,
+        t: d === "hold" ? "QUEUE" : "CONTAIN",
+        s: d === "hold" ? "await analyst" : "isolate + disable", kind: d === "hold" ? "hold" : "act" },
+      { i: 4, x: cx(4), y: yMid, w: 104, h: 52, t: "RECORD", s: "ticket + page", kind: "record" }
+    ];
+  }
+
+  function draw() {
+    var N = nodes(), A = ALERTS[state.alert], d = decide(), harm = isHarm();
+    ctx.clearRect(0, 0, W, H); ctx.fillStyle = "#06232B"; ctx.fillRect(0, 0, W, H);
+
+    ctx.textAlign = "left"; ctx.textBaseline = "top";
+    ctx.fillStyle = "rgba(127,227,220,.3)"; ctx.font = "9px 'JetBrains Mono', Menlo, monospace";
+    ctx.fillText("playbook: suspected-server-compromise.yml", 14, 11);
+
+    // edges
+    for (var i = 0; i < N.length - 1; i++) {
+      var a = N[i], b = N[i + 1];
+      var x0 = a.x + a.w / 2, x1 = b.x - b.w / 2;
+      var done = state.step > i;
+      ctx.strokeStyle = done ? "rgba(51,211,203,.5)" : "rgba(127,227,220,.16)";
+      ctx.lineWidth = done ? 1.8 : 1.2;
+      ctx.beginPath(); ctx.moveTo(x0, a.y); ctx.lineTo(x1, b.y); ctx.stroke();
+      if (done) {
+        ctx.fillStyle = "rgba(51,211,203,.6)";
+        ctx.beginPath(); ctx.moveTo(x1, b.y); ctx.lineTo(x1 - 6, b.y - 4); ctx.lineTo(x1 - 6, b.y + 4); ctx.fill();
+      }
+    }
+
+    // nodes
+    N.forEach(function (n) {
+      var active = state.step === n.i, done = state.step > n.i;
+      var bad = n.kind === "act" && harm;
+      var col = bad ? "#D64545"
+              : n.kind === "hold" && done ? "#00567C"
+              : done ? "#1F8F89" : active ? "#33D3CB" : "#2C5661";
+      var x = n.x - n.w / 2, y = n.y - n.h / 2;
+
+      ctx.fillStyle = bad ? "rgba(214,69,69,.14)" : done || active ? "rgba(51,211,203,.07)" : "rgba(255,255,255,.03)";
+      rr(x, y, n.w, n.h, 9); ctx.fill();
+      ctx.strokeStyle = col; ctx.lineWidth = active ? 2.2 : 1.3;
+      rr(x, y, n.w, n.h, 9); ctx.stroke();
+      if (active) { ctx.shadowColor = "#33D3CB"; ctx.shadowBlur = 10;
+                    rr(x, y, n.w, n.h, 9); ctx.stroke(); ctx.shadowBlur = 0; }
+
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillStyle = done || active ? (bad ? "#FF9B9B" : "#7FE3DC") : "#5D8C93";
+      ctx.font = "700 11px 'JetBrains Mono', Menlo, monospace";
+      ctx.fillText(n.t, n.x, n.y - (n.kind === "enrich" ? 22 : 9));
+
+      if (n.kind === "enrich") {
+        var items = [
+          ["ip rep", state.step > 1],
+          ["asset", state.step > 1],
+          ["identity", state.step > 1]
+        ];
+        items.forEach(function (it, k) {
+          ctx.font = "9px 'JetBrains Mono', Menlo, monospace";
+          ctx.fillStyle = it[1] ? "rgba(127,227,220,.75)" : "rgba(93,140,147,.6)";
+          ctx.fillText((it[1] ? "✓ " : "· ") + it[0], n.x, n.y - 2 + k * 13);
+        });
+      } else {
+        ctx.font = "9px 'JetBrains Mono', Menlo, monospace";
+        ctx.fillStyle = done || active ? "rgba(191,224,226,.6)" : "rgba(93,140,147,.55)";
+        ctx.fillText(n.s, n.x, n.y + 9);
+      }
+    });
+
+    // travelling token
+    if (state.running && state.step >= 0 && state.step < N.length - 1) {
+      var a2 = N[state.step], b2 = N[state.step + 1];
+      var p = state.sub || 0;
+      var tx = (a2.x + a2.w / 2) + ((b2.x - b2.w / 2) - (a2.x + a2.w / 2)) * p;
+      ctx.fillStyle = "#33D3CB";
+      ctx.beginPath(); ctx.arc(tx, a2.y, 4, 0, 7); ctx.fill();
+      ctx.globalAlpha = .3; ctx.beginPath(); ctx.arc(tx, a2.y, 8, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+    }
+
+    // harm banner
+    if (harm && state.step >= 3) {
+      ctx.fillStyle = "rgba(214,69,69,.16)";
+      rr(14, H - 42, W - 28, 30, 7); ctx.fill();
+      ctx.strokeStyle = "#D64545"; ctx.lineWidth = 1.2; rr(14, H - 42, W - 28, 30, 7); ctx.stroke();
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillStyle = "#FF9B9B"; ctx.font = "700 11px 'JetBrains Mono', Menlo, monospace";
+      ctx.fillText("pay-gw-01 ISOLATED · checkout down 14 min · 312 orders lost", W / 2, H - 27);
+    }
+  }
+
+  /* ---- panels -------------------------------------------------------------- */
+  function renderEnrich() {
+    var A = ALERTS[state.alert], shown = state.step > 1;
+    $("enrich").innerHTML =
+      row("source ip", A.ip + (shown ? "\n" + A.ipVerdict : ""), shown ? (A.ipBad ? "bad" : "") : "dim") +
+      row("asset", A.host + (shown ? "\n" + A.tier : ""), shown ? (A.tier0 ? "warn" : "") : "dim") +
+      row("identity", A.user + (shown ? "\n" + A.userNote : ""), shown ? "" : "dim");
+  }
+  function row(k, v, cls) {
+    return '<div class="er"><span class="k">' + k + '</span><span class="v ' + cls + '">' +
+      v.replace(/\n/g, "<br>") + "</span></div>";
+  }
+
+  function renderOutcome() {
+    var A = ALERTS[state.alert], d = decide(), harm = isHarm();
+    var o = $("out"), ot = $("ot"), os = $("os"), c = $("cap");
+    if (state.step < 4) {
+      o.className = "outcome"; ot.textContent = state.running ? "Running…" : "Not run yet";
+      os.innerHTML = state.running ? "Working through the steps." : "Press <b>Run playbook</b>.";
+      return;
+    }
+    if (harm) {
+      o.className = "outcome harm"; ot.textContent = "CONTAINED THE WRONG THING";
+      os.innerHTML = "A nightly billing job spawned a shell — <b>exactly what it does every night</b>. The playbook " +
+        "isolated the <b>payment gateway</b>. The attack was imaginary; the outage was not.";
+      c.innerHTML = "<span class='dngr'>Automation does not decide better — it decides the same way, faster and more " +
+        "often.</span> Switch the <b>guardrail</b> back on and run it again.";
+    } else if (d === "hold") {
+      o.className = "outcome held"; ot.textContent = "HELD FOR A HUMAN";
+      os.innerHTML = A.tier0
+        ? "The guardrail stopped it: <b>tier-0 assets are never isolated automatically</b>. Everything is enriched " +
+          "and waiting — the analyst decides in seconds instead of starting from scratch."
+        : "Nothing here justified acting alone. Queued with all three lookups already attached.";
+      c.innerHTML = "This is the shape of good automation: <b>it does the boring 90% and stops at the decision that " +
+        "should cost a human ten seconds of judgement.</b> The analyst opens a ticket that is already answered.";
+    } else {
+      o.className = "outcome good"; ot.textContent = "CONTAINED — 8.4 seconds";
+      os.innerHTML = "Host isolated from the network, session killed, account disabled, ticket opened, on-call paged. " +
+        "The attacker had <b>4 minutes</b> of access instead of the industry-average <b>hours</b>.";
+      c.innerHTML = "Nothing here is clever. Every step is one an analyst already knew how to do — the win is purely " +
+        "<em>speed and consistency</em>. <b>SOAR does not decide better; it decides the same way every time, at 3am.</b> " +
+        "Now run it against <b>a false positive</b> with the guardrail off.";
+    }
+  }
+
+  /* ---- run ----------------------------------------------------------------- */
+  var HUMAN_MIN = 41, SOAR_SEC = 8.4;
+  function run(instant) {
+    if (raf) cancelAnimationFrame(raf);
+    if (instant) {
+      state.step = 4; state.running = false; state.sub = 0;
+      $("sbar").style.width = "100%"; $("stv").textContent = SOAR_SEC.toFixed(1) + " s";
+      $("hbar").style.width = "8%";   $("htv").textContent = "3 min";
+      draw(); renderEnrich(); renderOutcome(); return;
+    }
+    state.step = 0; state.running = true; state.sub = 0;
+    var t0 = performance.now(), PER = 620, TOTAL = PER * 4;
+    renderEnrich(); renderOutcome();
+    (function step(now) {
+      var e = now - t0, prog = Math.min(1, e / TOTAL);
+      var s = Math.min(4, Math.floor(e / PER));
+      if (s !== state.step) { state.step = s; renderEnrich(); }
+      state.sub = (e % PER) / PER;
+      $("sbar").style.width = (prog * 100) + "%";
+      $("stv").textContent = (prog * SOAR_SEC).toFixed(1) + " s";
+      // the human is still reading the alert
+      $("hbar").style.width = (prog * 8) + "%";
+      $("htv").textContent = Math.round(prog * 3) + " min";
+      draw();
+      if (prog < 1) raf = requestAnimationFrame(step);
+      else { state.running = false; state.step = 4; draw(); renderEnrich(); renderOutcome(); }
+    })(t0);
+  }
+
+  /* ---- controls ------------------------------------------------------------ */
+  document.querySelectorAll("[data-a]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      document.querySelectorAll("[data-a]").forEach(function (x) { x.classList.remove("on"); });
+      b.classList.add("on"); state.alert = b.getAttribute("data-a"); run(false);
+    });
+  });
+  $("guard").addEventListener("click", function () {
+    state.guard = !state.guard; this.classList.toggle("on", state.guard); run(false);
+  });
+  $("run").addEventListener("click", function () { run(false); });
+
+  fit(); renderEnrich(); renderOutcome();
+  $("htv").textContent = HUMAN_MIN + " min";
+
+  /* presenter / screenshot hook: ?state=real|hold|harm */
+  var st = (location.search.match(/state=(\w+)/) || [])[1];
+  if (st) {
+    if (st === "hold") { state.alert = "fp"; state.guard = true; }
+    if (st === "harm") { state.alert = "fp"; state.guard = false; $("guard").classList.remove("on"); }
+    document.querySelectorAll("[data-a]").forEach(function (x) {
+      x.classList.toggle("on", x.getAttribute("data-a") === state.alert); });
+    run(true);
+  }
+})();
+</script>
+</body></html>
